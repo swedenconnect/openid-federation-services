@@ -19,6 +19,31 @@
 *.tar.gz
 *.rar
 
+.metadata
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+target
+Servers
+logs
+generated
+MANIFEST.MF
+test-output
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+/.apt_generated/
+
+target/
+
+${BACKUP_DIR}
+
+.DS_Store
+
+# Intelij
+*.iml
+.idea
+out

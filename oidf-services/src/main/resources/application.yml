@@ -1,0 +1,8 @@
+openid:
+  federation:
+    resolver:
+      active: true
+    trust-anchor:
+      active: true
+    trust-mark-issuer:
+      active: true
