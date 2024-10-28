@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.service.resolver;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.oauth2.sdk.ParseException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,19 +58,18 @@ public class ResolverController implements ApplicationModule {
   /**
    * Resolves the entity based on the given parameters.
    *
-   * @param name the name of the resolver entity providing the response
    * @param subject the resolved subject entity
    * @param trustAnchor the trust anchor to resolve to
    * @param type the type of the entity (optional) for filtering metadata
    * @return the resolved entity as a JSON response or an error response
    */
-  @GetMapping(value = "/{name}/resolve", produces = "application/resolve-response+jwt")
-  public String resolveEntity(@PathVariable(name = "name") String name,
+  @GetMapping(value = "/resolve", produces = "application/resolve-response+jwt")
+  public String resolveEntity(
       @RequestParam(name = "sub", required = false) String subject,
       @RequestParam(name = "anchor", required = false) String trustAnchor,
-      @RequestParam(name = "type", required = false) String type) {
-    final ResolverRequest resolverRequest = new ResolverRequest(name, subject, trustAnchor, type);
-    return resolver.resolve(resolverRequest).signedJwt();
+      @RequestParam(name = "type", required = false) String type) throws ParseException, JOSEException {
+    final ResolverRequest resolverRequest = new ResolverRequest("name", subject, trustAnchor, type);
+    return resolver.resolve(resolverRequest);
   }
 
   /**

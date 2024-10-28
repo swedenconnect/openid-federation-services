@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.resolver;
 
+import se.digg.oidfed.resolver.tree.EntityStatementTree;
+
 import java.util.List;
 
 /**
@@ -24,11 +26,21 @@ import java.util.List;
  * @author Felix Hellman
  */
 public class Discovery {
+
+  private final EntityStatementTree tree;
+
+  /**
+   * @param tree to search
+   */
+  public Discovery(final EntityStatementTree tree) {
+    this.tree = tree;
+  }
+
   /**
    * @param request to process
    * @return discovery response
    */
   public DiscoveryResponse discovery(final DiscoveryRequest request) {
-    return new DiscoveryResponse(List.of());
+    return new DiscoveryResponse(tree.discovery(request));
   }
 }
