@@ -17,13 +17,12 @@
 package se.digg.oidfed.trustmarkissuer;
 
 /**
- * @param name
- * @param trustMarkId
- * @param subject
- * @param issueTime
- * @param trustMark
+ * TrustMarkStatusRequest
+ *
+ * @param trustMarkId TrustMarkId
+ * @param subject Subject
+ * @param issueTime IssueTime not supported
  * @author Felix Hellman
  */
-public record TrustMarkStatusRequest(String name, String trustMarkId, String subject, Long issueTime,
-    String trustMark) {
+public record TrustMarkStatusRequest(String trustMarkId, String subject, Long issueTime) {
 }
