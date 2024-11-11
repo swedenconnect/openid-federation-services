@@ -25,7 +25,6 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkConfigurationResolver;
 import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkIssuerProperties;
 import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkProperties;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
@@ -39,6 +38,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static se.digg.oidfed.trustmarkissuer.util.FederationAssert.*;
@@ -54,22 +54,15 @@ public class TrustMarkIssuer {
   public static final JOSEObjectType TRUST_MARK_JWT_TYPE = new JOSEObjectType("trust-mark+jwt");
   private static final SecureRandom rng = new SecureRandom();
 
-  private final TrustMarkConfigurationResolver configurationResolver;
   private final TrustMarkProperties trustMarkProperties;
-  private final String issuer;
 
-  public TrustMarkIssuer(final TrustMarkConfigurationResolver configurationResolver) {
-    assertNotEmpty(configurationResolver, "TrustMarkConfigurationResolver can not be null");
-    assertNotEmpty(configurationResolver.getIssuer(),
-        "TrustMarkConfigurationResolver.subject is expected");
-    assertNotEmpty(configurationResolver.getTrustMarkProperties(),
-        "TrustMarkConfigurationResolver.trustMarkProperties is expected");
-    this.configurationResolver = configurationResolver;
-
-    this.trustMarkProperties = configurationResolver.getTrustMarkProperties();
+  /**
+   * TrustMarkIssuer
+   * @param trustMarkProperties ConfigurationProperties
+   */
+  public TrustMarkIssuer(final TrustMarkProperties trustMarkProperties) {
+    this.trustMarkProperties = assertNotEmpty(trustMarkProperties, "TrustMarkProperties can not be null");
     this.trustMarkProperties.validate();
-
-    this.issuer = assertNotEmpty(configurationResolver.getIssuer(), "Issuer is expected");
   }
 
   /**
@@ -81,7 +74,9 @@ public class TrustMarkIssuer {
   public List<String> trustMarkListing(final TrustMarkListingRequest request)
       throws InvalidRequestException, NotFoundException {
     assertNotEmptyThrows(request, () -> new InvalidRequestException("TrustMarkListingRequest is expected"));
-    return getTrustMarkProperty(request.trustMarkId(), request.subject())
+
+    return getTrustMarkSubject(TrustMarkId.validate(request.trustMarkId(), InvalidRequestException::new),
+        request.subject())
         .map(TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties::getSub)
         .toList();
   }
@@ -89,7 +84,7 @@ public class TrustMarkIssuer {
   /**
    * Validate the trust mark status.
    *
-   * @param request
+   * @param request For a TrustMark status check
    * @return True if trust mark is active
    */
   public Boolean trustMarkStatus(final TrustMarkStatusRequest request)
@@ -97,7 +92,7 @@ public class TrustMarkIssuer {
     if (request.issueTime() != null) {
       throw new InvalidRequestException("IssueTime parameter is not supported");
     }
-    return getTrustMarkProperty(request.trustMarkId(), request.subject()).findAny().isPresent();
+    return getTrustMarkSubject(TrustMarkId.create(request.trustMarkId()), request.subject()).findAny().isPresent();
   }
 
   /**
@@ -109,39 +104,38 @@ public class TrustMarkIssuer {
   public String trustMark(final TrustMarkRequest request)
       throws InvalidRequestException, NotFoundException, ServerErrorException {
     assertNotEmptyThrows(request.subject(), () -> new InvalidRequestException("Subject is expected"));
+    final TrustMarkId trustMarkId = TrustMarkId.create(request.trustMarkId());
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties tmProp =
-        getTrustMarkProperty(request.trustMarkId(), request.subject())
+    final TrustMarkIssuerProperties trustMarkIssuerProperties = getTrustMarkIssuerProperties(trustMarkId)
+        .orElseThrow(() -> new NotFoundException("TrustMark not found for id:'"+trustMarkId+"'"));
+
+    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties trustMarkSubject =
+        getTrustMarkSubject(trustMarkId, request.subject())
             .findFirst()
             .orElseThrow(() -> new NotFoundException(
-                "TrustMark can not be found for trust_mark_id:'" + request.trustMarkId() + "' and subject:'"
+                "TrustMark can not be found for TrustMarkId:'" + request.trustMarkId() + "' and subject:'"
                     + request.subject() + "'"));
 
     // https://openid.net/specs/openid-federation-1_0.html#name-trust-mark-claims
     final JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
         .issueTime(new Date(now().toEpochMilli()))
         .jwtID(new BigInteger(128, rng).toString(16))
-        .subject(tmProp.getSub());
+        .subject(trustMarkSubject.getSub());
 
     claimsSetBuilder.expirationTime(
-        calculateExp(trustMarkProperties.getTrustMarkValidityDuration(), tmProp.getExpires()));
+        calculateExp(trustMarkProperties.getTrustMarkValidityDuration(), trustMarkSubject.getExpires()));
 
-    throwIfNull(this.configurationResolver.getIssuer(), claimsSetBuilder::issuer,
+    throwIfNull(this.trustMarkProperties.getIssuerEntityId(), claimsSetBuilder::issuer,
         () -> new ServerErrorException("Issuer must be present"));
-
     doIfNotNull(request.trustMarkId(), (value) -> claimsSetBuilder.claim("id", value));
-
-    doIfNotNull(trustMarkProperties.getLogoUri(), (value) -> claimsSetBuilder.claim("logo_uri", value));
-
-    doIfNotNull(trustMarkProperties.getRefUrl(), (value) -> claimsSetBuilder.claim("ref", value));
-
-    configurationResolver.getDelegation(TrustMarkId.create(request.trustMarkId()))
-        .ifPresent(value -> claimsSetBuilder.claim("delegation", value));
+    doIfNotNull(trustMarkIssuerProperties.getLogoUri(), (value) -> claimsSetBuilder.claim("logo_uri", value));
+    doIfNotNull(trustMarkIssuerProperties.getRefUri(), (value) -> claimsSetBuilder.claim("ref", value));
+    doIfNotNull(trustMarkIssuerProperties.getDelegation(), (value) -> claimsSetBuilder.claim("delegation", value));
 
     final JWTClaimsSet claimsSet = claimsSetBuilder.build();
 
-    final JWK jwk = assertNotEmptyThrows(configurationResolver.getSignKey(),
-        () -> new ServerErrorException("Unable to find key to sign TrustMark"));
+    final JWK jwk = assertNotEmptyThrows(trustMarkProperties.getSignJWK(),
+        () -> new ServerErrorException("Unable to find key to sign JWK TrustMark"));
     assertNotEmptyThrows(jwk.getKeyID(), () -> new ServerErrorException("Kid is expected on sign key"));
 
     final JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.RS256)
@@ -156,7 +150,8 @@ public class TrustMarkIssuer {
       return signedTrustMarkJWT.serialize();
     }
     catch (JOSEException e) {
-      throw new ServerErrorException("Unable to sign TrustMarkId: '" + request.trustMarkId() + "'", e);
+      throw new ServerErrorException("Unable to sign TrustMarkId: '" + request.trustMarkId() +
+          "' Subject:'"+request.subject()+"'", e);
     }
   }
 
@@ -164,26 +159,44 @@ public class TrustMarkIssuer {
    * Calculate exp value. If current time plus trustmarkTimeToLive is grater then subjectTimeToLive. SubjectTimeToLive
    * will be used.
    *
-   * @param trustmarkDurationToLive Duration that the TrustMark JWT is expected to live.
+   * @param trustMarkDurationToLive Duration that the TrustMark JWT is expected to live.
    * @param subjectTimeToLive End time for when the subject is valid.
-   * @return Date that represents the exp filed in Trustmark JWT.
+   * @return Date that represents the exp field in Trustmark JWT.
    */
-  protected Date calculateExp(Duration trustmarkDurationToLive, Instant subjectTimeToLive) {
-    final Instant calculatedTrustMarkTTL = now().plus(trustmarkDurationToLive);
+  protected Date calculateExp(final Duration trustMarkDurationToLive,final Instant subjectTimeToLive) {
+    final Instant calculatedTrustMarkTTL = now().plus(trustMarkDurationToLive);
     if (subjectTimeToLive != null && calculatedTrustMarkTTL.isAfter(subjectTimeToLive)) {
       return new Date(subjectTimeToLive.toEpochMilli());
     }
     return new Date(calculatedTrustMarkTTL.toEpochMilli());
   }
 
-  private Stream<TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties> getTrustMarkProperty(
-      final String trustMarkIdStr, final String subject) throws InvalidRequestException, NotFoundException {
-    assertNotEmptyThrows(trustMarkIdStr, () -> new InvalidRequestException("TrustMarkId is expected"));
+  /**
+   * Finding a TrustMarkProperty from its TrausMarkId.
+   * @param trustMarkId TrustMarkId to find
+   * @return If TrustMarkIssuerProperties is found a Optional is returned.
+   */
+  private Optional<TrustMarkIssuerProperties> getTrustMarkIssuerProperties(TrustMarkId trustMarkId){
+    assertNotEmpty(trustMarkId,"TrustMarkId is expected");
+    return trustMarkProperties.getTrustMarks().stream()
+        .filter(trustMarkIssuerProperties -> trustMarkId.equals(trustMarkIssuerProperties.getTrustMarkId()))
+        .findFirst();
+  }
 
-    final TrustMarkId trustMarkId = TrustMarkId.create(trustMarkIdStr);
+  /**
+   * Finding TrustMAkrSubject
+   * @param trustMarkId Mandatory TrustMarkId
+   * @param subject Subject is an optional search parameter
+   * @return Stream with TrustMarkIssuerSubjectProperties
+   * @throws InvalidRequestException If TrustMarkId is not supplied
+   * @throws NotFoundException If a trustmark is not found
+   */
+  private Stream<TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties> getTrustMarkSubject(
+      final TrustMarkId trustMarkId, final String subject) throws InvalidRequestException, NotFoundException {
+    assertNotEmptyThrows(trustMarkId, () -> new InvalidRequestException("TrustMarkId is expected"));
 
     final TrustMarkIssuerProperties trustMarkIssuerProperties =
-        configurationResolver.getTrustMarkFromTrustMarkId(trustMarkId)
+        this.getTrustMarkIssuerProperties(trustMarkId)
             .orElseThrow(() -> new NotFoundException(
                 "TrustMark can not be found for trust_mark_id:'" + trustMarkId + "'"));
 
@@ -221,7 +234,7 @@ public class TrustMarkIssuer {
   }
 
   /**
-   * Method for mocking current time
+   * Method for overloading and change time if needed
    *
    * @return LocalDate of now
    */

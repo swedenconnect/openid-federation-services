@@ -16,15 +16,22 @@
 
 package se.digg.oidfed.trustmarkissuer;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import se.digg.oidfed.trustmarkissuer.configuration.ConfigurationResolverInMemory;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkIssuerProperties;
 import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkProperties;
+import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.security.KeyStore;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 /**
  * Data setup for testing
@@ -33,17 +40,42 @@ import java.time.temporal.ChronoUnit;
  */
 public class TestDataSetup {
 
-  public static ConfigurationResolverInMemory createConfigurationResolver() throws Exception {
-    return new ConfigurationResolverInMemory(jwkSet(),
-        TrustMarkProperties.builder()
-            .trustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES))
-            .logoUri("http://www.digg.se/logo.png")
-            .refUrl("http://www.digg.se/documentation/")
-            .build(),
-        "http://issuer.digg.se");
+
+
+  public static TrustMarkProperties trustMarkProperties() throws JOSEException {
+    final TrustMarkProperties trustMarkProperties = new TrustMarkProperties();
+    trustMarkProperties.setTrustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES));
+    trustMarkProperties.setIssuerEntityId("https://tmissuer.digg.se");
+    trustMarkProperties.setSignKey(generateKey() );
+    trustMarkProperties.setTrustMarks(new ArrayList<>());
+
+    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties sub1 =
+        TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
+            .sub("http://tm1.digg.se/sub1")
+            .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
+            .granted(Instant.now())
+            .build();
+
+    trustMarkProperties.getTrustMarks()
+        .add(TrustMarkIssuerProperties.builder()
+            .trustMarkId(TrustMarkId.create("http://tm.digg.se/default"))
+            .subjects(List.of(sub1))
+            .build());
+
+    return trustMarkProperties;
   }
 
-  public static JWKSet jwkSet()
+
+  private static String generateKey() throws JOSEException, JOSEException {
+    final RSAKey rsaKey = new RSAKeyGenerator(2048)
+        .keyUse(KeyUse.SIGNATURE)
+        .keyID(UUID.randomUUID().toString())
+        .issueTime(new Date())
+        .generate();
+    return Base64.getEncoder().encodeToString(rsaKey.toJSONString().getBytes(Charset.defaultCharset()));
+  }
+
+  public static JWK jwkSignKey()
       throws Exception {
 
     final String password = "Test1234";
@@ -55,13 +87,11 @@ public class TestDataSetup {
         throw new IllegalArgumentException("KeyStore not found: " + keyStoreFile);
       }
 
-      // Skapa en KeyStore av typen PKCS12
-      KeyStore keyStore = KeyStore.getInstance("PKCS12");
+      final KeyStore keyStore = KeyStore.getInstance("PKCS12");
       keyStore.load(keyStoreStream, password.toCharArray());
 
       final JWK key = JWK.load(keyStore, alias, password.toCharArray());
-      final JWKSet keys = new JWKSet(key);
-      return keys;
+      return key;
     }
 
   }

@@ -15,6 +15,6 @@
  *
  */
 /**
- * Package for trust-mark-issuer.
+ * Package for configuration classes
  */
-package se.digg.oidfed.trustmarkissuer;
+package se.digg.oidfed.trustmarkissuer.configuration;

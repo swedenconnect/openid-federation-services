@@ -16,17 +16,98 @@
  */
 package se.digg.oidfed.service.resolver;
 
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class ResolverIT {
+@ActiveProfiles("integration")
+class TrustMarkIT {
 
-  /**
-   * Placeholder test to verify that failsafe runs this test.
-   */
+
+  @LocalServerPort
+  private int port;
+
+  @BeforeEach
+  public void setup() {
+    RestAssured.port = port;
+  }
+
   @Test
-  void applicationStartup() {
+  public void testTrustMark() {
+    given()
+        .param("trust_mark_id", "http://tm.digg.se/sdk")
+        .param("sub", "http://www.pensionsmyndigheten.se/openidfed")
+        .when()
+        .get("/trust_mark")
+        .then()
+        .statusCode(HttpStatus.OK.value())
+        .contentType("application/trust-mark+jwt")
+        .log().all();
+  }
+
+  @Test
+  public void testTrustMarkListing() {
+    given()
+        .param("trust_mark_id", "http://tm.digg.se/sdk")
+        .param("sub", "http://www.pensionsmyndigheten.se/openidfed")
+        .when()
+        .get("/trust_mark_listing")
+        .then()
+        .statusCode(HttpStatus.OK.value())
+        .contentType(ContentType.JSON)
+        .body("$", hasSize(greaterThan(0)));
+  }
+
+  @Test
+  public void testTrustMarkStatusActive() {
+    given()
+        .param("trust_mark_id", "http://tm.digg.se/sdk")
+        .param("sub", "http://www.pensionsmyndigheten.se/openidfed")
+        .when()
+        .post("/trust_mark_status")
+        .then()
+        .statusCode(HttpStatus.OK.value())
+        .contentType(ContentType.JSON)
+        .body("active", is(true))
+        .log().all();
+  }
+
+  @Test
+  public void testTrustMarkStatusNotActive() {
+    given()
+        .param("trust_mark_id", "http://tm.digg.se/sdk")
+        .param("sub", "http://www.pensionsmyndigheten.se/notfound")
+        .when()
+        .post("/trust_mark_status")
+        .then()
+        .statusCode(HttpStatus.OK.value())
+        .contentType(ContentType.JSON)
+        .body("active", is(false))
+        .log().all();
+  }
+
+
+  @Test
+  public void testTrustMarkStatusError() {
+    given()
+        .param("trust_mark_id", "http://tm.digg.se/notfound")
+        .when()
+        .post("/trust_mark_status")
+        .then().log().all()
+        .statusCode(HttpStatus.NOT_FOUND.value())
+        .contentType(ContentType.JSON)
+        .body("error", is("not_found"))
+        .body("error_description", is("TrustMark can not be found for trust_mark_id:'http://tm.digg.se/notfound'"));
 
   }
+
 }

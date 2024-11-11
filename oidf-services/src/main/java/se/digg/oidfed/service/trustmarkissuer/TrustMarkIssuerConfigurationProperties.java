@@ -16,9 +16,17 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkIssuerProperties;
+import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkProperties;
+import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
+
+import java.time.Duration;
+import java.util.List;
 
 /**
  * Properties for trust mark issuer.
@@ -28,9 +36,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 @ConfigurationProperties(TrustMarkIssuerConfigurationProperties.PROPERTY_PATH)
-public class TrustMarkIssuerConfigurationProperties {
+public class TrustMarkIssuerConfigurationProperties extends TrustMarkProperties {
   public static final String PROPERTY_PATH = "openid.federation.trust-mark-issuer";
 
   /** Set to true if this module should be active or not. */
   private Boolean active;
+
+
+
+
+
 }

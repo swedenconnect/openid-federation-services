@@ -33,7 +33,7 @@ import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 public class TrustMarkIssuerConfiguration {
 
   @Bean
-  TrustMarkIssuer trustMarkIssuer() {
-    return new TrustMarkIssuer();
+  TrustMarkIssuer trustMarkIssuer(TrustMarkIssuerConfigurationProperties properties) {
+    return new TrustMarkIssuer(properties);
   }
 }

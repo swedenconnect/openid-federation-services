@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.trustmarkissuer.configuration;
 
+import com.nimbusds.jwt.SignedJWT;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,26 +33,43 @@ import java.util.List;
 import static se.digg.oidfed.trustmarkissuer.util.FederationAssert.assertTrue;
 
 /**
- * Properties for TrustMarks
+ * Properties for TrustMarks.
+ * https://openid.net/specs/openid-federation-1_0.html#section-7.1
  *
  * @author Per Fredrik Plars
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder(toBuilder = true)
 @Slf4j
 public class TrustMarkIssuerProperties implements Serializable {
   /** The Trust Mark ID */
-  private TrustMarkId trustmarkid;
+  private TrustMarkId trustMarkId;
+  /** An optional logo for issued Trust Marks */
+  private String logoUri;
+  /** Optional URL to information about issued Trust Marks */
+  private String refUri;
 
   /** List of SubjectProperties*/
   private List<TrustMarkIssuerSubjectProperties> subjects;
-
+  /**
+   *  delegation according to
+   */
+  private String delegation;
+  /**
+   * Validate content of configuration.
+   * @throws IllegalArgumentException is thrown if something is not right in configuration
+   */
   @PostConstruct
   public void validate() {
-    FederationAssert.assertNotEmpty(trustmarkid, "TrustMarkId is expected");
+    FederationAssert.assertNotEmpty(trustMarkId, "TrustMarkId is expected");
     FederationAssert.assertNotEmpty(subjects, "TrustMarkIssuerProperties is expected");
   }
 
+  /**
+   * TrustMarkIssuerSubjectProperties
+   */
   @Data
   @NoArgsConstructor
   @AllArgsConstructor
@@ -61,15 +79,18 @@ public class TrustMarkIssuerProperties implements Serializable {
     private Instant granted;
     private Instant expires;
     private boolean revoked;
-
+    /**
+     * Validate content of configuration.
+     * @throws IllegalArgumentException is thrown if something is not right in configuration
+     */
     @PostConstruct
     public void validate() {
       FederationAssert.assertNotEmpty(sub, "Subject is expected");
-      FederationAssert.assertNotEmpty(granted, "Granted is expected");
-      FederationAssert.assertNotEmpty(expires, "Expires is expected");
-      assertTrue(granted.isBefore(expires),"Expires expected to be after granted");
-      if(expires.isAfter(Instant.now())){
-        log.warn("TrustMark subject:'{}' has already expired. Consider to remove it. Expires:'{}'",sub,expires);
+      if(granted != null && expires != null) {
+        assertTrue(granted.isBefore(expires), "Expires expected to be after granted");
+        if (expires.isAfter(Instant.now())) {
+          log.warn("TrustMark subject:'{}' has already expired. Consider to remove it. Expires:'{}'", sub, expires);
+        }
       }
     }
   }

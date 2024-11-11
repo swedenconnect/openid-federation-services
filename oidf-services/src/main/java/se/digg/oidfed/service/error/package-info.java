@@ -15,6 +15,6 @@
  *
  */
 /**
- * Package for utility classes
+ * Package for errorhandling
  */
-package se.digg.oidfed.trustmarkissuer.util;
+package se.digg.oidfed.service.error;

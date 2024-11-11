@@ -15,6 +15,6 @@
  *
  */
 /**
- * Package for
+ * Package for DataValueObject
  */
-package se.digg.oidfed.trustmarkissuer.configuration;
+package se.digg.oidfed.trustmarkissuer.dvo;

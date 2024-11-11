@@ -1,9 +1,9 @@
 openid:
   federation:
     resolver:
-      active: true
+      active: false
     trust-anchor:
-      active: true
+      active: false
     trust-mark-issuer:
       active: true
       issuer-entity-id: "https://sandbox.swedenconnect.se/oidfed/trust-mark-issuer"

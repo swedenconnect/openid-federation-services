@@ -1,17 +1,17 @@
 /*
- *  Copyright 2024 Sweden Connect
+ * Copyright 2024 Sweden Connect
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package se.digg.oidfed.trustmarkissuer.util;
@@ -27,7 +27,13 @@ import java.util.function.Supplier;
  * @author Per Fredrik Plars
  */
 public final class FederationAssert {
-
+  /**
+   * If value is empty an IllegalArgumentException is thrown with message
+   * @param value Value to be tested. If string isBlank is used. If list the isEmpty is used to test if it is empty
+   * @param message Message in IllegalArgumentException
+   * @return Value that is tested
+   * @param <V> Value to be tested
+   */
   public static <V> V assertNotEmpty(V value, String message) {
     return switch (value) {
       case null -> throw new IllegalArgumentException(message);
@@ -38,6 +44,16 @@ public final class FederationAssert {
     };
   }
 
+  /**
+   * If value is empty exception will be thrown.
+   *
+   * @param value Value to be tested. If string isBlank is used. If list the isEmpty is used to test if it is empty
+   * @param ex Supplier for the exception
+   * @param <V> Value
+   * @param <E> Exception
+   * @return Value that is tested
+   * @throws E Exception that is returned from supplyer if value is empty
+   */
   public static <V, E extends Exception> V assertNotEmptyThrows(V value, final Supplier<E> ex) throws E {
     return switch (value) {
       case null -> throw ex.get();
@@ -48,6 +64,11 @@ public final class FederationAssert {
     };
   }
 
+  /**
+   * Throws IllegalArgumentException if value is false
+   * @param value Boolean value if true, exception is thrown
+   * @param message Message in IllegalArgumentException
+   */
   public static void assertTrue(Boolean value, String message) {
     assertNotEmpty(value, message);
     if (!value) {
@@ -55,12 +76,27 @@ public final class FederationAssert {
     }
   }
 
+  /**
+   * If value is not null consumer is called
+   * @param value Value
+   * @param doOperation The opertation that the value will be called with if it is not null
+   * @param <V> Value
+   */
   public static <V> void doIfNotNull(V value, Consumer<V> doOperation) {
     if (value != null) {
       doOperation.accept(value);
     }
   }
 
+  /**
+   * If value is not null doOperation is called otherwise supplyer with exception
+   * @param value Value to be tested
+   * @param doOperation Operation to be called if value is not null
+   * @param ex Exception supplier
+   * @param <V> Type of value object
+   * @param <E> Type of exception
+   * @throws E Exception thrown
+   */
   public static <V, E extends Exception> void throwIfNull(V value, Consumer<V> doOperation, final Supplier<E> ex)
       throws E {
     assertNotEmptyThrows(value, ex);

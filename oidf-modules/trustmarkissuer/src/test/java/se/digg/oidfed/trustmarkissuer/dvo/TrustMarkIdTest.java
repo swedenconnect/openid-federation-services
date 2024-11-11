@@ -55,11 +55,17 @@ class TrustMarkIdTest {
   }
 
   @Test
+  void testNull() {
+    assertThrows(IllegalArgumentException.class,() -> TrustMarkId.create(null));
+
+  }
+
+  @Test
   void testEquals() {
     final TrustMarkId trId1 = new TrustMarkId("http://www.tm.se/1");
     final TrustMarkId trId2 = new TrustMarkId("http://www.tm.se/2");
     assertNotEquals(trId1, trId2);
-    assertTrue(trId1.equals(trId1));
+    assertEquals(trId1, trId1);
   }
 
   @Test

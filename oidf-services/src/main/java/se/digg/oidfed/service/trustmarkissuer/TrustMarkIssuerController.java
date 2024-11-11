@@ -28,6 +28,11 @@ import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkListingRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkStatusRequest;
+import se.digg.oidfed.trustmarkissuer.exception.InvalidRequestException;
+import se.digg.oidfed.trustmarkissuer.exception.NotFoundException;
+import se.digg.oidfed.trustmarkissuer.exception.ServerErrorException;
+
+import java.util.List;
 
 /**
  * Controller for trust mark issuer.
@@ -52,55 +57,57 @@ public class TrustMarkIssuerController implements ApplicationModule {
   /**
    * Retrieves the trust mark for a given entity.
    *
-   * @param name the name of the federation entity
    * @param trustMarkId the ID of the trust mark
    * @param subject the subject of the trust mark
    * @return the trust mark or error response
    */
-  @GetMapping(value = "/{name}/trust_mark", produces = "application/trust-mark+jwt")
+  @GetMapping(value = "/trust_mark", produces = "application/trust-mark+jwt")
   public String trustMark(
-      @PathVariable(name = "name") final String name,
       @RequestParam(name = "trust_mark_id") final String trustMarkId,
-      @RequestParam(name = "sub") final String subject) {
-    return trustMarkIssuer.trustMark(new TrustMarkRequest(name, trustMarkId, subject));
+      @RequestParam(name = "sub") final String subject)
+      throws NotFoundException, InvalidRequestException, ServerErrorException {
+    return trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkId, subject));
   }
 
   /**
    * Retrieves trust mark listing for a given trust mark ID, and subject.
    *
-   * @param name the name of the trust mark issuer entity
    * @param trustMarkId the ID of the trust mark
    * @param subject the subject of the trust mark (optional)
    * @return the trust mark listing or an error response
    */
-  @GetMapping(value = "/{name}/trust_mark_listing", produces = MediaType.APPLICATION_JSON_VALUE)
-  public String trustMarkListing(
-      @PathVariable(name = "name") final String name,
+  @GetMapping(value = "/trust_mark_listing", produces = MediaType.APPLICATION_JSON_VALUE)
+  public List<String> trustMarkListing(
       @RequestParam(name = "trust_mark_id") final String trustMarkId,
-      @RequestParam(name = "sub", required = false) final String subject) {
-    return trustMarkIssuer.trustMarkListing(new TrustMarkListingRequest(name, trustMarkId, subject));
+      @RequestParam(name = "sub", required = false) final String subject)
+      throws NotFoundException, InvalidRequestException {
+    return trustMarkIssuer.trustMarkListing(new TrustMarkListingRequest( trustMarkId, subject));
   }
 
   /**
    * Retrieves the status of a trust mark.
    *
-   * @param name the name of the trust mark issuer
    * @param trustMarkId the ID of the trust mark (optional)
    * @param subject the subject of the trust mark (optional)
    * @param issueTime the issue time of the trust mark (optional)
-   * @param trustMark a trust mark (optional)
    * @return the trust mark status or an error response
    */
-  @PostMapping(value = "/{name}/trust_mark_status", produces = MediaType.APPLICATION_JSON_VALUE)
-  public String trustMarkStatus(
-      @PathVariable(name = "name") final String name,
-      @RequestParam(name = "trust_mark_id", required = false) final String trustMarkId,
+  @PostMapping(value = "/trust_mark_status", produces = MediaType.APPLICATION_JSON_VALUE)
+  public TrustMarkStatusReply trustMarkStatus(
+      @RequestParam(name = "trust_mark_id", required = true) final String trustMarkId,
       @RequestParam(name = "sub", required = false) final String subject,
-      @RequestParam(name = "iat", required = false) final Long issueTime,
-      @RequestParam(name = "trust_mark", required = false) final String trustMark) {
-    return trustMarkIssuer.trustMarkStatus(
-        new TrustMarkStatusRequest(name, trustMarkId, subject, issueTime, trustMark));
+      @RequestParam(name = "iat", required = false) final Long issueTime)
+      throws NotFoundException, InvalidRequestException {
+
+    return new TrustMarkStatusReply(trustMarkIssuer.trustMarkStatus(
+        new TrustMarkStatusRequest( trustMarkId,subject, issueTime)));
   }
+
+  /**
+   * TrustMarkStatusReply indicates if trustmark is active or not
+   * @param active true or false
+   */
+  public record TrustMarkStatusReply(Boolean active){}
 
   @Override
   public String getModuleName() {
