@@ -16,6 +16,20 @@
  */
 package se.digg.oidfed.resolver;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
+import net.minidev.json.JSONObject;
+import se.digg.oidfed.resolver.chain.ChainValidationResult;
+import se.digg.oidfed.resolver.chain.ChainValidator;
+import se.digg.oidfed.resolver.metadata.MetadataProcessor;
+import se.digg.oidfed.resolver.tree.EntityStatementTree;
+import se.digg.oidfed.resolver.trustmark.TrustMarkCollector;
+
+import java.util.List;
+import java.util.Set;
+
 /**
  * Resolver implementation.
  *
@@ -23,11 +37,73 @@ package se.digg.oidfed.resolver;
  */
 public class Resolver {
 
+  private final ResolverProperties resolverProperties;
+
+  private final ChainValidator validator;
+
+  private final EntityStatementTree tree;
+
+  private final MetadataProcessor processor;
+
+  private final ResolverResponseFactory factory;
+
   /**
-   * @param request
-   * @return response
+   * Constructor.
+   * @param resolverProperties from configuration
+   * @param validator for validating trust chains
+   * @param tree data structure to search upon
+   * @param processor for processing metadata
+   * @param factory to create signed responses
    */
-  public ResolverResponse resolve(final ResolverRequest request) {
-    return null;
+  public Resolver(final ResolverProperties resolverProperties, final ChainValidator validator,
+      final EntityStatementTree tree,
+      final MetadataProcessor processor, final ResolverResponseFactory factory) {
+    this.resolverProperties = resolverProperties;
+    this.validator = validator;
+    this.tree = tree;
+    this.processor = processor;
+    this.factory = factory;
+  }
+
+  /**
+   * @param request from the resolver api
+   * @return response
+   * @throws JOSEException
+   */
+  public String resolve(final ResolverRequest request) throws ParseException, JOSEException {
+
+    /*
+     * 1) resolve the chain
+     * 2) Validate the chain
+     * 3) Get Trust Marks
+     * 4) For each trust Mark
+     * 4 a) resolve the Trust Mark chain
+     * 4 b) validate the chain
+     * 4 c) validate the trust mark (supported by trust anchor, validity) or renew it if necessary
+     * 5) Filter metadata according to type
+     * 6) Build response
+     */
+
+    if (!request.trustAnchor().equalsIgnoreCase(resolverProperties.trustAnchor())) {
+      throw new IllegalArgumentException("Requested Trust Anchor is not supported");
+    }
+
+    final Set<EntityStatement> chain = tree.getTrustChain(request);
+    final ChainValidationResult chainValidationResult = validator.validate(chain.stream().toList());
+
+    final JSONObject processedMetadata = processor.processMetadata(chainValidationResult.chain());
+    final List<TrustMarkEntry> trustMarkEntries =
+        TrustMarkCollector.collectSubjectTrustMarks(chainValidationResult.chain());
+
+    final EntityStatement leaf = chainValidationResult.chain().getFirst();
+
+    final ResolverResponse response = ResolverResponse.builder()
+        .entityStatement(leaf)
+        .metadata(processedMetadata)
+        .trustMarkEntries(trustMarkEntries)
+        .trustChain(chainValidationResult.chain())
+        .build();
+
+    return factory.sign(response);
   }
 }

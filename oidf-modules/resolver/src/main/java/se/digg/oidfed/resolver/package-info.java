@@ -15,6 +15,8 @@
  *
  */
 /**
- * Package for resolver
+ * Package for resolver.
+ *
+ * @author Felix Hellman
  */
 package se.digg.oidfed.resolver;
