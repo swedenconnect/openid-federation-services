@@ -16,9 +16,18 @@
  */
 package se.digg.oidfed.service.resolver;
 
+import com.nimbusds.jose.jwk.JWK;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import se.digg.oidfed.resolver.ResolverProperties;
+
+import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
+import java.util.List;
 
 /**
  * Configuration properties for Resolver.
@@ -30,8 +39,60 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(ResolverConfigurationProperties.PROPERTY_PATH)
 public class ResolverConfigurationProperties {
 
+  /** Property path */
   public static final String PROPERTY_PATH = "openid.federation.resolver";
 
   /** Set to true if this module should be active or not. */
   private Boolean active;
+
+  /** Supported trustAnchor for this resolver*/
+  private String trustAnchor;
+
+  /**Duration for resolve responses*/
+  private Duration duration = Duration.of(7, ChronoUnit.DAYS);
+
+  private List<String> trustedJwks;
+
+  private String signKey;
+
+  private String entityIdentifier;
+
+  private String trustStoreBundle;
+
+  /**
+   * @return properties in non spring specific specific format.
+   */
+  public ResolverProperties toResolverProperties() {
+    return new ResolverProperties(trustAnchor, duration, parseTrustedJwks(), entityIdentifier, signKey(),
+        Duration.ofSeconds(10));
+  }
+
+  /**
+   * @return list of jwks parsed from configuration
+   */
+  public List<JWK> parseTrustedJwks() {
+    return trustedJwks.stream().map(s -> {
+      try {
+        return parseKey(s);
+      }
+      catch (ParseException e) {
+        throw new RuntimeException(e);
+      }
+    }).toList();
+  }
+
+  /**
+   * @return sign key parsed from configuration
+   */
+  public JWK signKey() {
+    try {
+      return ResolverConfigurationProperties.parseKey(signKey);
+    } catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static JWK parseKey(final String s) throws ParseException {
+    return JWK.parse(new String(Base64.getDecoder().decode(s), Charset.defaultCharset()));
+  }
 }

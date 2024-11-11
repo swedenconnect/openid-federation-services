@@ -16,6 +16,15 @@
  */
 package se.digg.oidfed.resolver;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import se.digg.oidfed.resolver.tree.Node;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.BiPredicate;
+
 /**
  * @param name
  * @param subject
@@ -24,6 +33,22 @@ package se.digg.oidfed.resolver;
  * @author Felix Hellman
  */
 public record ResolverRequest(String name, String subject, String trustAnchor, String type) {
+  /**
+   * @return this request as a search predicate
+   */
+  public BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>> asPredicate() {
+    final List<BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>>> predicates = new ArrayList<>();
 
+    predicates.add((a,s) -> a.getClaimsSet().isSelfStatement());
+
+    if (Objects.nonNull(subject)) {
+      predicates.add((a,s) -> a.getClaimsSet().getSubject().getValue().equalsIgnoreCase(subject));
+    }
+    if (Objects.nonNull(type)) {
+      predicates.add((a,s) -> Objects.nonNull(a.getClaimsSet().getMetadata(new EntityType(type))));
+    }
+
+    return predicates.stream().reduce((a,b) -> true, BiPredicate::and);
+  }
 }
 

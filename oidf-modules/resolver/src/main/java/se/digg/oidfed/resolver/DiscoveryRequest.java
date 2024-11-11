@@ -16,7 +16,14 @@
  */
 package se.digg.oidfed.resolver;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import se.digg.oidfed.resolver.tree.Node;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.BiPredicate;
 
 /**
  * Request object for discovery.
@@ -28,4 +35,29 @@ import java.util.List;
  * @author Felix Hellman
  */
 public record DiscoveryRequest(String name, String trustAnchor, List<String> types, List<String> trustMarkIds) {
+  /**
+   * @return this request as a search predicate
+   */
+  public BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>> asPredicate() {
+
+    List<BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>>> predicates = new ArrayList<>();
+
+    predicates.add((a,s) -> a.getClaimsSet().isSelfStatement());
+
+    if (Objects.isNull(trustAnchor)) {
+      throw new IllegalArgumentException("Trust anchor parameter can not be null");
+    }
+
+    if (Objects.nonNull(types) && !types.isEmpty()) {
+      predicates.add((a, s) -> types.stream()
+          .anyMatch(type -> Objects.nonNull(a.getClaimsSet().getMetadata(new EntityType(type)))));
+    }
+
+    if (Objects.nonNull(trustMarkIds) && !trustMarkIds.isEmpty()) {
+      predicates.add((a, s) -> a.getClaimsSet().getTrustMarks().stream()
+          .anyMatch(tmp -> trustMarkIds().contains(tmp.getID().getValue())));
+    }
+
+    return predicates.stream().reduce((a,b) -> true, BiPredicate::and);
+  }
 }

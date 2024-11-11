@@ -16,9 +16,23 @@
  */
 package se.digg.oidfed.resolver;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
+import lombok.Builder;
+import net.minidev.json.JSONObject;
+
+import java.util.List;
+
 /**
- * @param signedJwt
+ *
+ * @param entityStatement of the resolved entity
+ * @param metadata that has been processed by the policy
+ * @param trustMarkEntries for the trust chain
+ * @param trustChain for this response
+ *
  * @author Felix Hellman
  */
-public record ResolverResponse(String signedJwt) {
+@Builder
+public record ResolverResponse(EntityStatement entityStatement, JSONObject metadata,
+    List<TrustMarkEntry> trustMarkEntries, List<EntityStatement> trustChain) {
 }
