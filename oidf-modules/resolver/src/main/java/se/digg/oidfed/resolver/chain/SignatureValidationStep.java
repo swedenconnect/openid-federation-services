@@ -68,7 +68,9 @@ public class SignatureValidationStep implements ChainValidationStep {
     final String currentIssuer = current.getClaimsSet().getIssuer().getValue();
     final String nextSubject = next.getClaimsSet().getSubject().getValue();
     if (!currentIssuer.equals(nextSubject)) {
-      throw new IllegalArgumentException("Current issuer:%s is not same as next subject:%s".formatted(currentIssuer, nextSubject));
+      throw new IllegalArgumentException(
+          "Current issuer:%s is not same as next subject:%s".formatted(currentIssuer, nextSubject)
+      );
     }
     current.verifySignature(next.getClaimsSet().getJWKSet());
   }

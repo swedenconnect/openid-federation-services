@@ -63,7 +63,8 @@ public class ResolverConfigurationProperties {
    * @return properties in non spring specific specific format.
    */
   public ResolverProperties toResolverProperties() {
-    return new ResolverProperties(trustAnchor, duration, parseTrustedJwks(), entityIdentifier, signKey());
+    return new ResolverProperties(trustAnchor, duration, parseTrustedJwks(), entityIdentifier, signKey(),
+        Duration.ofSeconds(10));
   }
 
   /**

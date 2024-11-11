@@ -17,7 +17,6 @@
 package se.digg.oidfed.resolver;
 
 import com.nimbusds.jose.jwk.JWK;
-import lombok.Getter;
 
 import java.time.Duration;
 import java.util.List;
@@ -30,8 +29,9 @@ import java.util.List;
  * @param trustedKeys Keys trusted by this resolver to validate Entity Statement chains
  * @param entityIdentifier for the resolver
  * @param signKey for the resolver to sign responses with
+ * @param stepRetryTime time to wait before retrying a step that has failed
  * @author Felix Hellman
  */
 public record ResolverProperties(String trustAnchor, Duration resolveResponseDuration, List<JWK> trustedKeys,
-    String entityIdentifier, JWK signKey) {
+    String entityIdentifier, JWK signKey, Duration stepRetryTime) {
 }

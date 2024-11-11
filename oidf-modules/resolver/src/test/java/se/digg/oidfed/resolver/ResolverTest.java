@@ -1,26 +1,17 @@
 package se.digg.oidfed.resolver;
 
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicyEntry;
-import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
-import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import se.digg.oidfed.resolver.metadata.MetadataFactory;
 import se.digg.oidfed.resolver.metadata.MetadataPolicyFactory;
+import se.digg.oidfed.resolver.tree.resolution.DeferredStepRecoveryStrategy;
 import se.digg.oidfed.resolver.trustmark.TrustMarkFactory;
 
 import java.time.Duration;
@@ -159,11 +150,17 @@ class ResolverTest {
         .generate();
 
     final ResolverProperties properties =
-        new ResolverProperties(trustAnchorIdentifier, Duration.ZERO, tree.findAllKeys().getKeys(), resolverIdentifier, resolverKey);
+        new ResolverProperties(trustAnchorIdentifier, Duration.ZERO, tree.findAllKeys().getKeys(), resolverIdentifier
+            , resolverKey, Duration.ofSeconds(10));
+    final DeferredStepRecoveryStrategy deferredStepRecoveryStrategy = new DeferredStepRecoveryStrategy();
 
-    final ResolverClient resolver = ResolverFactory.createTestResolver(properties, tree, resolverKey);
+    //Fail relyingparty first time we try it
+    tree.setFailOnce(relyingPartyIdentifier + "/.well-known/openid-federation");
+    tree.setFailOnce(trustMarkIssuerIdentifier + "/.well-known/openid-federation");
+    final ResolverClient resolver = ResolverFactory.createTestResolver(properties, tree, resolverKey, deferredStepRecoveryStrategy);
+    //Re-run resolution of the steps that failed
+    deferredStepRecoveryStrategy.retry();
     final ResolverRequest request = new ResolverRequest("name", relyingPartyIdentifier, trustAnchorIdentifier, null);
-
     resolver.resolve(request)
         .withAssertion(statement -> resolver.getResolverIdentity()
             .equalsIgnoreCase(statement.getClaimsSet().getIssuer().getValue()), "Issuer should be resolver")

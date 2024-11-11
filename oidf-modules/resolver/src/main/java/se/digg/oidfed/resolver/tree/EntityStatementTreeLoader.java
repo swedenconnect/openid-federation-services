@@ -17,34 +17,53 @@
 package se.digg.oidfed.resolver.tree;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
+import se.digg.oidfed.resolver.tree.resolution.ErrorContext;
+import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
+import se.digg.oidfed.resolver.tree.resolution.StepExecutionError;
+import se.digg.oidfed.resolver.tree.resolution.StepRecoveryStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Responsible for populating and creating a new (logical) tree.
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class EntityStatementTreeLoader {
 
   private final EntityStatementIntegration integration;
 
   private final ExecutionStrategy executionStrategy;
 
+  private final StepRecoveryStrategy recoveryStrategy;
+
+  private final ErrorContextFactory errorContextFactory;
+
   private final List<Runnable> postHooks = new ArrayList<>();
 
   /**
-   * @param integration to use for fetching statements
-   * @param executionStrategy to use when iterating through the federation
+   * @param integration         to use for fetching statements
+   * @param executionStrategy   to use when iterating through the federation
+   * @param recoveryStrategy    to use when recovering from a failed step
+   * @param errorContextFactory to use when creating new error contexts
    */
-  public EntityStatementTreeLoader(final EntityStatementIntegration integration,
-      final ExecutionStrategy executionStrategy) {
+  public EntityStatementTreeLoader(
+      final EntityStatementIntegration integration,
+      final ExecutionStrategy executionStrategy,
+      final StepRecoveryStrategy recoveryStrategy,
+      final ErrorContextFactory errorContextFactory) {
+
     this.integration = integration;
     this.executionStrategy = executionStrategy;
+    this.recoveryStrategy = recoveryStrategy;
+    this.errorContextFactory = errorContextFactory;
   }
 
   /**
@@ -60,34 +79,77 @@ public class EntityStatementTreeLoader {
 
   /**
    * Resolves the tree from a given location (trust-anchor)
+   *
    * @param rootLocation location of the root (trust-anchor)
-   * @param tree to add the nodes to
+   * @param tree         to add the nodes to
    */
   public void resolveTree(final String rootLocation, final Tree<EntityStatement> tree) {
-    final Node<EntityStatement> root = new Node<>(rootLocation);
-    final EntityStatement entityStatement = this.integration.getEntityStatement(rootLocation);
-    final CacheSnapshot<EntityStatement> snapshot = tree.addRoot(root, entityStatement);
-    final String key = root.getKey();
-    executionStrategy.execute(() -> resolveChildren(snapshot.getData(key), rootLocation, tree, snapshot));
-    postHooks.forEach(executionStrategy::finalize);
+    this.resolveTree(rootLocation, tree, null);
   }
 
-  private void resolveChildren(final EntityStatement parent, final String parentLocation,
-      final Tree<EntityStatement> tree, final CacheSnapshot<EntityStatement> snapshot) {
-    final Optional<LocationInformationFactory.AuthorityInformation> authorityInformation = LocationInformationFactory
-        .getAuthorityInformation(parent);
 
-    authorityInformation.ifPresentOrElse(
-        authority -> onAuthority(parentLocation, tree, authority, snapshot),
-        () -> onSubjectStatement(parent, parentLocation, tree, snapshot)
-    );
+  private void resolveTree(final String rootLocation, final Tree<EntityStatement> tree, final ErrorContext context) {
+    try {
+      final Node<EntityStatement> root = new Node<>(rootLocation);
+      final EntityStatement entityStatement = this.integration.getEntityStatement(rootLocation);
+      final CacheSnapshot<EntityStatement> snapshot = tree.addRoot(root, entityStatement);
+      final String key = root.getKey();
+      executionStrategy.execute(() -> resolveChildren(snapshot.getData(key), rootLocation, tree,
+          snapshot, null));
+      postHooks.forEach(executionStrategy::finalize);
+    } catch (final Exception e) {
+      log.error("TreeLoader [parent] resolution step failed: ", e);
+      final ErrorContext errorContext = Optional.ofNullable(context)
+          .orElseGet(() -> errorContextFactory.create(rootLocation))
+          .increment();
+      final StepExecutionError executionError = new StepExecutionError(
+          rootLocation,
+          c -> resolveTree(rootLocation, tree, c),
+          errorContext
+      );
+      recoveryStrategy.handle(executionError);
+    }
+  }
+
+  private void resolveChildren(
+      final EntityStatement parent,
+      final String parentLocation,
+      final Tree<EntityStatement> tree,
+      final CacheSnapshot<EntityStatement> snapshot,
+      final ErrorContext context
+  ) {
+    try {
+      final Optional<LocationInformationFactory.AuthorityInformation> authorityInformation = LocationInformationFactory
+          .getAuthorityInformation(parent);
+
+      authorityInformation.ifPresentOrElse(
+          authority -> onAuthority(parentLocation, tree, authority, snapshot, context),
+          () -> onSubjectStatement(parent, parentLocation, tree, snapshot, context)
+      );
+    } catch (final Exception e) {
+      log.error("TreeLoader [child] resolution step failed: ", e);
+      final ErrorContext errorContext = Optional.ofNullable(context)
+          .orElseGet(() -> errorContextFactory.create(parentLocation))
+          .increment();
+      recoveryStrategy.handle(new StepExecutionError(parentLocation, childResolutionStep(parent, parentLocation, tree,
+          snapshot), errorContext));
+    }
+  }
+
+  private Consumer<ErrorContext> childResolutionStep(final EntityStatement parent,
+                                                     final String parentLocation,
+                                                     final Tree<EntityStatement> tree,
+                                                     final CacheSnapshot<EntityStatement> snapshot) {
+    return context -> this.resolveChildren(parent, parentLocation, tree, snapshot, context);
   }
 
   private void onAuthority(
       final String parentLocation,
       final Tree<EntityStatement> tree,
       final LocationInformationFactory.AuthorityInformation authorityInformation,
-      final CacheSnapshot<EntityStatement> snapshot) {
+      final CacheSnapshot<EntityStatement> snapshot,
+      final ErrorContext context
+  ) {
 
     final List<String> subordinateListing = this.integration.getSubordinateListing(authorityInformation.listEndpoint());
 
@@ -97,12 +159,13 @@ public class EntityStatementTreeLoader {
           final EntityStatement entityStatement = this.integration.getEntityStatement(location);
           final Node<EntityStatement> node = new Node<>(location);
           tree.addChild(node, parentLocation, entityStatement, snapshot);
-          executionStrategy.execute(() -> resolveChildren(entityStatement, location, tree, snapshot));
+          executionStrategy.execute(() -> resolveChildren(entityStatement, location, tree, snapshot, context));
         });
   }
 
   private void onSubjectStatement(final EntityStatement parent, final String parentLocation,
-      final Tree<EntityStatement> tree, final CacheSnapshot<EntityStatement> snapshot) {
+                                  final Tree<EntityStatement> tree, final CacheSnapshot<EntityStatement> snapshot,
+                                  final ErrorContext context) {
     LocationInformationFactory.getSubjectInformation(parent).ifPresent(subjectInformation -> {
       //If this is a subject statement, fetch entity statement
       subjectInformation.configurationLocation().ifPresentOrElse(embeddedLocation -> {
@@ -119,7 +182,8 @@ public class EntityStatementTreeLoader {
         final EntityStatement entityStatement = this.integration.getEntityStatement(subjectInformation.location());
         final Node<EntityStatement> node = new Node<>(subjectInformation.location());
         tree.addChild(node, parentLocation, entityStatement, snapshot);
-        executionStrategy.execute(() -> resolveChildren(entityStatement, subjectInformation.location(), tree, snapshot));
+        executionStrategy.execute(() -> resolveChildren(entityStatement, subjectInformation.location(), tree,
+            snapshot, context));
       });
     });
   }
