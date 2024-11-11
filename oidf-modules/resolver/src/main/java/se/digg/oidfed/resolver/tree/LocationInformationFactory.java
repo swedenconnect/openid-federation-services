@@ -56,7 +56,8 @@ public class LocationInformationFactory {
     if (!entityStatement.getClaimsSet().isSelfStatement()) {
       final String subject = entityStatement.getClaimsSet().getSubject().getValue();
       final String location = "%s/.well-known/openid-federation".formatted(subject);
-      final Optional<String> configurationLocation = Optional.ofNullable(entityStatement.getClaimsSet().getClaim("subject_entity_configuration_location"))
+      final Optional<String> configurationLocation = Optional.ofNullable(entityStatement.getClaimsSet()
+              .getClaim("subject_entity_configuration_location"))
               .map(String.class::cast);
       return Optional.of(new SubjectInformation(location, configurationLocation));
     }
@@ -79,6 +80,7 @@ public class LocationInformationFactory {
 
   /**
    * @param location of a given subject
+   * @param configurationLocation value of optional claim 'subject_entity_configuration_location'
    */
   public record SubjectInformation(String location, Optional<String> configurationLocation) {}
 }

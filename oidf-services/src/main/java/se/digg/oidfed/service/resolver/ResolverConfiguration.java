@@ -19,6 +19,10 @@ package se.digg.oidfed.service.resolver;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -29,7 +33,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.client.RestClient;
 import se.digg.oidfed.resolver.Discovery;
 import se.digg.oidfed.resolver.Resolver;
@@ -47,7 +50,11 @@ import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
 import se.digg.oidfed.resolver.tree.Tree;
 import se.digg.oidfed.resolver.tree.VersionedCacheLayer;
 import se.digg.oidfed.resolver.tree.resolution.BFSExecution;
+import se.digg.oidfed.resolver.tree.resolution.DefaultErrorContextFactory;
+import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
+import se.digg.oidfed.resolver.tree.resolution.ScheduledStepRecoveryStrategy;
+import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
 
 import java.net.http.HttpClient;
 import java.time.Clock;
@@ -66,8 +73,11 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class ResolverConfiguration {
   @Bean
-  Resolver resolver(final ResolverProperties resolverProperties, final ChainValidator validator,
-      final EntityStatementTree tree, final MetadataProcessor processor, final ResolverResponseFactory factory) {
+  Resolver resolver(final ResolverProperties resolverProperties,
+                    final ChainValidator validator,
+                    final EntityStatementTree tree,
+                    final MetadataProcessor processor,
+                    final ResolverResponseFactory factory) {
     return new Resolver(resolverProperties, validator, tree, processor, factory);
   }
 
@@ -88,7 +98,7 @@ public class ResolverConfiguration {
 
   @Bean
   EntityStatementTree entityStatementTree(final EntityStatementTreeLoader loader, final ResolverProperties properties,
-      final Tree<EntityStatement> tree) {
+                                          final Tree<EntityStatement> tree) {
     final EntityStatementTree entityStatementTree = new EntityStatementTree(tree);
     entityStatementTree.load(loader, "%s/.well-known/openid-federation".formatted(properties.trustAnchor()));
     return entityStatementTree;
@@ -101,9 +111,13 @@ public class ResolverConfiguration {
 
   @Bean
   EntityStatementTreeLoader loader(final EntityStatementIntegration integration,
-      final ExecutionStrategy executionStrategy, final VersionedCacheLayer<EntityStatement> versionedCacheLayer) {
+                                   final ExecutionStrategy executionStrategy,
+                                   final VersionedCacheLayer<EntityStatement> versionedCacheLayer,
+                                   final ResolverProperties properties, final ErrorContextFactory errorContextFactory) {
 
-    return new EntityStatementTreeLoader(integration, executionStrategy)
+    return new EntityStatementTreeLoader(integration, executionStrategy,
+        new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
+        errorContextFactory)
         .withAdditionalPostHook(versionedCacheLayer::useNextVersion);
   }
 
@@ -164,6 +178,18 @@ public class ResolverConfiguration {
   }
 
   @Bean
+  ErrorContextFactory errorContextFactory(final MeterRegistry registry) {
+    final DefaultErrorContextFactory factory = new DefaultErrorContextFactory();
+    return location -> {
+      final Counter counter = registry.counter(
+          "resovler_tree_step_failure",
+          List.of(Tag.of("location", location))
+      );
+      return new ObservableErrorContext(factory.create(location), counter);
+    };
+  }
+
+  @Bean
   RestClient resolverClient(final SslBundles bundles, final ResolverConfigurationProperties properties) {
     final HttpClient.Builder builder = HttpClient.newBuilder();
 
@@ -177,5 +203,10 @@ public class ResolverConfiguration {
     return RestClient.builder()
         .requestFactory(new JdkClientHttpRequestFactory(builder.build()))
         .build();
+  }
+
+  @Bean
+  MeterRegistry registry() {
+    return new CompositeMeterRegistry(io.micrometer.core.instrument.Clock.SYSTEM);
   }
 }

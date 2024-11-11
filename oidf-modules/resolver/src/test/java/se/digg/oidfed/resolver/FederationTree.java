@@ -1,7 +1,10 @@
 package se.digg.oidfed.resolver;
 
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
 import se.digg.oidfed.resolver.tree.CacheSnapshot;
@@ -10,12 +13,19 @@ import se.digg.oidfed.resolver.tree.Node;
 import se.digg.oidfed.resolver.tree.SearchRequest;
 import se.digg.oidfed.resolver.tree.Tree;
 
+import java.nio.charset.Charset;
+import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class FederationTree implements EntityStatementIntegration {
   private final VersionedInMemoryCache<FederationEntity>
       federationEntityInMemoryDataLayer = new VersionedInMemoryCache<>();
   private final Tree<FederationEntity> federationEntityTree = new Tree<>(federationEntityInMemoryDataLayer);
+  private final Set<String> failedLocations = new ConcurrentSkipListSet<>();
+
 
   public FederationTree(final FederationEntity entity) {
     final Node<FederationEntity> node = new Node<>(entity.getLocation());
@@ -39,6 +49,9 @@ public class FederationTree implements EntityStatementIntegration {
 
   @Override
   public EntityStatement getEntityStatement(final String location) {
+    if (failedLocations.remove(location)) {
+      throw new RuntimeException("Failed to fetch statement because of test specification");
+    }
     try {
       if (location.contains("data:application/entity-statement+jwt")) {
         return EntityStatement.parse(location.split(",")[1]);
@@ -77,5 +90,13 @@ public class FederationTree implements EntityStatementIntegration {
     catch (final Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Fails the mocked request to fail once
+   * @param location
+   */
+  public void setFailOnce(final String location) {
+    this.failedLocations.add(location);
   }
 }
