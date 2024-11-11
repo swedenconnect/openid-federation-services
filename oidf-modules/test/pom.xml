@@ -9,11 +9,12 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
+    <name>OIDF :: Modules :: Test</name>
     <artifactId>test</artifactId>
 
     <properties>
-        <maven.compiler.source>22</maven.compiler.source>
-        <maven.compiler.target>22</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

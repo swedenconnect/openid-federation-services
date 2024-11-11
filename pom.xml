@@ -61,6 +61,14 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <excludes>**/test/**/*</excludes>
                     <checkstyleRules>
@@ -109,7 +117,7 @@
                                 <dependencyConvergence/>
                                 <banDuplicatePomDependencyVersions/>
                                 <requireMavenVersion>
-                                    <version>3.9.9</version>
+                                    <version>3.8.8</version>
                                 </requireMavenVersion>
                                 <requireJavaVersion>
                                     <version>21</version>
@@ -197,8 +205,11 @@
                             <jvmFlag>-Dorg.apache.xml.security.ignoreLineBreaks=true</jvmFlag>
                         </jvmFlags>
                         <labels>
-                            <org.opencontainers.image.source>https://github.com/swedenconnect/openid-federation-services</org.opencontainers.image.source>
-                            <org.opencontainers.image.description>OpenId Federation Services</org.opencontainers.image.description>
+                            <org.opencontainers.image.source>
+                                https://github.com/swedenconnect/openid-federation-services
+                            </org.opencontainers.image.source>
+                            <org.opencontainers.image.description>OpenId Federation Services
+                            </org.opencontainers.image.description>
                             <org.opencontainers.image.licenses>Apache-2.0</org.opencontainers.image.licenses>
                         </labels>
                     </container>
