@@ -14,21 +14,20 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.resolver.tree;
+package se.digg.oidfed.common.tree;
 
+import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 
 /**
- * Search requests towards a tree.
- * @param predicate to find matching nodes for
- * @param includeParent true if the result should include all level of parents, false to only include matches.
- * @param snapshot version of the tree
- * @param <T> type of entity
+ * @param searchPredicate to find nodes for
+ * @param visitor action to perform
+ * @param snapshot version of the cache
+ * @param <T> type
  *
  * @author Felix Hellman
  */
-public record SearchRequest<T>(
-    BiPredicate<T, Node.NodeSearchContext<T>> predicate,
-    boolean includeParent,
-    CacheSnapshot<T> snapshot) {
+public record VisitRequest<T>(
+    BiPredicate<Node<T>, Node.NodeSearchContext<T>> searchPredicate,
+    BiConsumer<Node<T>, Node<T>> visitor, CacheSnapshot<T> snapshot) {
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.resolver.tree;
+package se.digg.oidfed.common.tree;
 
 import lombok.Getter;
 import lombok.Setter;

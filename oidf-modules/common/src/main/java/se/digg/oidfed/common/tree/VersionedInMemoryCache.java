@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.resolver.tree;
+package se.digg.oidfed.common.tree;
 
 import java.util.ArrayList;
 import java.util.List;

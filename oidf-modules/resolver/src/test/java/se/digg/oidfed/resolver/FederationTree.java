@@ -1,21 +1,15 @@
 package se.digg.oidfed.resolver;
 
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.digg.oidfed.common.tree.CacheSnapshot;
+import se.digg.oidfed.common.tree.Node;
+import se.digg.oidfed.common.tree.SearchRequest;
+import se.digg.oidfed.common.tree.Tree;
+import se.digg.oidfed.common.tree.VersionedInMemoryCache;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
-import se.digg.oidfed.resolver.tree.CacheSnapshot;
-import se.digg.oidfed.resolver.tree.VersionedInMemoryCache;
-import se.digg.oidfed.resolver.tree.Node;
-import se.digg.oidfed.resolver.tree.SearchRequest;
-import se.digg.oidfed.resolver.tree.Tree;
 
-import java.nio.charset.Charset;
-import java.util.Base64;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;

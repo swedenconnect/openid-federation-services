@@ -18,6 +18,9 @@ package se.digg.oidfed.resolver.tree;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.common.tree.CacheSnapshot;
+import se.digg.oidfed.common.tree.Node;
+import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContext;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;

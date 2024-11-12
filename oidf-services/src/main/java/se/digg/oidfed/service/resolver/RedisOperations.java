@@ -18,11 +18,10 @@ package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.RedisTemplate;
-import se.digg.oidfed.resolver.tree.Node;
+import se.digg.oidfed.common.tree.Node;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 /**

@@ -51,7 +51,6 @@ public class TrustAnchorController implements ApplicationModule {
 
   /**
    * Retrieves the Entity Statement for a subject.
-   *
    * Note that the issuer parameter is defined in the standard API, but it is not supported if provided. This service
    * does not support the provision of Entity Statements for other issuers.
    *
