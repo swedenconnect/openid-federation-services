@@ -27,8 +27,8 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 
-import static se.digg.oidfed.trustmarkissuer.util.FederationAssert.assertNotEmpty;
-import static se.digg.oidfed.trustmarkissuer.util.FederationAssert.assertTrue;
+import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertNotEmpty;
+import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertTrue;
 
 /**
  * Properties for TrustMarkIssuer

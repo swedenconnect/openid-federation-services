@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.util;
+package se.digg.oidfed.trustmarkissuer.validation;
 
 import java.util.Collection;
 import java.util.List;
@@ -73,18 +73,6 @@ public final class FederationAssert {
     assertNotEmpty(value, message);
     if (!value) {
       throw new IllegalArgumentException(message);
-    }
-  }
-
-  /**
-   * If value is not null consumer is called
-   * @param value Value
-   * @param doOperation The opertation that the value will be called with if it is not null
-   * @param <V> Value
-   */
-  public static <V> void doIfNotNull(V value, Consumer<V> doOperation) {
-    if (value != null) {
-      doOperation.accept(value);
     }
   }
 

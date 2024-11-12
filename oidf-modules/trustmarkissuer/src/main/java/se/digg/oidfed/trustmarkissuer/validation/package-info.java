@@ -17,4 +17,4 @@
 /**
  * Package for utility classes
  */
-package se.digg.oidfed.trustmarkissuer.util;
+package se.digg.oidfed.trustmarkissuer.validation;

@@ -24,6 +24,8 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkIssuerProperties;
 import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkProperties;
@@ -41,7 +43,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static se.digg.oidfed.trustmarkissuer.util.FederationAssert.*;
+import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertNotEmpty;
+import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertNotEmptyThrows;
+import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.throwIfNull;
 
 /**
  * Implementation of Trust Mark Issuer.
@@ -127,10 +131,17 @@ public class TrustMarkIssuer {
 
     throwIfNull(this.trustMarkProperties.getIssuerEntityId(), claimsSetBuilder::issuer,
         () -> new ServerErrorException("Issuer must be present"));
-    doIfNotNull(request.trustMarkId(), (value) -> claimsSetBuilder.claim("id", value));
-    doIfNotNull(trustMarkIssuerProperties.getLogoUri(), (value) -> claimsSetBuilder.claim("logo_uri", value));
-    doIfNotNull(trustMarkIssuerProperties.getRefUri(), (value) -> claimsSetBuilder.claim("ref", value));
-    doIfNotNull(trustMarkIssuerProperties.getDelegation(), (value) -> claimsSetBuilder.claim("delegation", value));
+
+    Optional.ofNullable(request.trustMarkId()).ifPresent( (value) -> claimsSetBuilder.claim("id", value));
+
+    Optional.ofNullable(trustMarkIssuerProperties.getLogoUri())
+        .ifPresent( (value) -> claimsSetBuilder.claim("logo_uri", value));
+
+    Optional.ofNullable(trustMarkIssuerProperties.getRefUri())
+        .ifPresent( (value) -> claimsSetBuilder.claim("ref", value));
+
+    Optional.ofNullable(trustMarkIssuerProperties.getDelegation())
+        .ifPresent( (value) -> claimsSetBuilder.claim("delegation", value));
 
     final JWTClaimsSet claimsSet = claimsSetBuilder.build();
 
@@ -142,17 +153,18 @@ public class TrustMarkIssuer {
         .keyID(jwk.getKeyID())
         .type(TRUST_MARK_JWT_TYPE)
         .build();
-
-    final SignedJWT signedTrustMarkJWT = new SignedJWT(jwsHeader, claimsSet);
-
     try {
+      final TrustMarkClaimsSet trustMarkClaimsSet = new TrustMarkClaimsSet(claimsSet);
+      final SignedJWT signedTrustMarkJWT = new SignedJWT(jwsHeader, trustMarkClaimsSet.toJWTClaimsSet());
+
       signedTrustMarkJWT.sign(new RSASSASigner(jwk.toRSAKey()));
       return signedTrustMarkJWT.serialize();
     }
-    catch (JOSEException e) {
+    catch (JOSEException | ParseException e) {
       throw new ServerErrorException("Unable to sign TrustMarkId: '" + request.trustMarkId() +
           "' Subject:'"+request.subject()+"'", e);
     }
+
   }
 
   /**

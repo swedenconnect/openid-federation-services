@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.trustmarkissuer.configuration;
 
-import com.nimbusds.jwt.SignedJWT;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,13 +23,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
-import se.digg.oidfed.trustmarkissuer.util.FederationAssert;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 
-import static se.digg.oidfed.trustmarkissuer.util.FederationAssert.assertTrue;
+import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertTrue;
 
 /**
  * Properties for TrustMarks.
