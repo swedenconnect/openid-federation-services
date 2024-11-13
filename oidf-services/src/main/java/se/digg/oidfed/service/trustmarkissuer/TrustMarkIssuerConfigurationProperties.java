@@ -19,6 +19,9 @@ package se.digg.oidfed.service.trustmarkissuer;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import se.digg.oidfed.trustmarkissuer.TrustMarkProperties;
+
+import java.util.List;
 
 /**
  * Properties for trust mark issuer.
@@ -33,4 +36,7 @@ public class TrustMarkIssuerConfigurationProperties {
 
   /** Set to true if this module should be active or not. */
   private Boolean active;
+
+  private List<TrustMarkProperties> trustMarkIssuers;
+
 }

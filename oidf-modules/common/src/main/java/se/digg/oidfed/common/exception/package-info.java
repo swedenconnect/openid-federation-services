@@ -14,15 +14,7 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.trustmarkissuer;
-
 /**
- * TrustMarkStatusRequest
- *
- * @param trustMarkId TrustMarkId
- * @param subject Subject
- * @param issueTime IssueTime not supported
- * @author Felix Hellman
+ * Package for exception
  */
-public record TrustMarkStatusRequest(String trustMarkId, String subject, Long issueTime) {
-}
+package se.digg.oidfed.common.exception;

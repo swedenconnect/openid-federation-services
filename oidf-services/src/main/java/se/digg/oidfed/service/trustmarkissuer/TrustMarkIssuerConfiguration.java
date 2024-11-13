@@ -16,11 +16,17 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.service.submodule.InMemorySubModuleRegistry;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
+import se.digg.oidfed.trustmarkissuer.TrustMarkProperties;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Configuration for trust mark.
@@ -32,8 +38,17 @@ import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 @ConditionalOnProperty(value = TrustMarkIssuerConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustMarkIssuerConfiguration {
 
-  @Bean
-  TrustMarkIssuer trustMarkIssuer() {
-    return new TrustMarkIssuer();
+  @Autowired
+  void trustMarkIssuer(TrustMarkIssuerConfigurationProperties properties,
+      InMemorySubModuleRegistry inMemorySubModuleRegistry) {
+    final List<TrustMarkProperties> trustMarkIssuersProperties =
+        Optional.ofNullable(properties.getTrustMarkIssuers())
+            .orElseThrow(() -> new IllegalArgumentException("TrustMarkIssuers is empty. Check application properties"));
+
+    final List<TrustMarkIssuer> trustMarkIssuers = trustMarkIssuersProperties.stream()
+        .map(TrustMarkIssuer::new).toList();
+
+    inMemorySubModuleRegistry.registerTrustMarkIssuer(trustMarkIssuers);
+
   }
 }

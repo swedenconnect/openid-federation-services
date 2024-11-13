@@ -17,10 +17,10 @@
 package se.digg.oidfed.trustmarkissuer;
 
 /**
- * @param name
- * @param trustMarkId
- * @param subject
+ * TrustMark listing request
+ * @param trustMarkId TrustMarkId
+ * @param subject Subject
  * @author Felix Hellman
  */
-public record TrustMarkListingRequest(String name, String trustMarkId, String subject) {
+public record TrustMarkListingRequest( String trustMarkId, String subject) {
 }

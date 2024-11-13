@@ -17,6 +17,7 @@
 package se.digg.oidfed.service.submodule;
 
 import se.digg.oidfed.resolver.Resolver;
+import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 
 import java.util.Optional;
 
@@ -31,4 +32,10 @@ public interface ResolverModuleRepository {
    * @return a resolver instance from registry or empty
    */
   Optional<Resolver> getResolver(final String alias);
+
+  /**
+   * @param alias of the resolver to get TrustMarkIssuer
+   * @return a resolver instance from registry or empty
+   */
+  Optional<TrustMarkIssuer> getTrustMarkIssuer(final String alias);
 }

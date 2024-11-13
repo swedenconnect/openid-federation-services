@@ -43,6 +43,13 @@ public class InMemorySubModuleRegistry implements ResolverModuleRepository {
   public void registerResolvers(final List<Resolver> resolverList) {
     resolverList.forEach(r -> this.resolvers.put(r.getAlias(), r));
   }
+  /**
+   * Takes a list of resolvers and registers them to the repository.
+   * @param trustMarkIssuerList to register
+   */
+  public void registerTrustMarkIssuer(final List<TrustMarkIssuer> trustMarkIssuerList) {
+    trustMarkIssuerList.forEach(r -> this.trustMarkIssuers.put(r.getAlias(), r));
+  }
 
   @Override
   public Optional<Resolver> getResolver(final String alias) {
@@ -53,9 +60,11 @@ public class InMemorySubModuleRegistry implements ResolverModuleRepository {
   public Optional<TrustAnchor> getTrustAnchor(final String alias) {
     return Optional.ofNullable(trustAnchors.get(alias));
   }
+*/
 
+ @Override
   public Optional<TrustMarkIssuer> getTrustMarkIssuer(final String alias) {
     return Optional.ofNullable(trustMarkIssuers.get(alias));
   }
-   */
+
 }

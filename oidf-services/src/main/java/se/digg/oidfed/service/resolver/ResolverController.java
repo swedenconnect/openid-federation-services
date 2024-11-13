@@ -16,15 +16,13 @@
  */
 package se.digg.oidfed.service.resolver;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.oauth2.sdk.ParseException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import se.digg.oidfed.resolver.Discovery;
+import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.resolver.DiscoveryRequest;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.resolver.ResolverRequest;
@@ -67,10 +65,10 @@ public class ResolverController implements ApplicationModule {
       @PathVariable(name = "alias") String alias,
       @RequestParam(name = "sub", required = false) String subject,
       @RequestParam(name = "anchor", required = false) String trustAnchor,
-      @RequestParam(name = "type", required = false) String type) {
+      @RequestParam(name = "type", required = false) String type) throws NotFoundException {
     final ResolverRequest resolverRequest = new ResolverRequest(subject, trustAnchor, type);
     final Resolver resolver = this.repository.getResolver(alias)
-        .orElseThrow(() -> new IllegalArgumentException("Could not find resolver with alias %s".formatted(alias)));
+        .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
     return resolver.resolve(resolverRequest);
   }
 
@@ -88,9 +86,9 @@ public class ResolverController implements ApplicationModule {
       @PathVariable(name = "alias") String alias,
       @RequestParam(name = "anchor", required = false) String trustAnchor,
       @RequestParam(name = "type", required = false) List<String> types,
-      @RequestParam(name = "trust_mark_id", required = false) List<String> trustMarkIds) {
+      @RequestParam(name = "trust_mark_id", required = false) List<String> trustMarkIds) throws NotFoundException {
     final Resolver resolver = repository.getResolver(alias)
-        .orElseThrow(() -> new IllegalArgumentException("Could not find resolver with alias %s".formatted(alias)));
+        .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
     return resolver.discovery(new DiscoveryRequest(trustAnchor, types, trustMarkIds)).supportedEntities();
   }
 
