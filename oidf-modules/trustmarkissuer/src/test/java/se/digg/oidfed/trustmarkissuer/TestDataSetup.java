@@ -17,12 +17,23 @@
 package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.id.Identifier;
+import com.nimbusds.oauth2.sdk.id.Issuer;
+import com.nimbusds.oauth2.sdk.id.Subject;
+import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkIssuerProperties;
 import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkProperties;
+import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
 import java.io.InputStream;
@@ -66,7 +77,33 @@ public class TestDataSetup {
   }
 
 
-  private static String generateKey() throws JOSEException, JOSEException {
+
+
+  public static SignedJWT createTrustMarkDelegation() throws JOSEException, JOSEException, ParseException {
+
+    final RSAKey rsaKey = new RSAKeyGenerator(2048)
+        .keyUse(KeyUse.SIGNATURE)
+        .keyID(UUID.randomUUID().toString())
+        .issueTime(new Date())
+        .generate();
+
+    final JWSHeader jwsHeader = new JWSHeader.Builder(JWSAlgorithm.RS256)
+        .keyID(rsaKey.getKeyID())
+        .type(new JOSEObjectType(TrustMarkDelegation.DELEGATION_TYPE))
+        .build();
+
+    final TrustMarkClaimsSet trustMarkClaimsSet = new TrustMarkClaimsSet(
+        Issuer.parse("http://issuer.digg.se"),
+        new Subject("http://subject.digg.se"),
+        new Identifier(UUID.randomUUID().toString()),
+        new Date());
+
+    final SignedJWT trustMarkDelegate = new SignedJWT(jwsHeader,trustMarkClaimsSet.toJWTClaimsSet());
+    trustMarkDelegate.sign(new RSASSASigner(rsaKey));
+    return trustMarkDelegate;
+  }
+
+    private static String generateKey() throws JOSEException, JOSEException {
     final RSAKey rsaKey = new RSAKeyGenerator(2048)
         .keyUse(KeyUse.SIGNATURE)
         .keyID(UUID.randomUUID().toString())

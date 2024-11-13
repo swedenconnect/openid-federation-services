@@ -16,18 +16,22 @@
  */
 package se.digg.oidfed.trustmarkissuer.configuration;
 
+import com.nimbusds.jwt.SignedJWT;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.io.Serializable;
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertTrue;
 
@@ -49,19 +53,16 @@ public class TrustMarkIssuerProperties implements Serializable {
   private String logoUri;
   /** Optional URL to information about issued Trust Marks */
   private String refUri;
-
   /** List of SubjectProperties*/
   private List<TrustMarkIssuerSubjectProperties> subjects;
-  /**
-   *  delegation according to
-   */
-  private String delegation;
+  /** TrustMark delegation */
+  private TrustMarkDelegation delegation;
   /**
    * Validate content of configuration.
    * @throws IllegalArgumentException is thrown if something is not right in configuration
    */
   @PostConstruct
-  public void validate() {
+  public void validate() throws IllegalArgumentException {
     FederationAssert.assertNotEmpty(trustMarkId, "TrustMarkId is expected");
     FederationAssert.assertNotEmpty(subjects, "TrustMarkIssuerProperties is expected");
   }

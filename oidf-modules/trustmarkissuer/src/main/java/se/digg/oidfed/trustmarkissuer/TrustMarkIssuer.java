@@ -108,7 +108,7 @@ public class TrustMarkIssuer {
   public String trustMark(final TrustMarkRequest request)
       throws InvalidRequestException, NotFoundException, ServerErrorException {
     assertNotEmptyThrows(request.subject(), () -> new InvalidRequestException("Subject is expected"));
-    final TrustMarkId trustMarkId = TrustMarkId.create(request.trustMarkId());
+    final TrustMarkId trustMarkId = TrustMarkId.validate(request.trustMarkId(),InvalidRequestException::new);
 
     final TrustMarkIssuerProperties trustMarkIssuerProperties = getTrustMarkIssuerProperties(trustMarkId)
         .orElseThrow(() -> new NotFoundException("TrustMark not found for id:'"+trustMarkId+"'"));
@@ -141,7 +141,7 @@ public class TrustMarkIssuer {
         .ifPresent( (value) -> claimsSetBuilder.claim("ref", value));
 
     Optional.ofNullable(trustMarkIssuerProperties.getDelegation())
-        .ifPresent( (value) -> claimsSetBuilder.claim("delegation", value));
+        .ifPresent( (value) -> claimsSetBuilder.claim("delegation", value.getDelegation()));
 
     final JWTClaimsSet claimsSet = claimsSetBuilder.build();
 
@@ -184,9 +184,9 @@ public class TrustMarkIssuer {
   }
 
   /**
-   * Finding a TrustMarkProperty from its TrausMarkId.
+   * Finding a TrustMarkProperty from its TrustMarkId.
    * @param trustMarkId TrustMarkId to find
-   * @return If TrustMarkIssuerProperties is found a Optional is returned.
+   * @return If TrustMarkIssuerProperties is found Optional is returned.
    */
   private Optional<TrustMarkIssuerProperties> getTrustMarkIssuerProperties(TrustMarkId trustMarkId){
     assertNotEmpty(trustMarkId,"TrustMarkId is expected");

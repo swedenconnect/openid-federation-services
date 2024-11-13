@@ -52,7 +52,7 @@ public final class FederationAssert {
    * @param <V> Value
    * @param <E> Exception
    * @return Value that is tested
-   * @throws E Exception that is returned from supplyer if value is empty
+   * @throws E Exception that is returned from suppler if value is empty
    */
   public static <V, E extends Exception> V assertNotEmptyThrows(V value, final Supplier<E> ex) throws E {
     return switch (value) {
