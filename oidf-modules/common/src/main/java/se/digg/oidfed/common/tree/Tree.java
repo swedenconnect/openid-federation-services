@@ -14,11 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.resolver.tree;
+package se.digg.oidfed.common.tree;
 
 import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BiPredicate;
 
 /**
  * Generic tree structure to do graph-searches upon.
@@ -63,7 +61,7 @@ public class Tree<T> {
    * @param request defines search parameters
    * @return a set of matching results
    */
-  public Set<Tree.SearchResult<T>> search(final SearchRequest<T> request) {
+  public Set<SearchResult<T>> search(final SearchRequest<T> request) {
     final Node.NodeSearchContext<T> context =
         new Node.NodeSearchContext<>(0, request.includeParent(), request.snapshot());
     return request.snapshot().getRoot().search(request.predicate(), context);

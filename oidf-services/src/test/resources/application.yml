@@ -1,5 +1,7 @@
 openid:
   federation:
+    trust-anchor:
+      active: true
     resolver:
       active: true
       trusted-jwks:

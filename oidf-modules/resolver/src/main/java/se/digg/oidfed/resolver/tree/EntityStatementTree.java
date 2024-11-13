@@ -19,6 +19,9 @@ package se.digg.oidfed.resolver.tree;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import net.minidev.json.JSONObject;
+import se.digg.oidfed.common.tree.CacheSnapshot;
+import se.digg.oidfed.common.tree.SearchRequest;
+import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.DiscoveryRequest;
 import se.digg.oidfed.resolver.ResolverRequest;
 

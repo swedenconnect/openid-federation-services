@@ -18,7 +18,7 @@ package se.digg.oidfed.resolver;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
-import se.digg.oidfed.resolver.tree.Node;
+import se.digg.oidfed.common.tree.Node;
 
 import java.util.ArrayList;
 import java.util.List;

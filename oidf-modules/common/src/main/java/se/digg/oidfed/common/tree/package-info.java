@@ -14,26 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.trustanchor;
-
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
-
-import java.util.List;
-
 /**
- * Properties for trust anchor.
+ * Package for tree structure.
  *
  * @author Felix Hellman
  */
-@Getter
-@Setter
-@ConfigurationProperties(TrustAnchorConfigurationProperties.PROPERTY_PATH)
-public class TrustAnchorConfigurationProperties {
-  public static final String PROPERTY_PATH = "openid.federation.trust-anchor";
-
-  /** Set to true if this module should be active or not. */
-  private Boolean active;
-}
+package se.digg.oidfed.common.tree;
