@@ -27,4 +27,12 @@
     </parent>
 
     <artifactId>resolver</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>se.digg.oidc-fed</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>

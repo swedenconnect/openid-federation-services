@@ -33,7 +33,7 @@ import se.digg.oidfed.trustanchor.TrustAnchor;
 public class TrustAnchorConfiguration {
 
   @Bean
-  TrustAnchor trustAnchor() {
+  TrustAnchor trustAnchor(final TrustAnchorConfigurationProperties properties) {
     return new TrustAnchor();
   }
 }

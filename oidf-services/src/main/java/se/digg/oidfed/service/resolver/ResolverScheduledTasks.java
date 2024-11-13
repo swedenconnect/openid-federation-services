@@ -19,12 +19,12 @@ package se.digg.oidfed.service.resolver;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import se.digg.oidfed.common.tree.CacheSnapshot;
+import se.digg.oidfed.common.tree.SearchRequest;
+import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.ResolverProperties;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
-import se.digg.oidfed.resolver.tree.CacheSnapshot;
 import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
-import se.digg.oidfed.resolver.tree.SearchRequest;
-import se.digg.oidfed.resolver.tree.Tree;
 
 import java.util.concurrent.TimeUnit;
 

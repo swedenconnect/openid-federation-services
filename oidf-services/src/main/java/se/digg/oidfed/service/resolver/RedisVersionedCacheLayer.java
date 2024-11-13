@@ -19,10 +19,10 @@ package se.digg.oidfed.service.resolver;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.RedisTemplate;
-import se.digg.oidfed.resolver.tree.CacheSnapshot;
-import se.digg.oidfed.resolver.tree.Node;
-import se.digg.oidfed.resolver.tree.VersionedCacheLayer;
-import se.digg.oidfed.resolver.tree.SnapshotSource;
+import se.digg.oidfed.common.tree.CacheSnapshot;
+import se.digg.oidfed.common.tree.Node;
+import se.digg.oidfed.common.tree.SnapshotSource;
+import se.digg.oidfed.common.tree.VersionedCacheLayer;
 
 import java.util.List;
 import java.util.Optional;
