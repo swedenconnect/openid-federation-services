@@ -14,18 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
-
-import org.springframework.stereotype.Component;
-
 /**
- * Scheduled tasks for the resolver.
+ * Package for submodules.
  *
  * @author Felix Hellman
  */
-@Component
-public class ResolverScheduledTasks {
-
-  //Will be implemented later
-
-}
+package se.digg.oidfed.service.submodule;

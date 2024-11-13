@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.resolver;
 
-import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import io.micrometer.core.instrument.Counter;
@@ -34,30 +33,18 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
-import se.digg.oidfed.common.tree.Tree;
-import se.digg.oidfed.common.tree.VersionedCacheLayer;
-import se.digg.oidfed.resolver.Discovery;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.resolver.ResolverProperties;
-import se.digg.oidfed.resolver.ResolverResponseFactory;
-import se.digg.oidfed.resolver.chain.ChainValidator;
-import se.digg.oidfed.resolver.chain.ConstraintsValidationStep;
-import se.digg.oidfed.resolver.chain.CriticalClaimsValidationStep;
-import se.digg.oidfed.resolver.chain.SignatureValidationStep;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.metadata.OIDFPolicyOperationFactory;
-import se.digg.oidfed.resolver.tree.EntityStatementTree;
-import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
 import se.digg.oidfed.resolver.tree.resolution.BFSExecution;
 import se.digg.oidfed.resolver.tree.resolution.DefaultErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
-import se.digg.oidfed.resolver.tree.resolution.ScheduledStepRecoveryStrategy;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
 
 import java.net.http.HttpClient;
-import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -73,52 +60,16 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class ResolverConfiguration {
   @Bean
-  Resolver resolver(final ResolverProperties resolverProperties,
-                    final ChainValidator validator,
-                    final EntityStatementTree tree,
-                    final MetadataProcessor processor,
-                    final ResolverResponseFactory factory) {
-    return new Resolver(resolverProperties, validator, tree, processor, factory);
+  List<Resolver> resolvers(final List<ResolverProperties> resolverProperties,
+      final ResolverFactory resolverFactory
+  ) {
+    return resolverProperties.stream().map(resolverFactory::create).toList();
   }
 
   @Bean
-  ResolverProperties resolverProperties(final ResolverConfigurationProperties properties) {
-    return properties.toResolverProperties();
-  }
-
-  @Bean
-  ChainValidator chainValidator(final ResolverProperties properties) {
-    return new ChainValidator(
-        List.of(
-            new SignatureValidationStep(new JWKSet(properties.trustedKeys())),
-            new ConstraintsValidationStep(),
-            new CriticalClaimsValidationStep())
-    );
-  }
-
-  @Bean
-  EntityStatementTree entityStatementTree(final EntityStatementTreeLoader loader, final ResolverProperties properties,
-                                          final Tree<EntityStatement> tree) {
-    final EntityStatementTree entityStatementTree = new EntityStatementTree(tree);
-    entityStatementTree.load(loader, "%s/.well-known/openid-federation".formatted(properties.trustAnchor()));
-    return entityStatementTree;
-  }
-
-  @Bean
-  Tree<EntityStatement> internalTree(final RedisVersionedCacheLayer redisVersionedCacheLayer) {
-    return new Tree<>(redisVersionedCacheLayer);
-  }
-
-  @Bean
-  EntityStatementTreeLoader loader(final EntityStatementIntegration integration,
-                                   final ExecutionStrategy executionStrategy,
-                                   final VersionedCacheLayer<EntityStatement> versionedCacheLayer,
-                                   final ResolverProperties properties, final ErrorContextFactory errorContextFactory) {
-
-    return new EntityStatementTreeLoader(integration, executionStrategy,
-        new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
-        errorContextFactory)
-        .withAdditionalPostHook(versionedCacheLayer::useNextVersion);
+  List<ResolverProperties> resolverProperties(final ResolverConfigurationProperties properties) {
+    return properties.getResolvers().stream().map(
+        ResolverConfigurationProperties.ResolverModuleProperties::toResolverProperties).toList();
   }
 
   @Bean
@@ -137,21 +88,21 @@ public class ResolverConfiguration {
   }
 
   @Bean
-  ResolverResponseFactory resolverResponseFactory(final ResolverProperties properties) {
-    return new ResolverResponseFactory(Clock.systemUTC(), properties);
-  }
-
-  @Bean
-  Discovery discovery(final EntityStatementTree tree) {
-    return new Discovery(tree);
-  }
-
-  @Bean
-  RedisVersionedCacheLayer redisDataLayer(
+  ResolverFactory resolverFactory(
       final RedisTemplate<String, Integer> versionTemplate,
-      final RedisOperations redisOperations
+      final RedisOperations redisOperations,
+      final MetadataProcessor processor,
+      final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory
   ) {
-    return new RedisVersionedCacheLayer(versionTemplate, redisOperations);
+    return new ResolverFactory(versionTemplate, redisOperations, processor, entityStatementTreeLoaderFactory);
+  }
+
+  @Bean
+  EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory(
+      final EntityStatementIntegration integration,
+      final ExecutionStrategy strategy,
+      final ErrorContextFactory factory) {
+    return new EntityStatementTreeLoaderFactory(integration, strategy, factory);
   }
 
   @Bean

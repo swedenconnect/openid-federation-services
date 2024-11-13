@@ -151,7 +151,7 @@ class ResolverTest {
 
     final ResolverProperties properties =
         new ResolverProperties(trustAnchorIdentifier, Duration.ZERO, tree.findAllKeys().getKeys(), resolverIdentifier
-            , resolverKey, Duration.ofSeconds(10));
+            , resolverKey, Duration.ofSeconds(10), "alias");
     final DeferredStepRecoveryStrategy deferredStepRecoveryStrategy = new DeferredStepRecoveryStrategy();
 
     //Fail relyingparty first time we try it
@@ -160,7 +160,7 @@ class ResolverTest {
     final ResolverClient resolver = ResolverFactory.createTestResolver(properties, tree, resolverKey, deferredStepRecoveryStrategy);
     //Re-run resolution of the steps that failed
     deferredStepRecoveryStrategy.retry();
-    final ResolverRequest request = new ResolverRequest("name", relyingPartyIdentifier, trustAnchorIdentifier, null);
+    final ResolverRequest request = new ResolverRequest(relyingPartyIdentifier, trustAnchorIdentifier, null);
     resolver.resolve(request)
         .withAssertion(statement -> resolver.getResolverIdentity()
             .equalsIgnoreCase(statement.getClaimsSet().getIssuer().getValue()), "Issuer should be resolver")
@@ -174,7 +174,7 @@ class ResolverTest {
         .get();
 
     final ResolverRequest trustMarkIssuerResolveRequest =
-        new ResolverRequest("name", trustMarkIssuerIdentifier, trustAnchorIdentifier, null);
+        new ResolverRequest(trustMarkIssuerIdentifier, trustAnchorIdentifier, null);
     resolver.resolve(trustMarkIssuerResolveRequest)
         .withAssertion(
             entity -> resolver.getResolverIdentity().equalsIgnoreCase(entity.getClaimsSet().getIssuer().getValue()),
@@ -190,7 +190,7 @@ class ResolverTest {
         .get();
 
     final DiscoveryResponse discovery =
-        resolver.getDiscovery().discovery(new DiscoveryRequest(null, trustAnchorIdentifier, null, null));
+        resolver.discovery(new DiscoveryRequest(trustAnchorIdentifier, null, null));
     Assertions.assertEquals(4, discovery.supportedEntities().size());
     Assertions.assertTrue(List.of(trustAnchorIdentifier, intermediateIdentifier, trustMarkIssuerIdentifier, relyingPartyIdentifier).containsAll(discovery.supportedEntities()));
   }

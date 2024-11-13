@@ -26,13 +26,12 @@ import java.util.Objects;
 import java.util.function.BiPredicate;
 
 /**
- * @param name
  * @param subject
  * @param trustAnchor
  * @param type
  * @author Felix Hellman
  */
-public record ResolverRequest(String name, String subject, String trustAnchor, String type) {
+public record ResolverRequest(String subject, String trustAnchor, String type) {
   /**
    * @return this request as a search predicate
    */

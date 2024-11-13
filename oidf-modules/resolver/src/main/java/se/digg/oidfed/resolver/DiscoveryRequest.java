@@ -28,13 +28,12 @@ import java.util.function.BiPredicate;
 /**
  * Request object for discovery.
  *
- * @param name
  * @param trustAnchor
  * @param types
  * @param trustMarkIds
  * @author Felix Hellman
  */
-public record DiscoveryRequest(String name, String trustAnchor, List<String> types, List<String> trustMarkIds) {
+public record DiscoveryRequest(String trustAnchor, List<String> types, List<String> trustMarkIds) {
   /**
    * @return this request as a search predicate
    */
