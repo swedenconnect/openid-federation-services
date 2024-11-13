@@ -14,18 +14,20 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
-
-import org.springframework.stereotype.Component;
+package se.digg.oidfed.resolver;
 
 /**
- * Scheduled tasks for the resolver.
+ * Exception class thrown by the resolver.
  *
  * @author Felix Hellman
  */
-@Component
-public class ResolverScheduledTasks {
-
-  //Will be implemented later
-
+public class ResolverException extends RuntimeException {
+  /**
+   * Constructor.
+   * @param message for the exception
+   * @param cause underlying cause
+   */
+  public ResolverException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

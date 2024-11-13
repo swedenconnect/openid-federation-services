@@ -17,7 +17,7 @@ public class ResolverClient {
 
   public String resolve(final ResolverRequest request) {
     final ResponseEntity<String> entity =
-        client.get().uri("http://localhost:%d/resolve?sub={sub}&anchor={anchor}".formatted(port), Map.of(
+        client.get().uri("http://localhost:%d/resolver/resolve?sub={sub}&anchor={anchor}".formatted(port), Map.of(
                 "sub", request.subject(),
                 "anchor", request.trustAnchor())
             )

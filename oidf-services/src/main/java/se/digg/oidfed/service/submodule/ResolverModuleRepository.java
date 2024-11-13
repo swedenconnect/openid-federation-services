@@ -14,18 +14,21 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
+package se.digg.oidfed.service.submodule;
 
-import org.springframework.stereotype.Component;
+import se.digg.oidfed.resolver.Resolver;
+
+import java.util.Optional;
 
 /**
- * Scheduled tasks for the resolver.
+ * Interface for exposing resolver modules.
  *
  * @author Felix Hellman
  */
-@Component
-public class ResolverScheduledTasks {
-
-  //Will be implemented later
-
+public interface ResolverModuleRepository {
+  /**
+   * @param alias of the resolver to get
+   * @return a resolver instance from registry or empty
+   */
+  Optional<Resolver> getResolver(final String alias);
 }

@@ -48,13 +48,11 @@ public class ResolverFactory {
         processor,
         factory);
 
-    final Discovery discovery = new Discovery(entityStatementTree);
-
     return new ResolverClient(resolver, properties.entityIdentifier(), resolverKey,
         () -> entityStatementTree.load(new EntityStatementTreeLoader(tree, new DFSExecution(), recoveryStrategy,
                 new DefaultErrorContextFactory()).withAdditionalPostHook(
             dataLayer::useNextVersion),
-        properties.trustAnchor() + "/.well-known/openid-federation"), discovery);
+        properties.trustAnchor() + "/.well-known/openid-federation"));
   }
   private static EntityStatementTree getEntityStatementTree(final ResolverProperties properties,
                                                             final FederationTree tree, final VersionedInMemoryCache<EntityStatement> entityStatementInMemoryDataLayer, final StepRecoveryStrategy recoveryStrategy) {

@@ -20,6 +20,7 @@ import com.nimbusds.jose.jwk.JWK;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.digg.oidfed.resolver.ResolverProperties;
 
 import java.nio.charset.Charset;
@@ -42,57 +43,74 @@ public class ResolverConfigurationProperties {
   /** Property path */
   public static final String PROPERTY_PATH = "openid.federation.resolver";
 
+
+  /**List of Resolver Module Properties*/
+  @NestedConfigurationProperty
+  private List<ResolverModuleProperties> resolvers;
+  /** Name of the ssl trust store bundle to use for all resolvers*/
+  private String trustStoreBundle;
   /** Set to true if this module should be active or not. */
   private Boolean active;
 
-  /** Supported trustAnchor for this resolver*/
-  private String trustAnchor;
-
-  /**Duration for resolve responses*/
-  private Duration duration = Duration.of(7, ChronoUnit.DAYS);
-
-  private List<String> trustedJwks;
-
-  private String signKey;
-
-  private String entityIdentifier;
-
-  private String trustStoreBundle;
-
   /**
-   * @return properties in non spring specific specific format.
+   * Configuration properties for each resolver module.
+   *
+   * @author Felix Hellman
    */
-  public ResolverProperties toResolverProperties() {
-    return new ResolverProperties(trustAnchor, duration, parseTrustedJwks(), entityIdentifier, signKey(),
-        Duration.ofSeconds(10));
-  }
+  @Getter
+  @Setter
+  public static class ResolverModuleProperties {
 
-  /**
-   * @return list of jwks parsed from configuration
-   */
-  public List<JWK> parseTrustedJwks() {
-    return trustedJwks.stream().map(s -> {
+    /** Supported trustAnchor for this resolver */
+    private String trustAnchor;
+
+    /** Duration for resolve responses */
+    private Duration duration = Duration.of(7, ChronoUnit.DAYS);
+
+    private List<String> trustedJwks;
+
+    private String signKey;
+
+    private String entityIdentifier;
+
+    private String alias;
+
+    /**
+     * @return properties in non spring specific specific format.
+     */
+    public ResolverProperties toResolverProperties() {
+      return new ResolverProperties(trustAnchor, duration, parseTrustedJwks(), entityIdentifier, signKey(),
+          Duration.ofSeconds(10), alias);
+    }
+
+    /**
+     * @return list of jwks parsed from configuration
+     */
+    public List<JWK> parseTrustedJwks() {
+      return trustedJwks.stream().map(s -> {
+        try {
+          return parseKey(s);
+        }
+        catch (ParseException e) {
+          throw new RuntimeException(e);
+        }
+      }).toList();
+    }
+
+    /**
+     * @return sign key parsed from configuration
+     */
+    public JWK signKey() {
       try {
-        return parseKey(s);
+        return ResolverModuleProperties.parseKey(signKey);
       }
       catch (ParseException e) {
         throw new RuntimeException(e);
       }
-    }).toList();
-  }
-
-  /**
-   * @return sign key parsed from configuration
-   */
-  public JWK signKey() {
-    try {
-      return ResolverConfigurationProperties.parseKey(signKey);
-    } catch (ParseException e) {
-      throw new RuntimeException(e);
     }
-  }
+    private static JWK parseKey(final String s) throws ParseException {
+      return JWK.parse(new String(Base64.getDecoder().decode(s), Charset.defaultCharset()));
+    }
 
-  private static JWK parseKey(final String s) throws ParseException {
-    return JWK.parse(new String(Base64.getDecoder().decode(s), Charset.defaultCharset()));
   }
 }

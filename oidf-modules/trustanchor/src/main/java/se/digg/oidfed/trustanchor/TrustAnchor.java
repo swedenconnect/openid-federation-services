@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.trustanchor;
 
+import se.digg.oidfed.common.module.Submodule;
+
 import java.util.List;
 
 /**
@@ -23,7 +25,7 @@ import java.util.List;
  *
  * @author Felix Hellman
  */
-public class TrustAnchor {
+public class TrustAnchor implements Submodule {
   /**
    * @param request
    * @return entity statement
@@ -38,5 +40,10 @@ public class TrustAnchor {
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) {
     return List.of();
+  }
+
+  @Override
+  public String getAlias() {
+    return "";
   }
 }

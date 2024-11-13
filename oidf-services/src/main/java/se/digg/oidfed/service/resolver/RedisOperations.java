@@ -111,10 +111,11 @@ public class RedisOperations {
    * Key for handling entities.
    * @param location internal node key
    * @param version to which the entity belongs to
+   * @param alias to which module the data belongs to
    */
-  public record EntityKey(String location, int version) {
+  public record EntityKey(String location, int version, String alias) {
     String getRedisKey() {
-      return "%d:entity:%s".formatted(version, location);
+      return "%s:%d:entity:%s".formatted(alias, version, location);
     }
   }
 
@@ -122,20 +123,22 @@ public class RedisOperations {
    * Key for handling child listings.
    * @param parent to which the child belongs to
    * @param version to which the child and parent belongs to
+   * @param alias to which module the data belongs to
    */
-  public record ChildKey(Node<EntityStatement> parent, int version) {
+  public record ChildKey(Node<EntityStatement> parent, int version, String alias) {
     String getRedisKey() {
-      return "%d:children:%s".formatted(version, parent.getKey());
+      return "%s:%d:children:%s".formatted(alias, version, parent.getKey());
     }
   }
 
   /**
    * Key for handling root nodes.
    * @param version to which the root belongs to
+   * @param alias to which module the data belongs to
    */
-  public record RootKey(int version) {
+  public record RootKey(int version, String alias) {
     String getRedisKey() {
-      return "%d:root".formatted(version);
+      return "%s:%d:root".formatted(alias, version);
     }
   }
 }
