@@ -24,13 +24,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.digg.oidfed.service.ApplicationModule;
+import se.digg.oidfed.service.submodule.ResolverModuleRepository;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkListingRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkStatusRequest;
-import se.digg.oidfed.trustmarkissuer.exception.InvalidRequestException;
-import se.digg.oidfed.trustmarkissuer.exception.NotFoundException;
-import se.digg.oidfed.trustmarkissuer.exception.ServerErrorException;
+import se.digg.oidfed.common.exception.InvalidRequestException;
+import se.digg.oidfed.common.exception.NotFoundException;
+import se.digg.oidfed.common.exception.ServerErrorException;
 
 import java.util.List;
 
@@ -43,63 +44,74 @@ import java.util.List;
 @ConditionalOnProperty(value = TrustMarkIssuerConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustMarkIssuerController implements ApplicationModule {
 
-  private final TrustMarkIssuer trustMarkIssuer;
+  private final ResolverModuleRepository repository;
 
   /**
    * Constructor.
    *
-   * @param trustMarkIssuer
+   * @param repository for resolver modules
    */
-  public TrustMarkIssuerController(final TrustMarkIssuer trustMarkIssuer) {
-    this.trustMarkIssuer = trustMarkIssuer;
+  public TrustMarkIssuerController(final ResolverModuleRepository repository) {
+    this.repository = repository;
+
   }
 
   /**
    * Retrieves the trust mark for a given entity.
-   *
+   * @param alias the alias of the trust mark providing the response
    * @param trustMarkId the ID of the trust mark
    * @param subject the subject of the trust mark
    * @return the trust mark or error response
    */
-  @GetMapping(value = "/trust_mark", produces = "application/trust-mark+jwt")
+  @GetMapping(value = "/{alias}/trust_mark", produces = "application/trust-mark+jwt")
   public String trustMark(
+      @PathVariable(name = "alias") String alias,
       @RequestParam(name = "trust_mark_id") final String trustMarkId,
       @RequestParam(name = "sub") final String subject)
       throws NotFoundException, InvalidRequestException, ServerErrorException {
-    return trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkId, subject));
+    final TrustMarkIssuer tmIssuer = this.repository.getTrustMarkIssuer(alias)
+        .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
+    return tmIssuer.trustMark(new TrustMarkRequest(trustMarkId, subject));
   }
 
   /**
    * Retrieves trust mark listing for a given trust mark ID, and subject.
-   *
+   * @param alias the alias of the trust mark providing the response
    * @param trustMarkId the ID of the trust mark
    * @param subject the subject of the trust mark (optional)
    * @return the trust mark listing or an error response
    */
-  @GetMapping(value = "/trust_mark_listing", produces = MediaType.APPLICATION_JSON_VALUE)
+  @GetMapping(value = "/{alias}/trust_mark_listing", produces = MediaType.APPLICATION_JSON_VALUE)
   public List<String> trustMarkListing(
+      @PathVariable(name = "alias") String alias,
       @RequestParam(name = "trust_mark_id") final String trustMarkId,
       @RequestParam(name = "sub", required = false) final String subject)
       throws NotFoundException, InvalidRequestException {
-    return trustMarkIssuer.trustMarkListing(new TrustMarkListingRequest( trustMarkId, subject));
+    final TrustMarkIssuer tmIssuer = this.repository.getTrustMarkIssuer(alias)
+        .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
+    return tmIssuer.trustMarkListing(new TrustMarkListingRequest( trustMarkId, subject));
   }
 
   /**
    * Retrieves the status of a trust mark.
    *
+   * @param alias the alias of the trust mark providing the response
    * @param trustMarkId the ID of the trust mark (optional)
    * @param subject the subject of the trust mark (optional)
    * @param issueTime the issue time of the trust mark (optional)
    * @return the trust mark status or an error response
    */
-  @PostMapping(value = "/trust_mark_status", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping(value = "/{alias}/trust_mark_status", produces = MediaType.APPLICATION_JSON_VALUE)
   public TrustMarkStatusReply trustMarkStatus(
+      @PathVariable(name = "alias") String alias,
       @RequestParam(name = "trust_mark_id", required = true) final String trustMarkId,
       @RequestParam(name = "sub", required = false) final String subject,
       @RequestParam(name = "iat", required = false) final Long issueTime)
       throws NotFoundException, InvalidRequestException {
+    final TrustMarkIssuer tmIssuer = this.repository.getTrustMarkIssuer(alias)
+        .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
 
-    return new TrustMarkStatusReply(trustMarkIssuer.trustMarkStatus(
+    return new TrustMarkStatusReply(tmIssuer.trustMarkStatus(
         new TrustMarkStatusRequest( trustMarkId,subject, issueTime)));
   }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
 
 /**
  * The server hosting the federation endpoint is currently unable to handle the request due to a temporary overloading

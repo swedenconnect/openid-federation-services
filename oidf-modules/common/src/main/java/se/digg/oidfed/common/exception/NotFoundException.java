@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
+
 
 /**
  * The requested Entity Identifier is "not found". The HTTP response status code SHOULD be 404 (Not Found).

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
+
 
 /**
  * The request is incomplete or does not comply with current specifications. The HTTP response status code SHOULD be 400

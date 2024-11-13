@@ -19,7 +19,7 @@ package se.digg.oidfed.service.error;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import se.digg.oidfed.trustmarkissuer.exception.FederationException;
+import se.digg.oidfed.common.exception.FederationException;
 
 import java.util.Map;
 
@@ -40,5 +40,7 @@ public class ErrorHandler {
   public ResponseEntity<Map<String, String>> handleFederationException(FederationException ex) {
     return ResponseEntity.status(ex.httpStatusCode()).body(ex.toJSONObject());
   }
+
+
 
 }

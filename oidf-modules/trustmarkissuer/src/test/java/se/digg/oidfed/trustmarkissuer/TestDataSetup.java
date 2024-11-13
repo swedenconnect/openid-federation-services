@@ -31,8 +31,6 @@ import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.id.Subject;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
-import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkIssuerProperties;
-import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkProperties;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
@@ -51,14 +49,15 @@ import java.util.*;
  */
 public class TestDataSetup {
 
-
-
   public static TrustMarkProperties trustMarkProperties() throws JOSEException {
-    final TrustMarkProperties trustMarkProperties = new TrustMarkProperties();
-    trustMarkProperties.setTrustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES));
-    trustMarkProperties.setIssuerEntityId("https://tmissuer.digg.se");
-    trustMarkProperties.setSignKey(generateKey() );
-    trustMarkProperties.setTrustMarks(new ArrayList<>());
+
+    final TrustMarkProperties trustMarkProperties = TrustMarkProperties.builder()
+        .trustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES))
+        .issuerEntityId("https://tmissuer.digg.se")
+        .signKey(generateKey())
+        .trustMarks(new ArrayList<>())
+        .alias("tm")
+        .build();
 
     final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties sub1 =
         TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
@@ -67,7 +66,7 @@ public class TestDataSetup {
             .granted(Instant.now())
             .build();
 
-    trustMarkProperties.getTrustMarks()
+    trustMarkProperties.trustMarks()
         .add(TrustMarkIssuerProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm.digg.se/default"))
             .subjects(List.of(sub1))
@@ -76,10 +75,7 @@ public class TestDataSetup {
     return trustMarkProperties;
   }
 
-
-
-
-  public static SignedJWT createTrustMarkDelegation() throws JOSEException, JOSEException, ParseException {
+  public static SignedJWT createTrustMarkDelegation() throws JOSEException, ParseException {
 
     final RSAKey rsaKey = new RSAKeyGenerator(2048)
         .keyUse(KeyUse.SIGNATURE)
@@ -98,12 +94,12 @@ public class TestDataSetup {
         new Identifier(UUID.randomUUID().toString()),
         new Date());
 
-    final SignedJWT trustMarkDelegate = new SignedJWT(jwsHeader,trustMarkClaimsSet.toJWTClaimsSet());
+    final SignedJWT trustMarkDelegate = new SignedJWT(jwsHeader, trustMarkClaimsSet.toJWTClaimsSet());
     trustMarkDelegate.sign(new RSASSASigner(rsaKey));
     return trustMarkDelegate;
   }
 
-    private static String generateKey() throws JOSEException, JOSEException {
+  private static String generateKey() throws JOSEException {
     final RSAKey rsaKey = new RSAKeyGenerator(2048)
         .keyUse(KeyUse.SIGNATURE)
         .keyID(UUID.randomUUID().toString())

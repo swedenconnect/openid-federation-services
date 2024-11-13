@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
+
 
 /**
  * The Client cannot be authorized or is not a valid participant of the federation. The HTTP response status code SHOULD

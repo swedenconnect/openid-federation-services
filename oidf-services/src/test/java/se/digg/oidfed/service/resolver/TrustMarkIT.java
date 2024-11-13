@@ -29,6 +29,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("trustmark")
 class TrustMarkIT {
 
 
@@ -38,6 +39,7 @@ class TrustMarkIT {
   @BeforeEach
   public void setup() {
     RestAssured.port = port;
+    RestAssured.basePath = "/tm";
   }
 
   @Test

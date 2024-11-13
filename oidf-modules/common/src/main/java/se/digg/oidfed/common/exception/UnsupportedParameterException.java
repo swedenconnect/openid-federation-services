@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
+
 
 /**
  * The server does not support the requested parameter.

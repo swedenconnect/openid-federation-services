@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
 
 /**
  * The server encountered an unexpected condition that prevented it from fulfilling the request. The HTTP response

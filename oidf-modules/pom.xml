@@ -27,7 +27,7 @@
 
     <artifactId>oidf-modules</artifactId>
     <name>OIDF :: Modules</name>
-    <version>1.0.0-SNAPSHOT</version>
+
     <packaging>pom</packaging>
     <modules>
         <module>common</module>

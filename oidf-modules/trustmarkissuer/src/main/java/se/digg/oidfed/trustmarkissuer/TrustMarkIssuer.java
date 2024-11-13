@@ -27,12 +27,11 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkIssuerProperties;
-import se.digg.oidfed.trustmarkissuer.configuration.TrustMarkProperties;
+import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
-import se.digg.oidfed.trustmarkissuer.exception.InvalidRequestException;
-import se.digg.oidfed.trustmarkissuer.exception.NotFoundException;
-import se.digg.oidfed.trustmarkissuer.exception.ServerErrorException;
+import se.digg.oidfed.common.exception.InvalidRequestException;
+import se.digg.oidfed.common.exception.NotFoundException;
+import se.digg.oidfed.common.exception.ServerErrorException;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -53,7 +52,7 @@ import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.throwIf
  * @author Felix Hellman
  */
 @Slf4j
-public class TrustMarkIssuer {
+public class TrustMarkIssuer implements Submodule {
 
   public static final JOSEObjectType TRUST_MARK_JWT_TYPE = new JOSEObjectType("trust-mark+jwt");
   private static final SecureRandom rng = new SecureRandom();
@@ -67,6 +66,11 @@ public class TrustMarkIssuer {
   public TrustMarkIssuer(final TrustMarkProperties trustMarkProperties) {
     this.trustMarkProperties = assertNotEmpty(trustMarkProperties, "TrustMarkProperties can not be null");
     this.trustMarkProperties.validate();
+  }
+
+  @Override
+  public String getAlias() {
+    return trustMarkProperties.alias();
   }
 
   /**
@@ -127,9 +131,9 @@ public class TrustMarkIssuer {
         .subject(trustMarkSubject.getSub());
 
     claimsSetBuilder.expirationTime(
-        calculateExp(trustMarkProperties.getTrustMarkValidityDuration(), trustMarkSubject.getExpires()));
+        calculateExp(trustMarkProperties.trustMarkValidityDuration(), trustMarkSubject.getExpires()));
 
-    throwIfNull(this.trustMarkProperties.getIssuerEntityId(), claimsSetBuilder::issuer,
+    throwIfNull(this.trustMarkProperties.issuerEntityId(), claimsSetBuilder::issuer,
         () -> new ServerErrorException("Issuer must be present"));
 
     Optional.ofNullable(request.trustMarkId()).ifPresent( (value) -> claimsSetBuilder.claim("id", value));
@@ -190,7 +194,7 @@ public class TrustMarkIssuer {
    */
   private Optional<TrustMarkIssuerProperties> getTrustMarkIssuerProperties(TrustMarkId trustMarkId){
     assertNotEmpty(trustMarkId,"TrustMarkId is expected");
-    return trustMarkProperties.getTrustMarks().stream()
+    return trustMarkProperties.trustMarks().stream()
         .filter(trustMarkIssuerProperties -> trustMarkId.equals(trustMarkIssuerProperties.getTrustMarkId()))
         .findFirst();
   }
@@ -253,5 +257,6 @@ public class TrustMarkIssuer {
   protected Instant now() {
     return Instant.now();
   }
+
 
 }

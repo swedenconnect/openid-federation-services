@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
+
 
 /**
  * The endpoint cannot service the requested issuer. The HTTP response status code SHOULD be 404 (Not Found).

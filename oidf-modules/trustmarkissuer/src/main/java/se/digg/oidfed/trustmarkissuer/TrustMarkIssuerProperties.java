@@ -11,12 +11,10 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
-package se.digg.oidfed.trustmarkissuer.configuration;
+package se.digg.oidfed.trustmarkissuer;
 
-import com.nimbusds.jwt.SignedJWT;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,10 +26,8 @@ import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.io.Serializable;
-import java.text.ParseException;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertTrue;
 

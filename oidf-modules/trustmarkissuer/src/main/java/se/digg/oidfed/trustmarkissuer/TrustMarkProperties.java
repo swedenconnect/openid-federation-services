@@ -11,11 +11,10 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.configuration;
+package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.PostConstruct;
@@ -33,30 +32,16 @@ import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertT
 /**
  * Properties for TrustMarkIssuer
  *
+ * @param trustMarkValidityDuration The validity duration of issued Trust Marks
+ * @param issuerEntityId IssuerEntityId
+ * @param signKey Key used to sign this trustmark
+ * @param trustMarks TrustMark Issuer
+ * @param alias for this trustmark instance
  * @author Per Fredrik Plars
  */
 @Builder
-@ToString
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TrustMarkProperties {
-
-  /** The validity duration of issued Trust Marks */
-  private Duration trustMarkValidityDuration;
-
-  /** */
-  private String issuerEntityId;
-
-  /**
-   * Key used to sign this trustmark
-   */
-  private String signKey;
-
-  /**
-   * TrustMark Issuer
-   */
-  private List<TrustMarkIssuerProperties> trustMarks;
+public record  TrustMarkProperties(Duration trustMarkValidityDuration,String issuerEntityId,String signKey,
+    List<TrustMarkIssuerProperties> trustMarks,String alias) {
 
   /**
    * TrustMark sign key, must contain kid
@@ -80,6 +65,7 @@ public class TrustMarkProperties {
     assertNotEmpty(trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
     assertNotEmpty(issuerEntityId, "IssuerEntityId is expected");
     assertNotEmpty(trustMarks, "TrustMarks is expected");
+    assertNotEmpty(alias, "Alias is expected");
     assertTrue(trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
         "Expect trustMarkValidityDuration to be grater then 5 minutes");
     getSignJWK();

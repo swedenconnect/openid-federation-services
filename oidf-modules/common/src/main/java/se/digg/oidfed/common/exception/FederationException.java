@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
 
 import java.util.Map;
 

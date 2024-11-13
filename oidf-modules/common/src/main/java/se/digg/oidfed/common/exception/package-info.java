@@ -17,4 +17,4 @@
 /**
  * Package for exception
  */
-package se.digg.oidfed.trustmarkissuer.exception;
+package se.digg.oidfed.common.exception;
