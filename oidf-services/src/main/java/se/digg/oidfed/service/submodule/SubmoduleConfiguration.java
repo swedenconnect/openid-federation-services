@@ -14,18 +14,25 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
+package se.digg.oidfed.service.submodule;
 
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.resolver.Resolver;
+
+import java.util.List;
 
 /**
- * Scheduled tasks for the resolver.
+ * Configuration for submodules.
  *
  * @author Felix Hellman
  */
-@Component
-public class ResolverScheduledTasks {
-
-  //Will be implemented later
-
+@Configuration
+public class SubmoduleConfiguration {
+  @Bean
+  InMemorySubModuleRegistry inMemorySubModuleRegistry(final List<Resolver> resolvers) {
+    final InMemorySubModuleRegistry inMemorySubModuleRegistry = new InMemorySubModuleRegistry();
+    inMemorySubModuleRegistry.registerResolvers(resolvers);
+    return inMemorySubModuleRegistry;
+  }
 }

@@ -14,18 +14,16 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
-
-import org.springframework.stereotype.Component;
+package se.digg.oidfed.common.module;
 
 /**
- * Scheduled tasks for the resolver.
+ * Submodule interface defines information that a module can present about itself.
  *
  * @author Felix Hellman
  */
-@Component
-public class ResolverScheduledTasks {
-
-  //Will be implemented later
-
+public interface Submodule {
+  /**
+   * @return alias of a given module
+   */
+  String getAlias();
 }

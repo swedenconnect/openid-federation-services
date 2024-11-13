@@ -6,8 +6,6 @@ import com.nimbusds.jose.util.Pair;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -17,16 +15,14 @@ public class ResolverClient {
   private final String resolverIdentity;
   private final RSASSAVerifier verifier;
   private final Runnable treeReloadAction;
-  private final Discovery discovery;
 
   public ResolverClient(final Resolver resolver, final String resolverIdentity, final JWK resolverKey,
-      final Runnable treeReloadAction, final Discovery discovery) {
+      final Runnable treeReloadAction) {
     try {
       this.resolver = resolver;
       this.resolverIdentity = resolverIdentity;
       this.verifier = new RSASSAVerifier(resolverKey.toRSAKey());
       this.treeReloadAction = treeReloadAction;
-      this.discovery = discovery;
     }
     catch (final Exception e) {
       throw new RuntimeException(e);
@@ -50,6 +46,10 @@ public class ResolverClient {
 
   public void resolveNextTree() {
     this.treeReloadAction.run();
+  }
+
+  public DiscoveryResponse discovery(final DiscoveryRequest discoveryRequest) {
+    return this.resolver.discovery(discoveryRequest);
   }
 
   public class ResolverClientResponse {
@@ -77,9 +77,5 @@ public class ResolverClient {
       }
       return entity;
     }
-  }
-
-  public Discovery getDiscovery() {
-    return discovery;
   }
 }

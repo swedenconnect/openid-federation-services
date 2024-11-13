@@ -23,6 +23,7 @@ import se.digg.oidfed.common.tree.CacheSnapshot;
 import se.digg.oidfed.common.tree.Node;
 import se.digg.oidfed.common.tree.SnapshotSource;
 import se.digg.oidfed.common.tree.VersionedCacheLayer;
+import se.digg.oidfed.resolver.ResolverProperties;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,43 +37,48 @@ public class RedisVersionedCacheLayer implements VersionedCacheLayer<EntityState
   private final RedisTemplate<String, Integer> versionTemplate;
 
   private final RedisOperations redisOperations;
+  private final ResolverProperties properties;
 
   /**
    * Constructor.
    * @param versionTemplate for handling version numbers
    * @param redisOperations for handling data operations upon a tree
+   * @param properties for handling which submodule the operation is for
    */
   public RedisVersionedCacheLayer(
       final RedisTemplate<String, Integer> versionTemplate,
-      final RedisOperations redisOperations) {
+      final RedisOperations redisOperations,
+      final ResolverProperties properties
+      ) {
 
     this.versionTemplate = versionTemplate;
     this.redisOperations = redisOperations;
+    this.properties = properties;
   }
 
   @Override
   public List<Node<EntityStatement>> getChildren(final Node<EntityStatement> parent, final int version) {
-    return redisOperations.getChildren(new RedisOperations.ChildKey(parent, version));
+    return redisOperations.getChildren(new RedisOperations.ChildKey(parent, version, properties.alias()));
   }
 
   @Override
   public void append(final Node<EntityStatement> child, final Node<EntityStatement> parent, final int version) {
-    redisOperations.append(new RedisOperations.ChildKey(parent, version), child);
+    redisOperations.append(new RedisOperations.ChildKey(parent, version, properties.alias()), child);
   }
 
   @Override
   public void setData(final String location, final EntityStatement data, final int version) {
-    redisOperations.setData(new RedisOperations.EntityKey(location, version), data);
+    redisOperations.setData(new RedisOperations.EntityKey(location, version, properties.alias()), data);
   }
 
   @Override
   public EntityStatement getData(final String location, final int version) {
-    return redisOperations.getData(new RedisOperations.EntityKey(location, version));
+    return redisOperations.getData(new RedisOperations.EntityKey(location, version, properties.alias()));
   }
 
   @Override
   public Node<EntityStatement> getRoot(final int version) {
-    return redisOperations.getRoot(new RedisOperations.RootKey(version));
+    return redisOperations.getRoot(new RedisOperations.RootKey(version, properties.alias()));
   }
 
   @Override
@@ -96,7 +102,7 @@ public class RedisVersionedCacheLayer implements VersionedCacheLayer<EntityState
   public CacheSnapshot<EntityStatement> createNewSnapshot(final Node<EntityStatement> root,
       final EntityStatement rootData) {
     final int version = getNextVersion();
-    this.redisOperations.setRoot(new RedisOperations.RootKey(version), root);
+    this.redisOperations.setRoot(new RedisOperations.RootKey(version, properties.alias()), root);
     this.setData(root.getKey(), rootData, version);
     return new CacheSnapshot<>(this, version);
   }

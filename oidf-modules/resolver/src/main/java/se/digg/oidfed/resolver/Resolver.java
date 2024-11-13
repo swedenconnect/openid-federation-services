@@ -21,6 +21,7 @@ import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONObject;
+import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.resolver.chain.ChainValidationResult;
 import se.digg.oidfed.resolver.chain.ChainValidator;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
@@ -35,7 +36,7 @@ import java.util.Set;
  *
  * @author Felix Hellman
  */
-public class Resolver {
+public class Resolver implements Submodule {
 
   private final ResolverProperties resolverProperties;
 
@@ -70,7 +71,7 @@ public class Resolver {
    * @return response
    * @throws JOSEException
    */
-  public String resolve(final ResolverRequest request) throws ParseException, JOSEException {
+  public String resolve(final ResolverRequest request) {
 
     /*
      * 1) resolve the chain
@@ -104,6 +105,24 @@ public class Resolver {
         .trustChain(chainValidationResult.chain())
         .build();
 
-    return factory.sign(response);
+    try {
+      return factory.sign(response);
+    } catch (final JOSEException | ParseException e) {
+      throw new ResolverException("Failed to sign resolver response", e);
+    }
   }
+
+  /**
+   * @param request to process
+   * @return discovery response
+   */
+  public DiscoveryResponse discovery(final DiscoveryRequest request) {
+    return new DiscoveryResponse(tree.discovery(request));
+  }
+
+  @Override
+  public String getAlias() {
+    return resolverProperties.alias();
+  }
+
 }
