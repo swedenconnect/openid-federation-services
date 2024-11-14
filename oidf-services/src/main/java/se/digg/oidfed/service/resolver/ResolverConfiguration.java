@@ -42,6 +42,7 @@ import se.digg.oidfed.resolver.tree.resolution.BFSExecution;
 import se.digg.oidfed.resolver.tree.resolution.DefaultErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
+import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
 
 import java.net.http.HttpClient;
@@ -67,9 +68,13 @@ public class ResolverConfiguration {
   }
 
   @Bean
-  List<ResolverProperties> resolverProperties(final ResolverConfigurationProperties properties) {
-    return properties.getResolvers().stream().map(
-        ResolverConfigurationProperties.ResolverModuleProperties::toResolverProperties).toList();
+  List<ResolverProperties> resolverProperties(
+      final ResolverConfigurationProperties properties,
+      final KeyRegistry registry) {
+    return properties.getResolvers()
+        .stream()
+        .map(resolverProperties -> resolverProperties.toResolverProperties(registry))
+        .toList();
   }
 
   @Bean
