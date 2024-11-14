@@ -17,13 +17,13 @@
 package se.digg.oidfed.trustanchor;
 
 /**
- * @param name
+ * @param path
  * @param entityType
  * @param trustMarked
  * @param trustMarkId
  * @param intermediate
  * @author Felix Hellman
  */
-public record SubordinateListingRequest(String name, String entityType, Boolean trustMarked, String trustMarkId,
+public record SubordinateListingRequest(String path, String entityType, Boolean trustMarked, String trustMarkId,
     Boolean intermediate) {
 }

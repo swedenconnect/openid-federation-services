@@ -31,13 +31,12 @@ import java.util.List;
 @Getter
 @Setter
 public class SpringEntityProperty {
-  private String alias;
+  private String path;
   private String entityIdentifier;
   private List<String> authorityHints;
-  private List<String> children;
   private Boolean isRoot;
   private String signKeyAlias;
-  private List<String> keys;
+  private List<String> jwkAlias;
   private String organizationName;
 
   /**
@@ -47,13 +46,12 @@ public class SpringEntityProperty {
    */
   public EntityProperties toEntityProperties(final KeyRegistry registry) {
     return new EntityProperties(
-        alias,
+        path,
         entityIdentifier,
         authorityHints,
-        children,
         isRoot,
         registry.getKey(signKeyAlias),
-        registry.getSet(keys),
+        registry.getSet(jwkAlias),
         organizationName);
   }
 }

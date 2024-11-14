@@ -20,7 +20,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.common.entity.EntityRegistry;
+import se.digg.oidfed.common.entity.PolicyRegistry;
+import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
+
+import java.util.List;
 
 /**
  * Configuration for Trust Anchor.
@@ -28,12 +33,21 @@ import se.digg.oidfed.trustanchor.TrustAnchor;
  * @author Felix Hellman
  */
 @Configuration
-@ConditionalOnProperty(value = TrustAnchorConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
-@EnableConfigurationProperties(TrustAnchorConfigurationProperties.class)
+@ConditionalOnProperty(value = TrustAnchorModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
+@EnableConfigurationProperties(TrustAnchorModuleProperties.class)
 public class TrustAnchorConfiguration {
 
   @Bean
-  TrustAnchor trustAnchor(final TrustAnchorConfigurationProperties properties) {
-    return new TrustAnchor();
+  List<TrustAnchor> trustAnchor(final EntityRegistry registry, final TrustAnchorModuleProperties properties, final
+  SubordinateStatementFactory factory) {
+    return properties.getAnchors()
+        .stream()
+        .map(a -> TrustAnchorFactory.create(registry, a, factory))
+        .toList();
+  }
+
+  @Bean
+  SubordinateStatementFactory trustAnchorEntityStatementFactory(final PolicyRegistry policyRegistry) {
+    return new SubordinateStatementFactory(policyRegistry);
   }
 }

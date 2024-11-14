@@ -22,11 +22,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.service.ApplicationModule;
+import se.digg.oidfed.service.submodule.TrustAnchorRepository;
 import se.digg.oidfed.trustanchor.EntityStatementRequest;
 import se.digg.oidfed.trustanchor.SubordinateListingRequest;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.List;
 
 /**
@@ -35,18 +39,18 @@ import java.util.List;
  * @author Felix Hellman
  */
 @RestController
-@ConditionalOnProperty(value = TrustAnchorConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
+@ConditionalOnProperty(value = TrustAnchorModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustAnchorController implements ApplicationModule {
 
-  private final TrustAnchor trustAnchor;
+  private final TrustAnchorRepository repository;
 
   /**
    * Constructor.
    *
-   * @param trustAnchor
+   * @param repository with trust anchor submodules
    */
-  public TrustAnchorController(final TrustAnchor trustAnchor) {
-    this.trustAnchor = trustAnchor;
+  public TrustAnchorController(final TrustAnchorRepository repository) {
+    this.repository = repository;
   }
 
   /**
@@ -54,38 +58,45 @@ public class TrustAnchorController implements ApplicationModule {
    * Note that the issuer parameter is defined in the standard API, but it is not supported if provided. This service
    * does not support the provision of Entity Statements for other issuers.
    *
-   * @param name the name of the issuing federation entity
-   * @param issuer the issuer of the entity statement (not supported)
+   * @param alias the path of the issuing federation entity
    * @param subject the subject of the entity statement
    * @return the Entity Statement or error response
+   * @throws NotFoundException if a given module is not found
    */
-  @GetMapping(value = "/{name}/fetch", produces = "application/entity-statement+jwt")
-  public String fetchEntityStatement(@PathVariable(name = "name") String name,
-      @RequestParam(name = "iss", required = false) String issuer,
-      @RequestParam(name = "sub", required = false) String subject) {
-    return trustAnchor.fetchEntityStatement(new EntityStatementRequest(name, issuer, subject));
+  @GetMapping(value = "/{alias}/fetch", produces = "application/entity-statement+jwt")
+  public String fetchEntityStatement(@PathVariable(name = "alias") String alias,
+      @RequestParam(name = "sub", required = false) String subject) throws NotFoundException {
+    final TrustAnchor trustAnchor = repository.getTrustAnchor(alias)
+            .orElseThrow(() -> new NotFoundException("Could not find given trust anchor"));
+    final EntityStatementRequest request =
+        new EntityStatementRequest(URLDecoder.decode(subject, Charset.defaultCharset()));
+    return trustAnchor.fetchEntityStatement(request);
   }
 
   /**
    * Retrieves the subordinate listing for provided entity type, trust mark status, trust mark ID, and intermediate
    * status.
    *
-   * @param name the name of the entity providing the response.
+   * @param alias the path of the entity providing the response.
    * @param entityType the type of the entity (optional)
    * @param trustMarked the trust mark status of the entity (optional)
    * @param trustMarkId the ID of the trust mark (optional)
    * @param intermediate the intermediate status of the subordinate entities (optional)
    * @return the subordinate listing or an error response
+   * @throws NotFoundException if a given module is not found
    */
-  @GetMapping(value = "/{name}/subordinate_listing", produces = MediaType.APPLICATION_JSON_VALUE)
-  public List<String> subordinateListing(@PathVariable(name = "name") String name,
+  @GetMapping(value = "/{alias}/subordinate_listing", produces = MediaType.APPLICATION_JSON_VALUE)
+  public List<String> subordinateListing(
+      @PathVariable(name = "alias") String alias,
       @RequestParam(name = "entity_type", required = false) String entityType,
       @RequestParam(name = "trust_marked", required = false) Boolean trustMarked,
       @RequestParam(name = "trust_mark_id", required = false) String trustMarkId,
       @RequestParam(name = "intermediate", required = false) Boolean intermediate
-  ) {
+  ) throws NotFoundException {
+    final TrustAnchor trustAnchor = repository.getTrustAnchor(alias)
+        .orElseThrow(() -> new NotFoundException("Could not find given trust anchor"));
     return trustAnchor.subordinateListing(
-        new SubordinateListingRequest(name, entityType, trustMarked, trustMarkId, intermediate));
+        new SubordinateListingRequest(alias, entityType, trustMarked, trustMarkId, intermediate));
   }
 
   @Override

@@ -23,7 +23,7 @@ package se.digg.oidfed.service;
  */
 public interface ApplicationModule {
   /**
-   * @return module name
+   * @return module path
    */
   String getModuleName();
 }

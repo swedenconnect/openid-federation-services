@@ -14,39 +14,38 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
+package se.digg.oidfed.service.trustanchor;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.redis.testcontainers.RedisContainer;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.utility.DockerImageName;
-import se.digg.oidfed.resolver.ResolverRequest;
+import org.springframework.web.client.RestClient;
 import se.digg.oidfed.service.IntegrationTestParent;
-import se.digg.oidfed.test.FederationEntity;
 
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("integration-test")
-class ResolverIT extends IntegrationTestParent {
+class TrustAnchorIT extends IntegrationTestParent {
 
+
+
+  @LocalServerPort
+  int serverPort;
 
   @Test
-  void resolveFederation() {
-
-    final ResolverClient resolverClient = new ResolverClient(serverPort);
-    final String resolved = resolverClient.resolve(new ResolverRequest(
-        "http://localhost:9090/intermediate/relyingparty",
-        "http://localhost:9090/trustanchor", "")
-    );
+  void test() {
+    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(serverPort)).build();
+    final List body = client.get().uri("/ta/subordinate_listing").retrieve().toEntity(List.class).getBody();
+    System.out.println(body);
+    Objects.requireNonNull(body);
+    final String jwt = client.get()
+        .uri("/ta/fetch?sub=%s".formatted(URLEncoder.encode((String) body.getFirst(), Charset.defaultCharset())))
+        .retrieve().body(String.class);
+    System.out.println(jwt);
   }
 }

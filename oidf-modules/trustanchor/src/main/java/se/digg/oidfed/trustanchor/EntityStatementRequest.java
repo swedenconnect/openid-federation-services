@@ -17,10 +17,8 @@
 package se.digg.oidfed.trustanchor;
 
 /**
- * @param name
- * @param issuer
  * @param subject
  * @author Felix Hellman
  */
-public record EntityStatementRequest(String name, String issuer, String subject) {
+public record EntityStatementRequest(String subject) {
 }
