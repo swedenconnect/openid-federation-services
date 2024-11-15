@@ -14,26 +14,44 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.trustanchor;
+package se.digg.oidfed.common.entity;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.List;
+import java.util.Map;
 
 /**
- * Properties for trust anchor.
+ * Holds multiple policies.
  *
  * @author Felix Hellman
  */
 @Getter
 @Setter
-@ConfigurationProperties(TrustAnchorConfigurationProperties.PROPERTY_PATH)
-public class TrustAnchorConfigurationProperties {
-  public static final String PROPERTY_PATH = "openid.federation.trust-anchor";
+public class PolicyProperty {
+  private List<PolicyRecord> policies;
 
-  /** Set to true if this module should be active or not. */
-  private Boolean active;
+  /**
+   * Record class of an individual policy.
+   *
+   * @author Felix Hellman
+   */
+  @Getter
+  @Setter
+  public static class PolicyRecord {
+
+    /**
+     * Constructor.
+     * @param name of the policy
+     * @param policy object of the policy
+     */
+    public PolicyRecord(final String name, final Map<String, Object> policy) {
+      this.name = name;
+      this.policy = policy;
+    }
+
+    private String name;
+    private Map<String, Object> policy;
+  }
 }

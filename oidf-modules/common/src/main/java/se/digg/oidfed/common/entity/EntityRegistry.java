@@ -80,49 +80,13 @@ public class EntityRegistry {
    *
    */
   public EntityRegistry(final List<EntityProperties> entityProperties) {
-    final Tree<EntityProperties> propertiesTree = new Tree<>(new VersionedInMemoryCache<>());
     final EntityProperties root = entityProperties.stream()
         .filter(EntityProperties::getIsRoot)
         .findFirst()
         .orElseThrow();
 
-    final CacheSnapshot<EntityProperties> snapshot =
-        propertiesTree.addRoot(new Node<>(root.getEntityIdentifier()), root);
-
     this.root = root;
 
-    final ArrayDeque<String> queue = new ArrayDeque<>(root.getChildren());
-
-    while (!queue.isEmpty()) {
-      final String child = queue.pollFirst();
-      final Optional<EntityProperties> entity = find(child, entityProperties);
-      entity.ifPresent(e -> {
-        propertiesTree.addChild(new Node<>(child), root.getEntityIdentifier(), e, snapshot);
-        Optional.ofNullable(e.getChildren()).ifPresent(queue::addAll);
-      });
-    }
-
-    entityProperties.forEach(pr -> addEntity(propertiesTree, pr, snapshot));
-
-  }
-
-  private Optional<EntityProperties> find(final String entityId, final List<EntityProperties> entityProperties) {
-    return entityProperties.stream()
-        .filter(f -> f.getEntityIdentifier().equalsIgnoreCase(entityId))
-        .findFirst();
-  }
-
-  private void addEntity(final Tree<EntityProperties> tree, final EntityProperties properties,
-      final CacheSnapshot<EntityProperties> snapshot) {
-    final SearchRequest<EntityProperties> request =
-        new SearchRequest<>((ep, c) -> ep.getEntityIdentifier().equalsIgnoreCase(properties.getEntityIdentifier()),
-            true, snapshot);
-    final String path = tree.search(request)
-        .stream()
-        .sorted(Comparator.comparingInt(a -> a.context().level()))
-        .map(ep -> ep.getData().getAlias())
-        .reduce("", (a, b) -> a + "/" + b);
-
-    pathedEntities.put(path, properties);
+    entityProperties.forEach(ep -> this.pathedEntities.put(ep.getPath(), ep));
   }
 }

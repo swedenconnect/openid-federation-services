@@ -17,9 +17,9 @@
 package se.digg.oidfed.service.trustmarkissuer;
 
 import com.nimbusds.jose.jwk.JWK;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.service.submodule.InMemorySubModuleRegistry;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
@@ -43,8 +43,8 @@ import java.util.Optional;
 @ConditionalOnProperty(value = TrustMarkIssuerModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustMarkIssuerConfiguration {
 
-  @Autowired
-  void trustMarkIssuer(TrustMarkIssuerModuleProperties properties,
+  @Bean
+  List<TrustMarkIssuer> trustMarkIssuer(TrustMarkIssuerModuleProperties properties,
       InMemorySubModuleRegistry inMemorySubModuleRegistry) {
 
     final List<TrustMarkIssuerModuleProperties.TrustMarkIssuers> trustMarkIssuersProperties =
@@ -57,6 +57,7 @@ public class TrustMarkIssuerConfiguration {
         .map(TrustMarkIssuer::new).toList();
 
     inMemorySubModuleRegistry.registerTrustMarkIssuer(trustMarkIssuers);
+    return trustMarkIssuers;
 
   }
 

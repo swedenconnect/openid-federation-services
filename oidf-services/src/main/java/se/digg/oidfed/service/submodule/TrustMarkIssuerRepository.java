@@ -16,21 +16,19 @@
  */
 package se.digg.oidfed.service.submodule;
 
-import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubjectLoader;
 
 import java.util.Optional;
 
 /**
- * Interface for exposing resolver modules.
+ * Interface for exposing trust mark issuer modules.
  *
  * @author Felix Hellman
  */
-public interface ResolverModuleRepository {
+public interface TrustMarkIssuerRepository {
   /**
-   * @param alias of the resolver to get
+   * @param alias of the resolver to get TrustMarkIssuer
    * @return a resolver instance from registry or empty
    */
-  Optional<Resolver> getResolver(final String alias);
+  Optional<TrustMarkIssuer> getTrustMarkIssuer(final String alias);
 }

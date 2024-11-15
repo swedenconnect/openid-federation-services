@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
+package se.digg.oidfed.service.trustmarkissuer;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -24,21 +24,18 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import se.digg.oidfed.service.IntegrationTestParent;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("trustmark")
-class TrustMarkIT {
+@ActiveProfiles({ "trustmark", "integration-test" })
+class TrustMarkIT extends IntegrationTestParent {
 
-
-  @LocalServerPort
-  private int port;
 
   @BeforeEach
   public void setup() {
-    RestAssured.port = port;
+    RestAssured.port = this.serverPort;
     RestAssured.basePath = "/tm";
   }
 

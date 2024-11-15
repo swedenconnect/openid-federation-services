@@ -1,5 +1,9 @@
 openid:
   federation:
+    policy-registry:
+      policies:
+        - name: my-super-policy
+          resource: classpath:test-policy.json
     key-registry:
       keys:
         - alias: sign-key-1
@@ -7,30 +11,34 @@ openid:
     entity-registry:
       base-path: "stuff"
       entity-registry:
-        - alias: root
+        - path: root
           entity-identifier: http://localhost:9090/root
-          children:
-            - http://localhost:9090/root/second
           is-root: true
           sign-key-alias: sign-key-1
           organization-name: myOrg
-          keys:
+          jwk-alias:
             - sign-key-1
-        - alias: second
+        - path: root/second
           entity-identifier: http://localhost:9090/root/second
           sign-key-alias: sign-key-1
           organization-name: myOrg
-          keys:
+          jwk-alias:
             - sign-key-1
     trust-anchor:
-      active: false
+      active: true
+      anchors:
+        - alias: ta
+          entity-identifier: http://localhost:9090/root
+          subordinate-listing:
+            - entity-identifier: http://localhost:9090/root/second
+              policy: my-super-policy
     resolver:
       active: true
       resolvers:
         - trusted-keys:
             - sign-key-1
           entity-identifier: http://localhost:9090/resolver
-          trust-anchor: http://localhost:9090/trustanchor
+          trust-anchor: http://localhost:9090/root
           sign-key-alias: sign-key-1
           alias: resolver
     trust-mark-issuer:

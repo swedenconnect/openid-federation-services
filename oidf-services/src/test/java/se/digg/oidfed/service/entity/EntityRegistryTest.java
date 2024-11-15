@@ -31,12 +31,11 @@ class EntityRegistryTest {
     final EntityProperties second = new EntityProperties();
     final String basePath = "http://entity-identifier.test";
 
-    second.setAlias("second");
+    second.setPath("/root/second");
     second.setEntityIdentifier(basePath + "/root/");
 
     final EntityProperties first = new EntityProperties();
-    first.setAlias("root");
-    first.setChildren(List.of(second.getEntityIdentifier()));
+    first.setPath("root");
     first.setEntityIdentifier(basePath + "/root");
     first.setIsRoot(true);
     final EntityRegistry registry = new EntityRegistry(List.of(first, second));

@@ -31,10 +31,9 @@ import java.util.List;
 @Getter
 @Setter
 public class EntityProperties {
-  private String alias;
+  private String path;
   private String entityIdentifier;
   private List<String> authortyHints;
-  private List<String> children;
   private Boolean isRoot;
   private JWK signKey;
   private JWKSet jwks;
@@ -48,22 +47,19 @@ public class EntityProperties {
 
   /**
    * Constructor.
-   * @param alias of the entity
+   * @param path of the entity
    * @param entityIdentifier of the entity
    * @param authortyHints of the entity
-   * @param children of the entity
    * @param isRoot if the entity is root or not
    * @param signKey of the entity
    * @param jwks of the entity
    * @param organizationName of the entity
    */
-  public EntityProperties(final String alias, final String entityIdentifier, final List<String> authortyHints,
-      final List<String> children,
+  public EntityProperties(final String path, final String entityIdentifier, final List<String> authortyHints,
       final Boolean isRoot, final JWK signKey, final JWKSet jwks, final String organizationName) {
-    this.alias = alias;
+    this.path = path;
     this.entityIdentifier = entityIdentifier;
     this.authortyHints = authortyHints;
-    this.children = children;
     this.isRoot = isRoot;
     this.signKey = signKey;
     this.jwks = jwks;

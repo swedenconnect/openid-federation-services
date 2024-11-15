@@ -19,6 +19,8 @@ package se.digg.oidfed.service.submodule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.resolver.Resolver;
+import se.digg.oidfed.trustanchor.TrustAnchor;
+import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 
 import java.util.List;
 
@@ -30,9 +32,15 @@ import java.util.List;
 @Configuration
 public class SubmoduleConfiguration {
   @Bean
-  InMemorySubModuleRegistry inMemorySubModuleRegistry(final List<Resolver> resolvers) {
+  InMemorySubModuleRegistry inMemorySubModuleRegistry(
+      final List<Resolver> resolvers,
+      final List<TrustAnchor> trustAnchors,
+      final List<TrustMarkIssuer> trustMarkIssuers
+  ) {
     final InMemorySubModuleRegistry inMemorySubModuleRegistry = new InMemorySubModuleRegistry();
     inMemorySubModuleRegistry.registerResolvers(resolvers);
+    inMemorySubModuleRegistry.registerTrustAnchor(trustAnchors);
+    inMemorySubModuleRegistry.registerTrustMarkIssuer(trustMarkIssuers);
     return inMemorySubModuleRegistry;
   }
 }
