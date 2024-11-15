@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.submodule;
 
-import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;

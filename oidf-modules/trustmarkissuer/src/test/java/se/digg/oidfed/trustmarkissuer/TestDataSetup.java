@@ -59,17 +59,23 @@ public class TestDataSetup {
         .alias("tm")
         .build();
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties sub1 =
-        TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
+    final TrustMarkIssuerSubject sub1 =
+        TrustMarkIssuerSubject.builder()
             .sub("http://tm1.digg.se/sub1")
-            .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
-            .granted(Instant.now())
+            .expires(Optional.of(Instant.now().plus(10, ChronoUnit.MINUTES)))
+            .granted(Optional.of(Instant.now()))
             .build();
 
+    final TrustMarkIssuerSubjectInMemLoader trustMarkIssuerSubjectLoader = new TrustMarkIssuerSubjectInMemLoader();
+    trustMarkIssuerSubjectLoader.register(sub1);
+
     trustMarkProperties.trustMarks()
-        .add(TrustMarkIssuerProperties.builder()
+        .add(TrustMarkProperties.TrustMarkIssuerProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm.digg.se/default"))
-            .subjects(List.of(sub1))
+            .logoUri(Optional.empty())
+            .refUri(Optional.empty())
+            .delegation(Optional.empty())
+            .trustMarkIssuerSubjectLoader(trustMarkIssuerSubjectLoader)
             .build());
 
     return trustMarkProperties;
@@ -99,34 +105,14 @@ public class TestDataSetup {
     return trustMarkDelegate;
   }
 
-  private static String generateKey() throws JOSEException {
+  private static RSAKey generateKey() throws JOSEException {
     final RSAKey rsaKey = new RSAKeyGenerator(2048)
         .keyUse(KeyUse.SIGNATURE)
         .keyID(UUID.randomUUID().toString())
         .issueTime(new Date())
         .generate();
-    return Base64.getEncoder().encodeToString(rsaKey.toJSONString().getBytes(Charset.defaultCharset()));
+    return rsaKey;
   }
 
-  public static JWK jwkSignKey()
-      throws Exception {
-
-    final String password = "Test1234";
-    final String alias = "rsa1";
-    final String keyStoreFile = "/rsa1.jks";
-
-    try (InputStream keyStoreStream = TestDataSetup.class.getResourceAsStream(keyStoreFile)) {
-      if (keyStoreStream == null) {
-        throw new IllegalArgumentException("KeyStore not found: " + keyStoreFile);
-      }
-
-      final KeyStore keyStore = KeyStore.getInstance("PKCS12");
-      keyStore.load(keyStoreStream, password.toCharArray());
-
-      final JWK key = JWK.load(keyStore, alias, password.toCharArray());
-      return key;
-    }
-
-  }
 
 }

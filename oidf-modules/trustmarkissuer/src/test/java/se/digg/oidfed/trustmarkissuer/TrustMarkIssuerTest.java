@@ -32,6 +32,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -52,31 +53,35 @@ class TrustMarkIssuerTest {
   @Test
   void trustMarkListing() throws NotFoundException, InvalidRequestException {
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties sub1 =
-        TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
+    final TrustMarkIssuerSubject sub1 =
+        TrustMarkIssuerSubject.builder()
             .sub("http://sub1.se")
-            .expires(Instant.now().plus(10, ChronoUnit.DAYS))
-            .granted(Instant.now())
+            .expires(Optional.of(Instant.now().plus(10, ChronoUnit.DAYS)))
+            .granted(Optional.of(Instant.now()))
             .build();
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties sub2 =
-        TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
+    final TrustMarkIssuerSubject sub2 =
+        TrustMarkIssuerSubject.builder()
             .sub("http://sub2.se")
-            .expires(Instant.now().plus(10, ChronoUnit.DAYS))
-            .granted(Instant.now())
+            .expires(Optional.of(Instant.now().plus(10, ChronoUnit.DAYS)))
+            .granted(Optional.of(Instant.now()))
             .build();
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties sub3 =
-        TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
+    final TrustMarkIssuerSubject sub3 =
+        TrustMarkIssuerSubject.builder()
             .sub("http://sub.outdated.se")
-            .expires(Instant.now().plus(1, ChronoUnit.DAYS))
-            .granted(Instant.now())
+            .expires(Optional.of(Instant.now().plus(1, ChronoUnit.DAYS)))
+            .granted(Optional.of(Instant.now()))
             .build();
 
+    //new TrustMarkIssuerSubjectInMemLoader(List.of(sub1, sub2, sub3)
     this.trustMarkProperties.trustMarks()
-        .add(TrustMarkIssuerProperties.builder()
+        .add(TrustMarkProperties.TrustMarkIssuerProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
-            .subjects(List.of(sub1, sub2, sub3))
+            .delegation(Optional.empty())
+            .logoUri(Optional.empty())
+            .refUri(Optional.empty())
+            .trustMarkIssuerSubjectLoader(new TrustMarkIssuerSubjectInMemLoader(List.of(sub1, sub2, sub3)))
             .build());
 
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkProperties) {
@@ -114,22 +119,24 @@ class TrustMarkIssuerTest {
   public void testTrustMarkCreation()
       throws NotFoundException, InvalidRequestException, ServerErrorException, ParseException {
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties sub1 =
-        TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
+    final TrustMarkIssuerSubject sub1 =
+        TrustMarkIssuerSubject.builder()
             .sub("http://sub1.se")
-            .expires(Instant.now().plus(10, ChronoUnit.DAYS))
-            .granted(Instant.now())
+            .expires(Optional.of(Instant.now().plus(10, ChronoUnit.DAYS)))
+            .granted(Optional.of(Instant.now()))
             .build();
 
-    this.trustMarkProperties.trustMarks().add(TrustMarkIssuerProperties.builder()
+    this.trustMarkProperties.trustMarks().add(TrustMarkProperties.TrustMarkIssuerProperties.builder()
         .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
-            .refUri("http://digg.se/tm1/doc")
-            .logoUri("http://digg.se/tm1/logo.png")
-        .subjects(List.of(sub1))
+        .refUri(Optional.of("http://digg.se/tm1/doc"))
+        .logoUri(Optional.of("http://digg.se/tm1/logo.png"))
+        .delegation(Optional.empty())
+        .trustMarkIssuerSubjectLoader(new TrustMarkIssuerSubjectInMemLoader(List.of(sub1)))
         .build());
 
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkProperties);
-    final String trustMarkJWT = trustMarkIssuer.trustMark(new TrustMarkRequest("http://tm1.digg.se", "http://sub1.se"));
+    final String trustMarkJWT = trustMarkIssuer.trustMark(new TrustMarkRequest("http://tm1.digg.se",
+        "http://sub1.se"));
 
     final SignedJWT tm = SignedJWT.parse(trustMarkJWT);
     final JWTClaimsSet unpackedClaims = tm.getJWTClaimsSet();
@@ -157,23 +164,26 @@ class TrustMarkIssuerTest {
   public void testTrustMarkValidity()
       throws NotFoundException, InvalidRequestException {
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties sub1 =
-        TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
+    final TrustMarkIssuerSubject sub1 =
+        TrustMarkIssuerSubject.builder()
             .sub("http://sub1.se")
-            .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
-            .granted(Instant.now())
+            .expires(Optional.of(Instant.now().plus(10, ChronoUnit.MINUTES)))
+            .granted(Optional.of(Instant.now()))
             .build();
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties expired =
-        TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties.builder()
+    final TrustMarkIssuerSubject expired =
+        TrustMarkIssuerSubject.builder()
             .sub("http://expired.se")
-            .expires(Instant.now().plus(6, ChronoUnit.MINUTES))
-            .granted(Instant.now())
+            .expires(Optional.of(Instant.now().plus(6, ChronoUnit.MINUTES)))
+            .granted(Optional.of(Instant.now()))
             .build();
 
-    this.trustMarkProperties.trustMarks().add(TrustMarkIssuerProperties.builder()
+    this.trustMarkProperties.trustMarks().add(TrustMarkProperties.TrustMarkIssuerProperties.builder()
         .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
-        .subjects(List.of(sub1, expired))
+        .delegation(Optional.empty())
+        .logoUri(Optional.empty())
+        .refUri(Optional.empty())
+        .trustMarkIssuerSubjectLoader(new TrustMarkIssuerSubjectInMemLoader(List.of(sub1, expired)))
         .build());
 
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkProperties) {
@@ -184,9 +194,11 @@ class TrustMarkIssuerTest {
     };
 
     assertTrue(
-        trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest("http://tm1.digg.se", "http://sub1.se", null)));
+        trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest("http://tm1.digg.se",
+            "http://sub1.se", null)));
     assertFalse(
-        trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest("http://tm1.digg.se", "http://expired.se", null)));
+        trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest("http://tm1.digg.se",
+            "http://expired.se", null)));
   }
 
   @Test
@@ -194,7 +206,7 @@ class TrustMarkIssuerTest {
 
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkProperties);
     final Instant ttlForSubject = Instant.now().plus(2, ChronoUnit.MINUTES);
-    final Date exp = trustMarkIssuer.calculateExp(Duration.ofMinutes(5), ttlForSubject);
+    final Date exp = trustMarkIssuer.calculateExp(Duration.ofMinutes(5), Optional.of(ttlForSubject));
 
     assertEquals(new Date(ttlForSubject.toEpochMilli()).toInstant(), exp.toInstant(),
         "Expected ttlForSubjectToBeSelected");
@@ -212,7 +224,7 @@ class TrustMarkIssuerTest {
     };
     final Instant ttlForSubject = Instant.now().plus(10, ChronoUnit.MINUTES);
     final Duration durationTTL = Duration.ofMinutes(5);
-    final Date exp = trustMarkIssuer.calculateExp(durationTTL, ttlForSubject);
+    final Date exp = trustMarkIssuer.calculateExp(durationTTL, Optional.of(ttlForSubject));
 
     assertEquals(new Date(now.plus(durationTTL).toEpochMilli()).toInstant(), exp.toInstant(),
         "Expected duration to be selected");
@@ -228,21 +240,33 @@ class TrustMarkIssuerTest {
       }
     };
 
-    assertTrue(trustMarkIssuer.isTrustMarkValidInTime(TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties
+    assertTrue(trustMarkIssuer.isTrustMarkValidInTime(TrustMarkIssuerSubject
         .builder()
-        .granted(Instant.now().minus(10, ChronoUnit.MINUTES))
-        .expires(Instant.now().plus(30, ChronoUnit.MINUTES))
+        .granted(Optional.empty())
+        .expires(Optional.empty())
         .build()));
 
-    assertFalse(trustMarkIssuer.isTrustMarkValidInTime(TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties
+    assertTrue(trustMarkIssuer.isTrustMarkValidInTime(TrustMarkIssuerSubject
+        .builder()
+        .granted(Optional.of(Instant.now().minus(10, ChronoUnit.MINUTES)))
+        .expires(Optional.of(Instant.now().plus(30, ChronoUnit.MINUTES)))
+        .build()));
+
+    assertTrue(trustMarkIssuer.isTrustMarkValidInTime(TrustMarkIssuerSubject
+        .builder()
+        .granted(Optional.of(Instant.now().minus(10, ChronoUnit.DAYS)))
+        .expires(Optional.of(Instant.now().plus(30, ChronoUnit.DAYS)))
+        .build()));
+
+    assertFalse(trustMarkIssuer.isTrustMarkValidInTime(TrustMarkIssuerSubject
         .builder()
         .revoked(true)
         .build()));
 
-    assertFalse(trustMarkIssuer.isTrustMarkValidInTime(TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties
+    assertFalse(trustMarkIssuer.isTrustMarkValidInTime(TrustMarkIssuerSubject
         .builder()
-        .granted(Instant.now().plus(10, ChronoUnit.MINUTES))
-        .expires(Instant.now().plus(30, ChronoUnit.MINUTES))
+        .granted(Optional.of(Instant.now().plus(10, ChronoUnit.MINUTES)))
+        .expires(Optional.of(Instant.now().plus(30, ChronoUnit.MINUTES)))
         .build()));
 
   }

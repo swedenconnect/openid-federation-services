@@ -16,15 +16,20 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
+import com.nimbusds.jose.jwk.JWK;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.service.submodule.InMemorySubModuleRegistry;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
+import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubject;
+import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubjectInMemLoader;
 import se.digg.oidfed.trustmarkissuer.TrustMarkProperties;
-import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
+import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,21 +39,63 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 @Configuration
-@EnableConfigurationProperties(TrustMarkIssuerConfigurationProperties.class)
-@ConditionalOnProperty(value = TrustMarkIssuerConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
+@EnableConfigurationProperties(TrustMarkIssuerModuleProperties.class)
+@ConditionalOnProperty(value = TrustMarkIssuerModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustMarkIssuerConfiguration {
 
   @Autowired
-  void trustMarkIssuer(TrustMarkIssuerConfigurationProperties properties,
+  void trustMarkIssuer(TrustMarkIssuerModuleProperties properties,
       InMemorySubModuleRegistry inMemorySubModuleRegistry) {
-    final List<TrustMarkProperties> trustMarkIssuersProperties =
+
+    final List<TrustMarkIssuerModuleProperties.TrustMarkIssuers> trustMarkIssuersProperties =
         Optional.ofNullable(properties.getTrustMarkIssuers())
             .orElseThrow(() -> new IllegalArgumentException("TrustMarkIssuers is empty. Check application properties"));
 
     final List<TrustMarkIssuer> trustMarkIssuers = trustMarkIssuersProperties.stream()
+        .map(this::toTrustMarkProperties)
+        .peek(TrustMarkProperties::validate)
         .map(TrustMarkIssuer::new).toList();
 
     inMemorySubModuleRegistry.registerTrustMarkIssuer(trustMarkIssuers);
 
+  }
+
+  /**
+   * TrustMark sign key, must contain kid
+   * @return JWK
+   */
+  private JWK getSignJWK(String signKey) {
+    try {
+      return JWK.parse(new String(Base64.getDecoder().decode(signKey), Charset.defaultCharset()));
+    }
+    catch (ParseException e) {
+      throw new IllegalArgumentException("Unable to parse signkey",e);
+    }
+  }
+
+  private TrustMarkProperties toTrustMarkProperties(TrustMarkIssuerModuleProperties.TrustMarkIssuers properties) {
+
+    return TrustMarkProperties.builder()
+        .issuerEntityId(properties.issuerEntityId())
+        .alias(properties.alias())
+        .trustMarkValidityDuration(properties.trustMarkValidityDuration())
+        .signKey(getSignJWK(properties.signKeyAlias())) // Todo replace when key repository is in place.
+        .trustMarks(properties.trustMarks().stream()
+            .map(tmIssuer -> TrustMarkProperties.TrustMarkIssuerProperties
+                .builder()
+                .trustMarkId(tmIssuer.trustMarkId())
+                .refUri(Optional.ofNullable(tmIssuer.refUri()))
+                .logoUri(Optional.ofNullable(tmIssuer.logoUri()))
+                .delegation(Optional.ofNullable(tmIssuer.delegation()))
+                .trustMarkIssuerSubjectLoader(
+                    new TrustMarkIssuerSubjectInMemLoader(tmIssuer.subjects().stream().map(tmiSubject ->
+                        TrustMarkIssuerSubject.builder()
+                            .sub(tmiSubject.sub())
+                            .expires(Optional.ofNullable(tmiSubject.expires()))
+                            .revoked(tmiSubject.revoked())
+                            .granted(Optional.ofNullable(tmiSubject.granted()))
+                            .build()).toList()))
+                .build()).toList())
+            .build();
   }
 }
