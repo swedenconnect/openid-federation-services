@@ -21,6 +21,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.submodule.InMemorySubModuleRegistry;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubject;
@@ -44,21 +45,17 @@ import java.util.Optional;
 public class TrustMarkIssuerConfiguration {
 
   @Bean
-  List<TrustMarkIssuer> trustMarkIssuer(TrustMarkIssuerModuleProperties properties,
-      InMemorySubModuleRegistry inMemorySubModuleRegistry) {
-
+  List<TrustMarkIssuer> trustMarkIssuer(TrustMarkIssuerModuleProperties properties, KeyRegistry keyRegistry){
     final List<TrustMarkIssuerModuleProperties.TrustMarkIssuers> trustMarkIssuersProperties =
         Optional.ofNullable(properties.getTrustMarkIssuers())
             .orElseThrow(() -> new IllegalArgumentException("TrustMarkIssuers is empty. Check application properties"));
 
     final List<TrustMarkIssuer> trustMarkIssuers = trustMarkIssuersProperties.stream()
-        .map(this::toTrustMarkProperties)
+        .map(tmi -> toTrustMarkProperties(tmi,keyRegistry))
         .peek(TrustMarkProperties::validate)
         .map(TrustMarkIssuer::new).toList();
 
-    inMemorySubModuleRegistry.registerTrustMarkIssuer(trustMarkIssuers);
     return trustMarkIssuers;
-
   }
 
   /**
@@ -74,13 +71,16 @@ public class TrustMarkIssuerConfiguration {
     }
   }
 
-  private TrustMarkProperties toTrustMarkProperties(TrustMarkIssuerModuleProperties.TrustMarkIssuers properties) {
+  private TrustMarkProperties toTrustMarkProperties(TrustMarkIssuerModuleProperties.TrustMarkIssuers properties,
+      KeyRegistry keyRegistry) {
 
     return TrustMarkProperties.builder()
         .issuerEntityId(properties.issuerEntityId())
         .alias(properties.alias())
         .trustMarkValidityDuration(properties.trustMarkValidityDuration())
-        .signKey(getSignJWK(properties.signKeyAlias())) // Todo replace when key repository is in place.
+        .signKey(keyRegistry.getKey(properties.signKeyAlias())
+            .orElseThrow(() ->
+                new IllegalArgumentException("Unable to find key for key alias:'"+properties.signKeyAlias()+"'")))
         .trustMarks(properties.trustMarks().stream()
             .map(tmIssuer -> TrustMarkProperties.TrustMarkIssuerProperties
                 .builder()

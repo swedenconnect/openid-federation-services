@@ -25,6 +25,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Registry for holding JWKs by alias
@@ -40,8 +41,8 @@ public class KeyRegistry {
    * @param alias to fetch
    * @return jwk
    */
-  public JWK getKey(final String alias) {
-    return this.aliasToJwkMap.get(alias);
+  public Optional<JWK> getKey(final String alias) {
+    return Optional.ofNullable(this.aliasToJwkMap.get(alias));
   }
 
   /**

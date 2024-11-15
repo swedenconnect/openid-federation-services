@@ -44,12 +44,12 @@ class TrustMarkIT extends IntegrationTestParent {
     given()
         .param("trust_mark_id", "http://tm.digg.se/sdk")
         .param("sub", "http://www.pensionsmyndigheten.se/openidfed")
-        .when()
+        .when().log().all()
         .get("/trust_mark")
-        .then()
+        .then().log().all()
         .statusCode(HttpStatus.OK.value())
-        .contentType("application/trust-mark+jwt")
-        .log().all();
+        .contentType("application/trust-mark+jwt");
+
   }
 
   @Test
