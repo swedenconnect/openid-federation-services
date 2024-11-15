@@ -16,21 +16,16 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
-import com.nimbusds.jose.jwk.JWK;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.keys.KeyRegistry;
-import se.digg.oidfed.service.submodule.InMemorySubModuleRegistry;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubject;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubjectInMemLoader;
 import se.digg.oidfed.trustmarkissuer.TrustMarkProperties;
 
-import java.nio.charset.Charset;
-import java.text.ParseException;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 

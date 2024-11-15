@@ -17,8 +17,6 @@
 package se.digg.oidfed.resolver.chain;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
-import net.minidev.json.JSONObject;
 
 import java.util.List;
 

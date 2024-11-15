@@ -17,8 +17,6 @@
 package se.digg.oidfed.service.submodule;
 
 import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubjectLoader;
 
 import java.util.Optional;
 

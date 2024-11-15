@@ -21,7 +21,6 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
@@ -34,13 +33,13 @@ import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.security.KeyStore;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Data setup for testing

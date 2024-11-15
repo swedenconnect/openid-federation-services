@@ -27,11 +27,11 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.common.module.Submodule;
-import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.exception.ServerErrorException;
+import se.digg.oidfed.common.module.Submodule;
+import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;

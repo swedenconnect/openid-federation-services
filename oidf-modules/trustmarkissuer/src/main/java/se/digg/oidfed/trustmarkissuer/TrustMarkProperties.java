@@ -18,18 +18,13 @@ package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.PostConstruct;
-import lombok.*;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
-import java.io.Serializable;
-import java.nio.charset.Charset;
-import java.text.ParseException;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 

@@ -16,12 +16,6 @@
  */
 package se.digg.oidfed.resolver.tree.resolution;
 
-import lombok.Getter;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Error context for keeping track of number of failures for a step.
  *

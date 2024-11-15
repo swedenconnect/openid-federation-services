@@ -62,7 +62,7 @@ public class TrustMarkIssuerModuleProperties {
    * TrustMark issuers
    *
    * @param remoteSubjectRepository Remote
-   * @param trustMarkValidityDuration ValidityDuration of the TrustMArk JWT token.
+   * @param trustMarkValidityDuration ValidityDuration of the TrustMark JWT token. Default value is PT30M
    * @param issuerEntityId EntityId of this trustmark issuer
    * @param signKeyAlias Alias to the key that is used when signing this trustmark
    * @param trustMarks List of defined trustmarks
