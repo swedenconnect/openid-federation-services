@@ -35,7 +35,7 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
 public class EntityRouter {
 
   /**
-   * @param registry to handle alias mapping
+   * @param registry to handle path mapping
    * @param factory to construct entity configurations
    * @return router function bean
    */

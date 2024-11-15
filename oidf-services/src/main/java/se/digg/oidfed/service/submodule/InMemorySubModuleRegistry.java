@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.submodule;
 
-import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
@@ -31,24 +30,37 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
-public class InMemorySubModuleRegistry implements ResolverModuleRepository {
+public class InMemorySubModuleRegistry
+    implements ResolverModuleRepository, TrustAnchorRepository, TrustMarkIssuerRepository {
   private final Map<String, Resolver> resolvers = new HashMap<>();
   private final Map<String, TrustAnchor> trustAnchors = new HashMap<>();
   private final Map<String, TrustMarkIssuer> trustMarkIssuers = new HashMap<>();
 
   /**
    * Takes a list of resolvers and registers them to the repository.
+   *
    * @param resolverList to register
    */
   public void registerResolvers(final List<Resolver> resolverList) {
     resolverList.forEach(r -> this.resolvers.put(r.getAlias(), r));
   }
+
   /**
-   * Takes a list of resolvers and registers them to the repository.
+   * Takes a list of trust mark issuers and registers them to the repository.
+   *
    * @param trustMarkIssuerList to register
    */
   public void registerTrustMarkIssuer(final List<TrustMarkIssuer> trustMarkIssuerList) {
     trustMarkIssuerList.forEach(r -> this.trustMarkIssuers.put(r.getAlias(), r));
+  }
+
+  /**
+   * Takes a list of trustAnchors and registers them to the repository.
+   *
+   * @param trustAnchors to register
+   */
+  public void registerTrustAnchor(final List<TrustAnchor> trustAnchors) {
+    trustAnchors.forEach(r -> this.trustAnchors.put(r.getAlias(), r));
   }
 
   @Override
@@ -56,13 +68,12 @@ public class InMemorySubModuleRegistry implements ResolverModuleRepository {
     return Optional.ofNullable(resolvers.get(alias));
   }
 
-  /* Add these when the respective module is added.
+  @Override
   public Optional<TrustAnchor> getTrustAnchor(final String alias) {
     return Optional.ofNullable(trustAnchors.get(alias));
   }
-*/
 
- @Override
+  @Override
   public Optional<TrustMarkIssuer> getTrustMarkIssuer(final String alias) {
     return Optional.ofNullable(trustMarkIssuers.get(alias));
   }

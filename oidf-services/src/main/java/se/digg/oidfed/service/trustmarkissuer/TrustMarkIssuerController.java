@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.digg.oidfed.service.ApplicationModule;
 import se.digg.oidfed.service.submodule.ResolverModuleRepository;
+import se.digg.oidfed.service.submodule.TrustMarkIssuerRepository;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkListingRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkRequest;
@@ -44,14 +45,14 @@ import java.util.List;
 @ConditionalOnProperty(value = TrustMarkIssuerConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustMarkIssuerController implements ApplicationModule {
 
-  private final ResolverModuleRepository repository;
+  private final TrustMarkIssuerRepository repository;
 
   /**
    * Constructor.
    *
    * @param repository for resolver modules
    */
-  public TrustMarkIssuerController(final ResolverModuleRepository repository) {
+  public TrustMarkIssuerController(final TrustMarkIssuerRepository repository) {
     this.repository = repository;
 
   }
