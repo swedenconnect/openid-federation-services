@@ -14,7 +14,7 @@ openid:
       trust-mark-issuers:
         - alias: "tm"
           issuer-entity-id: "https://sandbox.swedenconnect.se/oidfed/trust-mark-issuer"
-          trust-mark-validity-duration: PT30M
+          trust-mark-validity-duration: PT29M
           sign-key-alias: "sign-key-1"
           trust-marks:
             - trust-mark-id: "http://tm.digg.se/sdk"

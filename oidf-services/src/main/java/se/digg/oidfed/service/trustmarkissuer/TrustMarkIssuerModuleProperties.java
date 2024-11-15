@@ -21,6 +21,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
@@ -69,7 +70,7 @@ public class TrustMarkIssuerModuleProperties {
    */
   public record TrustMarkIssuers(
       String remoteSubjectRepository,
-      Duration trustMarkValidityDuration,
+      @DefaultValue("PT30M") Duration trustMarkValidityDuration,
       String issuerEntityId,
       String signKeyAlias,
       List<TrustMarkIssuer> trustMarks,

@@ -58,19 +58,6 @@ public class TrustMarkIssuerConfiguration {
     return trustMarkIssuers;
   }
 
-  /**
-   * TrustMark sign key, must contain kid
-   * @return JWK
-   */
-  private JWK getSignJWK(String signKey) {
-    try {
-      return JWK.parse(new String(Base64.getDecoder().decode(signKey), Charset.defaultCharset()));
-    }
-    catch (ParseException e) {
-      throw new IllegalArgumentException("Unable to parse signkey",e);
-    }
-  }
-
   private TrustMarkProperties toTrustMarkProperties(TrustMarkIssuerModuleProperties.TrustMarkIssuers properties,
       KeyRegistry keyRegistry) {
 
