@@ -23,16 +23,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.digg.oidfed.common.exception.InvalidRequestException;
+import se.digg.oidfed.common.exception.NotFoundException;
+import se.digg.oidfed.common.exception.ServerErrorException;
 import se.digg.oidfed.service.ApplicationModule;
-import se.digg.oidfed.service.submodule.ResolverModuleRepository;
 import se.digg.oidfed.service.submodule.TrustMarkIssuerRepository;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkListingRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkStatusRequest;
-import se.digg.oidfed.common.exception.InvalidRequestException;
-import se.digg.oidfed.common.exception.NotFoundException;
-import se.digg.oidfed.common.exception.ServerErrorException;
 
 import java.util.List;
 
@@ -42,7 +41,7 @@ import java.util.List;
  * @author Felix Hellman
  */
 @RestController
-@ConditionalOnProperty(value = TrustMarkIssuerConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
+@ConditionalOnProperty(value = TrustMarkIssuerModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustMarkIssuerController implements ApplicationModule {
 
   private final TrustMarkIssuerRepository repository;

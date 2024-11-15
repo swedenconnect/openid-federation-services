@@ -17,14 +17,7 @@
 package se.digg.oidfed.common.entity;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.digg.oidfed.common.tree.CacheSnapshot;
-import se.digg.oidfed.common.tree.Node;
-import se.digg.oidfed.common.tree.SearchRequest;
-import se.digg.oidfed.common.tree.Tree;
-import se.digg.oidfed.common.tree.VersionedInMemoryCache;
 
-import java.util.ArrayDeque;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

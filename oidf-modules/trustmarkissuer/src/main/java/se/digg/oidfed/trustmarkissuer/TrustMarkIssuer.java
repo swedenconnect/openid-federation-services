@@ -27,11 +27,11 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.common.module.Submodule;
-import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.exception.ServerErrorException;
+import se.digg.oidfed.common.module.Submodule;
+import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -85,7 +85,7 @@ public class TrustMarkIssuer implements Submodule {
 
     return getTrustMarkSubject(TrustMarkId.validate(request.trustMarkId(), InvalidRequestException::new),
         request.subject())
-        .map(TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties::getSub)
+        .map(TrustMarkIssuerSubject::sub)
         .toList();
   }
 
@@ -114,10 +114,11 @@ public class TrustMarkIssuer implements Submodule {
     assertNotEmptyThrows(request.subject(), () -> new InvalidRequestException("Subject is expected"));
     final TrustMarkId trustMarkId = TrustMarkId.validate(request.trustMarkId(),InvalidRequestException::new);
 
-    final TrustMarkIssuerProperties trustMarkIssuerProperties = getTrustMarkIssuerProperties(trustMarkId)
+    final TrustMarkProperties.TrustMarkIssuerProperties trustMarkIssuerProperties =
+        getTrustMarkIssuerProperties(trustMarkId)
         .orElseThrow(() -> new NotFoundException("TrustMark not found for id:'"+trustMarkId+"'"));
 
-    final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties trustMarkSubject =
+    final TrustMarkIssuerSubject trustMarkSubject =
         getTrustMarkSubject(trustMarkId, request.subject())
             .findFirst()
             .orElseThrow(() -> new NotFoundException(
@@ -128,28 +129,26 @@ public class TrustMarkIssuer implements Submodule {
     final JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
         .issueTime(new Date(now().toEpochMilli()))
         .jwtID(new BigInteger(128, rng).toString(16))
-        .subject(trustMarkSubject.getSub());
+        .subject(trustMarkSubject.sub());
 
     claimsSetBuilder.expirationTime(
-        calculateExp(trustMarkProperties.trustMarkValidityDuration(), trustMarkSubject.getExpires()));
+        calculateExp(trustMarkProperties.trustMarkValidityDuration(), trustMarkSubject.expires()));
 
     throwIfNull(this.trustMarkProperties.issuerEntityId(), claimsSetBuilder::issuer,
         () -> new ServerErrorException("Issuer must be present"));
 
-    Optional.ofNullable(request.trustMarkId()).ifPresent( (value) -> claimsSetBuilder.claim("id", value));
+    claimsSetBuilder.claim("id", request.trustMarkId());
 
-    Optional.ofNullable(trustMarkIssuerProperties.getLogoUri())
-        .ifPresent( (value) -> claimsSetBuilder.claim("logo_uri", value));
+    trustMarkIssuerProperties.logoUri().ifPresent( (value) -> claimsSetBuilder.claim("logo_uri", value));
 
-    Optional.ofNullable(trustMarkIssuerProperties.getRefUri())
-        .ifPresent( (value) -> claimsSetBuilder.claim("ref", value));
+    trustMarkIssuerProperties.refUri().ifPresent( (value) -> claimsSetBuilder.claim("ref", value));
 
-    Optional.ofNullable(trustMarkIssuerProperties.getDelegation())
+    trustMarkIssuerProperties.delegation()
         .ifPresent( (value) -> claimsSetBuilder.claim("delegation", value.getDelegation()));
 
     final JWTClaimsSet claimsSet = claimsSetBuilder.build();
 
-    final JWK jwk = assertNotEmptyThrows(trustMarkProperties.getSignJWK(),
+    final JWK jwk = assertNotEmptyThrows(trustMarkProperties.signKey(),
         () -> new ServerErrorException("Unable to find key to sign JWK TrustMark"));
     assertNotEmptyThrows(jwk.getKeyID(), () -> new ServerErrorException("Kid is expected on sign key"));
 
@@ -179,10 +178,11 @@ public class TrustMarkIssuer implements Submodule {
    * @param subjectTimeToLive End time for when the subject is valid.
    * @return Date that represents the exp field in Trustmark JWT.
    */
-  protected Date calculateExp(final Duration trustMarkDurationToLive,final Instant subjectTimeToLive) {
+  protected Date calculateExp(final Duration trustMarkDurationToLive,final Optional<Instant> subjectTimeToLive) {
     final Instant calculatedTrustMarkTTL = now().plus(trustMarkDurationToLive);
-    if (subjectTimeToLive != null && calculatedTrustMarkTTL.isAfter(subjectTimeToLive)) {
-      return new Date(subjectTimeToLive.toEpochMilli());
+    if (subjectTimeToLive != null && subjectTimeToLive.isPresent() &&
+        calculatedTrustMarkTTL.isAfter(subjectTimeToLive.get())) {
+      return new Date(subjectTimeToLive.get().toEpochMilli());
     }
     return new Date(calculatedTrustMarkTTL.toEpochMilli());
   }
@@ -192,10 +192,10 @@ public class TrustMarkIssuer implements Submodule {
    * @param trustMarkId TrustMarkId to find
    * @return If TrustMarkIssuerProperties is found Optional is returned.
    */
-  private Optional<TrustMarkIssuerProperties> getTrustMarkIssuerProperties(TrustMarkId trustMarkId){
+  private Optional<TrustMarkProperties.TrustMarkIssuerProperties> getTrustMarkIssuerProperties(TrustMarkId trustMarkId){
     assertNotEmpty(trustMarkId,"TrustMarkId is expected");
     return trustMarkProperties.trustMarks().stream()
-        .filter(trustMarkIssuerProperties -> trustMarkId.equals(trustMarkIssuerProperties.getTrustMarkId()))
+        .filter(trustMarkIssuerProperties -> trustMarkId.equals(trustMarkIssuerProperties.trustMarkId()))
         .findFirst();
   }
 
@@ -207,18 +207,20 @@ public class TrustMarkIssuer implements Submodule {
    * @throws InvalidRequestException If TrustMarkId is not supplied
    * @throws NotFoundException If a trustmark is not found
    */
-  private Stream<TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties> getTrustMarkSubject(
+  private Stream<TrustMarkIssuerSubject> getTrustMarkSubject(
       final TrustMarkId trustMarkId, final String subject) throws InvalidRequestException, NotFoundException {
     assertNotEmptyThrows(trustMarkId, () -> new InvalidRequestException("TrustMarkId is expected"));
 
-    final TrustMarkIssuerProperties trustMarkIssuerProperties =
+    final TrustMarkProperties.TrustMarkIssuerProperties trustMarkIssuerProperties =
         this.getTrustMarkIssuerProperties(trustMarkId)
             .orElseThrow(() -> new NotFoundException(
                 "TrustMark can not be found for trust_mark_id:'" + trustMarkId + "'"));
 
-    return trustMarkIssuerProperties.getSubjects().stream()
-        .filter(this::isTrustMarkValidInTime)
-        .filter(subProp -> subject == null || subProp.getSub().equals(subject));
+    return trustMarkIssuerProperties.trustMarkIssuerSubjectLoader()
+        .loadSubject(this.trustMarkProperties.issuerEntityId(),trustMarkId,Optional.ofNullable(subject)).stream()
+        .filter(this::isTrustMarkValidInTime);
+
+
   }
 
   /**
@@ -228,24 +230,28 @@ public class TrustMarkIssuer implements Submodule {
    * @return True if valid false otherwise
    */
   protected boolean isTrustMarkValidInTime(
-      final TrustMarkIssuerProperties.TrustMarkIssuerSubjectProperties trustMarkSubjectRecord) {
-    if(trustMarkSubjectRecord.isRevoked()){
-      log.debug("Trust Mark is revoked. sub:'{}'", trustMarkSubjectRecord.getSub());
+      final TrustMarkIssuerSubject trustMarkSubjectRecord) {
+    if(trustMarkSubjectRecord.revoked()){
+      log.debug("Trust Mark is revoked. sub:'{}'", trustMarkSubjectRecord.sub());
       return false;
     }
 
-    final Instant expires = trustMarkSubjectRecord.getExpires();
-    if (expires != null && now().isAfter(expires)) {
-      log.debug("Trust Mark for sub:'{}' has expired", trustMarkSubjectRecord.getSub());
-      return false;
-    }
-    final Instant granted = trustMarkSubjectRecord.getGranted();
-    if (granted != null && now().isBefore(granted)) {
-      log.debug("Trust Mark for sub:'{}' is not yet granted", trustMarkSubjectRecord.getSub());
-      return false;
-    }
-    log.debug("Trust Mark for sub:'{}' is valid", trustMarkSubjectRecord.getSub());
 
+    if (trustMarkSubjectRecord.expires()
+        .filter(expires -> now().isAfter(expires) )
+        .isPresent()) {
+      log.debug("Trust Mark for sub:'{}' has expired", trustMarkSubjectRecord.sub());
+      return false;
+    }
+
+    if (trustMarkSubjectRecord.granted()
+        .filter(granted -> now().isBefore(granted) )
+        .isPresent()) {
+      log.debug("Trust Mark for sub:'{}' is not yet granted", trustMarkSubjectRecord.sub());
+      return false;
+    }
+
+    log.debug("Trust Mark for sub:'{}' is valid", trustMarkSubjectRecord.sub());
     return true;
   }
 

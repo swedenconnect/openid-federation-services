@@ -50,7 +50,8 @@ public class SpringEntityProperty {
         entityIdentifier,
         authorityHints,
         isRoot,
-        registry.getKey(signKeyAlias),
+        registry.getKey(signKeyAlias)
+            .orElseThrow(() -> new IllegalArgumentException("Unable to find key for key alias:'"+signKeyAlias+"'")),
         registry.getSet(jwkAlias),
         organizationName);
   }

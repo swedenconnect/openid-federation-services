@@ -17,19 +17,8 @@
 package se.digg.oidfed.trustmarkissuer.dvo;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.jwk.KeyUse;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.id.Identifier;
-import com.nimbusds.oauth2.sdk.id.Issuer;
-import com.nimbusds.oauth2.sdk.id.Subject;
-import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -37,10 +26,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Date;
-import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static se.digg.oidfed.trustmarkissuer.TestDataSetup.createTrustMarkDelegation;
 
 /**

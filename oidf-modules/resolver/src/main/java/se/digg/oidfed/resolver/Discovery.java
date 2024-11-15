@@ -18,8 +18,6 @@ package se.digg.oidfed.resolver;
 
 import se.digg.oidfed.resolver.tree.EntityStatementTree;
 
-import java.util.List;
-
 /**
  * Responsible for discovery.
  *

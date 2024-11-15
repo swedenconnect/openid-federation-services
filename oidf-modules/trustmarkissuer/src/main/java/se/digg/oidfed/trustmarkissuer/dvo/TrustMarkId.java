@@ -21,7 +21,6 @@ import lombok.Getter;
 
 import java.io.Serializable;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**

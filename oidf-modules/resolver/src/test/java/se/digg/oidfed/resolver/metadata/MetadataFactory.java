@@ -1,7 +1,5 @@
 package se.digg.oidfed.resolver.metadata;
 
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 

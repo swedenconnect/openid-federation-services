@@ -18,13 +18,15 @@ package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.PostConstruct;
-import lombok.*;
+import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
+import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
-import java.nio.charset.Charset;
-import java.text.ParseException;
 import java.time.Duration;
-import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertNotEmpty;
 import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertTrue;
@@ -40,34 +42,53 @@ import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertT
  * @author Per Fredrik Plars
  */
 @Builder
-public record  TrustMarkProperties(Duration trustMarkValidityDuration,String issuerEntityId,String signKey,
+@Slf4j
+public record TrustMarkProperties(Duration trustMarkValidityDuration,String issuerEntityId,JWK signKey,
     List<TrustMarkIssuerProperties> trustMarks,String alias) {
 
   /**
-   * TrustMark sign key, must contain kid
-   * @return JWK
-   */
-  public JWK getSignJWK() {
-    try {
-      return JWK.parse(new String(Base64.getDecoder().decode(signKey), Charset.defaultCharset()));
-    }
-    catch (ParseException e) {
-      throw new IllegalArgumentException("Unable to parse signkey",e);
-    }
-  }
-
-  /**
    * Validate content of configuration.
-   * @throws IllegalArgumentException is thrown if something is not right in configuration
+   * @throws IllegalArgumentException is thrown when configuration is missing
    */
   @PostConstruct
   public void validate() throws IllegalArgumentException {
     assertNotEmpty(trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
+    assertNotEmpty(signKey, "SignKey is expected");
     assertNotEmpty(issuerEntityId, "IssuerEntityId is expected");
     assertNotEmpty(trustMarks, "TrustMarks is expected");
     assertNotEmpty(alias, "Alias is expected");
     assertTrue(trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
-        "Expect trustMarkValidityDuration to be grater then 5 minutes");
-    getSignJWK();
+        "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'"+trustMarkValidityDuration+"'");
+
+    this.trustMarks.forEach(TrustMarkIssuerProperties::validate);
+
   }
+
+  /**
+   *
+   * @param trustMarkId The Trust Mark ID
+   * @param logoUri Optional logo for issued Trust Marks
+   * @param refUri Optional URL to information about issued Trust Marks
+   * @param trustMarkIssuerSubjectLoader TrustMarkIssuerSubjectLoader
+   * @param delegation TrustMark delegation
+   */
+  @Builder
+  public record TrustMarkIssuerProperties(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
+      Optional<TrustMarkDelegation> delegation,TrustMarkIssuerSubjectLoader trustMarkIssuerSubjectLoader) {
+
+    /**
+     * Validate content of configuration.
+     * @throws IllegalArgumentException is thrown when configuration is missing
+     */
+    @PostConstruct
+    public void validate() throws IllegalArgumentException {
+      FederationAssert.assertNotEmpty(trustMarkId, "TrustMarkId is expected");
+      FederationAssert.assertNotEmpty(trustMarkIssuerSubjectLoader, "TrustMarkIssuerSubjectLoader is expected");
+      FederationAssert.assertNotEmpty(delegation, "Delegation can not be null");
+      FederationAssert.assertNotEmpty(logoUri, "LogoUri can not be null");
+      FederationAssert.assertNotEmpty(refUri, "RefUri can not be null");
+    }
+
+  }
+
 }

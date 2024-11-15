@@ -21,12 +21,13 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
-import se.digg.oidfed.resolver.ResolverProperties;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.resolver.ResolverProperties;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Configuration properties for Resolver.
@@ -80,6 +81,7 @@ public class ResolverConfigurationProperties {
     public ResolverProperties toResolverProperties(final KeyRegistry registry) {
       final List<JWK> list = trustedKeys.stream()
           .map(registry::getKey)
+          .map(Optional::orElseThrow)
           .toList();
 
       return new ResolverProperties(
@@ -87,7 +89,8 @@ public class ResolverConfigurationProperties {
           duration,
           list,
           entityIdentifier,
-          registry.getKey(signKeyAlias),
+          registry.getKey(signKeyAlias)
+              .orElseThrow(() -> new IllegalArgumentException("Unable to find key for key alias:'"+signKeyAlias+"'")),
           Duration.ofSeconds(10),
           alias
       );
