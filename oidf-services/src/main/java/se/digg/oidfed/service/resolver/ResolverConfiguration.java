@@ -23,10 +23,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -43,6 +43,8 @@ import se.digg.oidfed.resolver.tree.resolution.BFSExecution;
 import se.digg.oidfed.resolver.tree.resolution.DefaultErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
+import se.digg.oidfed.service.resolver.cache.CacheRegistry;
+import se.digg.oidfed.service.resolver.cache.RedisOperations;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
 
 import java.net.http.HttpClient;
@@ -57,7 +59,7 @@ import java.util.concurrent.Executors;
  */
 @Configuration
 @EnableConfigurationProperties(ResolverConfigurationProperties.class)
-@ConditionalOnProperty(value = ResolverConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
+@OnResolverModuleActive
 @Slf4j
 public class ResolverConfiguration {
   @Bean
@@ -97,17 +99,25 @@ public class ResolverConfiguration {
       final RedisTemplate<String, Integer> versionTemplate,
       final RedisOperations redisOperations,
       final MetadataProcessor processor,
-      final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory
+      final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory,
+      final CacheRegistry registry
   ) {
-    return new ResolverFactory(versionTemplate, redisOperations, processor, entityStatementTreeLoaderFactory);
+    return new ResolverFactory(versionTemplate, redisOperations, processor, entityStatementTreeLoaderFactory, registry);
+  }
+
+  @Bean
+  CacheRegistry cacheRegistry() {
+    return new CacheRegistry();
   }
 
   @Bean
   EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory(
       final EntityStatementIntegration integration,
       final ExecutionStrategy strategy,
-      final ErrorContextFactory factory) {
-    return new EntityStatementTreeLoaderFactory(integration, strategy, factory);
+      final ErrorContextFactory factory,
+      final ApplicationEventPublisher publisher
+  ) {
+    return new EntityStatementTreeLoaderFactory(integration, strategy, factory, publisher);
   }
 
   @Bean
