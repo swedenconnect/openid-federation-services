@@ -1,0 +1,22 @@
+name: Automated publication of docker image
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      - run: mvn clean install
+      - run: cd oidf-services; DOCKER_REPO=ghcr.io mvn clean package jib:build
