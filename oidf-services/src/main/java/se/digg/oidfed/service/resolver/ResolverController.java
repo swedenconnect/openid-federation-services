@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.resolver;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,7 +36,7 @@ import java.util.List;
  * @author Felix Hellman
  */
 @RestController
-@ConditionalOnProperty(value = ResolverConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
+@OnResolverModuleActive
 public class ResolverController implements ApplicationModule {
 
   private final ResolverModuleRepository repository;

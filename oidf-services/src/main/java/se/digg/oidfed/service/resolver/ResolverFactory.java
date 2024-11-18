@@ -20,7 +20,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.digg.oidfed.common.tree.Tree;
-import se.digg.oidfed.common.tree.VersionedCacheLayer;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.resolver.ResolverProperties;
 import se.digg.oidfed.resolver.ResolverResponseFactory;
@@ -30,6 +29,10 @@ import se.digg.oidfed.resolver.chain.CriticalClaimsValidationStep;
 import se.digg.oidfed.resolver.chain.SignatureValidationStep;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.tree.EntityStatementTree;
+import se.digg.oidfed.service.resolver.cache.CacheRegistration;
+import se.digg.oidfed.service.resolver.cache.CacheRegistry;
+import se.digg.oidfed.service.resolver.cache.RedisOperations;
+import se.digg.oidfed.service.resolver.cache.RedisVersionedCacheLayer;
 
 import java.time.Clock;
 import java.util.List;
@@ -45,32 +48,44 @@ public class ResolverFactory {
   private final RedisOperations redisOperations;
   private final MetadataProcessor processor;
   private final EntityStatementTreeLoaderFactory treeLoaderFactory;
+  private final CacheRegistry registry;
 
   /**
    * Constructor.
+   *
    * @param versionTemplate to use for cache
    * @param redisOperations to use for cache
    * @param processor to use for metadata
    * @param treeLoaderFactory to use for creating tree loaders
+   * @param registry for caches
    */
   public ResolverFactory(final RedisTemplate<String, Integer> versionTemplate, final RedisOperations redisOperations,
-      final MetadataProcessor processor, final EntityStatementTreeLoaderFactory treeLoaderFactory) {
+      final MetadataProcessor processor, final EntityStatementTreeLoaderFactory treeLoaderFactory,
+      final CacheRegistry registry) {
     this.versionTemplate = versionTemplate;
     this.redisOperations = redisOperations;
     this.processor = processor;
     this.treeLoaderFactory = treeLoaderFactory;
+    this.registry = registry;
   }
 
   /**
    * Creates a new instance of a {@link Resolver}
+   *
    * @param properties to create a module from
    * @return new instance
    */
   public Resolver create(final ResolverProperties properties) {
     final RedisVersionedCacheLayer redisVersionedCacheLayer =
         new RedisVersionedCacheLayer(versionTemplate, redisOperations, properties);
-    return new Resolver(properties, createChainValidator(properties), entityStatementTree(properties,
-        createTree(redisVersionedCacheLayer), redisVersionedCacheLayer), processor,
+    final EntityStatementTree entityStatementTree = new EntityStatementTree(new Tree<>(redisVersionedCacheLayer));
+    registry.registerCache(properties.alias(), new CacheRegistration(
+        entityStatementTree,
+        treeLoaderFactory.create(properties),
+        redisVersionedCacheLayer,
+        properties
+    ));
+    return new Resolver(properties, createChainValidator(properties), entityStatementTree, processor,
         resolverResponseFactory(properties));
   }
 
@@ -84,15 +99,6 @@ public class ResolverFactory {
         new ConstraintsValidationStep(),
         new CriticalClaimsValidationStep()
     ));
-  }
-
-  private EntityStatementTree entityStatementTree(
-      final ResolverProperties properties,
-      final Tree<EntityStatement> tree, final VersionedCacheLayer<EntityStatement> versionedCacheLayer) {
-    final EntityStatementTree entityStatementTree = new EntityStatementTree(tree);
-    entityStatementTree.load(treeLoaderFactory.create(versionedCacheLayer, properties),
-        "%s/.well-known/openid-federation".formatted(properties.trustAnchor()));
-    return entityStatementTree;
   }
 
   private ResolverResponseFactory resolverResponseFactory(final ResolverProperties properties) {

@@ -17,6 +17,7 @@
 package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import org.springframework.context.ApplicationEventPublisher;
 import se.digg.oidfed.common.tree.VersionedCacheLayer;
 import se.digg.oidfed.resolver.ResolverProperties;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
@@ -24,6 +25,7 @@ import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
 import se.digg.oidfed.resolver.tree.resolution.ScheduledStepRecoveryStrategy;
+import se.digg.oidfed.service.resolver.cache.TreeUpdatedEvent;
 
 import java.util.concurrent.Executors;
 
@@ -36,34 +38,33 @@ public class EntityStatementTreeLoaderFactory {
   private final EntityStatementIntegration integration;
   private final ExecutionStrategy executionStrategy;
   private final ErrorContextFactory errorContextFactory;
+  private final ApplicationEventPublisher publisher;
 
   /**
    * @param integration for fetching entities
    * @param executionStrategy for executing iterations
    * @param errorContextFactory for creating error context
+   * @param publisher publisher of events.
    */
-  public EntityStatementTreeLoaderFactory(
-      final EntityStatementIntegration integration,
+  public EntityStatementTreeLoaderFactory(final EntityStatementIntegration integration,
       final ExecutionStrategy executionStrategy,
-      final ErrorContextFactory errorContextFactory) {
+      final ErrorContextFactory errorContextFactory, final ApplicationEventPublisher publisher) {
     this.integration = integration;
     this.executionStrategy = executionStrategy;
     this.errorContextFactory = errorContextFactory;
+    this.publisher = publisher;
   }
 
   /**
    * Creates a new EntityStatementTreeLoader
-   * @param versionedCacheLayer to store data
    * @param properties for the loader
    * @return new instance of a tree loader
    */
-  public EntityStatementTreeLoader create(
-      final VersionedCacheLayer<EntityStatement> versionedCacheLayer,
-      final ResolverProperties properties) {
+  public EntityStatementTreeLoader create(final ResolverProperties properties) {
     return new EntityStatementTreeLoader(integration, executionStrategy,
         new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
         errorContextFactory)
-        .withAdditionalPostHook(versionedCacheLayer::useNextVersion);
+        .withAdditionalPostHook(() -> publisher.publishEvent(new TreeUpdatedEvent(properties.alias())));
   }
 
 }

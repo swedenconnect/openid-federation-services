@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
+package se.digg.oidfed.service.resolver.cache;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.RedisTemplate;
