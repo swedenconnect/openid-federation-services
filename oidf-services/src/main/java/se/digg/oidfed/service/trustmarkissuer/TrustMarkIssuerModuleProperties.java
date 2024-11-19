@@ -48,7 +48,7 @@ public class TrustMarkIssuerModuleProperties {
   private List<TrustMarkIssuers> trustMarkIssuers;
 
   /**
-   * Validate content of the configuration
+   * Validate data of configuration
    */
   @PostConstruct
   public void validate(){
@@ -61,26 +61,24 @@ public class TrustMarkIssuerModuleProperties {
   /**
    * TrustMark issuers
    *
-   * @param remoteSubjectRepository Remote
+   * @param remoteSubjectRepositoryUrl Remote subject repository
+   * @param remoteSubjectRepositoryJwtTrustKeyAlias Trust key when verify signature of trustmark register JWT token
    * @param trustMarkValidityDuration ValidityDuration of the TrustMark JWT token. Default value is PT30M
-   * @param issuerEntityId EntityId of this trustmark issuer
-   * @param signKeyAlias Alias to the key that is used when signing this trustmark
+   * @param entityIdentifier EntityId of this trustmark issuer
    * @param trustMarks List of defined trustmarks
    * @param alias Alias name for this trust mark issuer
    */
   public record TrustMarkIssuers(
-      String remoteSubjectRepository,
+      String alias,
+      String entityIdentifier,
+      String remoteSubjectRepositoryUrl,
+      String remoteSubjectRepositoryJwtTrustKeyAlias,
       @DefaultValue("PT30M") Duration trustMarkValidityDuration,
-      String issuerEntityId,
-      String signKeyAlias,
-      List<TrustMarkIssuer> trustMarks,
-      String alias) {
+      List<TrustMarkIssuer> trustMarks) {
     /**
      *  Validate content of the configuration
      */
     public void validate(){
-      FederationAssert.assertNotEmpty(signKeyAlias,
-          "SignKeyAlias is empty. Must be configured");
       FederationAssert.assertNotEmpty(trustMarks,
           "TrustMarks is empty. Must be configured");
 

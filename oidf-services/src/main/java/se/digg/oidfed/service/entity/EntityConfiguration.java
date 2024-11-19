@@ -24,7 +24,9 @@ import se.digg.oidfed.common.entity.EntityRegistry;
 import se.digg.oidfed.common.entity.EntityStatementFactory;
 import se.digg.oidfed.common.keys.KeyRegistry;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Configuration for entity registry.
@@ -39,11 +41,14 @@ public class EntityConfiguration {
   EntityRegistry entityRegistry(
       final EntityConfigurationProperties properties,
       final KeyRegistry keyRegistry) {
+
     final List<EntityProperties> mappedProperties =
-        properties.getEntityRegistry()
+        Optional.ofNullable(properties.getEntityRegistry())
+            .orElse(Collections.emptyList())
             .stream()
             .map(p -> p.toEntityProperties(keyRegistry))
             .toList();
+
     return new EntityRegistry(mappedProperties);
   }
 

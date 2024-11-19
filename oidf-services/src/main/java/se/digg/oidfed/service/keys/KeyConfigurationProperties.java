@@ -16,11 +16,13 @@
  */
 package se.digg.oidfed.service.keys;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.digg.oidfed.common.keys.KeyProperty;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.util.List;
 

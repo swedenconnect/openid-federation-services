@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
-@ActiveProfiles({ "trustmark", "integration-test" })
+@ActiveProfiles({"integration-test" })
 class TrustMarkIT extends IntegrationTestParent {
 
 
@@ -42,8 +42,8 @@ class TrustMarkIT extends IntegrationTestParent {
   @Test
   public void testTrustMark() {
     given()
-        .param("trust_mark_id", "http://tm.digg.se/sdk")
-        .param("sub", "http://www.pensionsmyndigheten.se/openidfed")
+        .param("trust_mark_id", "http://test.digg.se/tmi/sdk")
+        .param("sub", "http://test.pensionsmyndigheten.se/openidfed")
         .when().log().all()
         .get("/trust_mark")
         .then().log().all()
@@ -55,8 +55,8 @@ class TrustMarkIT extends IntegrationTestParent {
   @Test
   public void testTrustMarkListing() {
     given()
-        .param("trust_mark_id", "http://tm.digg.se/sdk")
-        .param("sub", "http://www.pensionsmyndigheten.se/openidfed")
+        .param("trust_mark_id", "http://test.digg.se/tmi/sdk")
+        .param("sub", "http://test.pensionsmyndigheten.se/openidfed")
         .when()
         .get("/trust_mark_listing")
         .then()
@@ -68,8 +68,8 @@ class TrustMarkIT extends IntegrationTestParent {
   @Test
   public void testTrustMarkStatusActive() {
     given()
-        .param("trust_mark_id", "http://tm.digg.se/sdk")
-        .param("sub", "http://www.pensionsmyndigheten.se/openidfed")
+        .param("trust_mark_id", "http://test.digg.se/tmi/sdk")
+        .param("sub", "http://test.pensionsmyndigheten.se/openidfed")
         .when()
         .post("/trust_mark_status")
         .then()
@@ -82,7 +82,7 @@ class TrustMarkIT extends IntegrationTestParent {
   @Test
   public void testTrustMarkStatusNotActive() {
     given()
-        .param("trust_mark_id", "http://tm.digg.se/sdk")
+        .param("trust_mark_id", "http://test.digg.se/tmi/sdk")
         .param("sub", "http://www.pensionsmyndigheten.se/notfound")
         .when()
         .post("/trust_mark_status")

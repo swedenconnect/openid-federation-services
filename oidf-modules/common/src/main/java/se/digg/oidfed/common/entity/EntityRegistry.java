@@ -42,7 +42,7 @@ public class EntityRegistry {
    */
   public Optional<EntityProperties> getEntity(final String path) {
     if (Objects.isNull(path) || path.isEmpty() || path.equalsIgnoreCase("/")) {
-      return Optional.of(root);
+      return Optional.ofNullable(root);
     }
     return Optional.ofNullable(pathedEntities.get(path));
   }
@@ -76,7 +76,7 @@ public class EntityRegistry {
     final EntityProperties root = entityProperties.stream()
         .filter(EntityProperties::getIsRoot)
         .findFirst()
-        .orElseThrow();
+        .orElse(null);
 
     this.root = root;
 

@@ -134,7 +134,7 @@ public class TrustMarkIssuer implements Submodule {
     claimsSetBuilder.expirationTime(
         calculateExp(trustMarkProperties.trustMarkValidityDuration(), trustMarkSubject.expires()));
 
-    throwIfNull(this.trustMarkProperties.issuerEntityId(), claimsSetBuilder::issuer,
+    throwIfNull(this.trustMarkProperties.issuerEntityId(), entityID -> claimsSetBuilder.issuer(entityID.getValue()),
         () -> new ServerErrorException("Issuer must be present"));
 
     claimsSetBuilder.claim("id", request.trustMarkId());
@@ -217,7 +217,8 @@ public class TrustMarkIssuer implements Submodule {
                 "TrustMark can not be found for trust_mark_id:'" + trustMarkId + "'"));
 
     return trustMarkIssuerProperties.trustMarkIssuerSubjectLoader()
-        .loadSubject(this.trustMarkProperties.issuerEntityId(),trustMarkId,Optional.ofNullable(subject)).stream()
+        .loadSubject(this.trustMarkProperties.issuerEntityId().getValue(),
+            trustMarkId,Optional.ofNullable(subject)).stream()
         .filter(this::isTrustMarkValidInTime);
 
 

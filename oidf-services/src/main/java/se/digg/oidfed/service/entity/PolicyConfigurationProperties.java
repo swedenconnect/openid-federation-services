@@ -17,15 +17,19 @@
 package se.digg.oidfed.service.entity;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.io.Resource;
 import se.digg.oidfed.common.entity.PolicyProperty;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Properties for policy registry
@@ -37,6 +41,14 @@ import java.util.Map;
 @ConfigurationProperties("openid.federation.policy-registry")
 public class PolicyConfigurationProperties {
   private List<PolicyRecordProperty> policies;
+
+  /**
+   * Validate configuration data
+   */
+  @PostConstruct
+  public void validate() {
+    Optional.ofNullable(policies).orElse(Collections.emptyList()).forEach(PolicyRecordProperty::validate);
+  }
 
   /**
    * Record for an individual policy.
@@ -61,6 +73,18 @@ public class PolicyConfigurationProperties {
       catch (final Exception e) {
         throw new EntityConfigurationException("Policy parsing failed", e);
       }
+    }
+
+    /**
+     * Validate configuration data
+     */
+    @PostConstruct
+    public void validate() {
+      FederationAssert.assertNotEmpty(resource,
+          "openid.federation.policy-registry.policies[].resource is empty. Must be configured");
+      FederationAssert.assertNotEmpty(name,
+          "openid.federation.policy-registry.policies[].name is empty. Must be configured");
+
     }
   }
 }

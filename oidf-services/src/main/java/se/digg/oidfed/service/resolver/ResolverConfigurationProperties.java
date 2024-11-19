@@ -17,12 +17,15 @@
 package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.jose.jwk.JWK;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.resolver.ResolverProperties;
+import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -50,6 +53,18 @@ public class ResolverConfigurationProperties {
   private String trustStoreBundle;
   /** Set to true if this module should be active or not. */
   private Boolean active;
+
+
+  /**
+   * Validate data of configuration
+   */
+  @PostConstruct
+  public void validate(){
+    FederationAssert.assertNotEmpty(resolvers,
+        "resolvers is empty. Must be configured");
+
+    resolvers.forEach(ResolverModuleProperties::validate);
+  }
 
   /**
    * Configuration properties for each resolver module.
@@ -94,6 +109,15 @@ public class ResolverConfigurationProperties {
           Duration.ofSeconds(10),
           alias
       );
+    }
+
+    /**
+     * Validate configuration data
+     */
+    public void validate(){
+      FederationAssert.assertNotEmpty(trustAnchor,
+          "trustAnchor is empty. Must be configured");
+
     }
 
   }

@@ -16,10 +16,13 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.common.entity.EntityProperties;
+import se.digg.oidfed.common.entity.EntityRegistry;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubject;
@@ -40,29 +43,36 @@ import java.util.Optional;
 public class TrustMarkIssuerConfiguration {
 
   @Bean
-  List<TrustMarkIssuer> trustMarkIssuer(TrustMarkIssuerModuleProperties properties, KeyRegistry keyRegistry){
+  List<TrustMarkIssuer> trustMarkIssuer(TrustMarkIssuerModuleProperties properties, KeyRegistry keyRegistry,
+      EntityRegistry entityRegistry){
+
+
     final List<TrustMarkIssuerModuleProperties.TrustMarkIssuers> trustMarkIssuersProperties =
         Optional.ofNullable(properties.getTrustMarkIssuers())
             .orElseThrow(() -> new IllegalArgumentException("TrustMarkIssuers is empty. Check application properties"));
 
-    final List<TrustMarkIssuer> trustMarkIssuers = trustMarkIssuersProperties.stream()
-        .map(tmi -> toTrustMarkProperties(tmi,keyRegistry))
+    return trustMarkIssuersProperties.stream()
+        .map(tmi -> toTrustMarkProperties(tmi,entityRegistry))
         .peek(TrustMarkProperties::validate)
-        .map(TrustMarkIssuer::new).toList();
-
-    return trustMarkIssuers;
+        .map(TrustMarkIssuer::new)
+        .toList();
   }
 
   private TrustMarkProperties toTrustMarkProperties(TrustMarkIssuerModuleProperties.TrustMarkIssuers properties,
-      KeyRegistry keyRegistry) {
+      EntityRegistry entityRegistry) {
+    final EntityID issuerEntityId = new EntityID(properties.entityIdentifier());
+    final EntityProperties entityProperties = entityRegistry.getEntity(issuerEntityId)
+        .orElseThrow(() ->
+            new IllegalArgumentException("Missing matching entityid in entityregistry: '%s'"
+                .formatted(properties.entityIdentifier())));
+
+
 
     return TrustMarkProperties.builder()
-        .issuerEntityId(properties.issuerEntityId())
+        .issuerEntityId(issuerEntityId)
         .alias(properties.alias())
         .trustMarkValidityDuration(properties.trustMarkValidityDuration())
-        .signKey(keyRegistry.getKey(properties.signKeyAlias())
-            .orElseThrow(() ->
-                new IllegalArgumentException("Unable to find key for key alias:'"+properties.signKeyAlias()+"'")))
+        .signKey(entityProperties.getSignKey())
         .trustMarks(properties.trustMarks().stream()
             .map(tmIssuer -> TrustMarkProperties.TrustMarkIssuerProperties
                 .builder()

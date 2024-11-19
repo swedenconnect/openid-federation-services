@@ -21,6 +21,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.PolicyRegistry;
 
+import java.util.Collections;
+import java.util.Optional;
+
 /**
  * Configuration class for policy.
  *
@@ -31,7 +34,8 @@ import se.digg.oidfed.common.entity.PolicyRegistry;
 public class PolicyConfiguration {
   @Bean
   PolicyRegistry policyRegistry(final PolicyConfigurationProperties properties) {
-    return new PolicyRegistry(properties.getPolicies().stream().map(
-        PolicyConfigurationProperties.PolicyRecordProperty::toRecord).toList());
+    return new PolicyRegistry(Optional.ofNullable(properties.getPolicies()).orElse(Collections.emptyList())
+        .stream().map(PolicyConfigurationProperties.PolicyRecordProperty::toRecord).toList());
   }
+
 }
