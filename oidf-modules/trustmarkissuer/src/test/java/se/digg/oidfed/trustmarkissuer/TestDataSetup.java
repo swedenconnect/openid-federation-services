@@ -29,6 +29,7 @@ import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.id.Subject;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
@@ -52,7 +53,7 @@ public class TestDataSetup {
 
     final TrustMarkProperties trustMarkProperties = TrustMarkProperties.builder()
         .trustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES))
-        .issuerEntityId("https://tmissuer.digg.se")
+        .issuerEntityId(new EntityID("https://tmissuer.digg.se"))
         .signKey(generateKey())
         .trustMarks(new ArrayList<>())
         .alias("tm")

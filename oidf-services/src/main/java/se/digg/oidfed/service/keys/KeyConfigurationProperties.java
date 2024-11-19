@@ -16,11 +16,13 @@
  */
 package se.digg.oidfed.service.keys;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.digg.oidfed.common.keys.KeyProperty;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.util.List;
 
@@ -37,4 +39,12 @@ public class KeyConfigurationProperties {
   /** Key properties to add to the registry */
   @NestedConfigurationProperty
   private List<KeyProperty> keys;
+
+  /**
+   * Validate configuration data
+   */
+  @PostConstruct
+  public void validate(){
+    FederationAssert.assertNotEmpty(keys,"Expected keys in openid.federation.key-registry");
+  }
 }

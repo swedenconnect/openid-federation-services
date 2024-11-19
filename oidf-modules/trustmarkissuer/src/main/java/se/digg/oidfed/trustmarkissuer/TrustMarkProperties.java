@@ -17,6 +17,7 @@
 package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.PostConstruct;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,7 @@ import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertT
  */
 @Builder
 @Slf4j
-public record TrustMarkProperties(Duration trustMarkValidityDuration,String issuerEntityId,JWK signKey,
+public record TrustMarkProperties(Duration trustMarkValidityDuration, EntityID issuerEntityId,JWK signKey,
     List<TrustMarkIssuerProperties> trustMarks,String alias) {
 
   /**

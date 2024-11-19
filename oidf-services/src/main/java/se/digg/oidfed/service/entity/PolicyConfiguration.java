@@ -34,4 +34,5 @@ public class PolicyConfiguration {
     return new PolicyRegistry(properties.getPolicies().stream().map(
         PolicyConfigurationProperties.PolicyRecordProperty::toRecord).toList());
   }
+
 }
