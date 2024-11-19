@@ -1,2 +1,12 @@
-# openid-federation-services
-OpenID Federation Services
+# OpenID Federation Services
+
+Implementation of OpenId Federation Specification
+
+
+## TrustAnchor / Intermediate 
+
+
+## TrustMark
+
+
+## Resolver

@@ -19,6 +19,8 @@ package se.digg.oidfed.trustanchor;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.digg.oidfed.common.entity.EntityProperties;
 import se.digg.oidfed.common.entity.EntityRegistry;
+import se.digg.oidfed.common.exception.InvalidIssuerException;
+import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.module.Submodule;
 
 import java.util.List;
@@ -56,9 +58,15 @@ public class TrustAnchor implements Submodule {
    * @param request to fetch entity statement for
    * @return entity statement
    */
-  public String fetchEntityStatement(final EntityStatementRequest request) {
-    final EntityProperties issuer = registry.getEntity(this.properties.getEntityId()).orElseThrow();
-    final EntityProperties subject = registry.getEntity(new EntityID(request.subject())).orElseThrow();
+  public String fetchEntityStatement(final EntityStatementRequest request)
+      throws  InvalidRequestException, InvalidIssuerException {
+    final EntityProperties issuer = registry.getEntity(this.properties.getEntityId())
+        .orElseThrow(() ->
+            new InvalidIssuerException("Entity not found for:'%s'".formatted(this.properties.getEntityId())));
+    final EntityProperties subject = registry.getEntity(new EntityID(request.subject()))
+        .orElseThrow(() ->
+            new InvalidRequestException("Entity not found for subject:'%s'".formatted(request.subject())));
+
 
     final Predicate<TrustAnchorProperties.SubordinateListingProperty> subordinatePredicate = sub -> sub
         .getEntityIdentifier()
@@ -68,7 +76,7 @@ public class TrustAnchor implements Submodule {
         this.properties.getSubordinateListing().stream().filter(subordinatePredicate).findFirst();
 
     if (subordinateListing.isEmpty()) {
-      throw new IllegalArgumentException("Subject is not listed under this issuer iss:%s sub:%s"
+      throw new InvalidRequestException("Subject is not listed under this issuer iss:%s sub:%s"
           .formatted(issuer.getEntityIdentifier(), subject.getEntityIdentifier()));
     }
 

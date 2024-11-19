@@ -16,20 +16,41 @@
 
 package se.digg.oidfed.service.error;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import se.digg.oidfed.common.exception.FederationException;
+import se.digg.oidfed.common.exception.NotFoundException;
+import se.digg.oidfed.common.exception.ServerErrorException;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Error handling that formats error responses to federarion standards
+ * Error Handler ControllerAdvice.
+ *
+ * All error response are transformed according to:
+ * {
+ *   "error":"server_error",
+ *   "error_description":"Human understandable description of the problem"
+ * }
  *
  * @author Per Fredrik Plars
  */
+@Slf4j
 @ControllerAdvice
-public class ErrorHandler {
+public class ErrorHandler extends ResponseEntityExceptionHandler {
 
   /**
    * Handle FederationException
@@ -38,9 +59,34 @@ public class ErrorHandler {
    */
   @ExceptionHandler(FederationException.class)
   public ResponseEntity<Map<String, String>> handleFederationException(FederationException ex) {
-    return ResponseEntity.status(ex.httpStatusCode()).body(ex.toJSONObject());
+    return ResponseEntity
+        .status(ex.httpStatusCode())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(ex.toJSONObject());
   }
 
+  @Override
+  protected ResponseEntity<Object> handleExceptionInternal(final Exception ex, final Object body,
+      final HttpHeaders headers,
+      final HttpStatusCode statusCode, final WebRequest request) {
+    if(statusCode.is5xxServerError()){
+      log.error("Error serving request:'%s'".formatted(ex.getMessage()),ex);
+    }
+    return super.handleExceptionInternal(ex, body, headers, statusCode, request);
+  }
 
+  @Override
+  protected ResponseEntity<Object> createResponseEntity(@Nullable Object body, HttpHeaders headers,
+      HttpStatusCode statusCode, WebRequest request) {
+    String error = HttpStatus.valueOf(statusCode.value()).getReasonPhrase();
+    String errorDescription ="Unknown server error";
+    if (body instanceof ProblemDetail){
+      error = Optional.ofNullable(((ProblemDetail) body).getTitle())
+          .orElse("server_error").toLowerCase().replace(' ','_');
+      errorDescription = ((ProblemDetail) body).getDetail();
+    }
+    return new ResponseEntity<>(
+        Map.of("error", error, "error_description", errorDescription) , headers, statusCode);
+  }
 
 }

@@ -53,6 +53,31 @@
         </dependencies>
     </dependencyManagement>
 
+    <developers>
+        <developer>
+            <id>felix</id>
+            <name>Felix Hellman</name>
+            <email>felix@litsec.se</email>
+            <url>http://www.litsec.se</url>
+            <organization>SwedenConnect</organization>
+            <organizationUrl>https://www.swedenconnect.se</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>plarsa</id>
+            <name>Per Fredrik Plars</name>
+            <email>pf@litsec.se</email>
+            <url>http://www.litsec.se</url>
+            <organization>SwedenConnect</organization>
+            <organizationUrl>https://www.swedenconnect.se</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
+
     <build>
         <plugins>
 
@@ -185,6 +210,13 @@
                         <phase>verify</phase>
                         <goals>
                             <goal>report-integration</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
                         </goals>
                     </execution>
                     <execution>

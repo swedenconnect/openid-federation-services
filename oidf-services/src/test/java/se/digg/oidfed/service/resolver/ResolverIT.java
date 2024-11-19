@@ -16,11 +16,14 @@
  */
 package se.digg.oidfed.service.resolver;
 
+import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import se.digg.oidfed.resolver.ResolverRequest;
 import se.digg.oidfed.service.IntegrationTestParent;
+
+import java.text.ParseException;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("integration-test")
@@ -28,12 +31,13 @@ class ResolverIT extends IntegrationTestParent {
 
 
   @Test
-  void resolveFederation() {
+  void resolveFederation() throws ParseException {
 
     final ResolverClient resolverClient = new ResolverClient(serverPort);
     final String resolved = resolverClient.resolve(new ResolverRequest(
         "http://localhost:9090/intermediate/relyingparty",
         "http://localhost:9090/trustanchor", "")
     );
+    SignedJWT.parse(resolved);
   }
 }
