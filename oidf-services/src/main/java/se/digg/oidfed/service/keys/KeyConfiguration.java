@@ -21,6 +21,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.keys.KeyRegistry;
 
+import java.util.Collections;
+import java.util.Optional;
+
 /**
  * Configuration class for keys and key-registry.
  *
@@ -32,7 +35,7 @@ public class KeyConfiguration {
   @Bean
   KeyRegistry keyRegistry(final KeyConfigurationProperties properties) {
     final KeyRegistry keyRegistry = new KeyRegistry();
-    properties.getKeys().forEach(keyRegistry::register);
+    Optional.ofNullable(properties.getKeys()).orElse(Collections.emptyList()).forEach(keyRegistry::register);
     return keyRegistry;
   }
 }

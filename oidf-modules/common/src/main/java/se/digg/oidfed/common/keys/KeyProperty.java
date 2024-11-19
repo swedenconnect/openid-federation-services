@@ -31,4 +31,5 @@ public class KeyProperty {
   private String key;
   /** Alias for a given key*/
   private String alias;
+
 }

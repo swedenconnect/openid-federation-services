@@ -43,18 +43,6 @@ public class EntityConfigurationProperties {
   @NestedConfigurationProperty
   private List<SpringEntityProperty> entityRegistry;
 
-  /**
-   * Validate data of configuration
-   */
-  @PostConstruct
-  public void validate(){
-    FederationAssert.assertNotEmpty(basePath,
-        "openid.federation.entity-registry.basePath is empty. Must be configured");
-    FederationAssert.assertNotEmpty(entityRegistry,
-        "openid.federation.entity-registry.entityRegistry is empty. Must be configured");
-
-  }
-
 }
 
 

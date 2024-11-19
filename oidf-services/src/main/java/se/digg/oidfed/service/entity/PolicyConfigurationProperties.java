@@ -26,8 +26,10 @@ import se.digg.oidfed.common.entity.PolicyProperty;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Properties for policy registry
@@ -45,9 +47,7 @@ public class PolicyConfigurationProperties {
    */
   @PostConstruct
   public void validate() {
-    FederationAssert.assertNotEmpty(policies,
-        "openid.federation.policy-registry.policies is empty. Must be configured");
-      policies.forEach(PolicyRecordProperty::validate);
+    Optional.ofNullable(policies).orElse(Collections.emptyList()).forEach(PolicyRecordProperty::validate);
   }
 
   /**

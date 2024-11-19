@@ -39,12 +39,4 @@ public class KeyConfigurationProperties {
   /** Key properties to add to the registry */
   @NestedConfigurationProperty
   private List<KeyProperty> keys;
-
-  /**
-   * Validate configuration data
-   */
-  @PostConstruct
-  public void validate(){
-    FederationAssert.assertNotEmpty(keys,"Expected keys in openid.federation.key-registry");
-  }
 }
