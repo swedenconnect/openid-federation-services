@@ -23,6 +23,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
@@ -46,6 +47,7 @@ import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
 import se.digg.oidfed.service.resolver.cache.CacheRegistry;
 import se.digg.oidfed.service.resolver.cache.RedisOperations;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
+import se.digg.oidfed.service.rest.RestClientRegistry;
 
 import java.net.http.HttpClient;
 import java.util.List;
@@ -85,8 +87,8 @@ public class ResolverConfiguration {
   }
 
   @Bean
-  EntityStatementIntegration integration() {
-    return new RestClientEntityStatementIntegration();
+  EntityStatementIntegration integration(@Qualifier("resolver-client") final RestClient client) {
+    return new RestClientEntityStatementIntegration(client);
   }
 
   @Bean
@@ -156,19 +158,11 @@ public class ResolverConfiguration {
   }
 
   @Bean
-  RestClient resolverClient(final SslBundles bundles, final ResolverConfigurationProperties properties) {
-    final HttpClient.Builder builder = HttpClient.newBuilder();
-
-    Optional.ofNullable(properties.getTrustStoreBundle())
-        .ifPresentOrElse(bundleName -> {
-              final SslBundle bundle = bundles.getBundle(bundleName);
-              builder.sslContext(bundle.createSslContext());
-            },
-            () -> log.info("Resolver was started without a trust-store, using default ..."));
-
-    return RestClient.builder()
-        .requestFactory(new JdkClientHttpRequestFactory(builder.build()))
-        .build();
+  @Qualifier("resolver-client")
+  RestClient resolverClient(final ResolverConfigurationProperties properties, final RestClientRegistry registry) {
+    return registry
+        .getClient(properties.getClient())
+        .orElseThrow();
   }
 
   @Bean

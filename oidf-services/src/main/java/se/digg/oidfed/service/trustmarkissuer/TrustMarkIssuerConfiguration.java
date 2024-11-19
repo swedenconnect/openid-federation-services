@@ -21,8 +21,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import se.digg.oidfed.common.entity.EntityProperties;
-import se.digg.oidfed.common.entity.EntityRegistry;
+import se.digg.oidfed.common.entity.EntityRecord;
+import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubject;
@@ -44,7 +44,7 @@ public class TrustMarkIssuerConfiguration {
 
   @Bean
   List<TrustMarkIssuer> trustMarkIssuer(TrustMarkIssuerModuleProperties properties, KeyRegistry keyRegistry,
-      EntityRegistry entityRegistry){
+      EntityRecordRegistry entityRegistry){
 
 
     final List<TrustMarkIssuerModuleProperties.TrustMarkIssuers> trustMarkIssuersProperties =
@@ -59,9 +59,9 @@ public class TrustMarkIssuerConfiguration {
   }
 
   private TrustMarkProperties toTrustMarkProperties(TrustMarkIssuerModuleProperties.TrustMarkIssuers properties,
-      EntityRegistry entityRegistry) {
+      EntityRecordRegistry entityRegistry) {
     final EntityID issuerEntityId = new EntityID(properties.entityIdentifier());
-    final EntityProperties entityProperties = entityRegistry.getEntity(issuerEntityId)
+    final EntityRecord entityProperties = entityRegistry.getEntity(issuerEntityId)
         .orElseThrow(() ->
             new IllegalArgumentException("Missing matching entityid in entityregistry: '%s'"
                 .formatted(properties.entityIdentifier())));

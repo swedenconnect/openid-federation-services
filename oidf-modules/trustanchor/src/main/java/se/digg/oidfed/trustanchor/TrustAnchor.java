@@ -17,8 +17,8 @@
 package se.digg.oidfed.trustanchor;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.digg.oidfed.common.entity.EntityProperties;
-import se.digg.oidfed.common.entity.EntityRegistry;
+import se.digg.oidfed.common.entity.EntityRecord;
+import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.exception.InvalidIssuerException;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.module.Submodule;
@@ -34,7 +34,7 @@ import java.util.function.Predicate;
  */
 public class TrustAnchor implements Submodule {
 
-  private final EntityRegistry registry;
+  private final EntityRecordRegistry registry;
 
   private final TrustAnchorProperties properties;
 
@@ -47,8 +47,11 @@ public class TrustAnchor implements Submodule {
    * @param properties to use
    * @param factory to constructor entity statements 
    */
-  public TrustAnchor(final EntityRegistry registry, final TrustAnchorProperties properties,
+  public TrustAnchor(
+      final EntityRecordRegistry registry,
+      final TrustAnchorProperties properties,
       final SubordinateStatementFactory factory) {
+
     this.registry = registry;
     this.properties = properties;
     this.factory = factory;
@@ -59,29 +62,23 @@ public class TrustAnchor implements Submodule {
    * @return entity statement
    */
   public String fetchEntityStatement(final EntityStatementRequest request)
-      throws  InvalidRequestException, InvalidIssuerException {
-    final EntityProperties issuer = registry.getEntity(this.properties.getEntityId())
-        .orElseThrow(() ->
-            new InvalidIssuerException("Entity not found for:'%s'".formatted(this.properties.getEntityId())));
-    final EntityProperties subject = registry.getEntity(new EntityID(request.subject()))
-        .orElseThrow(() ->
-            new InvalidRequestException("Entity not found for subject:'%s'".formatted(request.subject())));
+      throws InvalidIssuerException, InvalidRequestException {
+    final EntityRecord issuer = this.registry.getEntity(this.properties.getEntityId())
+        .orElseThrow(
+            () -> new InvalidIssuerException("Entity not found for:'%s'".formatted(this.properties.getEntityId()))
+        );
+    final EntityRecord subject = this.registry.getEntity(new EntityID(request.subject()))
+        .orElseThrow(
+            () -> new InvalidRequestException("Entity not found for subject:'%s'".formatted(request.subject()))
+        );
 
-
-    final Predicate<TrustAnchorProperties.SubordinateListingProperty> subordinatePredicate = sub -> sub
-        .getEntityIdentifier()
-        .equalsIgnoreCase(request.subject());
-
-    final Optional<TrustAnchorProperties.SubordinateListingProperty> subordinateListing =
-        this.properties.getSubordinateListing().stream().filter(subordinatePredicate).findFirst();
-
-    if (subordinateListing.isEmpty()) {
-      throw new InvalidRequestException("Subject is not listed under this issuer iss:%s sub:%s"
-          .formatted(issuer.getEntityIdentifier(), subject.getEntityIdentifier()));
+    if (!subject.getIssuer().equals(issuer.getSubject())) {
+      throw new IllegalArgumentException("Subject is not listed under this issuer iss:%s sub:%s"
+          .formatted(subject.getIssuer(), issuer.getSubject()));
     }
 
     return factory
-        .createEntityStatement(issuer, subject, subordinateListing.get())
+        .createEntityStatement(issuer, subject)
         .serialize();
   }
 
@@ -90,9 +87,9 @@ public class TrustAnchor implements Submodule {
    * @return listing of subordinates
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) {
-    return this.properties.getSubordinateListing()
-        .stream()
-        .map(TrustAnchorProperties.SubordinateListingProperty::getEntityIdentifier)
+    return registry
+        .find(ec -> ec.getIssuer().equals(this.properties.getEntityId()) && ec.getIssuer() != ec.getSubject()).stream()
+        .map(ec -> ec.getSubject().getValue())
         .toList();
   }
 

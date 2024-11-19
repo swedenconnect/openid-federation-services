@@ -20,7 +20,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
-import se.digg.oidfed.common.entity.EntityProperties;
+import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.PolicyRegistry;
 
 import java.time.Instant;
@@ -48,27 +48,25 @@ public class SubordinateStatementFactory {
    * Creates a signed entity statement from the issuer.
    * @param issuer to create the statement from
    * @param subject to create thte statement for
-   * @param subordinateListing containing customization information for the statement, e.g. policy name
    * @return a signed entity statement
    */
-  public SignedJWT createEntityStatement(final EntityProperties issuer, final EntityProperties subject,
-      final TrustAnchorProperties.SubordinateListingProperty subordinateListing) {
+  public SignedJWT createEntityStatement(final EntityRecord issuer, final EntityRecord subject) {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-      registry.getPolicy(subordinateListing.getPolicy())
+      registry.getPolicy(subject.getPolicyName())
           .ifPresent(policy -> builder.claim("metadata_policy", policy));
 
       final JWTClaimsSet jwtClaimsSet = builder
           .issueTime(Date.from(Instant.now()))
           .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
-          .issuer(issuer.getEntityIdentifier())
-          .subject(subject.getEntityIdentifier())
+          .issuer(issuer.getSubject().getValue())
+          .subject(subject.getSubject().getValue())
           .claim("jwks", subject.getJwks().toJSONObject())
           .build();
 
       final EntityStatement entityStatement =
-          EntityStatement.sign(new EntityStatementClaimsSet(jwtClaimsSet), issuer.getSignKey());
+          EntityStatement.sign(new EntityStatementClaimsSet(jwtClaimsSet), issuer.getJwks().getKeys().getFirst());
       return entityStatement.getSignedStatement();
     }
     catch (final Exception e) {

@@ -16,17 +16,27 @@
  */
 package se.digg.oidfed.service.entity;
 
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.proc.JWSVerifierFactory;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import se.digg.oidfed.common.entity.EntityProperties;
-import se.digg.oidfed.common.entity.EntityRegistry;
+import org.springframework.web.client.RestClient;
+import se.digg.oidfed.common.entity.DelegatingEntityRecordRegistry;
+import se.digg.oidfed.common.entity.EntityRecordIntegration;
+import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.EntityRecordVerifier;
 import se.digg.oidfed.common.entity.EntityStatementFactory;
+import se.digg.oidfed.common.entity.InMemoryEntityRecordRegistry;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.rest.RestClientRegistry;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Configuration for entity registry.
@@ -38,22 +48,44 @@ import java.util.Optional;
 public class EntityConfiguration {
 
   @Bean
-  EntityRegistry entityRegistry(
-      final EntityConfigurationProperties properties,
-      final KeyRegistry keyRegistry) {
+  EntityRecordRegistry entityRegistry(final EntityConfigurationProperties properties,
+                                      final ApplicationEventPublisher publisher
+  ) {
 
-    final List<EntityProperties> mappedProperties =
-        Optional.ofNullable(properties.getEntityRegistry())
-            .orElse(Collections.emptyList())
-            .stream()
-            .map(p -> p.toEntityProperties(keyRegistry))
-            .toList();
-
-    return new EntityRegistry(mappedProperties);
+    final String subject = properties.getEntityRegistry()
+        .stream()
+        .filter(EntityProperty::isDefaultEntity)
+        .findFirst()
+        .get()
+        .getSubject();
+    return new DelegatingEntityRecordRegistry(
+        new EntityID(subject)
+        , new InMemoryEntityRecordRegistry(properties.getBasePath()),
+        List.of(er -> publisher.publishEvent(new EntityRegisteredEvent(er))));
   }
 
   @Bean
-  EntityStatementFactory entityStatementFactory() {
-    return new EntityStatementFactory();
+  EntityStatementFactory entityStatementFactory(final KeyRegistry registry) {
+    return new EntityStatementFactory(registry.getKey("sign-key-1").get());
+  }
+
+  @Bean
+  @Qualifier("entity-record-integration-client")
+  RestClient entityRecordIntegrationClient(final RestClientRegistry registry,
+                                           final EntityConfigurationProperties properties) {
+    return registry.getClient(properties.getClient())
+        .orElseThrow();
+  }
+
+  @Bean
+  EntityRecordIntegration entityRecordIntegration(
+      @Qualifier("entity-record-integration-client") final RestClient client) {
+    return new RestClientEntityRecordIntegration(client);
+  }
+
+  @Bean
+  EntityRecordVerifier entityRecordVerifier(
+      final KeyRegistry registry, final EntityConfigurationProperties properties) {
+    return new EntityRecordVerifier(registry.getSet(properties.getJwkAlias()));
   }
 }

@@ -20,7 +20,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import se.digg.oidfed.common.entity.EntityRegistry;
+import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.PolicyRegistry;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
@@ -38,7 +38,7 @@ import java.util.List;
 public class TrustAnchorConfiguration {
 
   @Bean
-  List<TrustAnchor> trustAnchor(final EntityRegistry registry, final TrustAnchorModuleProperties properties, final
+  List<TrustAnchor> trustAnchor(final EntityRecordRegistry registry, final TrustAnchorModuleProperties properties, final
   SubordinateStatementFactory factory) {
     return properties.getAnchors()
         .stream()

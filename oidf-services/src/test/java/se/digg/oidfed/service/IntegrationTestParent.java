@@ -17,13 +17,26 @@
 package se.digg.oidfed.service;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.http.Body;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.redis.testcontainers.RedisContainer;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.utility.DockerImageName;
+import se.digg.oidfed.common.entity.EntityRecord;
+import se.digg.oidfed.common.entity.EntityRecordSigner;
+import se.digg.oidfed.common.entity.HostedRecord;
+import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.resolver.WiremockFederation;
 import se.digg.oidfed.test.FederationEntity;
 
@@ -31,14 +44,17 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-
 public class IntegrationTestParent {
   @LocalServerPort
   public int serverPort;
 
   private static List<FederationEntity> entityList;
+
+  @Autowired
+  KeyRegistry registry;
 
   private static final RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:6.2.6"));
 
@@ -63,6 +79,27 @@ public class IntegrationTestParent {
     catch (Exception e) {
       throw new RuntimeException("Failed to configure wiremock federation", e);
     }
+  }
+
+  @BeforeEach
+  void before() throws JOSEException {
+    final JWKSet set = registry.getSet(List.of("sign-key-1"));
+    final EntityRecordSigner entityRecordSigner = new EntityRecordSigner(new RSASSASigner(set.getKeys().getFirst().toRSAKey()));
+
+    final String body = entityRecordSigner.signRecords(List.of(
+        EntityRecord.builder()
+            .issuer(new EntityID("http://localhost.test:9090/root"))
+            .subject(new EntityID("http://localhost.test:9090/sub"))
+            .jwks(set)
+            .policyName("my-super-policy")
+            .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",
+                "orgName"))).build())
+            .build()
+    )).serialize();
+
+    WireMock.stubFor(WireMock.get("/registry/v1/entities").willReturn(
+        new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
+    );
   }
 
   @DynamicPropertySource

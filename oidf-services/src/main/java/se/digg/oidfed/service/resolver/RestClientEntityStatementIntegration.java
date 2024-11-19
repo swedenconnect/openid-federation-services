@@ -35,8 +35,16 @@ import java.util.Objects;
  */
 public class RestClientEntityStatementIntegration implements EntityStatementIntegration {
 
-  private final RestClient client = RestClient.builder().build();
+  private final RestClient client;
   private final ObjectMapper mapper = new ObjectMapper();
+
+  /**
+   * Constructor.
+   * @param client to use
+   */
+  public RestClientEntityStatementIntegration(final RestClient client) {
+    this.client = client;
+  }
 
   @Override
   public EntityStatement getEntityStatement(final String location) {
