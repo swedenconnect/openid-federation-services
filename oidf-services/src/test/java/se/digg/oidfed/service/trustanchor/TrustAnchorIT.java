@@ -16,6 +16,10 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
+import com.github.tomakehurst.wiremock.http.Response;
+import com.nimbusds.jwt.SignedJWT;
+import io.restassured.RestAssured;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -25,27 +29,58 @@ import se.digg.oidfed.service.IntegrationTestParent;
 
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Objects;
+
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.notNullValue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("integration-test")
 class TrustAnchorIT extends IntegrationTestParent {
 
-
-
   @LocalServerPort
   int serverPort;
 
+  @BeforeEach
+  public void setup() {
+    RestAssured.port = this.serverPort;
+    RestAssured.basePath = "/ta";
+  }
+
+
   @Test
-  void test() {
+  void testListSubordinatesAndFetchEntityStatement() throws ParseException {
     final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(serverPort)).build();
-    final List body = client.get().uri("/ta/subordinate_listing").retrieve().toEntity(List.class).getBody();
+    final List<?> body = client.get().uri("/ta/subordinate_listing").retrieve().toEntity(List.class).getBody();
     System.out.println(body);
     Objects.requireNonNull(body);
     final String jwt = client.get()
         .uri("/ta/fetch?sub=%s".formatted(URLEncoder.encode((String) body.getFirst(), Charset.defaultCharset())))
         .retrieve().body(String.class);
-    System.out.println(jwt);
+
+    SignedJWT signedJWT = SignedJWT.parse(jwt);
+    System.out.println(signedJWT.getHeader().toString());
+    System.out.println(signedJWT.getJWTClaimsSet().toString());
+  }
+
+  @Test
+  void testSubordinateListingEndpointWithAllParameters() {
+    given()
+        .when()
+        .log().all()
+        // ToDo Function is not implemented yet
+        .queryParam("trust_marked","false")
+        .get("/subordinate_listing")
+        .then()
+        .log().all()
+        .statusCode(200)
+        .contentType("application/json")
+        .body("$", not(empty()))
+        .body("$", hasItems("http://localhost:9090/root/second"));
   }
 }

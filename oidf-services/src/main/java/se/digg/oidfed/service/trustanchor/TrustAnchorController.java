@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.digg.oidfed.common.exception.InvalidIssuerException;
+import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.service.ApplicationModule;
 import se.digg.oidfed.service.submodule.TrustAnchorRepository;
@@ -62,12 +64,16 @@ public class TrustAnchorController implements ApplicationModule {
    * @param subject the subject of the entity statement
    * @return the Entity Statement or error response
    * @throws NotFoundException if a given module is not found
+   * @throws InvalidRequestException If there is a problem with incoming request parameters
+   * @throws InvalidIssuerException If issuer is not found.
    */
   @GetMapping(value = "/{alias}/fetch", produces = "application/entity-statement+jwt")
   public String fetchEntityStatement(@PathVariable(name = "alias") String alias,
-      @RequestParam(name = "sub", required = false) String subject) throws NotFoundException {
+      @RequestParam(name = "sub", required = false) String subject)
+      throws NotFoundException, InvalidRequestException, InvalidIssuerException {
     final TrustAnchor trustAnchor = repository.getTrustAnchor(alias)
-            .orElseThrow(() -> new NotFoundException("Could not find given trust anchor"));
+            .orElseThrow(() ->
+                new NotFoundException("Could not find given trust anchor for alias:'%s'".formatted(alias)));
     final EntityStatementRequest request =
         new EntityStatementRequest(URLDecoder.decode(subject, Charset.defaultCharset()));
     return trustAnchor.fetchEntityStatement(request);
