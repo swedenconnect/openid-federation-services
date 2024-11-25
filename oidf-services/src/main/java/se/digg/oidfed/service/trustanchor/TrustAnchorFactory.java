@@ -16,7 +16,8 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
-import se.digg.oidfed.common.entity.EntityRegistry;
+import se.digg.oidfed.common.entity.EntityRecord;
+import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 
@@ -34,7 +35,7 @@ public class TrustAnchorFactory {
    * @return a new instance
    */
   public static TrustAnchor create(
-      final EntityRegistry registry,
+      final EntityRecordRegistry registry,
       final TrustAnchorModuleProperties.TrustAnchorSubModuleProperties properties,
       final SubordinateStatementFactory factory
   ) {

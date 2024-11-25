@@ -49,8 +49,8 @@ public class ResolverConfigurationProperties {
   /**List of Resolver Module Properties*/
   @NestedConfigurationProperty
   private List<ResolverModuleProperties> resolvers;
-  /** Name of the ssl trust store bundle to use for all resolvers*/
-  private String trustStoreBundle;
+  /** Name of the rest client to use*/
+  private String client;
   /** Set to true if this module should be active or not. */
   private Boolean active;
 

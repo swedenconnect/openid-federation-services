@@ -1,0 +1,118 @@
+/*
+ * Copyright 2024 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package se.digg.oidfed.common.entity;
+
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.text.ParseException;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
+
+/**
+ * Data class for entity record.
+ *
+ * @author Felix Hellman
+ */
+@Getter
+@Builder
+public class EntityRecord {
+  private final EntityID issuer;
+  private final EntityID subject;
+  private final String policyName;
+  private final JWKSet jwks;
+  private final HostedRecord hostedRecord;
+
+  /**
+   * Constructor.
+   *
+   * @param issuer       of the entity
+   * @param subject      of the entity
+   * @param policyName   of the entity
+   * @param jwks         of the entity
+   * @param hostedRecord optional parameter if the record is hosted
+   */
+  public EntityRecord(
+      final EntityID issuer,
+      final EntityID subject,
+      final String policyName,
+      final JWKSet jwks,
+      final HostedRecord hostedRecord) {
+    this.issuer = issuer;
+    this.subject = subject;
+    this.policyName = policyName;
+    this.jwks = jwks;
+    this.hostedRecord = hostedRecord;
+  }
+
+  /**
+   * @return json object
+   */
+  public Map<String, Object> toJson() {
+    final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
+        .claim("entity_record", Map.of(
+            "issuer", issuer.getValue(),
+            "subject", subject.getValue(),
+            "policy_name", policyName,
+            "jwks", jwks.toJSONObject()
+        ));
+    Optional.ofNullable(hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
+    final JWTClaimsSet build = builder
+        .build();
+    return build.toJSONObject();
+  }
+
+  /**
+   * @return first key
+   */
+  public JWK getSignKey() {
+    return this.getSignKey((jwk) -> true);
+  }
+
+  /**
+   * @param selector to match a key towards
+   * @return first found key with the given selector
+   */
+  public JWK getSignKey(final Predicate<JWK> selector) {
+    return this.jwks.getKeys()
+        .stream()
+        .filter(selector)
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("No such key exits for this entity"));
+  }
+
+  /**
+   * @param entityRecord json to create instance from
+   * @return instance of EntityRecord
+   * @throws ParseException if parse failed
+   */
+  public static EntityRecord fromJson(final Map<String, Object> entityRecord) throws ParseException {
+    final Map<String, Object> record = (Map<String, Object>) entityRecord.get("entity_record");
+    final Optional<Object> hostedRecord = Optional.ofNullable(entityRecord.get("hosted_record"));
+    return new EntityRecord(
+        new EntityID((String) record.get("issuer")),
+        new EntityID((String) record.get("subject")),
+        (String) record.get("policy_name"),
+        JWKSet.parse((Map<String, Object>) record.get("jwks")),
+        hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
+  }
+}

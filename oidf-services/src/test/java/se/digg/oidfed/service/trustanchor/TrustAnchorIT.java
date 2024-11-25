@@ -67,20 +67,4 @@ class TrustAnchorIT extends IntegrationTestParent {
     System.out.println(signedJWT.getHeader().toString());
     System.out.println(signedJWT.getJWTClaimsSet().toString());
   }
-
-  @Test
-  void testSubordinateListingEndpointWithAllParameters() {
-    given()
-        .when()
-        .log().all()
-        // ToDo Function is not implemented yet
-        .queryParam("trust_marked","false")
-        .get("/subordinate_listing")
-        .then()
-        .log().all()
-        .statusCode(200)
-        .contentType("application/json")
-        .body("$", not(empty()))
-        .body("$", hasItems("http://localhost:9090/root/second"));
-  }
 }

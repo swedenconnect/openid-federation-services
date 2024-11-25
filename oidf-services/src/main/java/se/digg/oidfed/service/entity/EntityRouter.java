@@ -16,12 +16,12 @@
  */
 package se.digg.oidfed.service.entity;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
-import se.digg.oidfed.common.entity.EntityRegistry;
+import org.springframework.web.servlet.function.support.RouterFunctionMapping;
+import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityStatementFactory;
 
 import static org.springframework.web.servlet.function.RouterFunctions.route;
@@ -31,18 +31,30 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
  *
  * @author Felix Hellman
  */
-@Configuration
+@Component
 public class EntityRouter {
 
+  private final EntityRecordRegistry registry;
+  private final EntityStatementFactory factory;
+  private final RouterFunctionMapping mapping;
+
   /**
+   * Constructor.
    * @param registry to handle path mapping
    * @param factory to construct entity configurations
-   * @return router function bean
+   * @param mapping to reload
    */
-  @Bean
-  public RouterFunction<ServerResponse> entityConfigurationRouterFunction(final EntityRegistry registry, final
-      EntityStatementFactory factory) {
+  public EntityRouter(final EntityRecordRegistry registry, final EntityStatementFactory factory,
+                      final RouterFunctionMapping mapping) {
+    this.registry = registry;
+    this.factory = factory;
+    this.mapping = mapping;
+  }
 
+  /**
+   * Calculates and updates endpoints for entity-configurations.
+   */
+  public void reevaluteEndpoints() {
     final RouterFunctions.Builder route = route();
 
     route.GET("/.well-known/openid-federation", r -> {
@@ -63,7 +75,9 @@ public class EntityRouter {
       });
     });
 
-    return route.build();
+    final RouterFunction<ServerResponse> functions = route.build();
+    mapping.setRouterFunction(functions);
+    RouterFunctions.changeParser(functions, mapping.getPatternParser());
   }
 
 }

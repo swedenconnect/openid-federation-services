@@ -14,45 +14,36 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.entity;
+package se.digg.oidfed.service.rest;
 
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 import java.util.List;
 
 /**
- * Configuration properties for entity-registry.
+ * Properties for rest-clients.
  *
  * @author Felix Hellman
  */
-@ConfigurationProperties("openid.federation.entity-registry")
 @Getter
 @Setter
-public class EntityConfigurationProperties {
+@ConfigurationProperties("openid.federation.rest-client-registry")
+public class RestClientProperties {
+
+  private List<RestClientProperty> clients;
 
   /**
-   * Base path for all entities that are hosted
+   * Common properties for rest-clients
+   *
+   * @author Felix Hellman
    */
-  private String basePath;
-
-  /**
-   * Rest client to use for entity registry
-   */
-  private String client;
-
-  /**
-   * Alias of all keys that can verify entity records
-   */
-  private List<String> jwkAlias;
-
-  /**
-   * Properties for all entities in the registry
-   */
-  @NestedConfigurationProperty
-  private List<EntityProperty> entityRegistry;
+  @Getter
+  @Setter
+  public static class RestClientProperty {
+    private String baseUri;
+    private String trustStoreBundleName;
+    private String name;
+  }
 }
-
-
