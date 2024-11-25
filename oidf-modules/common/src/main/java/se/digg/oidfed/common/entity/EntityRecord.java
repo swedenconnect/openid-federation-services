@@ -40,6 +40,7 @@ public class EntityRecord {
   private final EntityID subject;
   private final String policyName;
   private final JWKSet jwks;
+  private final String overrideConfigurationLocation;
   private final HostedRecord hostedRecord;
 
   /**
@@ -49,6 +50,7 @@ public class EntityRecord {
    * @param subject      of the entity
    * @param policyName   of the entity
    * @param jwks         of the entity
+   * @param overrideConfigurationLocation of the entity
    * @param hostedRecord optional parameter if the record is hosted
    */
   public EntityRecord(
@@ -56,11 +58,13 @@ public class EntityRecord {
       final EntityID subject,
       final String policyName,
       final JWKSet jwks,
+      final String overrideConfigurationLocation,
       final HostedRecord hostedRecord) {
     this.issuer = issuer;
     this.subject = subject;
     this.policyName = policyName;
     this.jwks = jwks;
+    this.overrideConfigurationLocation = overrideConfigurationLocation;
     this.hostedRecord = hostedRecord;
   }
 
@@ -76,6 +80,8 @@ public class EntityRecord {
             "jwks", jwks.toJSONObject()
         ));
     Optional.ofNullable(hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
+    Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
+        "override_configuration_location", location));
     final JWTClaimsSet build = builder
         .build();
     return build.toJSONObject();
@@ -113,6 +119,7 @@ public class EntityRecord {
         new EntityID((String) record.get("subject")),
         (String) record.get("policy_name"),
         JWKSet.parse((Map<String, Object>) record.get("jwks")),
+        Optional.ofNullable((String) entityRecord.get("override_configuration_location")).orElse(null),
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
   }
 }

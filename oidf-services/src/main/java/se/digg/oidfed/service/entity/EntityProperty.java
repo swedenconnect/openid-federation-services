@@ -41,6 +41,7 @@ public class EntityProperty {
   private String issuer;
   private String subject;
   private String policyName;
+  private String overrideConfigurationLocation;
   private List<String> jwkAlias;
   @NestedConfigurationProperty
   private HostedEntityProperty hostedRecord;
@@ -90,6 +91,7 @@ public class EntityProperty {
         new EntityID(subject),
         policyName,
         new JWKSet(jwkAlias.stream().map(registry::getKey).map(Optional::get).toList()),
+        overrideConfigurationLocation,
         hostedRecord(hostedRecord).orElse(null)
     );
   }
