@@ -65,7 +65,6 @@ public class HostedRecord {
             .map(tms -> tms.stream()
                 .map(TrustMarkSource::toJson)
                 .toList()).orElseGet(List::of)
-
     );
   }
 

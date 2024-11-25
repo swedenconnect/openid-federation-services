@@ -49,6 +49,7 @@ class EntityRecordTest {
         new EntityID("http://subject.test"),
         "my-awesome-policy",
         new JWKSet(List.of(key)),
+        "http://override.test/location",
         null);
 
     final RSASSASigner signer = new RSASSASigner(key);
@@ -63,6 +64,7 @@ class EntityRecordTest {
     Assertions.assertEquals(expected.getIssuer(), actual.getIssuer());
     Assertions.assertTrue(expected.getJwks().containsJWK(actual.getJwks().getKeys().get(0)));
     Assertions.assertEquals(expected.getPolicyName(), actual.getPolicyName());
+    Assertions.assertEquals(expected.getOverrideConfigurationLocation(), actual.getOverrideConfigurationLocation());
   }
 
   @Test
@@ -73,10 +75,23 @@ class EntityRecordTest {
         .issueTime(new Date())
         .generate();
 
-    final EntityRecord expected = new EntityRecord(new EntityID("http://issuer.test"), new EntityID("http://subject.test"),
-        "my-awesome-policy", new JWKSet(List.of(key)), new HostedRecord(Map.of("metadata", Map.of("key", "value")),
-        List.of(new TrustMarkSource(new EntityID("http://trustmarkissuer.test"), "http://trustmark.test/1")),
-        List.of("http://issuer.test")));
+
+    final TrustMarkSource trustMarkSource = new TrustMarkSource(new EntityID("http://trustmarkissuer.test"), "http://trustmark.test/1");
+    final Map<String, Object> metadata = Map.of("metadata", Map.of("key", "value"));
+
+    final HostedRecord hosted = HostedRecord.builder()
+        .metadata(metadata)
+        .trustMarkSources(List.of(trustMarkSource))
+        .authorityHints(List.of())
+        .build();
+
+    final EntityRecord expected = EntityRecord.builder()
+        .issuer(new EntityID("http://issuer.test"))
+        .subject(new EntityID("http://subject.test"))
+        .jwks(new JWKSet(List.of(key)))
+        .policyName("my-awesome-policy")
+        .hostedRecord(hosted)
+        .build();
 
     final RSASSASigner signer = new RSASSASigner(key);
     final EntityRecordVerifier entityRecordVerifier = new EntityRecordVerifier(new JWKSet(List.of(key)));
