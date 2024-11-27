@@ -17,6 +17,7 @@
 package se.digg.oidfed.common.entity;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -58,6 +59,7 @@ public class EntityRecordSigner {
 
     final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().get();
     final JWSHeader header = new JWSHeader.Builder(alg)
+        .type(new JOSEObjectType("entity-records+jwt"))
         .build();
 
     final SignedJWT jwt = new SignedJWT(header, claims);

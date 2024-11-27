@@ -54,7 +54,7 @@ public class SubordinateStatementFactory {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-      registry.getPolicy(subject.getPolicyName())
+      registry.getPolicy(subject.getPolicyRecordId())
           .ifPresent(policy -> builder.claim("metadata_policy", policy));
 
       final JWTClaimsSet jwtClaimsSet = builder

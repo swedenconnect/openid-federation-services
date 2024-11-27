@@ -63,7 +63,7 @@ class EntityRecordTest {
     Assertions.assertEquals(expected.getSubject(), actual.getSubject());
     Assertions.assertEquals(expected.getIssuer(), actual.getIssuer());
     Assertions.assertTrue(expected.getJwks().containsJWK(actual.getJwks().getKeys().get(0)));
-    Assertions.assertEquals(expected.getPolicyName(), actual.getPolicyName());
+    Assertions.assertEquals(expected.getPolicyRecordId(), actual.getPolicyRecordId());
     Assertions.assertEquals(expected.getOverrideConfigurationLocation(), actual.getOverrideConfigurationLocation());
   }
 
@@ -89,7 +89,7 @@ class EntityRecordTest {
         .issuer(new EntityID("http://issuer.test"))
         .subject(new EntityID("http://subject.test"))
         .jwks(new JWKSet(List.of(key)))
-        .policyName("my-awesome-policy")
+        .policyRecordId("my-awesome-policy")
         .hostedRecord(hosted)
         .build();
 
@@ -109,7 +109,7 @@ class EntityRecordTest {
     final TrustMarkSource actualTrustMarkSource = actual.getHostedRecord().getTrustMarkSources().get(0);
     Assertions.assertEquals(expectedTrustMarkSource.getTrustMarkId(), actualTrustMarkSource.getTrustMarkId());
     Assertions.assertEquals(expectedTrustMarkSource.getIssuer().getValue(), actualTrustMarkSource.getIssuer().getValue());
-    Assertions.assertEquals(expected.getPolicyName(), actual.getPolicyName());
+    Assertions.assertEquals(expected.getPolicyRecordId(), actual.getPolicyRecordId());
     Assertions.assertEquals(expected.getHostedRecord().getAuthorityHints(), actual.getHostedRecord().getAuthorityHints());
   }
 }
