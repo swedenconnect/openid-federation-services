@@ -38,7 +38,7 @@ import java.util.function.Predicate;
 public class EntityRecord {
   private final EntityID issuer;
   private final EntityID subject;
-  private final String policyName;
+  private final String policyRecordId;
   private final JWKSet jwks;
   private final String overrideConfigurationLocation;
   private final HostedRecord hostedRecord;
@@ -46,23 +46,23 @@ public class EntityRecord {
   /**
    * Constructor.
    *
-   * @param issuer       of the entity
-   * @param subject      of the entity
-   * @param policyName   of the entity
-   * @param jwks         of the entity
+   * @param issuer                        of the entity
+   * @param subject                       of the entity
+   * @param policyRecordId                of the entity
+   * @param jwks                          of the entity
    * @param overrideConfigurationLocation of the entity
-   * @param hostedRecord optional parameter if the record is hosted
+   * @param hostedRecord                  optional parameter if the record is hosted
    */
   public EntityRecord(
       final EntityID issuer,
       final EntityID subject,
-      final String policyName,
+      final String policyRecordId,
       final JWKSet jwks,
       final String overrideConfigurationLocation,
       final HostedRecord hostedRecord) {
     this.issuer = issuer;
     this.subject = subject;
-    this.policyName = policyName;
+    this.policyRecordId = policyRecordId;
     this.jwks = jwks;
     this.overrideConfigurationLocation = overrideConfigurationLocation;
     this.hostedRecord = hostedRecord;
@@ -72,13 +72,13 @@ public class EntityRecord {
    * @return json object
    */
   public Map<String, Object> toJson() {
-    final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
-        .claim("entity_record", Map.of(
-            "issuer", issuer.getValue(),
-            "subject", subject.getValue(),
-            "policy_name", policyName,
-            "jwks", jwks.toJSONObject()
-        ));
+    final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
+
+    builder.claim("issuer", issuer.getValue());
+    builder.claim("subject", subject.getValue());
+    builder.claim("policy_record_id", policyRecordId);
+    builder.claim("jwks", jwks.toJSONObject());
+
     Optional.ofNullable(hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
     Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
         "override_configuration_location", location));
@@ -112,13 +112,12 @@ public class EntityRecord {
    * @throws ParseException if parse failed
    */
   public static EntityRecord fromJson(final Map<String, Object> entityRecord) throws ParseException {
-    final Map<String, Object> record = (Map<String, Object>) entityRecord.get("entity_record");
     final Optional<Object> hostedRecord = Optional.ofNullable(entityRecord.get("hosted_record"));
     return new EntityRecord(
-        new EntityID((String) record.get("issuer")),
-        new EntityID((String) record.get("subject")),
-        (String) record.get("policy_name"),
-        JWKSet.parse((Map<String, Object>) record.get("jwks")),
+        new EntityID((String) entityRecord.get("issuer")),
+        new EntityID((String) entityRecord.get("subject")),
+        (String) entityRecord.get("policy_record_id"),
+        JWKSet.parse((Map<String, Object>) entityRecord.get("jwks")),
         Optional.ofNullable((String) entityRecord.get("override_configuration_location")).orElse(null),
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
   }

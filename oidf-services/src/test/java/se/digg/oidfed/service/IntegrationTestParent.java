@@ -25,7 +25,6 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.redis.testcontainers.RedisContainer;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -91,7 +90,7 @@ public class IntegrationTestParent {
             .issuer(new EntityID("http://localhost.test:9090/root"))
             .subject(new EntityID("http://localhost.test:9090/sub"))
             .jwks(set)
-            .policyName("my-super-policy")
+            .policyRecordId("my-super-policy")
             .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",
                 "orgName"))).build())
             .build()

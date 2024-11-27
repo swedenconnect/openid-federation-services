@@ -45,13 +45,13 @@ class DelegatingEntityRecordRegistryTest {
     final EntityRecord first = EntityRecord.builder()
         .issuer(root)
         .subject(selfHostedSubject)
-        .policyName("my-policy")
+        .policyRecordId("my-policy")
         .jwks(jwks)
         .build();
     final EntityRecord second = EntityRecord.builder()
         .issuer(root)
         .subject(hostedSubject)
-        .policyName("my-policy")
+        .policyRecordId("my-policy")
         .jwks(jwks)
         .hostedRecord(HostedRecord.builder().build())
         .build();
