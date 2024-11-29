@@ -25,7 +25,8 @@ import org.springframework.stereotype.Component;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordIntegration;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
-import se.digg.oidfed.common.entity.EntityRecordVerifier;
+import se.digg.oidfed.common.entity.RecordVerifier;
+import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.keys.KeyRegistry;
 
 /**
@@ -41,36 +42,36 @@ public class EntityInitializer {
   private final EntityConfigurationProperties properties;
   private final KeyRegistry keyRegistry;
   private final EntityRecordRegistry registry;
-  private final EntityRecordIntegration integration;
-  private final EntityRecordVerifier verifier;
-
+  private final RecordRegistrySource source;
 
   /**
-   * @param router to reload
-   * @param properties to use
-   * @param keyRegistry to use
-   * @param registry to use
-   * @param integration to use
-   * @param verifier to use
+   * Constructor.
+   * @param router to update
+   * @param properties to read from
+   * @param keyRegistry to read keys from
+   * @param registry to add records to
+   * @param source to get records from
    */
   public EntityInitializer(
       final EntityRouter router,
       final EntityConfigurationProperties properties,
       final KeyRegistry keyRegistry,
       final EntityRecordRegistry registry,
-      final EntityRecordIntegration integration,
-      final EntityRecordVerifier verifier) {
+      final RecordRegistrySource source) {
 
     this.router = router;
     this.properties = properties;
     this.keyRegistry = keyRegistry;
     this.registry = registry;
-    this.integration = integration;
-    this.verifier = verifier;
+    this.source = source;
   }
 
+
+  /**
+   * @param event to handle
+   */
   @EventListener
-  void handle(final ApplicationStartedEvent event) {
+  public void handle(final ApplicationStartedEvent event) {
     properties.getEntityRegistry()
         .stream().map(r -> r.toEntityRecord(keyRegistry))
         .toList().forEach(registry::addEntity);
@@ -79,8 +80,7 @@ public class EntityInitializer {
         "Could not find root entity in configuration"));
     final EntityID issuer = issuerRecord.getIssuer();
     try {
-      final SignedJWT all = integration.getAll(issuer);
-      verifier.verify(all).forEach(registry::addEntity);
+      source.getEntityRecords(issuer.getValue()).forEach(registry::addEntity);
     } catch (final Exception e) {
       log.error("failed to fetch entity records from registry", e);
     }

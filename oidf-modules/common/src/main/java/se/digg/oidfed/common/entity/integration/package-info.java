@@ -14,22 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.entity;
-
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-import java.util.Collections;
-import java.util.Optional;
-
 /**
- * Configuration class for policy.
+ * Package for integration towards entity registry.
  *
  * @author Felix Hellman
  */
-@Configuration
-@EnableConfigurationProperties(PolicyConfigurationProperties.class)
-public class PolicyConfiguration {
-
-}
+package se.digg.oidfed.common.entity.integration;

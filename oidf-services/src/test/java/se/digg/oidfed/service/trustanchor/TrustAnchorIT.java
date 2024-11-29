@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
-import com.github.tomakehurst.wiremock.http.Response;
 import com.nimbusds.jwt.SignedJWT;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,12 +31,6 @@ import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Objects;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.notNullValue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("integration-test")

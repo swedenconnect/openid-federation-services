@@ -31,27 +31,4 @@ import java.util.Map;
 @Setter
 public class PolicyProperty {
   private List<PolicyRecord> policies;
-
-  /**
-   * Record class of an individual policy.
-   *
-   * @author Felix Hellman
-   */
-  @Getter
-  @Setter
-  public static class PolicyRecord {
-
-    /**
-     * Constructor.
-     * @param name of the policy
-     * @param policy object of the policy
-     */
-    public PolicyRecord(final String name, final Map<String, Object> policy) {
-      this.name = name;
-      this.policy = policy;
-    }
-
-    private String name;
-    private Map<String, Object> policy;
-  }
 }

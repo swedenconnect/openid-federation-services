@@ -66,4 +66,24 @@ public class EntityRecordSigner {
     jwt.sign(signer);
     return jwt;
   }
+
+  /**
+   * @param record to sign
+   * @return signed policy record
+   * @throws JOSEException if signature fails
+   */
+  public SignedJWT signPolicy(final PolicyRecord record) throws JOSEException {
+    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
+        .claim("policy_record", record.toJson())
+        .build();
+
+    final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().get();
+    final JWSHeader header = new JWSHeader.Builder(alg)
+        .type(new JOSEObjectType("policy-record+jwt"))
+        .build();
+
+    final SignedJWT jwt = new SignedJWT(header, claims);
+    jwt.sign(signer);
+    return jwt;
+  }
 }

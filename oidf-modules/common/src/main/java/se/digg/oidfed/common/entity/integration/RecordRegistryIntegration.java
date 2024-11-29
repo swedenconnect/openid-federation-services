@@ -14,22 +14,29 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.entity;
+package se.digg.oidfed.common.entity.integration;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.common.entity.EntityRecord;
+import se.digg.oidfed.common.entity.PolicyRecord;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
- * Configuration class for policy.
+ * Interface for integrating towards a record registry.
  *
  * @author Felix Hellman
  */
-@Configuration
-@EnableConfigurationProperties(PolicyConfigurationProperties.class)
-public class PolicyConfiguration {
+public interface RecordRegistryIntegration {
+  /**
+   * @param id of the policy
+   * @return policy if present in registry
+   */
+  Optional<PolicyRecord> getPolicy(final String id);
 
+  /**
+   * @param issuer for the records
+   * @return list of records
+   */
+  List<EntityRecord> getEntityRecords(final String issuer);
 }
