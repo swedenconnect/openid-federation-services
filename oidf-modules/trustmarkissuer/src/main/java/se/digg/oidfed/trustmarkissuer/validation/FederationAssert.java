@@ -34,7 +34,7 @@ public final class FederationAssert {
    * @return Value that is tested
    * @param <V> Value to be tested
    */
-  public static <V> V assertNotEmpty(V value, String message) {
+  public static <V> V assertNotEmpty(final V value, final String message) {
     return switch (value) {
       case null -> throw new IllegalArgumentException(message);
       case String s when s.isBlank() -> throw new IllegalArgumentException(message);
@@ -54,7 +54,7 @@ public final class FederationAssert {
    * @return Value that is tested
    * @throws E Exception that is returned from suppler if value is empty
    */
-  public static <V, E extends Exception> V assertNotEmptyThrows(V value, final Supplier<E> ex) throws E {
+  public static <V, E extends Exception> V assertNotEmptyThrows(final V value, final Supplier<E> ex) throws E {
     return switch (value) {
       case null -> throw ex.get();
       case String s when s.isBlank() -> throw ex.get();
@@ -69,7 +69,7 @@ public final class FederationAssert {
    * @param value Boolean value if true, exception is thrown
    * @param message Message in IllegalArgumentException
    */
-  public static void assertTrue(Boolean value, String message) {
+  public static void assertTrue(final Boolean value, final String message) {
     assertNotEmpty(value, message);
     if (!value) {
       throw new IllegalArgumentException(message);
@@ -85,7 +85,8 @@ public final class FederationAssert {
    * @param <E> Type of exception
    * @throws E Exception thrown
    */
-  public static <V, E extends Exception> void throwIfNull(V value, Consumer<V> doOperation, final Supplier<E> ex)
+  public static <V, E extends Exception> void throwIfNull(final V value, final Consumer<V> doOperation,
+                                                          final Supplier<E> ex)
       throws E {
     assertNotEmptyThrows(value, ex);
     doOperation.accept(value);

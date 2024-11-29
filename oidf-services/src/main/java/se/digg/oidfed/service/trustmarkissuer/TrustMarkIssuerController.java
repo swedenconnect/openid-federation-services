@@ -65,7 +65,7 @@ public class TrustMarkIssuerController implements ApplicationModule {
    */
   @GetMapping(value = "/{alias}/trust_mark", produces = "application/trust-mark+jwt")
   public String trustMark(
-      @PathVariable(name = "alias") String alias,
+      @PathVariable(name = "alias") final String alias,
       @RequestParam(name = "trust_mark_id") final String trustMarkId,
       @RequestParam(name = "sub") final String subject)
       throws NotFoundException, InvalidRequestException, ServerErrorException {
@@ -83,7 +83,7 @@ public class TrustMarkIssuerController implements ApplicationModule {
    */
   @GetMapping(value = "/{alias}/trust_mark_listing", produces = MediaType.APPLICATION_JSON_VALUE)
   public List<String> trustMarkListing(
-      @PathVariable(name = "alias") String alias,
+      @PathVariable(name = "alias") final String alias,
       @RequestParam(name = "trust_mark_id") final String trustMarkId,
       @RequestParam(name = "sub", required = false) final String subject)
       throws NotFoundException, InvalidRequestException {
@@ -103,7 +103,7 @@ public class TrustMarkIssuerController implements ApplicationModule {
    */
   @PostMapping(value = "/{alias}/trust_mark_status", produces = MediaType.APPLICATION_JSON_VALUE)
   public TrustMarkStatusReply trustMarkStatus(
-      @PathVariable(name = "alias") String alias,
+      @PathVariable(name = "alias") final String alias,
       @RequestParam(name = "trust_mark_id", required = true) final String trustMarkId,
       @RequestParam(name = "sub", required = false) final String subject,
       @RequestParam(name = "iat", required = false) final Long issueTime)

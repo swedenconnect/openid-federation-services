@@ -132,7 +132,7 @@ public class ResolverConfiguration {
 
   @Bean
   RedisTemplate<String, EntityStatement> redisTemplate(final RedisConnectionFactory factory) {
-    RedisTemplate<String, EntityStatement> template = new RedisTemplate<>();
+    final RedisTemplate<String, EntityStatement> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
     template.setValueSerializer(new EntityStatementSerializer());
     return template;
@@ -140,7 +140,7 @@ public class ResolverConfiguration {
 
   @Bean
   RedisTemplate<String, Integer> integerRedisTemplate(final RedisConnectionFactory factory) {
-    RedisTemplate<String, Integer> template = new RedisTemplate<>();
+    final RedisTemplate<String, Integer> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
     return template;
   }

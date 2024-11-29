@@ -77,16 +77,16 @@ public class ResolverFactory {
    */
   public Resolver create(final ResolverProperties properties) {
     final RedisVersionedCacheLayer redisVersionedCacheLayer =
-        new RedisVersionedCacheLayer(versionTemplate, redisOperations, properties);
+        new RedisVersionedCacheLayer(this.versionTemplate, this.redisOperations, properties);
     final EntityStatementTree entityStatementTree = new EntityStatementTree(new Tree<>(redisVersionedCacheLayer));
-    registry.registerCache(properties.alias(), new CacheRegistration(
+    this.registry.registerCache(properties.alias(), new CacheRegistration(
         entityStatementTree,
-        treeLoaderFactory.create(properties),
+        this.treeLoaderFactory.create(properties),
         redisVersionedCacheLayer,
         properties
     ));
-    return new Resolver(properties, createChainValidator(properties), entityStatementTree, processor,
-        resolverResponseFactory(properties));
+    return new Resolver(properties, this.createChainValidator(properties), entityStatementTree, this.processor,
+        this.resolverResponseFactory(properties));
   }
 
   private Tree<EntityStatement> createTree(final RedisVersionedCacheLayer redisVersionedCacheLayer) {

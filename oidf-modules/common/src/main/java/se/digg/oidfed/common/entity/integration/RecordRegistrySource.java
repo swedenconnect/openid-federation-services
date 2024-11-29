@@ -46,13 +46,13 @@ public class RecordRegistrySource {
    * @return policy if such a policy exits
    */
   public Optional<PolicyRecord> getPolicy(final String id) {
-    final CacheResponse<PolicyRecord> policy = cache.getPolicy(id);
+    final CacheResponse<PolicyRecord> policy = this.cache.getPolicy(id);
     if (policy.data().isPresent()) {
       return policy.data();
     }
     if (policy.fetchOnMiss()) {
-      final Optional<PolicyRecord> policyRecord = integration.getPolicy(id);
-      cache.registerPolicy(policyRecord.orElse(null), id);
+      final Optional<PolicyRecord> policyRecord = this.integration.getPolicy(id);
+      this.cache.registerPolicy(policyRecord.orElse(null), id);
     }
     return Optional.empty();
   }
@@ -62,13 +62,13 @@ public class RecordRegistrySource {
    * @return records
    */
   public List<EntityRecord> getEntityRecords(final String issuer) {
-    final CacheResponse<List<EntityRecord>> entities = cache.getEntityRecords(issuer);
+    final CacheResponse<List<EntityRecord>> entities = this.cache.getEntityRecords(issuer);
     if (entities.data().isPresent()) {
       return entities.data().get();
     }
     if (entities.fetchOnMiss()) {
-      final List<EntityRecord> entityRecords = integration.getEntityRecords(issuer);
-      cache.registerRecords(entityRecords, issuer);
+      final List<EntityRecord> entityRecords = this.integration.getEntityRecords(issuer);
+      this.cache.registerRecords(entityRecords, issuer);
     }
     return List.of();
   }

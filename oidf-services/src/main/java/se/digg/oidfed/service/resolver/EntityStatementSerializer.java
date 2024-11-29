@@ -49,7 +49,7 @@ public class EntityStatementSerializer implements RedisSerializer<EntityStatemen
     try {
       return EntityStatement.parse(new String(bytes, Charset.defaultCharset()));
     }
-    catch (ParseException e) {
+    catch (final ParseException e) {
       throw new RuntimeException(e);
     }
   }

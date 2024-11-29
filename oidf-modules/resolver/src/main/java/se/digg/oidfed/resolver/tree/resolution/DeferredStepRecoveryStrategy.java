@@ -31,15 +31,15 @@ public class DeferredStepRecoveryStrategy implements StepRecoveryStrategy {
 
   @Override
   public void handle(final StepExecutionError executionError) {
-    stepExecutionErrors.add(executionError);
+    this.stepExecutionErrors.add(executionError);
   }
 
   /**
    * Retries failed steps.
    */
   public void retry() {
-    while (!stepExecutionErrors.isEmpty()) {
-      final StepExecutionError step = stepExecutionErrors.removeFirst();
+    while (!this.stepExecutionErrors.isEmpty()) {
+      final StepExecutionError step = this.stepExecutionErrors.removeFirst();
       step.getStep().accept(step.getErrorContext());
     }
   }

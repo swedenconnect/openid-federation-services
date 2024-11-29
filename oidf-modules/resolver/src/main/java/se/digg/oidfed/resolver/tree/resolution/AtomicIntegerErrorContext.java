@@ -38,17 +38,17 @@ public class AtomicIntegerErrorContext implements ErrorContext {
 
   @Override
   public ErrorContext increment() {
-    count.incrementAndGet();
+    this.count.incrementAndGet();
     return this;
   }
 
   @Override
   public int getErrorCount() {
-    return count.get();
+    return this.count.get();
   }
 
   @Override
   public String getLocation() {
-    return location;
+    return this.location;
   }
 }

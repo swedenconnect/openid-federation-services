@@ -35,19 +35,19 @@ public class TrustMarkCollector {
    * @return trust marks from chain
    */
   public static List<TrustMarkEntry> collectSubjectTrustMarks(final List<EntityStatement> chain) {
-    EntityStatement leafStatement = chain.getFirst();
+    final EntityStatement leafStatement = chain.getFirst();
     if (leafStatement.getClaimsSet().getTrustMarks() == null) {
       return List.of();
     }
-    EntityStatement superiorStatement = chain.get(2);
-    String subject = leafStatement.getClaimsSet().getSubject().getValue();
+    final EntityStatement superiorStatement = chain.get(2);
+    final String subject = leafStatement.getClaimsSet().getSubject().getValue();
 
     leafStatement.getClaimsSet().getJSONArrayClaim("trust_marks");
-    List<TrustMarkEntry> trustMarks = TrustMarkCollector.parseTrustmark(leafStatement);
+    final List<TrustMarkEntry> trustMarks = TrustMarkCollector.parseTrustmark(leafStatement);
     if (superiorStatement.getClaimsSet().getSubject().getValue().equals(subject)) {
       // If the superior statement is issued for the subject,
       // then collect any trust marks not present in the leaf statement
-      List<TrustMarkEntry> superiorStatementTrustMarks = TrustMarkCollector.parseTrustmark(superiorStatement);
+      final List<TrustMarkEntry> superiorStatementTrustMarks = TrustMarkCollector.parseTrustmark(superiorStatement);
       superiorStatementTrustMarks.stream()
           .filter(supTrustMark -> trustMarks.stream()
               .noneMatch(subjTrustMark -> supTrustMark.getID().equals(subjTrustMark.getID())))
@@ -64,7 +64,7 @@ public class TrustMarkCollector {
           try {
             return TrustMarkEntry.parse(json);
           }
-          catch (ParseException e) {
+          catch (final ParseException e) {
             throw new IllegalArgumentException("Failed to parse TrustMarkEntry", e);
           }
         }).toList();

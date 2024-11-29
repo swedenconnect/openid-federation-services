@@ -76,7 +76,7 @@ public class EntityStatementTreeLoader {
    * @return this
    */
   public EntityStatementTreeLoader withAdditionalPostHook(final Runnable hook) {
-    postHooks.add(hook);
+    this.postHooks.add(hook);
     return this;
   }
 
@@ -97,20 +97,20 @@ public class EntityStatementTreeLoader {
       final EntityStatement entityStatement = this.integration.getEntityStatement(rootLocation);
       final CacheSnapshot<EntityStatement> snapshot = tree.addRoot(root, entityStatement);
       final String key = root.getKey();
-      executionStrategy.execute(() -> resolveChildren(snapshot.getData(key), rootLocation, tree,
+      this.executionStrategy.execute(() -> this.resolveChildren(snapshot.getData(key), rootLocation, tree,
           snapshot, null));
-      postHooks.forEach(executionStrategy::finalize);
+      this.postHooks.forEach(this.executionStrategy::finalize);
     } catch (final Exception e) {
       log.error("TreeLoader [parent] resolution step failed: ", e);
       final ErrorContext errorContext = Optional.ofNullable(context)
-          .orElseGet(() -> errorContextFactory.create(rootLocation))
+          .orElseGet(() -> this.errorContextFactory.create(rootLocation))
           .increment();
       final StepExecutionError executionError = new StepExecutionError(
           rootLocation,
-          c -> resolveTree(rootLocation, tree, c),
+          c -> this.resolveTree(rootLocation, tree, c),
           errorContext
       );
-      recoveryStrategy.handle(executionError);
+      this.recoveryStrategy.handle(executionError);
     }
   }
 
@@ -126,15 +126,16 @@ public class EntityStatementTreeLoader {
           .getAuthorityInformation(parent);
 
       authorityInformation.ifPresentOrElse(
-          authority -> onAuthority(parentLocation, tree, authority, snapshot, context),
-          () -> onSubjectStatement(parent, parentLocation, tree, snapshot, context)
+          authority -> this.onAuthority(parentLocation, tree, authority, snapshot, context),
+          () -> this.onSubjectStatement(parent, parentLocation, tree, snapshot, context)
       );
     } catch (final Exception e) {
       log.error("TreeLoader [child] resolution step failed: ", e);
       final ErrorContext errorContext = Optional.ofNullable(context)
-          .orElseGet(() -> errorContextFactory.create(parentLocation))
+          .orElseGet(() -> this.errorContextFactory.create(parentLocation))
           .increment();
-      recoveryStrategy.handle(new StepExecutionError(parentLocation, childResolutionStep(parent, parentLocation, tree,
+      this.recoveryStrategy.handle(new StepExecutionError(parentLocation, this.childResolutionStep(parent,
+          parentLocation, tree,
           snapshot), errorContext));
     }
   }
@@ -162,7 +163,8 @@ public class EntityStatementTreeLoader {
           final EntityStatement entityStatement = this.integration.getEntityStatement(location);
           final Node<EntityStatement> node = new Node<>(location);
           tree.addChild(node, parentLocation, entityStatement, snapshot);
-          executionStrategy.execute(() -> resolveChildren(entityStatement, location, tree, snapshot, context));
+          this.executionStrategy.execute(() -> this.resolveChildren(entityStatement, location, tree, snapshot,
+              context));
         });
   }
 
@@ -185,7 +187,7 @@ public class EntityStatementTreeLoader {
         final EntityStatement entityStatement = this.integration.getEntityStatement(subjectInformation.location());
         final Node<EntityStatement> node = new Node<>(subjectInformation.location());
         tree.addChild(node, parentLocation, entityStatement, snapshot);
-        executionStrategy.execute(() -> resolveChildren(entityStatement, subjectInformation.location(), tree,
+        this.executionStrategy.execute(() -> this.resolveChildren(entityStatement, subjectInformation.location(), tree,
             snapshot, context));
       });
     });

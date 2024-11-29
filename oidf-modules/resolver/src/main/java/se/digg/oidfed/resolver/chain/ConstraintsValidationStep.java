@@ -39,9 +39,10 @@ public class ConstraintsValidationStep implements ChainValidationStep {
   public void validate(final List<EntityStatement> chain) {
     for (int i = 1; i < chain.size(); i++) {
       try {
-        verifyIndividualConstraint(chain.get(i - 1).getClaimsSet().getConstraints(), chain.subList(i, chain.size()));
+        this.verifyIndividualConstraint(chain.get(i - 1).getClaimsSet().getConstraints(), chain.subList(i,
+            chain.size()));
       }
-      catch (Exception e) {
+      catch (final Exception e) {
         throw new RuntimeException(e);
       }
     }
@@ -57,19 +58,21 @@ public class ConstraintsValidationStep implements ChainValidationStep {
     }
 
     // Extract constraints components
-    int maxPathLength = constraints.getMaxPathLength();
-    List<String> allowedLeafEntityTypes = constraints.getLeafEntityTypeConstraint().getAllowedAsStringList();
-    List<String> excluded = constraints.getExcludedEntityIDs().stream().map(EntityIDConstraint::toString).toList();
-    List<String> permitted = constraints.getPermittedEntityIDs().stream().map(EntityIDConstraint::toString).toList();
-    EntityStatement leafStatement = subordinateStatements.getLast();
+    final int maxPathLength = constraints.getMaxPathLength();
+    final List<String> allowedLeafEntityTypes = constraints.getLeafEntityTypeConstraint().getAllowedAsStringList();
+    final List<String> excluded =
+        constraints.getExcludedEntityIDs().stream().map(EntityIDConstraint::toString).toList();
+    final List<String> permitted =
+        constraints.getPermittedEntityIDs().stream().map(EntityIDConstraint::toString).toList();
+    final EntityStatement leafStatement = subordinateStatements.getLast();
 
-    Map<String, Object> leafEntityMetadataJsonObject = leafStatement.getClaimsSet().getMetadataPolicyJSONObject();
-    List<String> leafEntityTypes = leafEntityMetadataJsonObject.keySet().stream()
+    final Map<String, Object> leafEntityMetadataJsonObject = leafStatement.getClaimsSet().getMetadataPolicyJSONObject();
+    final List<String> leafEntityTypes = leafEntityMetadataJsonObject.keySet().stream()
         .filter(s -> !"federation_entity".equals(s))
         .filter(
             s -> leafEntityMetadataJsonObject.get(s) != null && !((Map) leafEntityMetadataJsonObject.get(s)).isEmpty())
         .toList();
-    List<String> subjectEntityIdentifiers = subordinateStatements.stream()
+    final List<String> subjectEntityIdentifiers = subordinateStatements.stream()
         .map(EntityStatement::getClaimsSet)
         .map(CommonClaimsSet::getSubject)
         .map(Identifier::getValue)

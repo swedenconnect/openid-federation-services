@@ -38,19 +38,19 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
   @Override
   public Optional<EntityRecord> getEntity(final String path) {
     if (Objects.isNull(path) || path.isEmpty() || path.equalsIgnoreCase("/")) {
-      return registry.getEntity(defaultEntity);
+      return this.registry.getEntity(this.defaultEntity);
     }
-    return registry.getEntity(path);
+    return this.registry.getEntity(path);
   }
 
   @Override
   public Set<String> getPaths() {
-    return registry.getPaths();
+    return this.registry.getPaths();
   }
 
   @Override
   public Optional<EntityRecord> getEntity(final EntityID entityID) {
-    return registry.getEntity(entityID);
+    return this.registry.getEntity(entityID);
   }
 
   /**
@@ -81,6 +81,6 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
 
   @Override
   public List<EntityRecord> find(final Predicate<EntityRecord> predicate) {
-    return registry.find(predicate);
+    return this.registry.find(predicate);
   }
 }

@@ -61,10 +61,10 @@ public class EntityStatementTreeLoaderFactory {
    * @return new instance of a tree loader
    */
   public EntityStatementTreeLoader create(final ResolverProperties properties) {
-    return new EntityStatementTreeLoader(integration, executionStrategy,
+    return new EntityStatementTreeLoader(this.integration, this.executionStrategy,
         new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
-        errorContextFactory)
-        .withAdditionalPostHook(() -> publisher.publishEvent(new TreeUpdatedEvent(properties.alias())));
+        this.errorContextFactory)
+        .withAdditionalPostHook(() -> this.publisher.publishEvent(new TreeUpdatedEvent(properties.alias())));
   }
 
 }

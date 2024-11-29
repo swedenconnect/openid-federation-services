@@ -40,17 +40,17 @@ public class ObservableErrorContext implements ErrorContext {
 
   @Override
   public ErrorContext increment() {
-    counter.increment();
-    return context.increment();
+    this.counter.increment();
+    return this.context.increment();
   }
 
   @Override
   public int getErrorCount() {
-    return context.getErrorCount();
+    return this.context.getErrorCount();
   }
 
   @Override
   public String getLocation() {
-    return context.getLocation();
+    return this.context.getLocation();
   }
 }

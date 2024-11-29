@@ -74,12 +74,12 @@ public class EntityRecord {
   public Map<String, Object> toJson() {
     final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-    builder.claim("issuer", issuer.getValue());
-    builder.claim("subject", subject.getValue());
-    builder.claim("policy_record_id", policyRecordId);
-    builder.claim("jwks", jwks.toJSONObject());
+    builder.claim("issuer", this.issuer.getValue());
+    builder.claim("subject", this.subject.getValue());
+    builder.claim("policy_record_id", this.policyRecordId);
+    builder.claim("jwks", this.jwks.toJSONObject());
 
-    Optional.ofNullable(hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
+    Optional.ofNullable(this.hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
     Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
         "override_configuration_location", location));
     final JWTClaimsSet build = builder

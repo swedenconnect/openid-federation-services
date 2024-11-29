@@ -38,7 +38,7 @@ public class InMemoryRecordRegistryCache implements RecordRegistryCache {
 
   @Override
   public CacheResponse<PolicyRecord> getPolicy(final String id) {
-    return Optional.ofNullable(policyRecords.get(id)).orElse(new CacheResponse<>(Optional.empty(), true));
+    return Optional.ofNullable(this.policyRecords.get(id)).orElse(new CacheResponse<>(Optional.empty(), true));
   }
 
   @Override
@@ -48,7 +48,7 @@ public class InMemoryRecordRegistryCache implements RecordRegistryCache {
 
   @Override
   public CacheResponse<List<EntityRecord>> getEntityRecords(final String issuer) {
-    return Optional.ofNullable(entityRecords.get(issuer)).orElse(new CacheResponse<>(Optional.empty(), true));
+    return Optional.ofNullable(this.entityRecords.get(issuer)).orElse(new CacheResponse<>(Optional.empty(), true));
   }
 
   @Override

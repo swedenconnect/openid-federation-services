@@ -63,7 +63,7 @@ public class TrustAnchorModuleProperties {
      * @return property
      */
     public TrustAnchorProperties toTrustAnchorProperties() {
-      final List<TrustAnchorProperties.SubordinateListingProperty> subordinates = subordinateListing.stream()
+      final List<TrustAnchorProperties.SubordinateListingProperty> subordinates = this.subordinateListing.stream()
           .map(sub -> new TrustAnchorProperties.SubordinateListingProperty(sub.entityIdentifier, sub.policy))
           .toList();
       return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier), subordinates);

@@ -31,7 +31,7 @@ public record ChainValidationStepResult(String name, boolean valid, Throwable er
    * @param name of the step
    * @return result instance
    */
-  public static ChainValidationStepResult valid(String name) {
+  public static ChainValidationStepResult valid(final String name) {
     return new ChainValidationStepResult(name, true, null);
   }
 

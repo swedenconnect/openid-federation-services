@@ -77,7 +77,7 @@ public class TrustAnchor implements Submodule {
           .formatted(subject.getIssuer(), issuer.getSubject()));
     }
 
-    return factory
+    return this.factory
         .createEntityStatement(issuer, subject)
         .serialize();
   }
@@ -87,7 +87,7 @@ public class TrustAnchor implements Submodule {
    * @return listing of subordinates
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) {
-    return registry
+    return this.registry
         .find(ec -> ec.getIssuer().equals(this.properties.getEntityId()) && ec.getIssuer() != ec.getSubject()).stream()
         .map(ec -> ec.getSubject().getValue())
         .toList();
@@ -95,6 +95,6 @@ public class TrustAnchor implements Submodule {
 
   @Override
   public String getAlias() {
-    return properties.getAlias();
+    return this.properties.getAlias();
   }
 }

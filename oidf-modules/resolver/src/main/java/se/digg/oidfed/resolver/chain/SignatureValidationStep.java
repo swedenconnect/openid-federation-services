@@ -51,7 +51,7 @@ public class SignatureValidationStep implements ChainValidationStep {
       Objects.requireNonNull(leaf.verifySignatureOfSelfStatement());
       verifyValidityTime(leaf);
       //Verify TA
-      verifyEntity(chain.getLast());
+      this.verifyEntity(chain.getLast());
 
       for (int i = 0 ; i < chain.size() - 1; i++) {
         verifyLink(chain.get(i), chain.get(i+1));
@@ -83,7 +83,7 @@ public class SignatureValidationStep implements ChainValidationStep {
     verifyValidityTime(entity);
   }
 
-  private static void verifyValidityTime(EntityStatement entityStatement) {
+  private static void verifyValidityTime(final EntityStatement entityStatement) {
 
     if (entityStatement.getClaimsSet().getIssueTime() == null) {
       throw new IllegalArgumentException("Entity Statement has no issue time");
@@ -93,12 +93,12 @@ public class SignatureValidationStep implements ChainValidationStep {
       throw new IllegalArgumentException("Entity Statement has no expiration time");
     }
 
-    Instant issueTime = Instant.ofEpochMilli(entityStatement.getClaimsSet().getIssueTime().getTime());
+    final Instant issueTime = Instant.ofEpochMilli(entityStatement.getClaimsSet().getIssueTime().getTime());
     if (Instant.now().isBefore(issueTime.minusSeconds(15))) {
       throw new IllegalArgumentException("Entity Statement issue time is in the future");
     }
 
-    Instant expirationTime = Instant.ofEpochMilli(entityStatement.getClaimsSet().getExpirationTime().getTime());
+    final Instant expirationTime = Instant.ofEpochMilli(entityStatement.getClaimsSet().getExpirationTime().getTime());
     if (Instant.now().isAfter(expirationTime)) {
       throw new IllegalArgumentException("Entity Statement has expired");
     }

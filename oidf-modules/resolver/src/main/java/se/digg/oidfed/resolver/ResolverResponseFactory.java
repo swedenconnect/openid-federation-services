@@ -66,13 +66,13 @@ public class ResolverResponseFactory {
    * @throws JOSEException
    */
   public String sign(final ResolverResponse resolverResponse) throws ParseException, JOSEException {
-    final JWK signingKey = properties.signKey();
-    final Instant now = Instant.now(clock);
+    final JWK signingKey = this.properties.signKey();
+    final Instant now = Instant.now(this.clock);
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder(resolverResponse.entityStatement().getClaimsSet().toJWTClaimsSet())
-            .issuer(properties.entityIdentifier())
+            .issuer(this.properties.entityIdentifier())
             .issueTime(Date.from(now))
-            .expirationTime(Date.from(now.plus(properties.resolveResponseDuration())))
+            .expirationTime(Date.from(now.plus(this.properties.resolveResponseDuration())))
             .claim("metadata", resolverResponse.metadata())
             .claim("trust_marks",
                 resolverResponse.trustMarkEntries().stream().map(trustMark -> trustMark.getTrustMark().serialize())
@@ -82,14 +82,13 @@ public class ResolverResponseFactory {
                     .toList())
             .build();
     final SignedJWT jwt =
-        new SignedJWT(new JWSHeader(keyTypeJWSAlgorithmMap.get(signingKey.getKeyType())), claims);
-    jwt.sign(getSigner(signingKey));
+        new SignedJWT(new JWSHeader(this.keyTypeJWSAlgorithmMap.get(signingKey.getKeyType())), claims);
+    jwt.sign(this.getSigner(signingKey));
     return jwt.serialize();
   }
 
   private JWSSigner getSigner(final JWK signingKey) throws JOSEException {
-
-    KeyType keyType = signingKey.getKeyType();
+    final KeyType keyType = signingKey.getKeyType();
     if (keyType.equals(KeyType.EC)) {
       return new ECDSASigner(signingKey.toECKey());
     }

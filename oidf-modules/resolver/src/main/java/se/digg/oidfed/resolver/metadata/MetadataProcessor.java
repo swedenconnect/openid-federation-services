@@ -68,7 +68,7 @@ public class MetadataProcessor {
                 try {
                   return entity.getClaimsSet().getMetadataPolicy(new EntityType(mdt));
                 }
-                catch (PolicyViolationException e) {
+                catch (final PolicyViolationException e) {
                   throw new IllegalArgumentException(e);
                 }
               });
@@ -76,23 +76,23 @@ public class MetadataProcessor {
           .filter(Objects::nonNull)
           .toList();
 
-      final MetadataPolicy combinedMetadataPolicy = MetadataPolicy.combine(metadataPolicies, combinationValidator);
+      final MetadataPolicy combinedMetadataPolicy = MetadataPolicy.combine(metadataPolicies, this.combinationValidator);
 
       final MetadataPolicy metadataPolicy =
-          MetadataPolicy.parse(combinedMetadataPolicy.toJSONObject(), operationFactory, combinationValidator);
+          MetadataPolicy.parse(combinedMetadataPolicy.toJSONObject(), this.operationFactory, this.combinationValidator);
 
       final JSONObject result = new JSONObject();
       metadataType.forEach(type -> {
         try {
           result.put(type, metadataPolicy.apply(leafNode.getClaimsSet().getMetadata(new EntityType(type))));
         }
-        catch (PolicyViolationException e) {
+        catch (final PolicyViolationException e) {
           throw new RuntimeException(e);
         }
       });
       return result;
     }
-    catch (PolicyViolationException | com.nimbusds.oauth2.sdk.ParseException e) {
+    catch (final PolicyViolationException | com.nimbusds.oauth2.sdk.ParseException e) {
       throw new IllegalArgumentException("Failed to validate/parse policy", e);
     }
   }

@@ -47,7 +47,7 @@ public class PolicyConfigurationProperties {
    */
   @PostConstruct
   public void validate() {
-    Optional.ofNullable(policies).orElse(Collections.emptyList()).forEach(PolicyRecordProperty::validate);
+    Optional.ofNullable(this.policies).orElse(Collections.emptyList()).forEach(PolicyRecordProperty::validate);
   }
 
   /**
@@ -80,9 +80,9 @@ public class PolicyConfigurationProperties {
      */
     @PostConstruct
     public void validate() {
-      FederationAssert.assertNotEmpty(resource,
+      FederationAssert.assertNotEmpty(this.resource,
           "openid.federation.policy-registry.policies[].resource is empty. Must be configured");
-      FederationAssert.assertNotEmpty(name,
+      FederationAssert.assertNotEmpty(this.name,
           "openid.federation.policy-registry.policies[].name is empty. Must be configured");
 
     }

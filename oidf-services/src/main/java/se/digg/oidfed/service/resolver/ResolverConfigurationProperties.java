@@ -60,10 +60,10 @@ public class ResolverConfigurationProperties {
    */
   @PostConstruct
   public void validate(){
-    FederationAssert.assertNotEmpty(resolvers,
+    FederationAssert.assertNotEmpty(this.resolvers,
         "resolvers is empty. Must be configured");
 
-    resolvers.forEach(ResolverModuleProperties::validate);
+    this.resolvers.forEach(ResolverModuleProperties::validate);
   }
 
   /**
@@ -94,20 +94,21 @@ public class ResolverConfigurationProperties {
      * @return properties
      */
     public ResolverProperties toResolverProperties(final KeyRegistry registry) {
-      final List<JWK> list = trustedKeys.stream()
+      final List<JWK> list = this.trustedKeys.stream()
           .map(registry::getKey)
           .map(Optional::orElseThrow)
           .toList();
 
       return new ResolverProperties(
-          trustAnchor,
-          duration,
+          this.trustAnchor,
+          this.duration,
           list,
-          entityIdentifier,
-          registry.getKey(signKeyAlias)
-              .orElseThrow(() -> new IllegalArgumentException("Unable to find key for key alias:'"+signKeyAlias+"'")),
+          this.entityIdentifier,
+          registry.getKey(this.signKeyAlias)
+              .orElseThrow(() -> new IllegalArgumentException("Unable to find key for key alias:'%s'"
+                  .formatted(this.signKeyAlias))),
           Duration.ofSeconds(10),
-          alias
+          this.alias
       );
     }
 
@@ -115,7 +116,7 @@ public class ResolverConfigurationProperties {
      * Validate configuration data
      */
     public void validate(){
-      FederationAssert.assertNotEmpty(trustAnchor,
+      FederationAssert.assertNotEmpty(this.trustAnchor,
           "trustAnchor is empty. Must be configured");
 
     }

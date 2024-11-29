@@ -72,18 +72,18 @@ public class EntityInitializer {
    */
   @EventListener
   public void handle(final ApplicationStartedEvent event) {
-    properties.getEntityRegistry()
-        .stream().map(r -> r.toEntityRecord(keyRegistry))
-        .toList().forEach(registry::addEntity);
+    this.properties.getEntityRegistry()
+        .stream().map(r -> r.toEntityRecord(this.keyRegistry))
+        .toList().forEach(this.registry::addEntity);
 
-    final EntityRecord issuerRecord = registry.getEntity("/").orElseThrow(() -> new IllegalArgumentException(
+    final EntityRecord issuerRecord = this.registry.getEntity("/").orElseThrow(() -> new IllegalArgumentException(
         "Could not find root entity in configuration"));
     final EntityID issuer = issuerRecord.getIssuer();
     try {
-      source.getEntityRecords(issuer.getValue()).forEach(registry::addEntity);
+      this.source.getEntityRecords(issuer.getValue()).forEach(this.registry::addEntity);
     } catch (final Exception e) {
       log.error("failed to fetch entity records from registry", e);
     }
-    router.reevaluteEndpoints();
+    this.router.reevaluteEndpoints();
   }
 }

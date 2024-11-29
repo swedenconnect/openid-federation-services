@@ -59,8 +59,8 @@ public class TrustMarkSource {
    */
   public Map<String, Object> toJson() {
     return Map.of(
-        "issuer", issuer.getValue(),
-        "trust_mark_id", trustMarkId
+        "issuer", this.issuer.getValue(),
+        "trust_mark_id", this.trustMarkId
     );
   }
 }

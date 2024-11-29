@@ -43,7 +43,7 @@ public class TrustMarkIssuerSubjectInMemLoader implements TrustMarkIssuerSubject
    * Takes a list of TrustMarkIssuerSubject
    * @param trustMarkPropertiesList List vith TrustMarkIssuerSubject
    */
-  public TrustMarkIssuerSubjectInMemLoader(List<TrustMarkIssuerSubject> trustMarkPropertiesList) {
+  public TrustMarkIssuerSubjectInMemLoader(final List<TrustMarkIssuerSubject> trustMarkPropertiesList) {
     this.trustMarkPropertiesList = trustMarkPropertiesList;
     this.trustMarkPropertiesList.forEach(TrustMarkIssuerSubject::validate);
   }
@@ -54,7 +54,7 @@ public class TrustMarkIssuerSubjectInMemLoader implements TrustMarkIssuerSubject
   public List<TrustMarkIssuerSubject> loadSubject(final String issuerEntityId, final TrustMarkId trustMarkId,
       final Optional<String> subject) {
 
-    return trustMarkPropertiesList.stream()
+    return this.trustMarkPropertiesList.stream()
         .filter(trustMarkIssuerSubject -> Objects.isNull(subject) || subject.isEmpty() ||
             subject.filter(sub -> trustMarkIssuerSubject.sub().equals(sub)).isPresent())
         .toList();
@@ -65,9 +65,9 @@ public class TrustMarkIssuerSubjectInMemLoader implements TrustMarkIssuerSubject
    * Register new TrustMarkIssuerSubject
    * @param trustMarkIssuerSubject TrustMarkIssuerSubject to be registered
    */
-  public void register(TrustMarkIssuerSubject trustMarkIssuerSubject){
+  public void register(final TrustMarkIssuerSubject trustMarkIssuerSubject){
     trustMarkIssuerSubject.validate();
-    trustMarkPropertiesList.add(trustMarkIssuerSubject);
+    this.trustMarkPropertiesList.add(trustMarkIssuerSubject);
   }
 
 

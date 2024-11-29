@@ -46,8 +46,8 @@ public class IntersectsOperation implements StringListOperation {
   @Override
   public List<String> apply(final List<String> value) throws PolicyViolationException {
 
-    if (value.stream().noneMatch(set::contains)) {
-      throw new PolicyViolationException("values:%s does not intersect with set:%s".formatted(value, set));
+    if (value.stream().noneMatch(this.set::contains)) {
+      throw new PolicyViolationException("values:%s does not intersect with set:%s".formatted(value, this.set));
     }
 
     return value;
@@ -61,12 +61,12 @@ public class IntersectsOperation implements StringListOperation {
   @Override
   public void parseConfiguration(final Object o) throws ParseException {
     final List<String> configuration = JSONUtils.toStringList(o);
-    set.addAll(configuration);
+    this.set.addAll(configuration);
   }
 
   @Override
   public Map.Entry<String, Object> toJSONObjectEntry() {
-    return new AbstractMap.SimpleImmutableEntry<>(this.getOperationName().getValue(), set);
+    return new AbstractMap.SimpleImmutableEntry<>(this.getOperationName().getValue(), this.set);
   }
 
   @Override
