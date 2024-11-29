@@ -44,25 +44,25 @@ public class InMemoryEntityRecordRegistry implements EntityRecordRegistry {
 
   @Override
   public Optional<EntityRecord> getEntity(final String path) {
-    return Optional.ofNullable(pathEntities.get(path));
+    return Optional.ofNullable(this.pathEntities.get(path));
   }
 
   @Override
   public Set<String> getPaths() {
-    return pathEntities.keySet();
+    return this.pathEntities.keySet();
   }
 
   @Override
   public Optional<EntityRecord> getEntity(final EntityID entityID) {
-    return Optional.ofNullable(idEntityRecordMap.get(entityID));
+    return Optional.ofNullable(this.idEntityRecordMap.get(entityID));
   }
 
   @Override
   public void addEntity(final EntityRecord record) {
-    idEntityRecordMap.put(record.getSubject(), record);
+    this.idEntityRecordMap.put(record.getSubject(), record);
 
     Optional.ofNullable(record.getHostedRecord()).ifPresent(hostedRecord -> {
-      pathEntities.put(EntityPathFactory.getPath(record, basePath), record);
+      this.pathEntities.put(EntityPathFactory.getPath(record, this.basePath), record);
     });
   }
 

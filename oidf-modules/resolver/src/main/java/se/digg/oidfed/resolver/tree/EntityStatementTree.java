@@ -65,7 +65,7 @@ public class EntityStatementTree {
         .sorted(Comparator.comparingInt(a -> a.context().level()))
         .map(Tree.SearchResult::getData)
         // Remove intermediate authorities
-        .filter(es -> !isIntermediate(es, resolverRequest))
+        .filter(es -> !this.isIntermediate(es, resolverRequest))
         .collect(Collectors.toCollection(LinkedHashSet::new))
         //Reverse order to be leaf --> n --> root
         .reversed();
@@ -76,7 +76,7 @@ public class EntityStatementTree {
    * @return list of resolved entities
    */
   public List<String> discovery(final DiscoveryRequest discoveryRequest) {
-    return this.tree.search(new SearchRequest<>(discoveryRequest.asPredicate(), false, tree.getCurrentSnapshot()))
+    return this.tree.search(new SearchRequest<>(discoveryRequest.asPredicate(), false, this.tree.getCurrentSnapshot()))
         .stream()
         .map(n -> n.getData().getEntityID().getValue())
         .toList();

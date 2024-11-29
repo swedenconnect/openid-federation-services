@@ -56,7 +56,7 @@ public class RecordVerifier {
   public List<EntityRecord> verifyEntities(final String jwtString) {
     try {
       final SignedJWT jwt = SignedJWT.parse(jwtString);
-      final Key key = selectKey(jwt);
+      final Key key = this.selectKey(jwt);
 
       final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory()
           .createJWSVerifier(jwt.getHeader(), key);
@@ -86,7 +86,7 @@ public class RecordVerifier {
   public Optional<PolicyRecord> verifyPolicy(final String jwtString) {
     try {
       final SignedJWT jwt = SignedJWT.parse(jwtString);
-      final Key key = selectKey(jwt);
+      final Key key = this.selectKey(jwt);
 
       final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory()
           .createJWSVerifier(jwt.getHeader(), key);
@@ -111,7 +111,7 @@ public class RecordVerifier {
         .build());
 
     final JWK jwk = selector
-        .select(jwks)
+        .select(this.jwks)
         .getFirst();
 
     return switch (jwk.getKeyType().getValue()) {

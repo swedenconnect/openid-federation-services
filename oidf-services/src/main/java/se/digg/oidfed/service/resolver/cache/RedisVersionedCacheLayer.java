@@ -58,51 +58,51 @@ public class RedisVersionedCacheLayer implements VersionedCacheLayer<EntityState
 
   @Override
   public List<Node<EntityStatement>> getChildren(final Node<EntityStatement> parent, final int version) {
-    return redisOperations.getChildren(new RedisOperations.ChildKey(parent, version, properties.alias()));
+    return this.redisOperations.getChildren(new RedisOperations.ChildKey(parent, version, this.properties.alias()));
   }
 
   @Override
   public void append(final Node<EntityStatement> child, final Node<EntityStatement> parent, final int version) {
-    redisOperations.append(new RedisOperations.ChildKey(parent, version, properties.alias()), child);
+    this.redisOperations.append(new RedisOperations.ChildKey(parent, version, this.properties.alias()), child);
   }
 
   @Override
   public void setData(final String location, final EntityStatement data, final int version) {
-    redisOperations.setData(new RedisOperations.EntityKey(location, version, properties.alias()), data);
+    this.redisOperations.setData(new RedisOperations.EntityKey(location, version, this.properties.alias()), data);
   }
 
   @Override
   public EntityStatement getData(final String location, final int version) {
-    return redisOperations.getData(new RedisOperations.EntityKey(location, version, properties.alias()));
+    return this.redisOperations.getData(new RedisOperations.EntityKey(location, version, this.properties.alias()));
   }
 
   @Override
   public Node<EntityStatement> getRoot(final int version) {
-    return redisOperations.getRoot(new RedisOperations.RootKey(version, properties.alias()));
+    return this.redisOperations.getRoot(new RedisOperations.RootKey(version, this.properties.alias()));
   }
 
   @Override
   public int getCurrentVersion() {
     final BoundValueOperations<String, Integer> stringIntegerBoundValueOperations =
-        versionTemplate.boundValueOps("tree:version");
+        this.versionTemplate.boundValueOps("tree:version");
     return Optional.ofNullable(stringIntegerBoundValueOperations.get()).orElse(0);
   }
 
   @Override
   public void useNextVersion() {
-    versionTemplate.boundValueOps("tree:version").set(getNextVersion());
+    this.versionTemplate.boundValueOps("tree:version").set(getNextVersion());
   }
 
   @Override
   public CacheSnapshot<EntityStatement> snapshot() {
-    return new CacheSnapshot<>(this, getCurrentVersion());
+    return new CacheSnapshot<>(this, this.getCurrentVersion());
   }
 
   @Override
   public CacheSnapshot<EntityStatement> createNewSnapshot(final Node<EntityStatement> root,
       final EntityStatement rootData) {
     final int version = getNextVersion();
-    this.redisOperations.setRoot(new RedisOperations.RootKey(version, properties.alias()), root);
+    this.redisOperations.setRoot(new RedisOperations.RootKey(version, this.properties.alias()), root);
     this.setData(root.getKey(), rootData, version);
     return new CacheSnapshot<>(this, version);
   }

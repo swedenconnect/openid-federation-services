@@ -54,12 +54,13 @@ public class TrustMarkId implements Serializable {
 
   @Override
   public String toString() {
-    return trustMarkId;
+    return this.trustMarkId;
   }
 
 
 
-  private static <EX extends Exception> String validateInternal(String trustMarkId, Function<String,EX> ex) throws EX{
+  private static <EX extends Exception> String validateInternal(
+      final String trustMarkId, final Function<String,EX> ex) throws EX{
     if(trustMarkId == null){
       throw ex.apply("Unable to create TrustMarkId since input is null.");
     }
@@ -77,7 +78,8 @@ public class TrustMarkId implements Serializable {
    * @param <EX> Exception
    * @throws EX  Exception thrown if trustmark is not validated
    */
-  public static <EX extends Exception> TrustMarkId validate(String trustMarkId, Function<String,EX> ex) throws EX{
+  public static <EX extends Exception> TrustMarkId validate(
+      final String trustMarkId, final Function<String,EX> ex) throws EX{
    return new TrustMarkId(validateInternal(trustMarkId,ex));
   }
 

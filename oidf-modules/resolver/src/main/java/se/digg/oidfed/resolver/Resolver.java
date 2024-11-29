@@ -85,14 +85,14 @@ public class Resolver implements Submodule {
      * 6) Build response
      */
 
-    if (!request.trustAnchor().equalsIgnoreCase(resolverProperties.trustAnchor())) {
+    if (!request.trustAnchor().equalsIgnoreCase(this.resolverProperties.trustAnchor())) {
       throw new IllegalArgumentException("Requested Trust Anchor is not supported");
     }
 
-    final Set<EntityStatement> chain = tree.getTrustChain(request);
-    final ChainValidationResult chainValidationResult = validator.validate(chain.stream().toList());
+    final Set<EntityStatement> chain = this.tree.getTrustChain(request);
+    final ChainValidationResult chainValidationResult = this.validator.validate(chain.stream().toList());
 
-    final JSONObject processedMetadata = processor.processMetadata(chainValidationResult.chain());
+    final JSONObject processedMetadata = this.processor.processMetadata(chainValidationResult.chain());
     final List<TrustMarkEntry> trustMarkEntries =
         TrustMarkCollector.collectSubjectTrustMarks(chainValidationResult.chain());
 
@@ -106,7 +106,7 @@ public class Resolver implements Submodule {
         .build();
 
     try {
-      return factory.sign(response);
+      return this.factory.sign(response);
     } catch (final JOSEException | ParseException e) {
       throw new ResolverException("Failed to sign resolver response", e);
     }
@@ -117,12 +117,12 @@ public class Resolver implements Submodule {
    * @return discovery response
    */
   public DiscoveryResponse discovery(final DiscoveryRequest request) {
-    return new DiscoveryResponse(tree.discovery(request));
+    return new DiscoveryResponse(this.tree.discovery(request));
   }
 
   @Override
   public String getAlias() {
-    return resolverProperties.alias();
+    return this.resolverProperties.alias();
   }
 
 }

@@ -59,25 +59,25 @@ public class EntityRouter {
 
     route.GET("/.well-known/openid-federation", r -> {
       return ServerResponse.ok().body(
-          registry.getEntity("/")
-              .map(factory::createEntityConfiguration)
+          this.registry.getEntity("/")
+              .map(this.factory::createEntityConfiguration)
               .map(e -> e.getSignedStatement().serialize())
               .orElseThrow());
     });
 
-    registry.getPaths().forEach(path -> {
+    this.registry.getPaths().forEach(path -> {
       route.GET("%s/.well-known/openid-federation".formatted(path), r -> {
         return ServerResponse.ok().body(
-            registry.getEntity(path)
-                .map(factory::createEntityConfiguration)
+            this.registry.getEntity(path)
+                .map(this.factory::createEntityConfiguration)
                 .map(e -> e.getSignedStatement().serialize())
                 .orElseThrow());
       });
     });
 
     final RouterFunction<ServerResponse> functions = route.build();
-    mapping.setRouterFunction(functions);
-    RouterFunctions.changeParser(functions, mapping.getPatternParser());
+    this.mapping.setRouterFunction(functions);
+    RouterFunctions.changeParser(functions, this.mapping.getPatternParser());
   }
 
 }

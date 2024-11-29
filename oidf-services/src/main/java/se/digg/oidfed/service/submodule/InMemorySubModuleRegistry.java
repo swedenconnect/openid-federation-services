@@ -65,17 +65,17 @@ public class InMemorySubModuleRegistry
 
   @Override
   public Optional<Resolver> getResolver(final String alias) {
-    return Optional.ofNullable(resolvers.get(alias));
+    return Optional.ofNullable(this.resolvers.get(alias));
   }
 
   @Override
   public Optional<TrustAnchor> getTrustAnchor(final String alias) {
-    return Optional.ofNullable(trustAnchors.get(alias));
+    return Optional.ofNullable(this.trustAnchors.get(alias));
   }
 
   @Override
   public Optional<TrustMarkIssuer> getTrustMarkIssuer(final String alias) {
-    return Optional.ofNullable(trustMarkIssuers.get(alias));
+    return Optional.ofNullable(this.trustMarkIssuers.get(alias));
   }
 
 }

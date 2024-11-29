@@ -75,7 +75,7 @@ public class EntityProperty {
        * @return converted property
        */
       public TrustMarkSource toTrustMarkSource() {
-        return new TrustMarkSource(new EntityID(issuer), trustMarkId);
+        return new TrustMarkSource(new EntityID(this.issuer), this.trustMarkId);
       }
     }
   }
@@ -87,12 +87,12 @@ public class EntityProperty {
    */
   public EntityRecord toEntityRecord(final KeyRegistry registry) {
     return new EntityRecord(
-        new EntityID(issuer),
-        new EntityID(subject),
-        policyName,
-        new JWKSet(jwkAlias.stream().map(registry::getKey).map(Optional::get).toList()),
-        overrideConfigurationLocation,
-        hostedRecord(hostedRecord).orElse(null)
+        new EntityID(this.issuer),
+        new EntityID(this.subject),
+        this.policyName,
+        new JWKSet(this.jwkAlias.stream().map(registry::getKey).map(Optional::get).toList()),
+        this.overrideConfigurationLocation,
+        this.hostedRecord(this.hostedRecord).orElse(null)
     );
   }
 

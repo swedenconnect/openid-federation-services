@@ -38,7 +38,7 @@ public class OIDFPolicyOperationFactory implements PolicyOperationFactory {
     return switch (operationName.getValue()) {
       case "regexp" -> new RegexpOperation();
       case "intersects" -> new IntersectsOperation();
-      default -> operationFactory.createForName(operationName);
+      default -> this.operationFactory.createForName(operationName);
     };
   }
 }

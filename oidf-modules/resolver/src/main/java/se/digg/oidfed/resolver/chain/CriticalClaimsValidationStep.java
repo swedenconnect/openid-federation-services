@@ -36,7 +36,7 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
     if (chain.stream()
         .map(es -> es.getClaimsSet().getStringListClaim("crit"))
         .filter(criticalClaims -> criticalClaims != null && !criticalClaims.isEmpty())
-        .anyMatch(criticalClaims -> !new HashSet<>(supportedCriticalClaims).containsAll(criticalClaims))
+        .anyMatch(criticalClaims -> !new HashSet<>(this.supportedCriticalClaims).containsAll(criticalClaims))
     ) {
       throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");
     }

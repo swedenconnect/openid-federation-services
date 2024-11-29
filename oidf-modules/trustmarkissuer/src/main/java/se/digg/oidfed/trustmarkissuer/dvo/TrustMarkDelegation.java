@@ -55,7 +55,8 @@ public class TrustMarkDelegation implements Serializable {
     return new TrustMarkDelegation(trustMarkDelegation);
   }
 
-  private static <EX extends Exception> String validateInternal(String delegation, Function<String, EX> ex) throws EX {
+  private static <EX extends Exception> String validateInternal(final String delegation,
+                                                                final Function<String, EX> ex) throws EX {
     if (delegation == null || delegation.isBlank()) {
       throw ex.apply("Unable to create TrustMarkDelegation since input is null.");
     }
@@ -80,7 +81,7 @@ public class TrustMarkDelegation implements Serializable {
       assertNotEmptyThrows(claimsSet.getIssueTime(), () -> ex.apply("IssueTime is expected in JWT claim"));
 
     }
-    catch (ParseException e) {
+    catch (final ParseException e) {
       throw ex.apply("Unable to parse delegation JWT: '" + e.getMessage() + "'");
     }
     return delegation;
@@ -94,14 +95,15 @@ public class TrustMarkDelegation implements Serializable {
    * @param <EX> Exception
    * @throws EX  Exception thrown if trustmark is not validated
    */
-  public static <EX extends Exception> TrustMarkDelegation validate(String trustMarkDelegation, Function<String,EX> ex)
+  public static <EX extends Exception> TrustMarkDelegation validate(final String trustMarkDelegation,
+                                                                    final Function<String,EX> ex)
       throws EX{
     return new TrustMarkDelegation(validateInternal(trustMarkDelegation,ex));
   }
 
   @Override
   public String toString() {
-    return delegation;
+    return this.delegation;
   }
 
 }

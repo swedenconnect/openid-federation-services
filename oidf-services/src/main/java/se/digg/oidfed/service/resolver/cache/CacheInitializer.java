@@ -42,6 +42,6 @@ public class CacheInitializer {
 
   @EventListener
   void handle(final ApplicationStartedEvent event) {
-    registry.getAliases().forEach(registry::loadTree);
+    this.registry.getAliases().forEach(this.registry::loadTree);
   }
 }

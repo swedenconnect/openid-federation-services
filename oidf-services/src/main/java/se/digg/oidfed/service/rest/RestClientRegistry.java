@@ -35,7 +35,7 @@ public class RestClientRegistry {
    * @param client the client to register
    */
   public void register(final String name, final RestClient client) {
-    restClients.put(name, client);
+    this.restClients.put(name, client);
   }
 
   /**
@@ -43,6 +43,6 @@ public class RestClientRegistry {
    * @return instance of client if it exists
    */
   public Optional<RestClient> getClient(final String name) {
-    return Optional.ofNullable(restClients.get(name));
+    return Optional.ofNullable(this.restClients.get(name));
   }
 }

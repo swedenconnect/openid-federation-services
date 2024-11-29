@@ -59,7 +59,7 @@ public class Node<T> {
    * @param context to propagate data in the tree
    */
   public void addChild(final NodePopulationContext<T> context) {
-    if (context.parentKey().equalsIgnoreCase(key)) {
+    if (context.parentKey().equalsIgnoreCase(this.key)) {
       context.cacheSnapshot().append(context.child(), this);
       return;
     }
@@ -118,7 +118,7 @@ public class Node<T> {
      * @return node context for the next level of iteration
      */
     public NodeSearchContext<T> next() {
-      return new NodeSearchContext<>(level + 1, includeParent, cacheSnapshot);
+      return new NodeSearchContext<>(this.level + 1, this.includeParent, this.cacheSnapshot);
     }
   }
 

@@ -52,10 +52,10 @@ public class TrustMarkIssuerModuleProperties {
    */
   @PostConstruct
   public void validate(){
-    FederationAssert.assertNotEmpty(trustMarkIssuers,
+    FederationAssert.assertNotEmpty(this.trustMarkIssuers,
         "trustMarkIssuers is empty. Must be configured");
 
-    trustMarkIssuers.forEach(TrustMarkIssuers::validate);
+    this.trustMarkIssuers.forEach(TrustMarkIssuers::validate);
   }
 
   /**
@@ -79,10 +79,10 @@ public class TrustMarkIssuerModuleProperties {
      *  Validate content of the configuration
      */
     public void validate(){
-      FederationAssert.assertNotEmpty(trustMarks,
+      FederationAssert.assertNotEmpty(this.trustMarks,
           "TrustMarks is empty. Must be configured");
 
-      trustMarks.forEach(TrustMarkIssuer::validate);
+      this.trustMarks.forEach(TrustMarkIssuer::validate);
     }
 
     /**
@@ -118,7 +118,7 @@ public class TrustMarkIssuerModuleProperties {
        *  Validate content of the configuration
        */
       public void validate(){
-        FederationAssert.assertNotEmpty(subjects,
+        FederationAssert.assertNotEmpty(this.subjects,
             "trust-mark-issuers[].trust-marks[].subjects is empty. Must be configured");
       }
     }

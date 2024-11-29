@@ -56,7 +56,7 @@ public class FederationException extends Exception {
    * @return Map of string,string
    */
   public Map<String, String> toJSONObject() {
-    return Map.of("error", error, "error_description", errorDescription);
+    return Map.of("error", this.error, "error_description", this.errorDescription);
   }
 
   /**

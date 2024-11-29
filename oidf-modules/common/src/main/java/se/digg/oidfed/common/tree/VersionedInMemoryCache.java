@@ -39,38 +39,38 @@ public class VersionedInMemoryCache<T> implements VersionedCacheLayer<T>, Snapsh
   private final AtomicInteger integer = new AtomicInteger(0);
 
   @Override
-  public void setData(final String key, final T data, int version) {
-    dataMap.put(getKey(key, version), data);
+  public void setData(final String key, final T data, final int version) {
+    this.dataMap.put(this.getKey(key, version), data);
   }
 
   @Override
   public Node<T> getRoot(final int version) {
-    return rootMap.get(version);
+    return this.rootMap.get(version);
   }
 
   @Override
-  public T getData(final String key, int version) {
-    return dataMap.get(getKey(key, version));
+  public T getData(final String key, final int version) {
+    return this.dataMap.get(this.getKey(key, version));
   }
 
-  private String getKey(final String key, int version) {
+  private String getKey(final String key, final int version) {
     return "%d:%s".formatted(version, key);
   }
 
   @Override
-  public List<Node<T>> getChildren(final Node<T> node, int version) {
-    return Optional.ofNullable(this.childMap.get(getKey(node.getKey(), version))).orElseGet(List::of);
+  public List<Node<T>> getChildren(final Node<T> node, final int version) {
+    return Optional.ofNullable(this.childMap.get(this.getKey(node.getKey(), version))).orElseGet(List::of);
   }
 
   @Override
-  public synchronized void append(final Node<T> child, final Node<T> parent, int version) {
+  public synchronized void append(final Node<T> child, final Node<T> parent, final int version) {
     //Can probably be solved without synchronized using compute if missing ...
-    List<Node<T>> nodes = this.childMap.get(getKey(parent.getKey(), version));
+    List<Node<T>> nodes = this.childMap.get(this.getKey(parent.getKey(), version));
     if (Objects.isNull(nodes)) {
       nodes = new ArrayList<>();
     }
     nodes.add(child);
-    this.childMap.put(getKey(parent.getKey(), version), nodes);
+    this.childMap.put(this.getKey(parent.getKey(), version), nodes);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class VersionedInMemoryCache<T> implements VersionedCacheLayer<T>, Snapsh
 
   @Override
   public void useNextVersion() {
-    this.integer.set(getNextVersion());
+    this.integer.set(this.getNextVersion());
   }
 
   @Override
@@ -91,8 +91,8 @@ public class VersionedInMemoryCache<T> implements VersionedCacheLayer<T>, Snapsh
   @Override
   public CacheSnapshot<T> createNewSnapshot(final Node<T> root, final T rootData) {
     final int version = this.getNextVersion();
-    rootMap.put(version, root);
-    setData(root.getKey(), rootData, version);
+    this.rootMap.put(version, root);
+    this.setData(root.getKey(), rootData, version);
     return new CacheSnapshot<>(this, version);
   }
 }

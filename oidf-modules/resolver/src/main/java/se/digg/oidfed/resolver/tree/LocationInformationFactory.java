@@ -73,7 +73,7 @@ public class LocationInformationFactory {
      * @param entityId of a subject that belongs to the authority
      * @return fetch endpoint for a given subject
      */
-    public String subjectFetchEndpoint(String entityId) {
+    public String subjectFetchEndpoint(final String entityId) {
       return "%s?sub=%s".formatted(fetchEndpoint(), URLEncoder.encode(entityId, Charset.defaultCharset()));
     }
   }

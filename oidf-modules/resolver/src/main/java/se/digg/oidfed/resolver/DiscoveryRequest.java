@@ -39,20 +39,20 @@ public record DiscoveryRequest(String trustAnchor, List<String> types, List<Stri
    */
   public BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>> asPredicate() {
 
-    List<BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>>> predicates = new ArrayList<>();
+    final List<BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>>> predicates = new ArrayList<>();
 
     predicates.add((a,s) -> a.getClaimsSet().isSelfStatement());
 
-    if (Objects.isNull(trustAnchor)) {
+    if (Objects.isNull(this.trustAnchor)) {
       throw new IllegalArgumentException("Trust anchor parameter can not be null");
     }
 
-    if (Objects.nonNull(types) && !types.isEmpty()) {
-      predicates.add((a, s) -> types.stream()
+    if (Objects.nonNull(this.types) && !this.types.isEmpty()) {
+      predicates.add((a, s) -> this.types.stream()
           .anyMatch(type -> Objects.nonNull(a.getClaimsSet().getMetadata(new EntityType(type)))));
     }
 
-    if (Objects.nonNull(trustMarkIds) && !trustMarkIds.isEmpty()) {
+    if (Objects.nonNull(this.trustMarkIds) && !this.trustMarkIds.isEmpty()) {
       predicates.add((a, s) -> a.getClaimsSet().getTrustMarks().stream()
           .anyMatch(tmp -> trustMarkIds().contains(tmp.getID().getValue())));
     }

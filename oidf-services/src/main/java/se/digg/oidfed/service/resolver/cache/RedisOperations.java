@@ -52,7 +52,7 @@ public class RedisOperations {
    * @return list of children, empty list if no children
    */
   public List<Node<EntityStatement>> getChildren(final ChildKey childKey) {
-    final Set<String> members = stringTemplate.opsForSet().members(childKey.getRedisKey());
+    final Set<String> members = this.stringTemplate.opsForSet().members(childKey.getRedisKey());
     if (Objects.nonNull(members)) {
       return members
           .stream()
@@ -68,7 +68,7 @@ public class RedisOperations {
    * @param child node key
    */
   public void append(final ChildKey parent, final Node<EntityStatement> child) {
-    stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey());
+    this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey());
   }
 
   /**
@@ -77,7 +77,7 @@ public class RedisOperations {
    * @param data to set
    */
   public void setData(final EntityKey key, final EntityStatement data) {
-    template.opsForValue().set(key.getRedisKey(), data);
+    this.template.opsForValue().set(key.getRedisKey(), data);
   }
 
   /**
@@ -86,7 +86,7 @@ public class RedisOperations {
    * @return value, can be null
    */
   public EntityStatement getData(final EntityKey key) {
-    return template.opsForValue().get(key.getRedisKey());
+    return this.template.opsForValue().get(key.getRedisKey());
   }
 
   /**
@@ -95,7 +95,7 @@ public class RedisOperations {
    * @return root node
    */
   public Node<EntityStatement> getRoot(final RootKey key) {
-    return new Node<>(stringTemplate.opsForValue().get(key.getRedisKey()));
+    return new Node<>(this.stringTemplate.opsForValue().get(key.getRedisKey()));
   }
 
   /**
@@ -104,7 +104,7 @@ public class RedisOperations {
    * @param root node key for root
    */
   public void setRoot(final RootKey key, final Node<EntityStatement> root) {
-    stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey());
+    this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey());
   }
 
   /**
@@ -115,7 +115,7 @@ public class RedisOperations {
    */
   public record EntityKey(String location, int version, String alias) {
     String getRedisKey() {
-      return "%s:%d:entity:%s".formatted(alias, version, location);
+      return "%s:%d:entity:%s".formatted(this.alias, this.version, this.location);
     }
   }
 
@@ -127,7 +127,7 @@ public class RedisOperations {
    */
   public record ChildKey(Node<EntityStatement> parent, int version, String alias) {
     String getRedisKey() {
-      return "%s:%d:children:%s".formatted(alias, version, parent.getKey());
+      return "%s:%d:children:%s".formatted(this.alias, this.version, this.parent.getKey());
     }
   }
 
@@ -138,7 +138,7 @@ public class RedisOperations {
    */
   public record RootKey(int version, String alias) {
     String getRedisKey() {
-      return "%s:%d:root".formatted(alias, version);
+      return "%s:%d:root".formatted(this.alias, this.version);
     }
   }
 }

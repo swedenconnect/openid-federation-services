@@ -113,6 +113,14 @@
                             </module>
                             <module name="JavadocPackage"/>
                             <module name="TreeWalker">
+                                <module name="RequireThis">
+                                    <property name="checkFields" value="true"/>
+                                    <property name="checkMethods" value="true"/>
+                                    <property name="validateOnlyOverlapping" value="false"/>
+                                </module>
+                                <module name="FinalLocalVariable">
+                                    <property name="tokens" value="VARIABLE_DEF,PARAMETER_DEF"/>
+                                </module>
                                 <module name="JavadocType">
                                     <property name="authorFormat" value="\S"/>
                                 </module>

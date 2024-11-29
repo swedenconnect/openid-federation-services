@@ -58,6 +58,6 @@ public class PolicyRecord {
    * @return current record as json object
    */
   public Map<String, Object> toJson() {
-    return Map.of("policy_record_id", id, "policy", policy);
+    return Map.of("policy_record_id", this.id, "policy", this.policy);
   }
 }

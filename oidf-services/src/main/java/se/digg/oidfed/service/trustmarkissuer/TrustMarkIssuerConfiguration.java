@@ -43,8 +43,8 @@ import java.util.Optional;
 public class TrustMarkIssuerConfiguration {
 
   @Bean
-  List<TrustMarkIssuer> trustMarkIssuer(TrustMarkIssuerModuleProperties properties, KeyRegistry keyRegistry,
-      EntityRecordRegistry entityRegistry){
+  List<TrustMarkIssuer> trustMarkIssuer(final TrustMarkIssuerModuleProperties properties,
+      final EntityRecordRegistry entityRegistry){
 
 
     final List<TrustMarkIssuerModuleProperties.TrustMarkIssuers> trustMarkIssuersProperties =
@@ -52,14 +52,14 @@ public class TrustMarkIssuerConfiguration {
             .orElseThrow(() -> new IllegalArgumentException("TrustMarkIssuers is empty. Check application properties"));
 
     return trustMarkIssuersProperties.stream()
-        .map(tmi -> toTrustMarkProperties(tmi,entityRegistry))
+        .map(tmi -> this.toTrustMarkProperties(tmi,entityRegistry))
         .peek(TrustMarkProperties::validate)
         .map(TrustMarkIssuer::new)
         .toList();
   }
 
-  private TrustMarkProperties toTrustMarkProperties(TrustMarkIssuerModuleProperties.TrustMarkIssuers properties,
-      EntityRecordRegistry entityRegistry) {
+  private TrustMarkProperties toTrustMarkProperties(final TrustMarkIssuerModuleProperties.TrustMarkIssuers properties,
+      final EntityRecordRegistry entityRegistry) {
     final EntityID issuerEntityId = new EntityID(properties.entityIdentifier());
     final EntityRecord entityProperties = entityRegistry.getEntity(issuerEntityId)
         .orElseThrow(() ->

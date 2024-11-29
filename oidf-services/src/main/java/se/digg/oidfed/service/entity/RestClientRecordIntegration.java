@@ -66,22 +66,22 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
   @Override
   public Optional<PolicyRecord> getPolicy(final String id) {
     final String uri = "/api/v1/federationservice/policy_record?policy_id={id}";
-    final String jwt = client.get()
+    final String jwt = this.client.get()
         .uri(uri, Map.of("id", URLEncoder.encode(id, Charset.defaultCharset())))
         .retrieve()
-        .onStatus(errorHandler)
+        .onStatus(this.errorHandler)
         .body(String.class);
-    return verifier.verifyPolicy(jwt);
+    return this.verifier.verifyPolicy(jwt);
   }
 
   @Override
   public List<EntityRecord> getEntityRecords(final String issuer) {
-    final String jwt = client.get().uri("/api/v1/federationservice/entity_record")
+    final String jwt = this.client.get().uri("/api/v1/federationservice/entity_record")
         .retrieve().onStatus(predicate -> predicate.value() == 404, (r, handler) -> {
           throw new RuntimeException("Not found");
         })
         .body(String.class);
-    return verifier.verifyEntities(jwt);
+    return this.verifier.verifyEntities(jwt);
   }
 }
 

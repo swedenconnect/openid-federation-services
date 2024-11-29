@@ -48,7 +48,7 @@ public class RegexpOperation implements StringOperation {
 
   @Override
   public String apply(final String input) throws PolicyViolationException {
-    final List<Matcher> list = regexp.stream().map(p -> p.matcher(input))
+    final List<Matcher> list = this.regexp.stream().map(p -> p.matcher(input))
         .filter(matcher -> !matcher.matches())
         .toList();
 
@@ -68,12 +68,12 @@ public class RegexpOperation implements StringOperation {
 
   @Override
   public void parseConfiguration(final Object configuration) throws ParseException {
-    regexp.addAll(JSONUtils.toStringList(configuration).stream().map(Pattern::compile).toList());
+    this.regexp.addAll(JSONUtils.toStringList(configuration).stream().map(Pattern::compile).toList());
   }
 
   @Override
   public Map.Entry<String, Object> toJSONObjectEntry() {
-    final List<String> patterns = regexp.stream().map(Pattern::pattern).toList();
+    final List<String> patterns = this.regexp.stream().map(Pattern::pattern).toList();
     return new AbstractMap.SimpleImmutableEntry<>(this.getOperationName().getValue(), patterns);
   }
 

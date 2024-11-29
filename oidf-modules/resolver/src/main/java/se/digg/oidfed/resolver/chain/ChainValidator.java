@@ -51,7 +51,7 @@ public class ChainValidator {
     }
 
     final List<ChainValidationStepResult> failedValidationSteps =
-        chainValidationSteps
+        this.chainValidationSteps
             .stream()
             .map(step -> execute(step, chain))
             .filter(stepResult -> !stepResult.valid())

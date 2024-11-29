@@ -53,13 +53,14 @@ public record TrustMarkProperties(Duration trustMarkValidityDuration, EntityID i
    */
   @PostConstruct
   public void validate() throws IllegalArgumentException {
-    assertNotEmpty(trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
-    assertNotEmpty(signKey, "SignKey is expected");
-    assertNotEmpty(issuerEntityId, "IssuerEntityId is expected");
-    assertNotEmpty(trustMarks, "TrustMarks is expected");
-    assertNotEmpty(alias, "Alias is expected");
-    assertTrue(trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
-        "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'"+trustMarkValidityDuration+"'");
+    assertNotEmpty(this.trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
+    assertNotEmpty(this.signKey, "SignKey is expected");
+    assertNotEmpty(this.issuerEntityId, "IssuerEntityId is expected");
+    assertNotEmpty(this.trustMarks, "TrustMarks is expected");
+    assertNotEmpty(this.alias, "Alias is expected");
+    assertTrue(this.trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
+        "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'%s'"
+            .formatted(this.trustMarkValidityDuration));
 
     this.trustMarks.forEach(TrustMarkIssuerProperties::validate);
 
@@ -83,11 +84,11 @@ public record TrustMarkProperties(Duration trustMarkValidityDuration, EntityID i
      */
     @PostConstruct
     public void validate() throws IllegalArgumentException {
-      FederationAssert.assertNotEmpty(trustMarkId, "TrustMarkId is expected");
-      FederationAssert.assertNotEmpty(trustMarkIssuerSubjectLoader, "TrustMarkIssuerSubjectLoader is expected");
-      FederationAssert.assertNotEmpty(delegation, "Delegation can not be null");
-      FederationAssert.assertNotEmpty(logoUri, "LogoUri can not be null");
-      FederationAssert.assertNotEmpty(refUri, "RefUri can not be null");
+      FederationAssert.assertNotEmpty(this.trustMarkId, "TrustMarkId is expected");
+      FederationAssert.assertNotEmpty(this.trustMarkIssuerSubjectLoader, "TrustMarkIssuerSubjectLoader is expected");
+      FederationAssert.assertNotEmpty(this.delegation, "Delegation can not be null");
+      FederationAssert.assertNotEmpty(this.logoUri, "LogoUri can not be null");
+      FederationAssert.assertNotEmpty(this.refUri, "RefUri can not be null");
     }
 
   }

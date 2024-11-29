@@ -47,14 +47,15 @@ public record TrustMarkIssuerSubject(String sub, Optional<Instant> granted,
    */
   @PostConstruct
   public void validate() {
-    FederationAssert.assertNotEmpty(sub, "Subject is expected");
-    FederationAssert.assertNotEmpty(granted, "Granted can not be null");
-    FederationAssert.assertNotEmpty(expires, "Expires can not be null");
+    FederationAssert.assertNotEmpty(this.sub, "Subject is expected");
+    FederationAssert.assertNotEmpty(this.granted, "Granted can not be null");
+    FederationAssert.assertNotEmpty(this.expires, "Expires can not be null");
 
-    if (granted.isPresent() && expires.isPresent()) {
-      assertTrue(granted.get().isBefore(expires.get()), "Expires expected to be after granted");
-      if (expires.get().isAfter(Instant.now())) {
-        log.warn("TrustMark subject:'{}' has already expired. Consider to remove it. Expires:'{}'", sub, expires.get());
+    if (this.granted.isPresent() && this.expires.isPresent()) {
+      assertTrue(this.granted.get().isBefore(this.expires.get()), "Expires expected to be after granted");
+      if (this.expires.get().isAfter(Instant.now())) {
+        log.warn("TrustMark subject:'{}' has already expired. Consider to remove it. Expires:'{}'",
+            this.sub, this.expires.get());
       }
     }
   }

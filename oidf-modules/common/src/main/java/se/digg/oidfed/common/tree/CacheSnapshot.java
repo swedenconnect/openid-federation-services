@@ -44,7 +44,7 @@ public class CacheSnapshot<T> {
    * @return data for a given key, can be null
    */
   public T getData(final String key) {
-    return cache.getData(key, version);
+    return this.cache.getData(key,this.version);
   }
 
   /**
@@ -52,7 +52,7 @@ public class CacheSnapshot<T> {
    * @param data to add to key
    */
   public void setData(final String key, final T data) {
-    cache.setData(key, data, version);
+    this.cache.setData(key, data,this.version);
   }
 
   /**
@@ -61,7 +61,7 @@ public class CacheSnapshot<T> {
    * @param parent to add the child to
    */
   public void append(final Node<T> child, final Node<T> parent) {
-    cache.append(child, parent, version);
+    this.cache.append(child, parent, this.version);
   }
 
   /**
@@ -69,13 +69,13 @@ public class CacheSnapshot<T> {
    * @return list of children
    */
   public List<Node<T>> getChildren(final Node<T> parent) {
-    return cache.getChildren(parent, version);
+    return this.cache.getChildren(parent,this.version);
   }
 
   /**
    * @return root node of the given tree
    */
   public Node<T> getRoot() {
-    return cache.getRoot(version);
+    return this.cache.getRoot(this.version);
   }
 }

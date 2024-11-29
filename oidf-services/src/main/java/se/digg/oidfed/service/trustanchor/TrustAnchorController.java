@@ -68,10 +68,10 @@ public class TrustAnchorController implements ApplicationModule {
    * @throws InvalidIssuerException If issuer is not found.
    */
   @GetMapping(value = "/{alias}/fetch", produces = "application/entity-statement+jwt")
-  public String fetchEntityStatement(@PathVariable(name = "alias") String alias,
-      @RequestParam(name = "sub", required = false) String subject)
+  public String fetchEntityStatement(@PathVariable(name = "alias") final String alias,
+      @RequestParam(name = "sub", required = false) final String subject)
       throws NotFoundException, InvalidRequestException, InvalidIssuerException {
-    final TrustAnchor trustAnchor = repository.getTrustAnchor(alias)
+    final TrustAnchor trustAnchor = this.repository.getTrustAnchor(alias)
             .orElseThrow(() ->
                 new NotFoundException("Could not find given trust anchor for alias:'%s'".formatted(alias)));
     final EntityStatementRequest request =
@@ -93,13 +93,13 @@ public class TrustAnchorController implements ApplicationModule {
    */
   @GetMapping(value = "/{alias}/subordinate_listing", produces = MediaType.APPLICATION_JSON_VALUE)
   public List<String> subordinateListing(
-      @PathVariable(name = "alias") String alias,
-      @RequestParam(name = "entity_type", required = false) String entityType,
-      @RequestParam(name = "trust_marked", required = false) Boolean trustMarked,
-      @RequestParam(name = "trust_mark_id", required = false) String trustMarkId,
-      @RequestParam(name = "intermediate", required = false) Boolean intermediate
+      @PathVariable(name = "alias") final String alias,
+      @RequestParam(name = "entity_type", required = false) final String entityType,
+      @RequestParam(name = "trust_marked", required = false) final Boolean trustMarked,
+      @RequestParam(name = "trust_mark_id", required = false) final String trustMarkId,
+      @RequestParam(name = "intermediate", required = false) final Boolean intermediate
   ) throws NotFoundException {
-    final TrustAnchor trustAnchor = repository.getTrustAnchor(alias)
+    final TrustAnchor trustAnchor = this.repository.getTrustAnchor(alias)
         .orElseThrow(() -> new NotFoundException("Could not find given trust anchor"));
     return trustAnchor.subordinateListing(
         new SubordinateListingRequest(alias, entityType, trustMarked, trustMarkId, intermediate));

@@ -49,7 +49,8 @@ public class RestClientEntityStatementIntegration implements EntityStatementInte
   @Override
   public EntityStatement getEntityStatement(final String location) {
     try {
-      final ResponseEntity<String> entity = client.get().uri(URI.create(location)).retrieve().toEntity(String.class);
+      final ResponseEntity<String> entity = this.client.get()
+          .uri(URI.create(location)).retrieve().toEntity(String.class);
       final String body = entity.getBody();
       Objects.requireNonNull(body);
       return EntityStatement.parse(body);
@@ -62,8 +63,9 @@ public class RestClientEntityStatementIntegration implements EntityStatementInte
   @Override
   public List<String> getSubordinateListing(final String location) {
     try {
-      final String json = client.get().uri(location).retrieve().toEntity(String.class).getBody();
-      final List<String> list = (List<String>) mapper.readValue(json, List.class);
+      final String json = this.client.get()
+          .uri(location).retrieve().toEntity(String.class).getBody();
+      final List<String> list = (List<String>) this.mapper.readValue(json, List.class);
       return list;
     }
     catch (final JsonProcessingException e) {

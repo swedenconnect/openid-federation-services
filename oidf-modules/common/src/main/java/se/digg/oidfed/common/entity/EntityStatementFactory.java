@@ -76,8 +76,8 @@ public class EntityStatementFactory {
         return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), signKey);
       }
       builder.issuer(record.getSubject().getValue());
-      builder.claim("jwks", new JWKSet(List.of(signKey)).toJSONObject());
-      return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), signKey);
+      builder.claim("jwks", new JWKSet(List.of(this.signKey)).toJSONObject());
+      return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signKey);
     }
     catch (JOSEException | ParseException e) {
       throw new IllegalArgumentException("Failed to sign entity configuration", e);

@@ -61,10 +61,10 @@ public class ResolverController implements ApplicationModule {
    */
   @GetMapping(value = "/{alias}/resolve", produces = "application/resolve-response+jwt")
   public String resolveEntity(
-      @PathVariable(name = "alias") String alias,
-      @RequestParam(name = "sub", required = false) String subject,
-      @RequestParam(name = "anchor", required = false) String trustAnchor,
-      @RequestParam(name = "type", required = false) String type) throws NotFoundException {
+      @PathVariable(name = "alias") final String alias,
+      @RequestParam(name = "sub", required = false) final String subject,
+      @RequestParam(name = "anchor", required = false) final String trustAnchor,
+      @RequestParam(name = "type", required = false) final String type) throws NotFoundException {
     final ResolverRequest resolverRequest = new ResolverRequest(subject, trustAnchor, type);
     final Resolver resolver = this.repository.getResolver(alias)
         .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
@@ -82,11 +82,12 @@ public class ResolverController implements ApplicationModule {
    */
   @GetMapping(value = "/{alias}/discovery", produces = MediaType.APPLICATION_JSON_VALUE)
   public List<String> discovery(
-      @PathVariable(name = "alias") String alias,
-      @RequestParam(name = "anchor", required = false) String trustAnchor,
-      @RequestParam(name = "type", required = false) List<String> types,
-      @RequestParam(name = "trust_mark_id", required = false) List<String> trustMarkIds) throws NotFoundException {
-    final Resolver resolver = repository.getResolver(alias)
+      @PathVariable(name = "alias") final String alias,
+      @RequestParam(name = "anchor", required = false) final String trustAnchor,
+      @RequestParam(name = "type", required = false) final List<String> types,
+      @RequestParam(name = "trust_mark_id", required = false) final List<String> trustMarkIds)
+      throws NotFoundException {
+    final Resolver resolver = this.repository.getResolver(alias)
         .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
     return resolver.discovery(new DiscoveryRequest(trustAnchor, types, trustMarkIds)).supportedEntities();
   }

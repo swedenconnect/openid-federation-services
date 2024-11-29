@@ -40,11 +40,11 @@ public record ResolverRequest(String subject, String trustAnchor, String type) {
 
     predicates.add((a,s) -> a.getClaimsSet().isSelfStatement());
 
-    if (Objects.nonNull(subject)) {
-      predicates.add((a,s) -> a.getClaimsSet().getSubject().getValue().equalsIgnoreCase(subject));
+    if (Objects.nonNull(this.subject)) {
+      predicates.add((a,s) -> a.getClaimsSet().getSubject().getValue().equalsIgnoreCase(this.subject));
     }
-    if (Objects.nonNull(type)) {
-      predicates.add((a,s) -> Objects.nonNull(a.getClaimsSet().getMetadata(new EntityType(type))));
+    if (Objects.nonNull(this.type)) {
+      predicates.add((a,s) -> Objects.nonNull(a.getClaimsSet().getMetadata(new EntityType(this.type))));
     }
 
     return predicates.stream().reduce((a,b) -> true, BiPredicate::and);

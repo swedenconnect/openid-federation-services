@@ -59,9 +59,9 @@ public class HostedRecord {
    */
   public Map<String, Object> toJson() {
     return Map.of(
-        "authority_hints", Optional.ofNullable(authorityHints).orElseGet(List::of),
-        "metadata", metadata,
-        "trust_mark_sources", Optional.ofNullable(trustMarkSources)
+        "authority_hints", Optional.ofNullable(this.authorityHints).orElseGet(List::of),
+        "metadata", this.metadata,
+        "trust_mark_sources", Optional.ofNullable(this.trustMarkSources)
             .map(tms -> tms.stream()
                 .map(TrustMarkSource::toJson)
                 .toList()).orElseGet(List::of)
