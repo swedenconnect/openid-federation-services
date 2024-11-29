@@ -21,7 +21,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
-import se.digg.oidfed.common.entity.PolicyRegistry;
+import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 
@@ -47,7 +47,7 @@ public class TrustAnchorConfiguration {
   }
 
   @Bean
-  SubordinateStatementFactory trustAnchorEntityStatementFactory(final PolicyRegistry policyRegistry) {
-    return new SubordinateStatementFactory(policyRegistry);
+  SubordinateStatementFactory trustAnchorEntityStatementFactory(final RecordRegistrySource source) {
+    return new SubordinateStatementFactory(source);
   }
 }

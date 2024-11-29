@@ -14,22 +14,20 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.entity;
-
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-import java.util.Collections;
-import java.util.Optional;
+package se.digg.oidfed.common.entity;
 
 /**
- * Configuration class for policy.
+ * Exception for record verification failures.
  *
  * @author Felix Hellman
  */
-@Configuration
-@EnableConfigurationProperties(PolicyConfigurationProperties.class)
-public class PolicyConfiguration {
-
+public class RecordVerificationException extends RuntimeException {
+  /**
+   * Constructor.
+   * @param message the detail message
+   * @param cause the cause
+   */
+  public RecordVerificationException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

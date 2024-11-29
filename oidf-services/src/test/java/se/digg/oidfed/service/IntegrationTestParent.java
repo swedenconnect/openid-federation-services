@@ -29,16 +29,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.utility.DockerImageName;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordSigner;
 import se.digg.oidfed.common.entity.HostedRecord;
+import se.digg.oidfed.common.entity.PolicyRecord;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.entity.EntityInitializer;
 import se.digg.oidfed.service.resolver.WiremockFederation;
 import se.digg.oidfed.test.FederationEntity;
 
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -51,6 +55,9 @@ public class IntegrationTestParent {
   public int serverPort;
 
   private static List<FederationEntity> entityList;
+
+  @Autowired
+  EntityInitializer entityInitializer;
 
   @Autowired
   KeyRegistry registry;
@@ -96,9 +103,17 @@ public class IntegrationTestParent {
             .build()
     )).serialize();
 
-    WireMock.stubFor(WireMock.get("/registry/v1/entities").willReturn(
+    final String policyBody = entityRecordSigner.signPolicy(new PolicyRecord("my-super-policy", Map.of())).serialize();
+
+    WireMock.stubFor(WireMock.get("/api/v1/federationservice/entity_record").willReturn(
         new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
     );
+
+    WireMock.stubFor(WireMock.get("/api/v1/federationservice/policy_record?policy_id=%s".formatted(URLEncoder.encode(
+        "my-super-policy", Charset.defaultCharset()))).willReturn(
+        new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
+    );
+    entityInitializer.handle(null);
   }
 
   @DynamicPropertySource

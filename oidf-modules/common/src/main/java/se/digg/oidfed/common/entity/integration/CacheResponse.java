@@ -14,22 +14,17 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.entity;
+package se.digg.oidfed.common.entity.integration;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-import java.util.Collections;
 import java.util.Optional;
 
 /**
- * Configuration class for policy.
+ * @param data        from cache
+ * @param fetchOnMiss true if key has not been seen before, false if key has been seen before but is still missing
+ * @param <T>         type
  *
  * @author Felix Hellman
  */
-@Configuration
-@EnableConfigurationProperties(PolicyConfigurationProperties.class)
-public class PolicyConfiguration {
-
+public record CacheResponse<T>(Optional<T> data, boolean fetchOnMiss) {
 }

@@ -16,10 +16,6 @@
  */
 package se.digg.oidfed.service.entity;
 
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.proc.JWSVerifierFactory;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -30,9 +26,13 @@ import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.entity.DelegatingEntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityRecordIntegration;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
-import se.digg.oidfed.common.entity.EntityRecordVerifier;
+import se.digg.oidfed.common.entity.RecordVerifier;
 import se.digg.oidfed.common.entity.EntityStatementFactory;
 import se.digg.oidfed.common.entity.InMemoryEntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.InMemoryRecordRegistryCache;
+import se.digg.oidfed.common.entity.integration.RecordRegistryCache;
+import se.digg.oidfed.common.entity.integration.RecordRegistryIntegration;
+import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.rest.RestClientRegistry;
 
@@ -78,14 +78,26 @@ public class EntityConfiguration {
   }
 
   @Bean
-  EntityRecordIntegration entityRecordIntegration(
-      @Qualifier("entity-record-integration-client") final RestClient client) {
-    return new RestClientEntityRecordIntegration(client);
+  RecordRegistryIntegration entityRecordIntegration(
+      @Qualifier("entity-record-integration-client") final RestClient client, final RecordVerifier verifier) {
+    return new RestClientRecordIntegration(client, verifier);
   }
 
   @Bean
-  EntityRecordVerifier entityRecordVerifier(
+  RecordVerifier entityRecordVerifier(
       final KeyRegistry registry, final EntityConfigurationProperties properties) {
-    return new EntityRecordVerifier(registry.getSet(properties.getJwkAlias()));
+    return new RecordVerifier(registry.getSet(properties.getJwkAlias()));
+  }
+
+  @Bean
+  RecordRegistrySource recordRegistrySource(
+      final RecordRegistryIntegration integration,
+      final RecordRegistryCache cache) {
+    return new RecordRegistrySource(integration, cache);
+  }
+
+  @Bean
+  RecordRegistryCache recordRegistryCache() {
+    return new InMemoryRecordRegistryCache();
   }
 }

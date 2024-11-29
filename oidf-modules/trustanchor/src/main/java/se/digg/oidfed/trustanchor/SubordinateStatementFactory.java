@@ -21,11 +21,12 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import se.digg.oidfed.common.entity.EntityRecord;
-import se.digg.oidfed.common.entity.PolicyRegistry;
+import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Optional;
 
 /**
  * Entity statement factory for trust anchor.
@@ -34,14 +35,14 @@ import java.util.Date;
  */
 public class SubordinateStatementFactory {
 
-  private final PolicyRegistry registry;
+  private final RecordRegistrySource source;
 
   /**
    * Constructor.
-   * @param registry of policies
+   * @param source of policies
    */
-  public SubordinateStatementFactory(final PolicyRegistry registry) {
-    this.registry = registry;
+  public SubordinateStatementFactory(final RecordRegistrySource source) {
+    this.source = source;
   }
 
   /**
@@ -54,8 +55,8 @@ public class SubordinateStatementFactory {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-      registry.getPolicy(subject.getPolicyRecordId())
-          .ifPresent(policy -> builder.claim("metadata_policy", policy));
+      Optional.ofNullable(subject.getPolicyRecordId()).flatMap(source::getPolicy)
+              .ifPresent(policy -> builder.claim("metadata_policy", policy));
 
       final JWTClaimsSet jwtClaimsSet = builder
           .issueTime(Date.from(Instant.now()))

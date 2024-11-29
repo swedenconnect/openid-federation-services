@@ -22,7 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.io.Resource;
-import se.digg.oidfed.common.entity.PolicyProperty;
+import se.digg.oidfed.common.entity.PolicyRecord;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.nio.charset.Charset;
@@ -64,11 +64,11 @@ public class PolicyConfigurationProperties {
     /**
      * @return converted policy record
      */
-    public PolicyProperty.PolicyRecord toRecord() {
+    public PolicyRecord toRecord() {
       try {
         final String json = this.resource.getContentAsString(Charset.defaultCharset());
         final Map<String, Object> policy = (Map<String, Object>) new ObjectMapper().readValue(json, Map.class);
-        return new PolicyProperty.PolicyRecord(this.name, policy);
+        return new PolicyRecord(this.name, policy);
       }
       catch (final Exception e) {
         throw new EntityConfigurationException("Policy parsing failed", e);
