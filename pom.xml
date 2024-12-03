@@ -57,8 +57,8 @@
         <developer>
             <id>felix</id>
             <name>Felix Hellman</name>
-            <email>felix@litsec.se</email>
-            <url>http://www.litsec.se</url>
+            <email>felix@idsec.se</email>
+            <url>http://www.idsec.se</url>
             <organization>SwedenConnect</organization>
             <organizationUrl>https://www.swedenconnect.se</organizationUrl>
             <roles>
@@ -68,8 +68,8 @@
         <developer>
             <id>plarsa</id>
             <name>Per Fredrik Plars</name>
-            <email>pf@litsec.se</email>
-            <url>http://www.litsec.se</url>
+            <email>pf@idsec.se</email>
+            <url>http://www.idsec.se</url>
             <organization>SwedenConnect</organization>
             <organizationUrl>https://www.swedenconnect.se</organizationUrl>
             <roles>
