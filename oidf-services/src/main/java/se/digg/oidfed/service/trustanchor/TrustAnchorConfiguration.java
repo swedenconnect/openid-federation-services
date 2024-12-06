@@ -21,6 +21,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.CachedRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;

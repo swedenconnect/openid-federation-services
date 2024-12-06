@@ -17,32 +17,40 @@
 package se.digg.oidfed.service.entity;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.entity.DelegatingEntityRecordRegistry;
-import se.digg.oidfed.common.entity.EntityRecordIntegration;
+import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.PolicyRecord;
 import se.digg.oidfed.common.entity.RecordVerifier;
 import se.digg.oidfed.common.entity.EntityStatementFactory;
 import se.digg.oidfed.common.entity.InMemoryEntityRecordRegistry;
 import se.digg.oidfed.common.entity.integration.InMemoryRecordRegistryCache;
 import se.digg.oidfed.common.entity.integration.RecordRegistryCache;
 import se.digg.oidfed.common.entity.integration.RecordRegistryIntegration;
+import se.digg.oidfed.common.entity.integration.CachedRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.rest.RestClientRegistry;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Configuration for entity registry.
  *
  * @author Felix Hellman
  */
+@Slf4j
 @Configuration
 @EnableConfigurationProperties(EntityConfigurationProperties.class)
 public class EntityConfiguration {
@@ -70,6 +78,7 @@ public class EntityConfiguration {
   }
 
   @Bean
+  @ConditionalOnProperty(value = "openid.federation.entity-registry.client")
   @Qualifier("entity-record-integration-client")
   RestClient entityRecordIntegrationClient(final RestClientRegistry registry,
                                            final EntityConfigurationProperties properties) {
@@ -78,6 +87,7 @@ public class EntityConfiguration {
   }
 
   @Bean
+  @ConditionalOnProperty(value = "openid.federation.entity-registry.client")
   RecordRegistryIntegration entityRecordIntegration(
       @Qualifier("entity-record-integration-client") final RestClient client, final RecordVerifier verifier) {
     return new RestClientRecordIntegration(client, verifier);
@@ -90,10 +100,28 @@ public class EntityConfiguration {
   }
 
   @Bean
+  @ConditionalOnProperty(value = "openid.federation.entity-registry.client")
   RecordRegistrySource recordRegistrySource(
       final RecordRegistryIntegration integration,
       final RecordRegistryCache cache) {
-    return new RecordRegistrySource(integration, cache);
+    return new CachedRecordRegistrySource(integration, cache);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean(RecordRegistrySource.class)
+  RecordRegistrySource emptyRecordRegistrySource() {
+    log.warn("Starting application without a connection to an entity registry");
+    return new RecordRegistrySource() {
+      @Override
+      public Optional<PolicyRecord> getPolicy(final String id) {
+        return Optional.empty();
+      }
+
+      @Override
+      public List<EntityRecord> getEntityRecords(final String issuer) {
+        return List.of();
+      }
+    };
   }
 
   @Bean
