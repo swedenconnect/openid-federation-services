@@ -86,7 +86,6 @@ public class EntityRegistryIT extends IntegrationTestParent {
         EntityRecord.builder()
             .issuer(new EntityID("http://localhost.test:9090/iss"))
             .subject(new EntityID("http://localhost.test:9090/sub"))
-            .jwks(set)
             .policyRecordId("policy")
             .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",
                 "orgName"))).build())

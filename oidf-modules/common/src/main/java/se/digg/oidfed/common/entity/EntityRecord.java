@@ -39,7 +39,7 @@ public class EntityRecord {
   private final EntityID issuer;
   private final EntityID subject;
   private final String policyRecordId;
-  private final JWKSet jwks;
+  private JWKSet jwks;
   private final String overrideConfigurationLocation;
   private final HostedRecord hostedRecord;
 
@@ -77,7 +77,8 @@ public class EntityRecord {
     builder.claim("issuer", this.issuer.getValue());
     builder.claim("subject", this.subject.getValue());
     builder.claim("policy_record_id", this.policyRecordId);
-    builder.claim("jwks", this.jwks.toJSONObject());
+    Optional.ofNullable(this.jwks).map(JWKSet::toJSONObject)
+        .ifPresent(jwks -> builder.claim("jwks", jwks));
 
     Optional.ofNullable(this.hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
     Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
@@ -117,8 +118,26 @@ public class EntityRecord {
         new EntityID((String) entityRecord.get("issuer")),
         new EntityID((String) entityRecord.get("subject")),
         (String) entityRecord.get("policy_record_id"),
-        JWKSet.parse((Map<String, Object>) entityRecord.get("jwks")),
+        Optional.ofNullable(entityRecord.get("jwks")).map(jwks -> {
+          try {
+            return JWKSet.parse((Map<String, Object>) jwks);
+          } catch (final ParseException e) {
+            throw new IllegalArgumentException("JWKS claim is not json claim", e);
+          }
+        }).orElse(null),
         Optional.ofNullable((String) entityRecord.get("override_configuration_location")).orElse(null),
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
+  }
+
+
+  /**
+   * Updates the jwks used for this entity.
+   * Is primarily used for hosted records.
+   * @param jwks to set
+   * @return this record with jwks
+   */
+  public EntityRecord withJwks(final JWKSet jwks) {
+    this.jwks = jwks;
+    return this;
   }
 }

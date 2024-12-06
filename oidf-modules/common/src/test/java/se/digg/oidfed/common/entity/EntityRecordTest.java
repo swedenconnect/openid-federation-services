@@ -88,7 +88,6 @@ class EntityRecordTest {
     final EntityRecord expected = EntityRecord.builder()
         .issuer(new EntityID("http://issuer.test"))
         .subject(new EntityID("http://subject.test"))
-        .jwks(new JWKSet(List.of(key)))
         .policyRecordId("my-awesome-policy")
         .hostedRecord(hosted)
         .build();
@@ -102,7 +101,6 @@ class EntityRecordTest {
 
     Assertions.assertEquals(expected.getSubject(), actual.getSubject());
     Assertions.assertEquals(expected.getIssuer(), actual.getIssuer());
-    Assertions.assertTrue(expected.getJwks().containsJWK(actual.getJwks().getKeys().get(0)));
     Assertions.assertEquals(expected.getHostedRecord().getMetadata().get("key"),
         actual.getHostedRecord().getMetadata().get("key"));
     final TrustMarkSource expectedTrustMarkSource = expected.getHostedRecord().getTrustMarkSources().get(0);
