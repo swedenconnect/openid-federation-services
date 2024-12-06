@@ -105,7 +105,8 @@ public class IntegrationTestParent {
 
     final String policyBody = entityRecordSigner.signPolicy(new PolicyRecord("my-super-policy", Map.of())).serialize();
 
-    WireMock.stubFor(WireMock.get("/api/v1/federationservice/entity_record").willReturn(
+    WireMock.stubFor(WireMock.get("/api/v1/federationservice/entity_record?iss=%s".formatted(URLEncoder.encode("http" +
+        "://localhost.test:9090/root", Charset.defaultCharset()))).willReturn(
         new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
     );
 
