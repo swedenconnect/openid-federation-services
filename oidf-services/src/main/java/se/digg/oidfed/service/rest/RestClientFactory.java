@@ -54,7 +54,8 @@ public class RestClientFactory {
               final SslBundle bundle = this.bundles.getBundle(bundleName);
               builder.sslContext(bundle.createSslContext());
             },
-            () -> log.info("Resolver was started without a trust-store, using default ..."));
+            () -> log.info("Client: %s was created without a trust-store, using default ..."
+                .formatted(property.getName())));
 
     final RestClient.Builder restClientBuilder = RestClient.builder()
         .requestFactory(new JdkClientHttpRequestFactory(builder.build()));
