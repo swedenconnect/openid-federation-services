@@ -23,53 +23,21 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Loading cache for record registry.
+ * Interface for record registry integration/cache
  *
  * @author Felix Hellman
  */
-public class RecordRegistrySource {
-
-  private final RecordRegistryIntegration integration;
-  private final RecordRegistryCache cache;
-
-  /**
-   * @param integration towards registry
-   * @param cache for registry
-   */
-  public RecordRegistrySource(final RecordRegistryIntegration integration, final RecordRegistryCache cache) {
-    this.integration = integration;
-    this.cache = cache;
-  }
+public interface RecordRegistrySource {
 
   /**
    * @param id of the policy
    * @return policy if such a policy exits
    */
-  public Optional<PolicyRecord> getPolicy(final String id) {
-    final CacheResponse<PolicyRecord> policy = this.cache.getPolicy(id);
-    if (policy.data().isPresent()) {
-      return policy.data();
-    }
-    if (policy.fetchOnMiss()) {
-      final Optional<PolicyRecord> policyRecord = this.integration.getPolicy(id);
-      this.cache.registerPolicy(policyRecord.orElse(null), id);
-    }
-    return Optional.empty();
-  }
+  Optional<PolicyRecord> getPolicy(final String id);
 
   /**
    * @param issuer for the entity records
    * @return records
    */
-  public List<EntityRecord> getEntityRecords(final String issuer) {
-    final CacheResponse<List<EntityRecord>> entities = this.cache.getEntityRecords(issuer);
-    if (entities.data().isPresent()) {
-      return entities.data().get();
-    }
-    if (entities.fetchOnMiss()) {
-      final List<EntityRecord> entityRecords = this.integration.getEntityRecords(issuer);
-      this.cache.registerRecords(entityRecords, issuer);
-    }
-    return List.of();
-  }
+  public List<EntityRecord> getEntityRecords(final String issuer);
 }
