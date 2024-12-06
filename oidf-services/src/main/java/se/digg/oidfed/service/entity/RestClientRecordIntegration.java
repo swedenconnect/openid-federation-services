@@ -76,7 +76,7 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
 
   @Override
   public List<EntityRecord> getEntityRecords(final String issuer) {
-    final String jwt = this.client.get().uri("/api/v1/federationservice/entity_record")
+    final String jwt = this.client.get().uri("/api/v1/federationservice/entity_record?iss={iss}", Map.of("iss", issuer))
         .retrieve().onStatus(predicate -> predicate.value() == 404, (r, handler) -> {
           throw new RuntimeException("Not found");
         })

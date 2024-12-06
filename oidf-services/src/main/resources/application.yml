@@ -11,15 +11,12 @@ logging:
   level:
     ROOT: INFO
     se.digg: INFO
-
 openid:
   federation:
-
     resolver:
       active: false
 
     trust-anchor:
       active: false
-
     trust-mark-issuer:
       active: false
