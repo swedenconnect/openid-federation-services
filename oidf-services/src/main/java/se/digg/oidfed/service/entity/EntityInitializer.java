@@ -78,7 +78,8 @@ public class EntityInitializer {
         "Could not find root entity in configuration"));
     final EntityID issuer = issuerRecord.getIssuer();
     try {
-      this.source.getEntityRecords(issuer.getValue()).forEach(this.registry::addEntity);
+      this.source.getEntityRecords(issuer.getValue())
+          .forEach(this.registry::addEntity);
     } catch (final Exception e) {
       log.error("failed to fetch entity records from registry", e);
     }

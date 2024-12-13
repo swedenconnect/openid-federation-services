@@ -19,6 +19,7 @@ package se.digg.oidfed.service.entity;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriTemplate;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.PolicyRecord;
 import se.digg.oidfed.common.entity.RecordVerifier;
@@ -27,6 +28,7 @@ import se.digg.oidfed.common.entity.integration.RecordRegistryIntegration;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,10 +67,13 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
 
   @Override
   public Optional<PolicyRecord> getPolicy(final String id) {
-    final String uri = "/api/v1/federationservice/policy_record?policy_id={id}";
     final String jwt = this.client.get()
-        .uri(uri, Map.of("id", URLEncoder.encode(id, Charset.defaultCharset())))
-        .retrieve()
+        .uri(builder -> {
+          return builder
+              .path("/api/v1/federationservice/policy_record")
+              .query("policy_id={policy_id}")
+              .build(Map.of("policy_id", id));
+        })        .retrieve()
         .onStatus(this.errorHandler)
         .body(String.class);
     return this.verifier.verifyPolicy(jwt);
@@ -76,10 +81,16 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
 
   @Override
   public List<EntityRecord> getEntityRecords(final String issuer) {
-    final String jwt = this.client.get().uri("/api/v1/federationservice/entity_record?iss={iss}", Map.of("iss", issuer))
-        .retrieve().onStatus(predicate -> predicate.value() == 404, (r, handler) -> {
-          throw new RuntimeException("Not found");
+
+    final String jwt = this.client
+        .get()
+        .uri(builder -> {
+          return builder
+              .path("/api/v1/federationservice/entity_record")
+              .query("iss={iss}")
+              .build(Map.of("iss", issuer));
         })
+        .retrieve()
         .body(String.class);
     return this.verifier.verifyEntities(jwt);
   }

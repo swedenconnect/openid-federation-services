@@ -16,12 +16,12 @@
  */
 package se.digg.oidfed.trustanchor;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import se.digg.oidfed.common.entity.EntityRecord;
-import se.digg.oidfed.common.entity.integration.CachedRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 
 import java.time.Instant;
@@ -38,17 +38,26 @@ public class SubordinateStatementFactory {
 
   private final RecordRegistrySource source;
 
+  private final String baseUri;
+
   /**
    * Constructor.
+   *
    * @param source of policies
+   * @param baseUri for hosted records
    */
-  public SubordinateStatementFactory(final RecordRegistrySource source) {
+  public SubordinateStatementFactory(
+      final RecordRegistrySource source,
+      final String baseUri
+  ) {
     this.source = source;
+    this.baseUri = baseUri;
   }
 
   /**
    * Creates a signed entity statement from the issuer.
-   * @param issuer to create the statement from
+   *
+   * @param issuer  to create the statement from
    * @param subject to create thte statement for
    * @return a signed entity statement
    */
@@ -57,21 +66,35 @@ public class SubordinateStatementFactory {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
       Optional.ofNullable(subject.getPolicyRecordId()).flatMap(this.source::getPolicy)
-              .ifPresent(policy -> builder.claim("metadata_policy", policy));
+          .ifPresent(policy -> builder.claim("metadata_policy", policy));
+
+      Optional.ofNullable(subject.getOverrideConfigurationLocation())
+          .map(location -> {
+            if (location.startsWith("/")) {
+              return "%s%s/.well-known/openid-federation".formatted(this.baseUri, location);
+            }
+            return location;
+          })
+          .ifPresent(location -> builder.claim("subject_entity_configuration_location", location));
+
+      Optional.ofNullable(subject.getJwks()).map(JWKSet::toJSONObject)
+          .ifPresentOrElse(jwks -> builder.claim("jwks", jwks)
+              , () -> {
+                builder.claim("jwks", issuer.getJwks().toJSONObject());
+              });
+
 
       final JWTClaimsSet jwtClaimsSet = builder
           .issueTime(Date.from(Instant.now()))
           .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
           .issuer(issuer.getSubject().getValue())
           .subject(subject.getSubject().getValue())
-          .claim("jwks", subject.getJwks().toJSONObject())
           .build();
 
       final EntityStatement entityStatement =
           EntityStatement.sign(new EntityStatementClaimsSet(jwtClaimsSet), issuer.getJwks().getKeys().getFirst());
       return entityStatement.getSignedStatement();
-    }
-    catch (final Exception e) {
+    } catch (final Exception e) {
       throw new EntityStatementSignException("Failed to sign entity statement", e);
     }
   }

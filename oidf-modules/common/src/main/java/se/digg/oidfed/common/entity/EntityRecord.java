@@ -40,7 +40,7 @@ public class EntityRecord {
   private final EntityID subject;
   private final String policyRecordId;
   private JWKSet jwks;
-  private final String overrideConfigurationLocation;
+  private String overrideConfigurationLocation;
   private final HostedRecord hostedRecord;
 
   /**
@@ -127,17 +127,5 @@ public class EntityRecord {
         }).orElse(null),
         Optional.ofNullable((String) entityRecord.get("override_configuration_location")).orElse(null),
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
-  }
-
-
-  /**
-   * Updates the jwks used for this entity.
-   * Is primarily used for hosted records.
-   * @param jwks to set
-   * @return this record with jwks
-   */
-  public EntityRecord withJwks(final JWKSet jwks) {
-    this.jwks = jwks;
-    return this;
   }
 }
