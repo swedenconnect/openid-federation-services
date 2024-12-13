@@ -74,6 +74,20 @@ public class EntityInitializer {
         .stream().map(r -> r.toEntityRecord(this.keyRegistry))
         .toList().forEach(this.registry::addEntity);
 
+    this.loadFromRegistry();
+  }
+
+  /**
+   * Event listener for reloading all entities from the register.
+   * @param event to trigger on
+   */
+  @EventListener
+  public void handleReload(final EntityReloadEvent event) {
+    log.debug("Handling entity reload event");
+    this.loadFromRegistry();
+  }
+
+  private void loadFromRegistry() {
     final EntityRecord issuerRecord = this.registry.getEntity("/").orElseThrow(() -> new IllegalArgumentException(
         "Could not find root entity in configuration"));
     final EntityID issuer = issuerRecord.getIssuer();
