@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.common.entity;
 
+import java.util.Optional;
+
 /**
  * Factory class for creating paths.
  *
@@ -28,10 +30,26 @@ public class EntityPathFactory {
    * @return relative path of the basepath
    */
   public static String getPath(final EntityRecord record, final String basePath) {
+    final Optional<String> hostedLocation = Optional.ofNullable(record.getOverrideConfigurationLocation())
+        .map(location -> {
+      if (location.startsWith("/")) {
+        return location;
+      }
+      if (location.startsWith(basePath)) {
+        return location.replace(basePath, "");
+      }
+      throw new IllegalArgumentException("Override Configuration Location is not relative or leads to another domain");
+    });
+    if (hostedLocation.isPresent()) {
+      return hostedLocation.get();
+    }
     if (!record.getSubject().getValue().contains(basePath)) {
       throw new IllegalArgumentException("Failed to determine path for hosted record");
     }
-    final String key = record.getSubject().getValue().replace(basePath, "");
+    final String key = record
+        .getSubject()
+        .getValue()
+        .replace(basePath, "");
     if (key.isEmpty() || key.isBlank()) {
       return "/";
     }

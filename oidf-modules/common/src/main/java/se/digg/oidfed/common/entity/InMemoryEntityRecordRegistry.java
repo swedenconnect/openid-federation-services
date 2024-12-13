@@ -33,13 +33,13 @@ import java.util.function.Predicate;
 public class InMemoryEntityRecordRegistry implements EntityRecordRegistry {
   private final Map<String, EntityRecord> pathEntities = new HashMap<>();
   private final Map<EntityID, EntityRecord> idEntityRecordMap = new HashMap<>();
-  private final String basePath;
+  private final String baseUri;
 
   /**
-   * @param basePath for this registry
+   * @param baseUri for this registry
    */
-  public InMemoryEntityRecordRegistry(final String basePath) {
-    this.basePath = basePath;
+  public InMemoryEntityRecordRegistry(final String baseUri) {
+    this.baseUri = baseUri;
   }
 
   @Override
@@ -62,13 +62,13 @@ public class InMemoryEntityRecordRegistry implements EntityRecordRegistry {
     this.idEntityRecordMap.put(record.getSubject(), record);
 
     Optional.ofNullable(record.getHostedRecord()).ifPresent(hostedRecord -> {
-      this.pathEntities.put(EntityPathFactory.getPath(record, this.basePath), record);
+      this.pathEntities.put(EntityPathFactory.getPath(record, this.baseUri), record);
     });
   }
 
   @Override
-  public String getBasePath() {
-    return this.basePath;
+  public String getBaseUri() {
+    return this.baseUri;
   }
 
   @Override

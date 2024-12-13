@@ -54,7 +54,7 @@ public interface EntityRecordRegistry {
   /**
    * @return base path of this registry
    */
-  String getBasePath();
+  String getBaseUri();
 
   /**
    * Takes a predicate to find entities.
