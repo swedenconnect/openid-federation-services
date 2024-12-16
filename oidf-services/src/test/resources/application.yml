@@ -43,7 +43,7 @@ openid:
             - sign-key-1
 
 
-      #client: registry-integration
+      client: registry-integration
       jwk-alias:
         - sign-key-1
     trust-anchor:

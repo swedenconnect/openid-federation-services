@@ -19,7 +19,7 @@ package se.digg.oidfed.trustmarkissuer;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWKSet;
 import se.digg.oidfed.common.entity.RecordVerificationException;
-import se.digg.oidfed.common.entity.RecordVerifier;
+import se.digg.oidfed.common.entity.EntityRecordVerifier;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.text.ParseException;
@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * @author Per Fredrik Plars
  */
-public class TrustMarkSubjectRecordVerifier extends RecordVerifier {
+public class TrustMarkSubjectRecordVerifier extends EntityRecordVerifier {
 
 
   /**

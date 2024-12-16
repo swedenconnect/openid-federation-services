@@ -35,7 +35,7 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
-public class RecordVerifier {
+public class EntityRecordVerifier {
 
   private final JWKSet jwks;
 
@@ -44,7 +44,7 @@ public class RecordVerifier {
    *
    * @param jwks to trust
    */
-  public RecordVerifier(final JWKSet jwks) {
+  public EntityRecordVerifier(final JWKSet jwks) {
     this.jwks = jwks;
   }
 

@@ -54,11 +54,11 @@ class EntityRecordTest {
 
     final RSASSASigner signer = new RSASSASigner(key);
     final RSASSAVerifier verifier = new RSASSAVerifier(key);
-    final RecordVerifier recordVerifier = new RecordVerifier(new JWKSet(List.of(key)));
+    final EntityRecordVerifier entityRecordVerifier = new EntityRecordVerifier(new JWKSet(List.of(key)));
     final EntityRecordSigner entityRecordSigner = new EntityRecordSigner(signer);
     final SignedJWT serialize = entityRecordSigner.signRecords(List.of(expected));
     System.out.println(serialize.serialize());
-    final EntityRecord actual = recordVerifier.verifyEntities(serialize.serialize()).getFirst();
+    final EntityRecord actual = entityRecordVerifier.verifyEntities(serialize.serialize()).getFirst();
 
     Assertions.assertEquals(expected.getSubject(), actual.getSubject());
     Assertions.assertEquals(expected.getIssuer(), actual.getIssuer());
@@ -93,11 +93,11 @@ class EntityRecordTest {
         .build();
 
     final RSASSASigner signer = new RSASSASigner(key);
-    final RecordVerifier recordVerifier = new RecordVerifier(new JWKSet(List.of(key)));
+    final EntityRecordVerifier entityRecordVerifier = new EntityRecordVerifier(new JWKSet(List.of(key)));
     final EntityRecordSigner entityRecordSigner = new EntityRecordSigner(signer);
     final SignedJWT signedJWT = entityRecordSigner.signRecords(List.of(expected));
     System.out.println(signedJWT.serialize());
-    final EntityRecord actual = recordVerifier.verifyEntities(signedJWT.serialize()).getFirst();
+    final EntityRecord actual = entityRecordVerifier.verifyEntities(signedJWT.serialize()).getFirst();
 
     Assertions.assertEquals(expected.getSubject(), actual.getSubject());
     Assertions.assertEquals(expected.getIssuer(), actual.getIssuer());

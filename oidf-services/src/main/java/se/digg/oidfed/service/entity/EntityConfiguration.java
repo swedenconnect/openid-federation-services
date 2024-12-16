@@ -32,6 +32,7 @@ import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.PolicyRecord;
 import se.digg.oidfed.common.entity.EntityStatementFactory;
 import se.digg.oidfed.common.entity.InMemoryEntityRecordRegistry;
+import se.digg.oidfed.common.entity.EntityRecordVerifier;
 import se.digg.oidfed.common.entity.integration.InMemoryRecordRegistryCache;
 import se.digg.oidfed.common.entity.integration.RecordRegistryCache;
 import se.digg.oidfed.common.entity.integration.RecordRegistryIntegration;
@@ -55,11 +56,14 @@ import java.util.Optional;
 public class EntityConfiguration {
 
   /**
-   * Creates an instance of {@link EntityRecordRegistry} using the provided configuration properties and event publisher.
+   * Creates an instance of {@link EntityRecordRegistry} using the provided configuration properties and event
+   * publisher.
    *
-   * @param properties the configuration properties defining the entity registry setup, including base path and entities.
+   * @param properties the configuration properties defining the entity registry setup, including base path and
+   * entities.
    * @param publisher the application event publisher used to publish events when entities are registered.
-   * @return a configured instance of {@link EntityRecordRegistry} that delegates operations and publishes registration events.
+   * @return a configured instance of {@link EntityRecordRegistry} that delegates operations and publishes registration
+   * events.
    */
   @Bean
   EntityRecordRegistry entityRegistry(final EntityConfigurationProperties properties,
@@ -124,7 +128,7 @@ public class EntityConfiguration {
   @ConditionalOnProperty(value = "openid.federation.entity-registry.client")
   RecordRegistryIntegration entityRecordIntegration(
       @Qualifier("entity-record-integration-client") final RestClient client,
-      final TrustMarkSubjectRecordVerifier verifier) {
+      @Qualifier("entity-record-verifier") final EntityRecordVerifier verifier) {
     return new RestClientRecordIntegration(client, verifier);
   }
 
@@ -137,9 +141,11 @@ public class EntityConfiguration {
    *         based on the provided properties.
    */
   @Bean
-  TrustMarkSubjectRecordVerifier recordVerifier(
-      final KeyRegistry registry, final EntityConfigurationProperties properties) {
-    return new TrustMarkSubjectRecordVerifier(registry.getSet(properties.getJwkAlias()));
+  @Qualifier("entity-record-verifier")
+  EntityRecordVerifier entityRecordVerifier(
+      final KeyRegistry registry,
+      final EntityConfigurationProperties properties) {
+    return new EntityRecordVerifier(registry.getSet(properties.getJwkAlias()));
   }
 
   /**
