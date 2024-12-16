@@ -74,7 +74,7 @@ public class TMIRestClientRecordIntegration implements TrustMarkIssuerSubjectLoa
           .toEntity(String.class);
       return this.verifier.verifyTrustMarkSubjects(jwt.getBody());
     }
-    catch (HttpClientErrorException.NotFound e) {
+    catch (final HttpClientErrorException.NotFound e) {
       return List.of();
     }
   }

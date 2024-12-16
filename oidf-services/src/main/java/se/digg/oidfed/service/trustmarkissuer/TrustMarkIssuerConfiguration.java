@@ -110,7 +110,7 @@ public class TrustMarkIssuerConfiguration {
                 .logoUri(Optional.ofNullable(tmIssuer.logoUri()))
                 .delegation(Optional.ofNullable(tmIssuer.delegation()))
                 .trustMarkIssuerSubjectLoader(
-                    delegatedLoader(tmIssuer.subjects().stream().map(tmiSubject ->
+                    this.delegatedLoader(tmIssuer.subjects().stream().map(tmiSubject ->
                         TrustMarkIssuerSubject.builder()
                             .sub(tmiSubject.sub())
                             .expires(Optional.ofNullable(tmiSubject.expires()))

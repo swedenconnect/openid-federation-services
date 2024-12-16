@@ -56,12 +56,27 @@ public class EntityConfigurationProperties {
   @NestedConfigurationProperty
   private List<EntityProperty> entityRegistry;
 
+  /**
+   * Ensures that the required configuration properties for the entity registry are properly set.
+   *
+   * This method validates the following:
+   * - The `entityRegistry` property is not empty.
+   * - The `basePath` property is not empty.
+   *
+   * If any of the above conditions are not met, an {@link IllegalArgumentException} is raised
+   * with a descriptive error message.
+   *
+   * This method is marked with {@link PostConstruct}, ensuring that it is executed once
+   * immediately after dependency injection is complete and all properties are initialized.
+   *
+   * @throws IllegalArgumentException if any required configuration property is missing or invalid
+   */
   @PostConstruct
   public void validate(){
-    FederationAssert.assertNotEmpty(entityRegistry,
+    FederationAssert.assertNotEmpty(this.entityRegistry,
         "openid.federation.entity-registry.entityRegistry has to be set");
 
-    FederationAssert.assertNotEmpty(basePath,
+    FederationAssert.assertNotEmpty(this.basePath,
         "openid.federation.entity-registry.basePath has to be set");
 
 
