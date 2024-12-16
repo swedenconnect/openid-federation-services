@@ -32,21 +32,17 @@ import java.util.List;
 public class TrustAnchorProperties {
   private final String alias;
   private final EntityID entityId;
-  private final List<SubordinateListingProperty> subordinateListing;
 
   /**
    * Constructor.
    * @param alias of the trust anchor
    * @param entityId of the trust anchor
-   * @param subordinateListing of the trust anchor
    */
   public TrustAnchorProperties(
       final String alias,
-      final EntityID entityId,
-      final List<SubordinateListingProperty> subordinateListing) {
+      final EntityID entityId) {
     this.alias = alias;
     this.entityId = entityId;
-    this.subordinateListing = subordinateListing;
   }
 
   /**

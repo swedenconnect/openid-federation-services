@@ -59,6 +59,9 @@ public class Node<T> {
    * @param context to propagate data in the tree
    */
   public void addChild(final NodePopulationContext<T> context) {
+    if (!context.visited.add(this.key)) {
+      return;
+    }
     if (context.parentKey().equalsIgnoreCase(this.key)) {
       context.cacheSnapshot().append(context.child(), this);
       return;
@@ -77,10 +80,17 @@ public class Node<T> {
     if (searchPredicate.test(context.cacheSnapshot.getData(this.key), context)) {
       matches.add(new Tree.SearchResult<>(this, context));
     }
-    final List<Node<T>> children = context.cacheSnapshot().getChildren(this);
+    final List<Node<T>> children =
+        context.cacheSnapshot().getChildren(this);
+
+
+
     final Set<Tree.SearchResult<T>> results =
         children.stream()
-            .flatMap(child -> child.search(searchPredicate, context.next()).stream())
+            .filter(child -> context.visisted.add(child.key))
+            .flatMap(child -> {
+              return child.search(searchPredicate, context.next()).stream();
+            })
             .collect(Collectors.toSet());
 
     matches.addAll(results);
@@ -111,14 +121,16 @@ public class Node<T> {
    * @param level of the tree
    * @param includeParent true if all parents of a search result should be included
    * @param cacheSnapshot snapshot of a specific version of the cache to search upon
+   * @param visisted nodes that has already been visited, in order to resolve cyclic graphs
    * @param <T> type
    */
-  public record NodeSearchContext<T>(int level, boolean includeParent, CacheSnapshot<T> cacheSnapshot) {
+  public record NodeSearchContext<T>(int level, boolean includeParent, CacheSnapshot<T> cacheSnapshot,
+                                     Set<String> visisted) {
     /**
      * @return node context for the next level of iteration
      */
     public NodeSearchContext<T> next() {
-      return new NodeSearchContext<>(this.level + 1, this.includeParent, this.cacheSnapshot);
+      return new NodeSearchContext<>(this.level + 1, this.includeParent, this.cacheSnapshot, this.visisted);
     }
   }
 
@@ -126,7 +138,12 @@ public class Node<T> {
    * @param child to add
    * @param cacheSnapshot snapshot of a specific version of the cache to populate
    * @param parentKey to determine parent node
+   * @param visited nodes to resolve cyclic graphs
    * @param <T> type
    */
-  public record NodePopulationContext<T>(Node<T> child, CacheSnapshot<T> cacheSnapshot, String parentKey) {}
+  public record NodePopulationContext<T>(
+      Node<T> child,
+      CacheSnapshot<T> cacheSnapshot,
+      String parentKey,
+      Set<String> visited) {}
 }

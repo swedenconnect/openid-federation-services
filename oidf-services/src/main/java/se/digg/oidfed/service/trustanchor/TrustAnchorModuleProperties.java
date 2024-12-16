@@ -43,7 +43,7 @@ public class TrustAnchorModuleProperties {
   private List<TrustAnchorSubModuleProperties> anchors;
 
   /**
-   * Module propeties for an individual trust anchor module
+   * Module properties for an individual trust anchor module
    *
    * @author Felix Hellman
    */
@@ -55,18 +55,12 @@ public class TrustAnchorModuleProperties {
     /** EntityId for the trust anchor */
     private String entityIdentifier;
 
-    /** List of each subordinate */
-    private List<SubordinateSubModuleProperty> subordinateListing;
-
     /**
      * Converts this to {@link TrustAnchorProperties}
      * @return property
      */
     public TrustAnchorProperties toTrustAnchorProperties() {
-      final List<TrustAnchorProperties.SubordinateListingProperty> subordinates = this.subordinateListing.stream()
-          .map(sub -> new TrustAnchorProperties.SubordinateListingProperty(sub.entityIdentifier, sub.policy))
-          .toList();
-      return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier), subordinates);
+      return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier));
     }
 
     /**
