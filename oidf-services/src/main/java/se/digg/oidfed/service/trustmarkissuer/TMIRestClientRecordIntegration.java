@@ -16,23 +16,14 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
-import se.digg.oidfed.common.entity.EntityRecord;
-import se.digg.oidfed.common.entity.PolicyRecord;
-import se.digg.oidfed.common.entity.integration.RecordRegistryIntegration;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubject;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubjectLoader;
 import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRecordVerifier;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +60,8 @@ public class TMIRestClientRecordIntegration implements TrustMarkIssuerSubjectLoa
 
     try {
       final ResponseEntity<String> jwt = this.client.get()
-          .uri("/api/v1/federationservice/entity_record?iss={iss}&sub={sub}&trustmark_id={trustmark_id}", params)
+          .uri("/api/v1/federationservice/trustmarksubject_record?iss={iss}&sub={sub}&trustmark_id={trustmark_id}"
+              , params)
           .retrieve()
           .toEntity(String.class);
       return this.verifier.verifyTrustMarkSubjects(jwt.getBody());

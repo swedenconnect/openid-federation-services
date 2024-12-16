@@ -18,5 +18,6 @@ openid:
 
     trust-anchor:
       active: false
+
     trust-mark-issuer:
       active: false

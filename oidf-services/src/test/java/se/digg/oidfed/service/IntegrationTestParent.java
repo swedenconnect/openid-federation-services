@@ -114,6 +114,11 @@ public class IntegrationTestParent {
         "my-super-policy", Charset.defaultCharset()))).willReturn(
         new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
     );
+
+
+    WireMock.stubFor(WireMock.get("/api/v1/federationservice/trustmarksubject_record?").willReturn(
+        new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
+    );
     entityInitializer.handle(null);
   }
 
