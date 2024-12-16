@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 
 import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertTrue;
@@ -40,6 +41,37 @@ import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertT
 @Builder(toBuilder = true)
 public record TrustMarkIssuerSubject(String sub, Optional<Instant> granted,
     Optional<Instant> expires, boolean revoked) {
+
+  /**
+   * Converting json structure to TrustMarkIssuerSubject object
+   * Subject is mandatory and will be checked.
+   *
+   * @param record Reading subject,expires,granted,revoked values.
+   * @return TrustMarkIssuerSubject filled with data
+   */
+  public static TrustMarkIssuerSubject fromJson(final Map<String, Object> record) {
+    final TrustMarkIssuerSubject.TrustMarkIssuerSubjectBuilder tmisBuilder = TrustMarkIssuerSubject.builder()
+        .sub((String)record.get("subject"));
+
+    Optional.ofNullable((Boolean)record.get("revoked")).ifPresent(tmisBuilder::revoked);
+
+    Optional.ofNullable((String)record.get("expires"))
+        .filter(string -> !string.isBlank())
+        .map(Instant::parse)
+        .map(Optional::of)
+        .ifPresentOrElse(tmisBuilder::expires,() -> tmisBuilder.expires(Optional.empty()));
+
+    Optional.ofNullable((String)record.get("granted"))
+        .filter(string -> !string.isBlank())
+        .map(Instant::parse)
+        .map(Optional::of)
+        .ifPresentOrElse(tmisBuilder::granted,() -> tmisBuilder.granted(Optional.empty()));
+
+        final TrustMarkIssuerSubject tms =  tmisBuilder.build();
+        tms.validate();
+        return tms;
+  }
+
   /**
    * Validate content of configuration.
    *

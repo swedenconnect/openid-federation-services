@@ -19,7 +19,6 @@ package se.digg.oidfed.service.entity;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,7 +30,6 @@ import se.digg.oidfed.common.entity.DelegatingEntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.PolicyRecord;
-import se.digg.oidfed.common.entity.RecordVerifier;
 import se.digg.oidfed.common.entity.EntityStatementFactory;
 import se.digg.oidfed.common.entity.InMemoryEntityRecordRegistry;
 import se.digg.oidfed.common.entity.integration.InMemoryRecordRegistryCache;
@@ -41,6 +39,7 @@ import se.digg.oidfed.common.entity.integration.CachedRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.rest.RestClientRegistry;
+import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRecordVerifier;
 
 import java.util.List;
 import java.util.Optional;
@@ -89,14 +88,15 @@ public class EntityConfiguration {
   @Bean
   @ConditionalOnProperty(value = "openid.federation.entity-registry.client")
   RecordRegistryIntegration entityRecordIntegration(
-      @Qualifier("entity-record-integration-client") final RestClient client, final RecordVerifier verifier) {
+      @Qualifier("entity-record-integration-client") final RestClient client,
+      final TrustMarkSubjectRecordVerifier verifier) {
     return new RestClientRecordIntegration(client, verifier);
   }
 
   @Bean
-  RecordVerifier entityRecordVerifier(
+  TrustMarkSubjectRecordVerifier recordVerifier(
       final KeyRegistry registry, final EntityConfigurationProperties properties) {
-    return new RecordVerifier(registry.getSet(properties.getJwkAlias()));
+    return new TrustMarkSubjectRecordVerifier(registry.getSet(properties.getJwkAlias()));
   }
 
   @Bean

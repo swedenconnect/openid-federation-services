@@ -30,4 +30,12 @@ public class RecordVerificationException extends RuntimeException {
   public RecordVerificationException(final String message, final Throwable cause) {
     super(message, cause);
   }
+
+  /**
+   * Constructor.
+   * @param message the detailed message
+   */
+  public RecordVerificationException(final String message) {
+    super(message);
+  }
 }

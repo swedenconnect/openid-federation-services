@@ -83,5 +83,6 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
         .body(String.class);
     return this.verifier.verifyEntities(jwt);
   }
+
 }
 

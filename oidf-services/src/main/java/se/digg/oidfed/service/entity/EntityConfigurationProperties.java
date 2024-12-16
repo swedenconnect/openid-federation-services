@@ -16,10 +16,12 @@
  */
 package se.digg.oidfed.service.entity;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.util.List;
 
@@ -53,6 +55,17 @@ public class EntityConfigurationProperties {
    */
   @NestedConfigurationProperty
   private List<EntityProperty> entityRegistry;
+
+  @PostConstruct
+  public void validate(){
+    FederationAssert.assertNotEmpty(entityRegistry,
+        "openid.federation.entity-registry.entityRegistry has to be set");
+
+    FederationAssert.assertNotEmpty(basePath,
+        "openid.federation.entity-registry.basePath has to be set");
+
+
+  }
 }
 
 

@@ -54,7 +54,7 @@ public class TestDataSetup {
     final TrustMarkProperties trustMarkProperties = TrustMarkProperties.builder()
         .trustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES))
         .issuerEntityId(new EntityID("https://tmissuer.digg.se"))
-        .signKey(generateKey())
+        .signKey(TestDataSetup::generateKey)
         .trustMarks(new ArrayList<>())
         .alias("tm")
         .build();
@@ -105,12 +105,19 @@ public class TestDataSetup {
     return trustMarkDelegate;
   }
 
-  private static RSAKey generateKey() throws JOSEException {
-    final RSAKey rsaKey = new RSAKeyGenerator(2048)
-        .keyUse(KeyUse.SIGNATURE)
-        .keyID(UUID.randomUUID().toString())
-        .issueTime(new Date())
-        .generate();
+  private static RSAKey generateKey() {
+
+    final RSAKey rsaKey;
+    try {
+      rsaKey = new RSAKeyGenerator(2048)
+          .keyUse(KeyUse.SIGNATURE)
+          .keyID(UUID.randomUUID().toString())
+          .issueTime(new Date())
+          .generate();
+    }
+    catch (JOSEException e) {
+      throw new RuntimeException(e);
+    }
     return rsaKey;
   }
 
