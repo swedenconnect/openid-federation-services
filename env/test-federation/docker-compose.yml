@@ -1,0 +1,86 @@
+services:
+  authorization-ta:
+    image: ghcr.io/swedenconnect/openid-federation-services:latest
+    depends_on:
+      - dev-nginx
+      - dev-redis-stack
+    networks:
+      - backend
+    ports:
+      - 6000:6000/tcp
+      - 6001:6001/tcp
+    environment:
+      TRUST_ANCHOR_INSTALL_DIR: /opt/ta
+      SPRING_CONFIG_IMPORT: /opt/ta/application.yml
+      SERVER_PORT: 6000
+      MANAGEMENT_SERVER_PORT: 6001
+    volumes:
+      - ./config/authorization-ta/:/opt/ta/:ro
+  private-ta:
+    image: ghcr.io/swedenconnect/openid-federation-services:latest
+    depends_on:
+      - dev-nginx
+      - dev-redis-stack
+    networks:
+      - backend
+    ports:
+      - 6010:6010/tcp
+      - 6011:6011/tcp
+    environment:
+      TRUST_ANCHOR_INSTALL_DIR: /opt/ta
+      SPRING_CONFIG_IMPORT: /opt/ta/application.yml
+      SERVER_PORT: 6010
+      MANAGEMENT_SERVER_PORT: 6011
+    volumes:
+      - ./config/private-ta/:/opt/ta/:ro
+  municipality-ta:
+    image: ghcr.io/swedenconnect/openid-federation-services:latest
+    depends_on:
+      - dev-nginx
+      - dev-redis-stack
+      - authorization-ta
+    networks:
+      - backend
+    ports:
+      - 6020:6020/tcp
+      - 6021:6021/tcp
+    environment:
+      TRUST_ANCHOR_INSTALL_DIR: /opt/ta
+      SPRING_CONFIG_IMPORT: /opt/ta/application.yml
+      SERVER_PORT: 6020
+      MANAGEMENT_SERVER_PORT: 6021
+    volumes:
+      - ./config/municipality-ta/:/opt/ta/:ro
+  dev-nginx:
+    container_name: "nginx"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    image: nginx:stable
+    networks:
+      backend:
+        aliases:
+          - authorization.local.swedenconnect.se
+          - private.local.swedenconnect.se
+          - municipality.local.swedenconnect.se
+    ports:
+      - 443:443/tcp
+    volumes:
+      - ./config/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./config/certificates/ca.pem:/etc/nginx/ca.pem:ro
+      - ./config/certificates/server.crt:/etc/nginx/server.crt:ro
+      - ./config/certificates/server.key:/etc/nginx/server.key:ro
+      - ./config/nginx/mime.types:/etc/nginx/mime.types:ro
+
+  dev-redis-stack:
+    container_name: "redis"
+    image: redis/redis-stack:latest
+    hostname: "redis"
+    networks:
+      - backend
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+
+networks:
+  backend:
+    name: backend
