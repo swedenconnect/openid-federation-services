@@ -24,7 +24,8 @@ openid:
     policy-registry:
       policies:
         - name: default-policy
-          resource: file:${TRUST_ANCHOR_INSTALL_DIR}/defaultpolicy.json
+          policy:
+            resource: file:${TRUST_ANCHOR_INSTALL_DIR}/defaultpolicy.json
     entity-registry:
       jwk-alias:
         - sign-key-1
@@ -37,14 +38,15 @@ openid:
             - sign-key-1
           override-configuration-location: https://authorization.local.swedenconnect.se/ta
           hosted-record:
-            metadata: |
-              {
-                "federation_entity": { 
-                  "organization_name": "Authorization",
-                  "federation_fetch_endpoint": "https://authorization.local.swedenconnect.se/ta/fetch",
-                  "federation_list_endpoint": "https://authorization.local.swedenconnect.se/ta/subordinate_listing"
+            metadata:
+              json: |
+                {
+                  "federation_entity": { 
+                    "organization_name": "Authorization",
+                    "federation_fetch_endpoint": "https://authorization.local.swedenconnect.se/ta/fetch",
+                    "federation_list_endpoint": "https://authorization.local.swedenconnect.se/ta/subordinate_listing"
+                  }
                 }
-              }
         - subject: https://municipality.local.swedenconnect.se/ta
           issuer: https://authorization.local.swedenconnect.se/ta
           jwk-alias:
@@ -60,29 +62,31 @@ openid:
           jwk-alias:
             - sign-key-1
           hosted-record:
-            metadata: |
-              { "federation_entity": { "organization_name": "Authorization" },
-                "openid_provider": {
-                  "authorization_endpoint": "https://authorization.local.swedenconnect.se/op-1/authorization",
-                  "token_endpoint": "https://authorization.local.swedenconnect.se/op-1/token",
-                  "id_token_signing_alg_values_supported": [ "RS256" ],
-                  "issuer": "https://authorization.local.swedenconnect.se/op-1"
+            metadata:
+              json: |
+                { "federation_entity": { "organization_name": "Authorization" },
+                  "openid_provider": {
+                    "authorization_endpoint": "https://authorization.local.swedenconnect.se/op-1/authorization",
+                    "token_endpoint": "https://authorization.local.swedenconnect.se/op-1/token",
+                    "id_token_signing_alg_values_supported": [ "RS256" ],
+                    "issuer": "https://authorization.local.swedenconnect.se/op-1"
+                    }
                   }
-                }
         - subject: https://authorization.local.swedenconnect.se/op-2
           issuer: https://authorization.local.swedenconnect.se/ta
           jwk-alias:
             - sign-key-1
           hosted-record:
-            metadata: |
-              { "federation_entity": { "organization_name": "Authorization" },
-                "openid_provider": {
-                  "authorization_endpoint": "https://authorization.local.swedenconnect.se/op-2/authorization",
-                  "token_endpoint": "https://authorization.local.swedenconnect.se/op-2/token",
-                  "id_token_signing_alg_values_supported": [ "HS256" ],
-                  "issuer": "https://authorization.local.swedenconnect.se/op-2"
+            metadata:
+              json: |
+                { "federation_entity": { "organization_name": "Authorization" },
+                  "openid_provider": {
+                    "authorization_endpoint": "https://authorization.local.swedenconnect.se/op-2/authorization",
+                    "token_endpoint": "https://authorization.local.swedenconnect.se/op-2/token",
+                    "id_token_signing_alg_values_supported": [ "HS256" ],
+                    "issuer": "https://authorization.local.swedenconnect.se/op-2"
+                    }
                   }
-                }
     rest-client-registry:
       clients:
         - name: resolver-integration
