@@ -36,7 +36,37 @@ openid:
           subordinate-listing:
             - entity-identifier: https://federation.local.swedenconnect.se/int/rp
     trust-mark-issuer:
-      active: false
+      active: true
+      client: registry-integration
+      jwk-alias:
+        - sign-key-1
+      trust-mark-issuers:
+        - alias: "tmi"
+          entity-identifier: "https://federation.local.swedenconnect.se/tmi"
+          trust-mark-validity-duration: PT29M
+          trust-marks:
+            - trust-mark-id: "http://test.digg.se/tmi/sdk"
+              logo-uri: "http://test.digg.se/sdk/logo.png"
+              ref-uri: "http://test.digg.se/sdk/doc"
+              subjects:
+                - sub: http://test.pensionsmyndigheten.se/openidfed
+                  granted: "2024-01-01T10:00:00Z"
+                  expires: "2030-01-01T10:00:00Z"
+                  revoked: false
+
+                - sub: http://test.skatteverket.se/openidfed
+                  granted: "2024-01-01T10:00:00Z"
+                  expires: "2030-01-01T10:00:00Z"
+                  revoked: false
+
+            - trust-mark-id: "http://test.digg.se/tmi/iso"
+              logo-uri: "http://test.digg.se/iso/logo.png"
+              ref-uri: "http://test.digg.se/iso/doc"
+              subjects:
+                - sub: http://test.tullverket.se/openidfed
+                  granted: "2024-01-01T10:00:00Z"
+                  expires: "2030-01-01T10:00:00Z"
+                  revoked: false
     entity-registry:
       entity-registry:
         - issuer: https://federation.local.swedenconnect.se/ta
@@ -56,6 +86,11 @@ openid:
             metadata:
               federation_entity:
                 organization_name: "swedenconnect"
+        - issuer: https://federation.local.swedenconnect.se/tmi
+          subject: https://federation.local.swedenconnect.se/tmi
+          jwk-alias:
+            - sign-key-1
+
         - issuer: https://federation.local.swedenconnect.se/int/rp
           subject: https://federation.local.swedenconnect.se/int/rp
           jwk-alias:

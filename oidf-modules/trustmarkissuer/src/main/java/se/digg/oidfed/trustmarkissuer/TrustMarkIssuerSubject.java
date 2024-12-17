@@ -85,7 +85,7 @@ public record TrustMarkIssuerSubject(String sub, Optional<Instant> granted,
 
     if (this.granted.isPresent() && this.expires.isPresent()) {
       assertTrue(this.granted.get().isBefore(this.expires.get()), "Expires expected to be after granted");
-      if (this.expires.get().isAfter(Instant.now())) {
+      if (this.expires.get().isBefore(Instant.now())) {
         log.warn("TrustMark subject:'{}' has already expired. Consider to remove it. Expires:'{}'",
             this.sub, this.expires.get());
       }
