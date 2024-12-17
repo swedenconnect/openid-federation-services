@@ -21,6 +21,10 @@ logging:
     se.digg: INFO
 openid:
   federation:
+    policy-registry:
+      policies:
+        - name: authorization-policy
+          resource: file:${TRUST_ANCHOR_INSTALL_DIR}/authorization-policy.json
     entity-registry:
       jwk-alias:
         - sign-key-1
@@ -33,15 +37,19 @@ openid:
             - sign-key-1
           override-configuration-location: https://municipality.local.swedenconnect.se/ta
           hosted-record:
-            metadata:
-              federation_entity:
-                organization_name: "Municipality"
-                federation_fetch_endpoint: "https://municipality.local.swedenconnect.se/ta/fetch"
-                federation_list_endpoint: "https://municipality.local.swedenconnect.se/ta/subordinate_listing"
+            metadata: | 
+              {
+                "federation_entity": {
+                  "organization_name": "Municipality",
+                  "federation_fetch_endpoint": "https://municipality.local.swedenconnect.se/ta/fetch",
+                  "federation_list_endpoint": "https://municipality.local.swedenconnect.se/ta/subordinate_listing"
+                }
+              }
         - subject: https://authorization.local.swedenconnect.se/ta
           issuer: https://municipality.local.swedenconnect.se/ta
           jwk-alias:
             - sign-key-1
+          policy-name: authorization-policy
         - subject: https://private.local.swedenconnect.se/ta
           issuer: https://municipality.local.swedenconnect.se/ta
           jwk-alias:

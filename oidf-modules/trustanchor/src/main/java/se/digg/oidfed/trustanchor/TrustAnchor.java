@@ -43,9 +43,9 @@ public class TrustAnchor implements Submodule {
   /**
    * Constructor.
    *
-   * @param registry to use
+   * @param registry   to use
    * @param properties to use
-   * @param factory to constructor entity statements 
+   * @param factory    to constructor entity statements
    */
   public TrustAnchor(
       final EntityRecordRegistry registry,

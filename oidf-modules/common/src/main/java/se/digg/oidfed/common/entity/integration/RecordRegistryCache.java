@@ -51,4 +51,10 @@ public interface RecordRegistryCache {
    * @param issuer to add for a given key
    */
   void registerRecords(@Nullable final List<EntityRecord> records, final String issuer);
+
+  /**
+   * Locally adds a policy record
+   * @param record to add
+   */
+  void addPolicy(final PolicyRecord record);
 }

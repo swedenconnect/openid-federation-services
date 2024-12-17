@@ -56,4 +56,9 @@ public class InMemoryRecordRegistryCache implements RecordRegistryCache {
     this.entityRecords.put(issuer, new CacheResponse<>(Optional.ofNullable(records),
         Objects.nonNull(records) && !records.isEmpty()));
   }
+
+  @Override
+  public void addPolicy(final PolicyRecord record) {
+    this.policyRecords.put(record.getId(), new CacheResponse<>(Optional.of(record), true));
+  }
 }
