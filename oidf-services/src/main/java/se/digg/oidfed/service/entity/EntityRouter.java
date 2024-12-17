@@ -21,8 +21,11 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.servlet.function.support.RouterFunctionMapping;
+import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityStatementFactory;
+
+import java.util.Optional;
 
 import static org.springframework.web.servlet.function.RouterFunctions.route;
 
@@ -40,9 +43,10 @@ public class EntityRouter {
 
   /**
    * Constructor.
+   *
    * @param registry to handle path mapping
-   * @param factory to construct entity configurations
-   * @param mapping to reload
+   * @param factory  to construct entity configurations
+   * @param mapping  to reload
    */
   public EntityRouter(final EntityRecordRegistry registry, final EntityStatementFactory factory,
                       final RouterFunctionMapping mapping) {
@@ -57,13 +61,17 @@ public class EntityRouter {
   public void reevaluteEndpoints() {
     final RouterFunctions.Builder route = route();
 
-    route.GET("/.well-known/openid-federation", r -> {
-      return ServerResponse.ok().body(
-          this.registry.getEntity("/")
-              .map(this.factory::createEntityConfiguration)
-              .map(e -> e.getSignedStatement().serialize())
-              .orElseThrow());
-    });
+    final Optional<EntityRecord> defaultEntity = this.registry.getEntity("/");
+
+    if (defaultEntity.isPresent()) {
+      route.GET("/.well-known/openid-federation", r -> {
+        return ServerResponse.ok().body(
+            defaultEntity
+                .map(this.factory::createEntityConfiguration)
+                .map(e -> e.getSignedStatement().serialize())
+                .orElseThrow());
+      });
+    }
 
     this.registry.getPaths().forEach(path -> {
       route.GET("%s/.well-known/openid-federation".formatted(path), r -> {

@@ -27,16 +27,16 @@ openid:
           policy:
             resource: file:${TRUST_ANCHOR_INSTALL_DIR}/authorization-policy.json
     entity-registry:
+      issuers:
+        - https://municipality.local.swedenconnect.se/ta
       jwk-alias:
         - sign-key-1
       base-path: https://municipality.local.swedenconnect.se/
       entity-registry:
         - subject: https://municipality.local.swedenconnect.se/ta
           issuer: https://municipality.local.swedenconnect.se/ta
-          default-entity: true
           jwk-alias:
             - sign-key-1
-          override-configuration-location: https://municipality.local.swedenconnect.se/ta
           hosted-record:
             metadata:
               json: |

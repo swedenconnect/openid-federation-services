@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.keys.KeyRegistry;
@@ -101,15 +100,18 @@ public class EntityInitializer {
   }
 
   private void loadFromRegistry() {
-    final EntityRecord issuerRecord = this.registry.getEntity("/").orElseThrow(() -> new IllegalArgumentException(
-        "Could not find root entity in configuration"));
-    final EntityID issuer = issuerRecord.getIssuer();
+    this.properties.getIssuers().stream()
+        .map(EntityID::new)
+        .forEach(this::loadIssuerFromRegistry);
+    this.router.reevaluteEndpoints();
+  }
+
+  private void loadIssuerFromRegistry(final EntityID issuer) {
     try {
       this.source.getEntityRecords(issuer.getValue())
           .forEach(this.registry::addEntity);
     } catch (final Exception e) {
       log.error("failed to fetch entity records from registry", e);
     }
-    this.router.reevaluteEndpoints();
   }
 }

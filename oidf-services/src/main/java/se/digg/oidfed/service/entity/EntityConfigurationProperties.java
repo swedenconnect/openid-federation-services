@@ -51,6 +51,11 @@ public class EntityConfigurationProperties {
   private List<String> jwkAlias;
 
   /**
+   * List of issuers that is configured for this node.
+   */
+  private List<String> issuers;
+
+  /**
    * Properties for all entities in the registry
    */
   @NestedConfigurationProperty
