@@ -22,16 +22,16 @@ logging:
 openid:
   federation:
     entity-registry:
+      issuers:
+        - https://private.local.swedenconnect.se/ta
       jwk-alias:
         - sign-key-1
       base-path: https://private.local.swedenconnect.se/
       entity-registry:
         - subject: https://private.local.swedenconnect.se/ta
           issuer: https://private.local.swedenconnect.se/ta
-          default-entity: true
           jwk-alias:
             - sign-key-1
-          override-configuration-location: https://private.local.swedenconnect.se/ta
           hosted-record:
             metadata:
               json: |

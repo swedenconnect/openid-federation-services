@@ -70,15 +70,17 @@ public class EntityConfiguration {
                                       final ApplicationEventPublisher publisher
   ) {
 
-    final String subject = properties.getEntityRegistry()
+    final EntityID defaultEntity = properties.getEntityRegistry()
         .stream()
         .filter(EntityProperty::isDefaultEntity)
         .findFirst()
-        .get()
-        .getSubject();
+        .map(EntityProperty::getSubject)
+        .map(EntityID::new)
+        .orElse(null);
+
     return new DelegatingEntityRecordRegistry(
-        new EntityID(subject)
-        , new InMemoryEntityRecordRegistry(properties.getBasePath()),
+        defaultEntity,
+        new InMemoryEntityRecordRegistry(properties.getBasePath()),
         List.of(er -> publisher.publishEvent(new EntityRegisteredEvent(er))));
   }
 

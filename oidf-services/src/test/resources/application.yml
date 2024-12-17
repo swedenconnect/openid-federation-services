@@ -50,6 +50,8 @@ openid:
       jwk-alias:
         - sign-key-1
       base-path: "http://localhost.test:9090"
+      issuers:
+        - http://localhost.test:9090/root
     trust-anchor:
       active: true
       anchors:
