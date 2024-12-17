@@ -22,7 +22,9 @@ import com.github.tomakehurst.wiremock.http.Body;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +37,14 @@ import se.digg.oidfed.common.entity.HostedRecord;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.IntegrationTestParent;
 
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
 @ActiveProfiles("integration-test")
+@Slf4j
 public class EntityRegistryIT extends IntegrationTestParent {
 
   @Autowired
@@ -58,7 +63,6 @@ public class EntityRegistryIT extends IntegrationTestParent {
             .retrieve().toEntity(String.class);
 
     Assertions.assertNotNull(root);
-    System.out.println(root);
 
     final ResponseEntity<String> entityRoot =
         client.get()
@@ -66,7 +70,6 @@ public class EntityRegistryIT extends IntegrationTestParent {
             .retrieve().toEntity(String.class);
 
     Assertions.assertNotNull(entityRoot);
-    System.out.println(entityRoot);
 
     final ResponseEntity<String> entitySecond =
         client.get()
@@ -74,38 +77,31 @@ public class EntityRegistryIT extends IntegrationTestParent {
             .retrieve().toEntity(String.class);
 
     Assertions.assertNotNull(entitySecond);
-    System.out.println(entitySecond);
   }
 
   @Test
-  void dynamicRegistration() throws JOSEException, ParseException {
-    final JWKSet set = registry.getSet(List.of("sign-key-1"));
-    final EntityRecordSigner entityRecordSigner = new EntityRecordSigner(new RSASSASigner(set.getKeys().getFirst().toRSAKey()));
-
-    final String body = entityRecordSigner.signRecords(List.of(
-        EntityRecord.builder()
-            .issuer(new EntityID("http://localhost.test:9090/iss"))
-            .subject(new EntityID("http://localhost.test:9090/sub"))
-            .policyRecordId("policy")
-            .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",
-                "orgName"))).build())
-            .build()
-    )).serialize();
-
-    WireMock.stubFor(WireMock.get("/registry/v1/entities").willReturn(
-        new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
-    );
-
-
-    initializer.handle(null);
-
-    final RestClient client = RestClient.builder().build();
+  void dynamicRegistration() throws ParseException {
+    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(serverPort)).build();
 
     final ResponseEntity<String> entitySecond =
         client.get()
-            .uri("http://localhost:%d/sub/.well-known/openid-federation".formatted(serverPort))
+            .uri("http://localhost:%d/customsub/.well-known/openid-federation".formatted(serverPort))
             .retrieve().toEntity(String.class);
 
-    System.out.println(entitySecond.getBody());
+    final List<String> body =
+        (List<String>) client.get().uri("/ta/subordinate_listing").retrieve().toEntity(List.class).getBody();
+
+    Assertions.assertTrue(body.contains("http://localhost.test:9090/subsub"), "Subordinate listing does not contain " +
+        "expected value %s was %s".formatted("http://localhost.test:9090/subsub", body));
+
+    final String jwt = client.get()
+        .uri("/ta/fetch?sub=%s".formatted(URLEncoder.encode((String) "http://localhost.test:9090/subsub", Charset.defaultCharset())))
+        .retrieve().body(String.class);
+    final String subjectEntityConfigurationLocation = SignedJWT.parse(jwt).getJWTClaimsSet()
+        .getStringClaim("subject_entity_configuration_location")
+        .replace("8080", "" + serverPort);
+
+    Assertions.assertEquals("http://localhost.test:9090/customsub/.well-known/openid-federation",
+        subjectEntityConfigurationLocation);
   }
 }

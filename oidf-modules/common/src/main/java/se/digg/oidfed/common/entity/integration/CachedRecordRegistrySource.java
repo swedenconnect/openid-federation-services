@@ -63,7 +63,13 @@ public class CachedRecordRegistrySource implements RecordRegistrySource {
     if (entities.fetchOnMiss()) {
       final List<EntityRecord> entityRecords = this.integration.getEntityRecords(issuer);
       this.cache.registerRecords(entityRecords, issuer);
+      return entityRecords;
     }
     return List.of();
+  }
+
+  @Override
+  public void addPolicy(final PolicyRecord record) {
+    this.cache.addPolicy(record);
   }
 }

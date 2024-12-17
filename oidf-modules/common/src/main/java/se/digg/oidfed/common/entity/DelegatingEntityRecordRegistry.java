@@ -40,12 +40,7 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
     if (Objects.isNull(path) || path.isEmpty() || path.equalsIgnoreCase("/")) {
       return this.registry.getEntity(this.defaultEntity);
     }
-    return this.registry.getEntity(path).map(entity -> {
-      if (Objects.nonNull(entity.getHostedRecord())) {
-        entity.withJwks(this.getEntity(this.defaultEntity).get().getJwks());
-      }
-      return entity;
-    });
+    return this.registry.getEntity(path);
   }
 
   @Override
@@ -80,8 +75,8 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
   }
 
   @Override
-  public String getBasePath() {
-    return this.registry.getBasePath();
+  public String getBaseUri() {
+    return this.registry.getBaseUri();
   }
 
   @Override

@@ -84,13 +84,13 @@ public class RedisVersionedCacheLayer implements VersionedCacheLayer<EntityState
   @Override
   public int getCurrentVersion() {
     final BoundValueOperations<String, Integer> stringIntegerBoundValueOperations =
-        this.versionTemplate.boundValueOps("tree:version");
+        this.versionTemplate.boundValueOps("%s:tree:version".formatted(this.properties.alias()));
     return Optional.ofNullable(stringIntegerBoundValueOperations.get()).orElse(0);
   }
 
   @Override
   public void useNextVersion() {
-    this.versionTemplate.boundValueOps("tree:version").set(getNextVersion());
+    this.versionTemplate.boundValueOps("%s:tree:version".formatted(this.properties.alias())).set(getNextVersion());
   }
 
   @Override

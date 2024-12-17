@@ -69,8 +69,7 @@ public class PolicyConfigurationProperties {
         final String json = this.resource.getContentAsString(Charset.defaultCharset());
         final Map<String, Object> policy = (Map<String, Object>) new ObjectMapper().readValue(json, Map.class);
         return new PolicyRecord(this.name, policy);
-      }
-      catch (final Exception e) {
+      } catch (final Exception e) {
         throw new EntityConfigurationException("Policy parsing failed", e);
       }
     }

@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.common.tree;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -42,7 +44,7 @@ public class Tree<T> {
    * @param snapshot version to add the node to
    */
   public void addChild(final Node<T> node, final String parentEntityId, final T data, final CacheSnapshot<T> snapshot) {
-    snapshot.getRoot().addChild(new Node.NodePopulationContext<>(node, snapshot, parentEntityId));
+    snapshot.getRoot().addChild(new Node.NodePopulationContext<>(node, snapshot, parentEntityId, new HashSet<>()));
     snapshot.setData(node.getKey(), data);
   }
 
@@ -62,16 +64,19 @@ public class Tree<T> {
    * @return a set of matching results
    */
   public Set<SearchResult<T>> search(final SearchRequest<T> request) {
+    final Node<T> root = request.snapshot().getRoot();
+    final HashSet<String> visisted = new HashSet<>(List.of(root.getKey()));
     final Node.NodeSearchContext<T> context =
-        new Node.NodeSearchContext<>(0, request.includeParent(), request.snapshot());
-    return request.snapshot().getRoot().search(request.predicate(), context);
+        new Node.NodeSearchContext<>(0, request.includeParent(), request.snapshot(), visisted);
+    return root.search(request.predicate(), context);
   }
 
   /**
    * @param request that specifies who to visit and what action to perform
    */
   public void visit(final VisitRequest<T> request) {
-    final Node.NodeSearchContext<T> context = new Node.NodeSearchContext<>(0, false, request.snapshot());
+    final HashSet<String> visited = new HashSet<>();
+    final Node.NodeSearchContext<T> context = new Node.NodeSearchContext<>(0, false, request.snapshot(), visited);
     request.snapshot().getRoot()
         .visit(request.searchPredicate(), request.visitor(), context);
   }

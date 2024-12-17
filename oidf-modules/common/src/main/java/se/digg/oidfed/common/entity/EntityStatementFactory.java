@@ -68,10 +68,10 @@ public class EntityStatementFactory {
       builder.subject(record.getSubject().getValue());
       builder.issueTime(Date.from(Instant.now()));
       builder.expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)));
-      builder.claim("jwks", record.getJwks().toJSONObject());
       builder.claim("metadata", record.getHostedRecord().getMetadata());
       builder.claim("authority_hint", record.getIssuer());
       if (Objects.isNull(record.getHostedRecord())) {
+        builder.claim("jwks", record.getJwks().toJSONObject());
         final JWK signKey = record.getSignKey();
         return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), signKey);
       }

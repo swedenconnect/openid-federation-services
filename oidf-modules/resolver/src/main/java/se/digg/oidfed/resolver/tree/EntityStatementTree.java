@@ -93,6 +93,10 @@ public class EntityStatementTree {
   }
 
   private boolean isIntermediate(final EntityStatement statement, final ResolverRequest request) {
+    if (statement.getEntityID().getValue().equals(request.subject())) {
+      //The target is an intermediate, but is also the intended search target
+      return false;
+    }
     if (!statement.getClaimsSet().isSelfStatement()) {
       return false;
     }

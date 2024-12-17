@@ -176,14 +176,20 @@ public class EntityConfiguration {
   RecordRegistrySource emptyRecordRegistrySource() {
     log.warn("Starting application without a connection to an entity registry");
     return new RecordRegistrySource() {
+      private final InMemoryRecordRegistryCache cache = new InMemoryRecordRegistryCache();
       @Override
       public Optional<PolicyRecord> getPolicy(final String id) {
-        return Optional.empty();
+        return this.cache.getPolicy(id).data();
       }
 
       @Override
       public List<EntityRecord> getEntityRecords(final String issuer) {
-        return List.of();
+        return this.cache.getEntityRecords(issuer).data().orElse(List.of());
+      }
+
+      @Override
+      public void addPolicy(final PolicyRecord record) {
+        this.cache.addPolicy(record);
       }
     };
   }

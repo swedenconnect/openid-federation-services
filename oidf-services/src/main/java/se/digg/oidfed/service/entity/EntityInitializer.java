@@ -23,9 +23,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
-import se.digg.oidfed.common.entity.integration.CachedRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.keys.KeyRegistry;
+
+import java.util.Optional;
 
 /**
  * Initializer class for entity registry.
@@ -38,27 +39,32 @@ public class EntityInitializer {
 
   private final EntityRouter router;
   private final EntityConfigurationProperties properties;
+  private final PolicyConfigurationProperties policyProperties;
   private final KeyRegistry keyRegistry;
   private final EntityRecordRegistry registry;
   private final RecordRegistrySource source;
 
   /**
    * Constructor.
-   * @param router to update
-   * @param properties to read from
-   * @param keyRegistry to read keys from
-   * @param registry to add records to
-   * @param source to get records from
+   *
+   * @param router           to update
+   * @param properties       to read from
+   * @param policyProperties to read from
+   * @param keyRegistry      to read keys from
+   * @param registry         to add records to
+   * @param source           to get records from
    */
   public EntityInitializer(
       final EntityRouter router,
       final EntityConfigurationProperties properties,
+      final PolicyConfigurationProperties policyProperties,
       final KeyRegistry keyRegistry,
       final EntityRecordRegistry registry,
       final RecordRegistrySource source) {
 
     this.router = router;
     this.properties = properties;
+    this.policyProperties = policyProperties;
     this.keyRegistry = keyRegistry;
     this.registry = registry;
     this.source = source;
@@ -74,11 +80,33 @@ public class EntityInitializer {
         .stream().map(r -> r.toEntityRecord(this.keyRegistry))
         .toList().forEach(this.registry::addEntity);
 
+    Optional.ofNullable(this.policyProperties.getPolicies()).ifPresent(
+        pp -> pp.stream()
+            .map(PolicyConfigurationProperties.PolicyRecordProperty::toRecord)
+            .forEach(this.source::addPolicy)
+    );
+
+    this.loadFromRegistry();
+  }
+
+  /**
+   * Event listener for reloading all entities from the register.
+   *
+   * @param event to trigger on
+   */
+  @EventListener
+  public void handleReload(final EntityReloadEvent event) {
+    log.debug("Handling entity reload event");
+    this.loadFromRegistry();
+  }
+
+  private void loadFromRegistry() {
     final EntityRecord issuerRecord = this.registry.getEntity("/").orElseThrow(() -> new IllegalArgumentException(
         "Could not find root entity in configuration"));
     final EntityID issuer = issuerRecord.getIssuer();
     try {
-      this.source.getEntityRecords(issuer.getValue()).forEach(this.registry::addEntity);
+      this.source.getEntityRecords(issuer.getValue())
+          .forEach(this.registry::addEntity);
     } catch (final Exception e) {
       log.error("failed to fetch entity records from registry", e);
     }

@@ -39,5 +39,12 @@ public interface RecordRegistrySource {
    * @param issuer for the entity records
    * @return records
    */
-  public List<EntityRecord> getEntityRecords(final String issuer);
+  List<EntityRecord> getEntityRecords(final String issuer);
+
+
+  /**
+   * Locally adds a policy record
+   * @param record to add
+   */
+  void addPolicy(final PolicyRecord record);
 }

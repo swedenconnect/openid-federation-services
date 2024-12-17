@@ -20,6 +20,9 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.http.Body;
+import com.github.tomakehurst.wiremock.matching.MatchResult;
+import com.github.tomakehurst.wiremock.matching.SingleMatchMultiValuePattern;
+import com.github.tomakehurst.wiremock.matching.StringValuePattern;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -95,8 +98,8 @@ public class IntegrationTestParent {
     final String body = entityRecordSigner.signRecords(List.of(
         EntityRecord.builder()
             .issuer(new EntityID("http://localhost.test:9090/root"))
-            .subject(new EntityID("http://localhost.test:9090/sub"))
-            .jwks(set)
+            .subject(new EntityID("http://localhost.test:9090/subsub"))
+            .overrideConfigurationLocation("/customsub")
             .policyRecordId("my-super-policy")
             .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",
                 "orgName"))).build())
@@ -105,14 +108,15 @@ public class IntegrationTestParent {
 
     final String policyBody = entityRecordSigner.signPolicy(new PolicyRecord("my-super-policy", Map.of())).serialize();
 
-    WireMock.stubFor(WireMock.get("/api/v1/federationservice/entity_record?iss=%s".formatted(URLEncoder.encode("http" +
-        "://localhost.test:9090/root", Charset.defaultCharset()))).willReturn(
-        new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
+    WireMock.stubFor(
+        WireMock
+            .get("/api/v1/federationservice/entity_record?iss=http%3A%2F%2Flocalhost.test%3A9090%2Froot")
+            .willReturn(new ResponseDefinitionBuilder().withStatus(200).withResponseBody(new Body(body)))
     );
 
-    WireMock.stubFor(WireMock.get("/api/v1/federationservice/policy_record?policy_id=%s".formatted(URLEncoder.encode(
-        "my-super-policy", Charset.defaultCharset()))).willReturn(
-        new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
+    WireMock
+        .stubFor(WireMock.get("/api/v1/federationservice/policy_record?policy_id=my-super-policy")
+        .willReturn(new ResponseDefinitionBuilder().withResponseBody(new Body(policyBody)))
     );
 
 

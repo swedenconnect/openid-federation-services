@@ -43,9 +43,9 @@ public class TrustAnchor implements Submodule {
   /**
    * Constructor.
    *
-   * @param registry to use
+   * @param registry   to use
    * @param properties to use
-   * @param factory to constructor entity statements 
+   * @param factory    to constructor entity statements
    */
   public TrustAnchor(
       final EntityRecordRegistry registry,
@@ -88,7 +88,8 @@ public class TrustAnchor implements Submodule {
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) {
     return this.registry
-        .find(ec -> ec.getIssuer().equals(this.properties.getEntityId()) && ec.getIssuer() != ec.getSubject()).stream()
+        .find(ec -> ec.getIssuer().getValue().equalsIgnoreCase(this.properties.getEntityId().getValue()) &&
+            !ec.getIssuer().getValue().equalsIgnoreCase(ec.getSubject().getValue())).stream()
         .map(ec -> ec.getSubject().getValue())
         .toList();
   }

@@ -25,14 +25,11 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.ssl.SslBundle;
-import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.resolver.Resolver;
@@ -40,7 +37,7 @@ import se.digg.oidfed.resolver.ResolverProperties;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.metadata.OIDFPolicyOperationFactory;
-import se.digg.oidfed.resolver.tree.resolution.BFSExecution;
+import se.digg.oidfed.resolver.tree.resolution.DFSExecution;
 import se.digg.oidfed.resolver.tree.resolution.DefaultErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
@@ -49,9 +46,7 @@ import se.digg.oidfed.service.resolver.cache.RedisOperations;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
 import se.digg.oidfed.service.rest.RestClientRegistry;
 
-import java.net.http.HttpClient;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 
 /**
@@ -83,7 +78,7 @@ public class ResolverConfiguration {
 
   @Bean
   ExecutionStrategy resolutionStrategy() {
-    return new BFSExecution(Executors.newSingleThreadExecutor());
+    return new DFSExecution();
   }
 
   @Bean
