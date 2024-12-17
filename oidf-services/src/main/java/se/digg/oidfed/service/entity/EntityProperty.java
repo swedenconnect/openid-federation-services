@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.service.entity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
@@ -55,10 +57,10 @@ public class EntityProperty {
   @Getter
   @Setter
   public static class HostedEntityProperty {
-    private Map<String, Object> metadata;
+    private String metadata;
     @NestedConfigurationProperty
     private List<TrustMarkSourceProperty> trustMarkSources;
-    private List<String> authortyHints;
+    private List<String> authorityHints;
 
     /**
      * Property for trust mark source.
@@ -100,14 +102,21 @@ public class EntityProperty {
     if (property == null) {
       return Optional.empty();
     }
-    return Optional.of(new HostedRecord(
-        property.metadata,
-        Optional.ofNullable(property.trustMarkSources)
-            .map(tms -> tms.stream()
-                .map(tm -> tm.toTrustMarkSource())
-                .toList()
-            ).orElse(List.of()),
-        property.authortyHints
-    ));
+
+    final ObjectMapper mapper = new ObjectMapper();
+
+    try {
+      return Optional.of(new HostedRecord(
+          mapper.readerFor(Map.class).readValue(property.metadata),
+          Optional.ofNullable(property.trustMarkSources)
+              .map(tms -> tms.stream()
+                  .map(tm -> tm.toTrustMarkSource())
+                  .toList()
+              ).orElse(List.of()),
+          property.authorityHints
+      ));
+    } catch (final JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

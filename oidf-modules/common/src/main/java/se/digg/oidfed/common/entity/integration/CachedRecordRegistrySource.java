@@ -67,4 +67,9 @@ public class CachedRecordRegistrySource implements RecordRegistrySource {
     }
     return List.of();
   }
+
+  @Override
+  public void addPolicy(final PolicyRecord record) {
+    this.cache.addPolicy(record);
+  }
 }

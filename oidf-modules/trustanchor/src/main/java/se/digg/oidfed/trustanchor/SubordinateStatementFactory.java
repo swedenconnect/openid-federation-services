@@ -66,7 +66,7 @@ public class SubordinateStatementFactory {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
       Optional.ofNullable(subject.getPolicyRecordId()).flatMap(this.source::getPolicy)
-          .ifPresent(policy -> builder.claim("metadata_policy", policy));
+          .ifPresent(policy -> builder.claim("metadata_policy", policy.getPolicy()));
 
       Optional.ofNullable(subject.getOverrideConfigurationLocation())
           .map(location -> {

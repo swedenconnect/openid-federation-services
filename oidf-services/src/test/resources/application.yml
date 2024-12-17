@@ -24,17 +24,15 @@ openid:
           jwk-alias:
             - sign-key-1
           hosted-record:
-            metadata:
-              federation_entity:
-                organization_name: "orgName"
+            metadata: |
+              {"federation_entity": {"organization_name": "orgName"}}
         - subject: http://localhost.test:9090/root/second
           issuer: http://localhost.test:9090/root
           jwk-alias:
             - sign-key-1
           hosted-record:
-            metadata:
-              federation_entity:
-                organization_name: "orgName"
+            metadata: |
+              {"federation_entity": {"organization_name": "orgName"}}
         - subject: http://localhost.test:9090/tmi
           issuer: http://localhost.test:9090/tmi
           jwk-alias:
@@ -42,9 +40,8 @@ openid:
 
           policy-name: my-super-policy
           hosted-record:
-            metadata:
-              federation_entity:
-                organization_name: "orgName"
+            metadata: |
+              {"federation_entity": {"organization_name": "orgName"}}
       client: registry-integration
       jwk-alias:
         - sign-key-1
@@ -54,9 +51,6 @@ openid:
       anchors:
         - alias: ta
           entity-identifier: http://localhost.test:9090/root
-          subordinate-listing:
-            - entity-identifier: http://localhost:9090/root/second
-              policy: my-super-policy
 
     resolver:
       active: true
