@@ -16,8 +16,6 @@
  */
 package se.digg.oidfed.service.entity;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
@@ -27,9 +25,9 @@ import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.HostedRecord;
 import se.digg.oidfed.common.entity.TrustMarkSource;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.JsonObjectProperty;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -57,7 +55,7 @@ public class EntityProperty {
   @Getter
   @Setter
   public static class HostedEntityProperty {
-    private String metadata;
+    private JsonObjectProperty metadata;
     @NestedConfigurationProperty
     private List<TrustMarkSourceProperty> trustMarkSources;
     private List<String> authorityHints;
@@ -84,6 +82,7 @@ public class EntityProperty {
 
   /**
    * Converts the properties to the correct format.
+   *
    * @param registry to load keys from
    * @return new instance
    */
@@ -103,20 +102,14 @@ public class EntityProperty {
       return Optional.empty();
     }
 
-    final ObjectMapper mapper = new ObjectMapper();
-
-    try {
-      return Optional.of(new HostedRecord(
-          mapper.readerFor(Map.class).readValue(property.metadata),
-          Optional.ofNullable(property.trustMarkSources)
-              .map(tms -> tms.stream()
-                  .map(tm -> tm.toTrustMarkSource())
-                  .toList()
-              ).orElse(List.of()),
-          property.authorityHints
-      ));
-    } catch (final JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
+    return Optional.of(new HostedRecord(
+        property.metadata.toJsonObject(),
+        Optional.ofNullable(property.trustMarkSources)
+            .map(tms -> tms.stream()
+                .map(tm -> tm.toTrustMarkSource())
+                .toList()
+            ).orElse(List.of()),
+        property.authorityHints
+    ));
   }
 }

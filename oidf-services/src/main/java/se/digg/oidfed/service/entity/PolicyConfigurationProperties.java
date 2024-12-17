@@ -16,19 +16,16 @@
  */
 package se.digg.oidfed.service.entity;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.core.io.Resource;
 import se.digg.oidfed.common.entity.PolicyRecord;
+import se.digg.oidfed.service.JsonObjectProperty;
 import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -58,20 +55,14 @@ public class PolicyConfigurationProperties {
   @Getter
   @Setter
   public static class PolicyRecordProperty {
-    private Resource resource;
+    private JsonObjectProperty policy;
     private String name;
 
     /**
      * @return converted policy record
      */
     public PolicyRecord toRecord() {
-      try {
-        final String json = this.resource.getContentAsString(Charset.defaultCharset());
-        final Map<String, Object> policy = (Map<String, Object>) new ObjectMapper().readValue(json, Map.class);
-        return new PolicyRecord(this.name, policy);
-      } catch (final Exception e) {
-        throw new EntityConfigurationException("Policy parsing failed", e);
-      }
+      return new PolicyRecord(this.name, this.policy.toJsonObject());
     }
 
     /**
@@ -79,8 +70,8 @@ public class PolicyConfigurationProperties {
      */
     @PostConstruct
     public void validate() {
-      FederationAssert.assertNotEmpty(this.resource,
-          "openid.federation.policy-registry.policies[].resource is empty. Must be configured");
+      FederationAssert.assertNotEmpty(this.policy,
+          "openid.federation.policy-registry.policies[].policy is empty. Must be configured");
       FederationAssert.assertNotEmpty(this.name,
           "openid.federation.policy-registry.policies[].name is empty. Must be configured");
 

@@ -33,14 +33,15 @@ openid:
             - sign-key-1
           override-configuration-location: https://private.local.swedenconnect.se/ta
           hosted-record:
-            metadata: |
-              {
-                "federation_entity": {
-                  "organization_name": "Private",
-                  "federation_fetch_endpoint": "https://private.local.swedenconnect.se/ta/fetch",
-                  "federation_list_endpoint": "https://private.local.swedenconnect.se/ta/subordinate_listing"
+            metadata:
+              json: |
+                {
+                  "federation_entity": {
+                    "organization_name": "Private",
+                    "federation_fetch_endpoint": "https://private.local.swedenconnect.se/ta/fetch",
+                    "federation_list_endpoint": "https://private.local.swedenconnect.se/ta/subordinate_listing"
+                  }
                 }
-              }
         - subject: https://municipality.local.swedenconnect.se/ta
           issuer: https://private.local.swedenconnect.se/ta
           jwk-alias:

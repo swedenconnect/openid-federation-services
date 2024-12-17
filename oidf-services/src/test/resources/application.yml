@@ -9,7 +9,8 @@ openid:
     policy-registry:
       policies:
         - name: my-super-policy
-          resource: classpath:test-policy.json
+          policy:
+            resource: classpath:test-policy.json
 
     key-registry:
       keys:
@@ -24,15 +25,17 @@ openid:
           jwk-alias:
             - sign-key-1
           hosted-record:
-            metadata: |
-              {"federation_entity": {"organization_name": "orgName"}}
+            metadata:
+              json: |
+                {"federation_entity": {"organization_name": "orgName"}}
         - subject: http://localhost.test:9090/root/second
           issuer: http://localhost.test:9090/root
           jwk-alias:
             - sign-key-1
           hosted-record:
-            metadata: |
-              {"federation_entity": {"organization_name": "orgName"}}
+            metadata:
+              json: |
+                {"federation_entity": {"organization_name": "orgName"}}
         - subject: http://localhost.test:9090/tmi
           issuer: http://localhost.test:9090/tmi
           jwk-alias:
@@ -40,8 +43,9 @@ openid:
 
           policy-name: my-super-policy
           hosted-record:
-            metadata: |
-              {"federation_entity": {"organization_name": "orgName"}}
+            metadata:
+              json: |
+                {"federation_entity": {"organization_name": "orgName"}}
       client: registry-integration
       jwk-alias:
         - sign-key-1
