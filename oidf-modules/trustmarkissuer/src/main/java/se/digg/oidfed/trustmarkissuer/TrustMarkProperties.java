@@ -28,6 +28,7 @@ import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertNotEmpty;
 import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertTrue;
@@ -44,7 +45,7 @@ import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertT
  */
 @Builder
 @Slf4j
-public record TrustMarkProperties(Duration trustMarkValidityDuration, EntityID issuerEntityId,JWK signKey,
+public record TrustMarkProperties(Duration trustMarkValidityDuration, EntityID issuerEntityId, Supplier<JWK> signKey,
     List<TrustMarkIssuerProperties> trustMarks,String alias) {
 
   /**

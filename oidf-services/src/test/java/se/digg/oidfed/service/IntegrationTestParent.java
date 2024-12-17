@@ -118,6 +118,11 @@ public class IntegrationTestParent {
         .stubFor(WireMock.get("/api/v1/federationservice/policy_record?policy_id=my-super-policy")
         .willReturn(new ResponseDefinitionBuilder().withResponseBody(new Body(policyBody)))
     );
+
+
+    WireMock.stubFor(WireMock.get("/api/v1/federationservice/trustmarksubject_record?").willReturn(
+        new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
+    );
     entityInitializer.handle(null);
   }
 

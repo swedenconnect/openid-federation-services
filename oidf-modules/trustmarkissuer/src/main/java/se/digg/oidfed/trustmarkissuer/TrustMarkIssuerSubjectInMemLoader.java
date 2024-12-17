@@ -24,7 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * InMemory Implementation of
+ * InMemory Implementation of TrustMarkSubjects
  *
  * @author Per Fredrik Plars
  */
@@ -41,7 +41,7 @@ public class TrustMarkIssuerSubjectInMemLoader implements TrustMarkIssuerSubject
 
   /**
    * Takes a list of TrustMarkIssuerSubject
-   * @param trustMarkPropertiesList List vith TrustMarkIssuerSubject
+   * @param trustMarkPropertiesList List with TrustMarkIssuerSubject
    */
   public TrustMarkIssuerSubjectInMemLoader(final List<TrustMarkIssuerSubject> trustMarkPropertiesList) {
     this.trustMarkPropertiesList = trustMarkPropertiesList;

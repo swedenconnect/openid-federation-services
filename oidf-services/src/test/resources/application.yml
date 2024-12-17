@@ -64,7 +64,10 @@ openid:
           alias: resolver
 
     trust-mark-issuer:
-      active: false
+      active: true
+      client: registry-integration
+      jwk-alias:
+        - sign-key-1
       trust-mark-issuers:
         - alias: "tm"
           entity-identifier: "http://localhost.test:9090/tmi"

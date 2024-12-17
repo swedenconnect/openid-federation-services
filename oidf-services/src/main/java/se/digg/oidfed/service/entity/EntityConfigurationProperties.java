@@ -16,10 +16,12 @@
  */
 package se.digg.oidfed.service.entity;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.util.List;
 
@@ -53,6 +55,32 @@ public class EntityConfigurationProperties {
    */
   @NestedConfigurationProperty
   private List<EntityProperty> entityRegistry;
+
+  /**
+   * Ensures that the required configuration properties for the entity registry are properly set.
+   *
+   * This method validates the following:
+   * - The `entityRegistry` property is not empty.
+   * - The `basePath` property is not empty.
+   *
+   * If any of the above conditions are not met, an {@link IllegalArgumentException} is raised
+   * with a descriptive error message.
+   *
+   * This method is marked with {@link PostConstruct}, ensuring that it is executed once
+   * immediately after dependency injection is complete and all properties are initialized.
+   *
+   * @throws IllegalArgumentException if any required configuration property is missing or invalid
+   */
+  @PostConstruct
+  public void validate(){
+    FederationAssert.assertNotEmpty(this.entityRegistry,
+        "openid.federation.entity-registry.entityRegistry has to be set");
+
+    FederationAssert.assertNotEmpty(this.basePath,
+        "openid.federation.entity-registry.basePath has to be set");
+
+
+  }
 }
 
 

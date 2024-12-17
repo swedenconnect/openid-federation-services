@@ -44,7 +44,18 @@ public class TrustMarkIssuerModuleProperties {
 
   /** Set to true if this module should be active or not. */
   private Boolean active;
+  /**
+   * Rest client to use for entity registry
+   */
+  private String client;
 
+  /**
+   * Alias of all keys that can verify trustmarksubject records
+   */
+  private List<String> jwkAlias;
+
+
+  /** TrustmarkIssuers */
   private List<TrustMarkIssuers> trustMarkIssuers;
 
   /**
@@ -61,7 +72,6 @@ public class TrustMarkIssuerModuleProperties {
   /**
    * TrustMark issuers
    *
-   * @param remoteSubjectRepositoryUrl Remote subject repository
    * @param remoteSubjectRepositoryJwtTrustKeyAlias Trust key when verify signature of trustmark register JWT token
    * @param trustMarkValidityDuration ValidityDuration of the TrustMark JWT token. Default value is PT30M
    * @param entityIdentifier EntityId of this trustmark issuer
@@ -71,7 +81,7 @@ public class TrustMarkIssuerModuleProperties {
   public record TrustMarkIssuers(
       String alias,
       String entityIdentifier,
-      String remoteSubjectRepositoryUrl,
+
       String remoteSubjectRepositoryJwtTrustKeyAlias,
       @DefaultValue("PT30M") Duration trustMarkValidityDuration,
       List<TrustMarkIssuer> trustMarks) {

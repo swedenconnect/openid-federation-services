@@ -148,7 +148,7 @@ public class TrustMarkIssuer implements Submodule {
 
     final JWTClaimsSet claimsSet = claimsSetBuilder.build();
 
-    final JWK jwk = assertNotEmptyThrows(this.trustMarkProperties.signKey(),
+    final JWK jwk = assertNotEmptyThrows(this.trustMarkProperties.signKey().get(),
         () -> new ServerErrorException("Unable to find key to sign JWK TrustMark"));
     assertNotEmptyThrows(jwk.getKeyID(), () -> new ServerErrorException("Kid is expected on sign key"));
 

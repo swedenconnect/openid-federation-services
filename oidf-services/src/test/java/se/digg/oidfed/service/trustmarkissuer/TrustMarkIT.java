@@ -31,7 +31,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 @ActiveProfiles({"integration-test" })
-@Disabled
 class TrustMarkIT extends IntegrationTestParent {
 
 

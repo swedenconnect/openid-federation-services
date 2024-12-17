@@ -36,7 +36,7 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
-public class RecordVerifier {
+public class EntityRecordVerifier {
 
   private final JWKSet jwks;
 
@@ -45,7 +45,7 @@ public class RecordVerifier {
    *
    * @param jwks to trust
    */
-  public RecordVerifier(final JWKSet jwks) {
+  public EntityRecordVerifier(final JWKSet jwks) {
     this.jwks = jwks;
   }
 
@@ -55,15 +55,9 @@ public class RecordVerifier {
    */
   public List<EntityRecord> verifyEntities(final String jwtString) {
     try {
-      final SignedJWT jwt = SignedJWT.parse(jwtString);
-      final Key key = this.selectKey(jwt);
 
-      final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory()
-          .createJWSVerifier(jwt.getHeader(), key);
 
-      jwt.verify(jwsVerifier);
-
-      final List<Object> records = jwt
+      final List<Object> records = this.verify(jwtString)
           .getJWTClaimsSet()
           .getListClaim("entity_records");
 
@@ -85,15 +79,7 @@ public class RecordVerifier {
    */
   public Optional<PolicyRecord> verifyPolicy(final String jwtString) {
     try {
-      final SignedJWT jwt = SignedJWT.parse(jwtString);
-      final Key key = this.selectKey(jwt);
-
-      final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory()
-          .createJWSVerifier(jwt.getHeader(), key);
-
-      jwt.verify(jwsVerifier);
-
-      final Object policy = jwt
+          final Object policy = this.verify(jwtString)
           .getJWTClaimsSet()
           .getClaim("policy_record");
 
@@ -105,19 +91,36 @@ public class RecordVerifier {
     }
   }
 
-  private Key selectKey(final SignedJWT jwt) throws JOSEException {
+  protected SignedJWT verify(final String jwtString) throws JOSEException, ParseException {
+    final SignedJWT jwt = SignedJWT.parse(jwtString);
+    final Key key = this.selectKey(jwt);
+
+    final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory()
+        .createJWSVerifier(jwt.getHeader(), key);
+
+    if(!jwt.verify(jwsVerifier)){
+      throw new RecordVerificationException("Failed to verify signature on record");
+    }
+    return jwt;
+  }
+
+
+  protected Key selectKey(final SignedJWT jwt) throws JOSEException {
     final JWKSelector selector = new JWKSelector(new JWKMatcher.Builder()
         .keyID(jwt.getHeader().getKeyID())
         .build());
 
     final JWK jwk = selector
         .select(this.jwks)
-        .getFirst();
+        .stream()
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Unable to resolve key for JWT with kid:'%s' "
+            .formatted(jwt.getHeader().getKeyID())));
 
     return switch (jwk.getKeyType().getValue()) {
       case "EC" -> jwk.toECKey().toKeyPair().getPublic();
       case "RSA" -> jwk.toRSAKey().toKeyPair().getPublic();
-      case null, default -> throw new IllegalArgumentException("Unspported key type");
+      case null, default -> throw new IllegalArgumentException("Unsupported key type");
     };
   }
 }

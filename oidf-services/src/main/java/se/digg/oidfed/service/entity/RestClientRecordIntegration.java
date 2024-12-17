@@ -22,7 +22,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriTemplate;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.PolicyRecord;
-import se.digg.oidfed.common.entity.RecordVerifier;
+import se.digg.oidfed.common.entity.EntityRecordVerifier;
 import se.digg.oidfed.common.entity.integration.RecordRegistryIntegration;
 
 import java.io.IOException;
@@ -40,7 +40,7 @@ import java.util.Optional;
  */
 public class RestClientRecordIntegration implements RecordRegistryIntegration {
   private final RestClient client;
-  private final RecordVerifier verifier;
+  private final EntityRecordVerifier verifier;
 
   private final ResponseErrorHandler errorHandler = new ResponseErrorHandler() {
     @Override
@@ -60,7 +60,7 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
    * @param client   to use
    * @param verifier to use
    */
-  public RestClientRecordIntegration(final RestClient client, final RecordVerifier verifier) {
+  public RestClientRecordIntegration(final RestClient client, final EntityRecordVerifier verifier) {
     this.client = client;
     this.verifier = verifier;
   }
@@ -94,5 +94,6 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
         .body(String.class);
     return this.verifier.verifyEntities(jwt);
   }
+
 }
 
