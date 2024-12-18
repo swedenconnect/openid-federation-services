@@ -67,7 +67,7 @@ public class JsonObjectProperty {
       try {
         return OBJECT_MAPPER.readerFor(Map.class).readValue(this.json);
       } catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Configured JSON is not valid", e);
+        throw new IllegalArgumentException("Configured JSON is not valid %s".formatted(this.json), e);
       }
     }
     if (Objects.nonNull(this.resource)) {

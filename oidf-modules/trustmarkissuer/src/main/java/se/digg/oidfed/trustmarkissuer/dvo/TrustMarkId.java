@@ -57,8 +57,6 @@ public class TrustMarkId implements Serializable {
     return this.trustMarkId;
   }
 
-
-
   private static <EX extends Exception> String validateInternal(
       final String trustMarkId, final Function<String,EX> ex) throws EX{
     if(trustMarkId == null){

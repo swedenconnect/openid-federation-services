@@ -27,6 +27,8 @@ openid:
           policy:
             resource: file:${TRUST_ANCHOR_INSTALL_DIR}/defaultpolicy.json
     entity-registry:
+      sign-key-alias: sign-key-1
+      trust-mark-issuer-client: resolver-integration
       issuers:
         - https://authorization.local.swedenconnect.se/ta
       jwk-alias:
@@ -47,6 +49,18 @@ openid:
                     "federation_list_endpoint": "https://authorization.local.swedenconnect.se/ta/subordinate_listing"
                   }
                 }
+        - subject: https://authorization.local.swedenconnect.se/tmi
+          issuer: https://authorization.local.swedenconnect.se/tmi
+          jwk-alias:
+            - sign-key-1
+          hosted-record:
+            metadata:
+              json: |
+                {
+                  "federation_entity": { 
+                    "organization_name": "Authorization"
+                  }
+                }
         - subject: https://municipality.local.swedenconnect.se/ta
           issuer: https://authorization.local.swedenconnect.se/ta
           jwk-alias:
@@ -62,6 +76,9 @@ openid:
           jwk-alias:
             - sign-key-1
           hosted-record:
+            trust-mark-sources:
+              - issuer: https://authorization.local.swedenconnect.se/tmi
+                trust-mark-id: https://authorization.local.swedenconnect.se/tmi/certified
             metadata:
               json: |
                 { "federation_entity": { "organization_name": "Authorization" },
@@ -110,6 +127,20 @@ openid:
       anchors:
         - alias: ta
           entity-identifier: https://authorization.local.swedenconnect.se/ta
+    trust-mark-issuer:
+      active: true
+      trust-mark-issuers:
+        - alias: tmi
+          entity-identifier: https://authorization.local.swedenconnect.se/tmi
+          trust-mark-validity-duration: PT29M
+
+          trust-marks:
+            - trust-mark-id: https://authorization.local.swedenconnect.se/tmi/certified
+              subjects:
+                - sub: https://authorization.local.swedenconnect.se/op-1
+                  granted: "2024-01-01T10:00:00Z"
+                  expires: "2030-01-01T10:00:00Z"
+                  revoked: false
 
 management:
   endpoints:
