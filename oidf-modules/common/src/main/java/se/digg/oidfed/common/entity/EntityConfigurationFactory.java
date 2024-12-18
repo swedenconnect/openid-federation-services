@@ -18,43 +18,41 @@ package se.digg.oidfed.common.entity;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKMatcher;
-import com.nimbusds.jose.jwk.JWKSelector;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
+import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
+import net.minidev.json.JSONObject;
+import se.digg.oidfed.common.entity.integration.TrustMarkLoadingCache;
+import se.digg.oidfed.common.entity.integration.TrustMarkRequest;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Factory class for creating entity statements.
  *
  * @author Felix Hellman
  */
-public class EntityStatementFactory {
-  /**
-   * Creates an entity statement that is self-signed
-   * @param record to construct entity configuration for
-   * @return new instance
-   */
-
+public class EntityConfigurationFactory {
   private final JWK signKey;
 
+  private final TrustMarkLoadingCache trustMarks;
+
   /**
-   * @param signKey to use
+   * @param signKey to sign entity statements with
+   * @param trustMarks to supply eventual trust marks
    */
-  public EntityStatementFactory(final JWK signKey) {
+  public EntityConfigurationFactory(final JWK signKey, final TrustMarkLoadingCache trustMarks) {
     this.signKey = signKey;
+    this.trustMarks = trustMarks;
   }
 
   /**
@@ -74,6 +72,18 @@ public class EntityStatementFactory {
         builder.claim("jwks", record.getJwks().toJSONObject());
         final JWK signKey = record.getSignKey();
         return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), signKey);
+      }
+      final List<TrustMarkSource> trustMarkSources = record.getHostedRecord().getTrustMarkSources();
+      if (Objects.nonNull(trustMarkSources)) {
+        final List<JSONObject> trustMarks = trustMarkSources.stream().map(s -> new TrustMarkRequest(record.getSubject(),
+                s.getIssuer(),
+                new EntityID(s.getTrustMarkId())))
+            .map(this.trustMarks::getTrustMark)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(TrustMarkEntry::toJSONObject)
+            .toList();
+        builder.claim("trust_marks", trustMarks);
       }
       builder.issuer(record.getSubject().getValue());
       builder.claim("jwks", new JWKSet(List.of(this.signKey)).toJSONObject());

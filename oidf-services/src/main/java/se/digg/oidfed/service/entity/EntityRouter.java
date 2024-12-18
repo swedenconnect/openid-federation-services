@@ -23,7 +23,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.servlet.function.support.RouterFunctionMapping;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
-import se.digg.oidfed.common.entity.EntityStatementFactory;
+import se.digg.oidfed.common.entity.EntityConfigurationFactory;
 
 import java.util.Optional;
 
@@ -38,7 +38,7 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
 public class EntityRouter {
 
   private final EntityRecordRegistry registry;
-  private final EntityStatementFactory factory;
+  private final EntityConfigurationFactory factory;
   private final RouterFunctionMapping mapping;
 
   /**
@@ -48,7 +48,7 @@ public class EntityRouter {
    * @param factory  to construct entity configurations
    * @param mapping  to reload
    */
-  public EntityRouter(final EntityRecordRegistry registry, final EntityStatementFactory factory,
+  public EntityRouter(final EntityRecordRegistry registry, final EntityConfigurationFactory factory,
                       final RouterFunctionMapping mapping) {
     this.registry = registry;
     this.factory = factory;

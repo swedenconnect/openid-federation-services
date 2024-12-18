@@ -52,6 +52,8 @@ openid:
       base-path: "http://localhost.test:9090"
       issuers:
         - http://localhost.test:9090/root
+      sign-key-alias: sign-key-1
+      trust-mark-issuer-client: resolver-integration
     trust-anchor:
       active: true
       anchors:

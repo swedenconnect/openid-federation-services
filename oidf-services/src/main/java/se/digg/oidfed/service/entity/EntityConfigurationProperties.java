@@ -56,6 +56,16 @@ public class EntityConfigurationProperties {
   private List<String> issuers;
 
   /**
+   * Sign key to use when signing hosted entity configurations.
+   */
+  private String signKeyAlias;
+
+  /**
+   * Rest client to use when fetching trust marks.
+   */
+  private String trustMarkIssuerClient;
+
+  /**
    * Properties for all entities in the registry
    */
   @NestedConfigurationProperty
