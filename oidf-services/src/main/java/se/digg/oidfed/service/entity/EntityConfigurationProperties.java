@@ -66,6 +66,11 @@ public class EntityConfigurationProperties {
   private String trustMarkIssuerClient;
 
   /**
+   * If registry fetch should be skipped at startup
+   */
+  private boolean skipRegistryInit = false;
+
+  /**
    * Properties for all entities in the registry
    */
   @NestedConfigurationProperty

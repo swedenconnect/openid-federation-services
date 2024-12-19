@@ -17,6 +17,7 @@
 package se.digg.oidfed.service.entity;
 
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -73,8 +74,9 @@ public class EntityRouter {
       });
     }
 
+
     this.registry.getPaths().forEach(path -> {
-      route.GET("%s/.well-known/openid-federation".formatted(path), r -> {
+      route.GET( r -> r.path().equals("%s/.well-known/openid-federation".formatted(path)), r -> {
         return ServerResponse.ok().body(
             this.registry.getEntity(path)
                 .map(this.factory::createEntityConfiguration)

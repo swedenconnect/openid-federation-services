@@ -52,11 +52,6 @@ public interface EntityRecordRegistry {
   void addEntity(final EntityRecord record);
 
   /**
-   * @return base path of this registry
-   */
-  String getBaseUri();
-
-  /**
    * Takes a predicate to find entities.
    * @param predicate to use
    * @return list of hits
