@@ -24,5 +24,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
+      - run: sudo echo "127.0.0.1 authorization.local.swedenconnect.se" | sudo tee -a /etc/hosts
+      - run: sudo echo "127.0.0.1 municipality.local.swedenconnect.se" | sudo tee -a /etc/hosts
+      - run: sudo echo "127.0.0.1 private.local.swedenconnect.se" | sudo tee -a /etc/hosts
       - run: mvn clean install --no-transfer-progress
       - run: cd oidf-services; DOCKER_REPO=ghcr.io mvn clean package jib:build --no-transfer-progress
