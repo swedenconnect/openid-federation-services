@@ -75,11 +75,6 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
   }
 
   @Override
-  public String getBaseUri() {
-    return this.registry.getBaseUri();
-  }
-
-  @Override
   public List<EntityRecord> find(final Predicate<EntityRecord> predicate) {
     return this.registry.find(predicate);
   }

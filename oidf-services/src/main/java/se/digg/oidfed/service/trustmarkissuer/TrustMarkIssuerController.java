@@ -70,7 +70,7 @@ public class TrustMarkIssuerController implements ApplicationModule {
       @RequestParam(name = "sub") final String subject)
       throws NotFoundException, InvalidRequestException, ServerErrorException {
     final TrustMarkIssuer tmIssuer = this.repository.getTrustMarkIssuer(alias)
-        .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
+        .orElseThrow(() -> new NotFoundException("Could not find trust mark with alias %s".formatted(alias)));
     return tmIssuer.trustMark(new TrustMarkRequest(trustMarkId, subject));
   }
 
@@ -88,7 +88,7 @@ public class TrustMarkIssuerController implements ApplicationModule {
       @RequestParam(name = "sub", required = false) final String subject)
       throws NotFoundException, InvalidRequestException {
     final TrustMarkIssuer tmIssuer = this.repository.getTrustMarkIssuer(alias)
-        .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
+        .orElseThrow(() -> new NotFoundException("Could not find trust mark with alias %s".formatted(alias)));
     return tmIssuer.trustMarkListing(new TrustMarkListingRequest( trustMarkId, subject));
   }
 
@@ -109,7 +109,7 @@ public class TrustMarkIssuerController implements ApplicationModule {
       @RequestParam(name = "iat", required = false) final Long issueTime)
       throws NotFoundException, InvalidRequestException {
     final TrustMarkIssuer tmIssuer = this.repository.getTrustMarkIssuer(alias)
-        .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
+        .orElseThrow(() -> new NotFoundException("Could not find trust mark with alias %s".formatted(alias)));
 
     return new TrustMarkStatusReply(tmIssuer.trustMarkStatus(
         new TrustMarkStatusRequest( trustMarkId,subject, issueTime)));

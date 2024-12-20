@@ -72,9 +72,10 @@ public class EntityInitializer {
 
   /**
    * @param event to handle
+   * @return event to notify the system that entities has been loaded
    */
   @EventListener
-  public void handle(final ApplicationStartedEvent event) {
+  public EntitiesInitializedEvent handle(final ApplicationStartedEvent event) {
     this.properties.getEntityRegistry()
         .stream().map(r -> r.toEntityRecord(this.keyRegistry))
         .toList().forEach(this.registry::addEntity);
@@ -85,25 +86,31 @@ public class EntityInitializer {
             .forEach(this.source::addPolicy)
     );
 
-    this.loadFromRegistry();
+    if (!this.properties.isSkipRegistryInit()) {
+      this.loadFromRegistry();
+    }
+    this.router.reevaluteEndpoints();
+    return new EntitiesInitializedEvent();
   }
 
   /**
    * Event listener for reloading all entities from the register.
    *
    * @param event to trigger on
+   * @return event to notify the system that entities has been loaded
    */
   @EventListener
-  public void handleReload(final EntityReloadEvent event) {
+  public EntitiesInitializedEvent handleReload(final EntityReloadEvent event) {
     log.debug("Handling entity reload event");
     this.loadFromRegistry();
+    this.router.reevaluteEndpoints();
+    return new EntitiesInitializedEvent();
   }
 
   private void loadFromRegistry() {
     this.properties.getIssuers().stream()
         .map(EntityID::new)
         .forEach(this::loadIssuerFromRegistry);
-    this.router.reevaluteEndpoints();
   }
 
   private void loadIssuerFromRegistry(final EntityID issuer) {

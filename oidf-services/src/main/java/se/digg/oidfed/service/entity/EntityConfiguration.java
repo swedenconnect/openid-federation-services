@@ -28,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.entity.DelegatingEntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityConfigurationFactory;
+import se.digg.oidfed.common.entity.EntityPathFactory;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityRecordVerifier;
@@ -82,7 +83,7 @@ public class EntityConfiguration {
 
     return new DelegatingEntityRecordRegistry(
         defaultEntity,
-        new InMemoryEntityRecordRegistry(properties.getBasePath()),
+        new InMemoryEntityRecordRegistry(new EntityPathFactory(properties.getIssuers())),
         List.of(er -> publisher.publishEvent(new EntityRegisteredEvent(er))));
   }
 

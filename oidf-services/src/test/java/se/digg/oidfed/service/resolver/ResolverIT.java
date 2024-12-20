@@ -17,27 +17,23 @@
 package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.jwt.SignedJWT;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import se.digg.oidfed.resolver.ResolverRequest;
+import org.springframework.web.client.RestClient;
 import se.digg.oidfed.service.IntegrationTestParent;
+import se.digg.oidfed.service.entity.TestFederationEntities;
+import se.digg.oidfed.service.rest.RestClientFactory;
+import se.digg.oidfed.service.rest.RestClientProperties;
+import se.digg.oidfed.service.testclient.FederationClients;
 
-import java.text.ParseException;
-
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("integration-test")
 class ResolverIT extends IntegrationTestParent {
 
 
   @Test
-  void resolveFederation() throws ParseException {
+  void resolveFederation(final FederationClients clients) {
+    final SignedJWT resolve = clients.municipality().resolver()
+        .resolve(TestFederationEntities.Authorization.OP_1, TestFederationEntities.Municipality.TRUST_ANCHOR, null);
 
-    final ResolverClient resolverClient = new ResolverClient(serverPort);
-    final String resolved = resolverClient.resolve(new ResolverRequest(
-        "http://localhost:9090/intermediate/relyingparty",
-        "http://localhost:9090/trustanchor", "")
-    );
-    SignedJWT.parse(resolved);
+    Assertions.assertNotNull(resolve);
   }
 }

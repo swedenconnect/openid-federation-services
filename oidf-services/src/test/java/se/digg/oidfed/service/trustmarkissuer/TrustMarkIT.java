@@ -16,14 +16,26 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
+import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.client.RestClient;
 import se.digg.oidfed.service.IntegrationTestParent;
+import se.digg.oidfed.service.entity.TestFederationEntities;
+import se.digg.oidfed.service.rest.RestClientFactory;
+import se.digg.oidfed.service.rest.RestClientProperties;
+import se.digg.oidfed.service.testclient.FederationClients;
+import wiremock.Run;
+
+import java.text.ParseException;
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.greaterThan;
@@ -34,6 +46,8 @@ import static org.hamcrest.Matchers.is;
 class TrustMarkIT extends IntegrationTestParent {
 
 
+  public static final EntityID TRUST_MARK_ID = new EntityID("https://authorization.local.swedenconnect.se/authorization-tmi/certified");
+
   @BeforeEach
   public void setup() {
     RestAssured.port = this.serverPort;
@@ -41,72 +55,63 @@ class TrustMarkIT extends IntegrationTestParent {
   }
 
   @Test
-  public void testTrustMark() {
-    given()
-        .param("trust_mark_id", "http://test.digg.se/tmi/sdk")
-        .param("sub", "http://test.pensionsmyndigheten.se/openidfed")
-        .when().log().all()
-        .get("/trust_mark")
-        .then().log().all()
-        .statusCode(HttpStatus.OK.value())
-        .contentType("application/trust-mark+jwt");
+  public void testTrustMark(final FederationClients clients) throws ParseException {
+    final SignedJWT trustMark = clients.authorization().trustMark().trustMark(
+        TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+        TRUST_MARK_ID,
+        TestFederationEntities.Authorization.OP_1
+    );
 
+    Assertions.assertEquals(TestFederationEntities.Authorization.TRUST_MARK_ISSUER.getValue(),
+        trustMark.getJWTClaimsSet().getIssuer());
   }
 
   @Test
-  public void testTrustMarkListing() {
-    given()
-        .param("trust_mark_id", "http://test.digg.se/tmi/sdk")
-        .param("sub", "http://test.pensionsmyndigheten.se/openidfed")
-        .when()
-        .get("/trust_mark_listing")
-        .then()
-        .statusCode(HttpStatus.OK.value())
-        .contentType(ContentType.JSON)
-        .body("$", hasSize(greaterThan(0)));
+  public void testTrustMarkListing(final FederationClients clients) {
+    final List<String> trustMarkListing = clients.authorization().trustMark().trustMarkListing(
+        TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+        TRUST_MARK_ID,
+        null
+    );
+    Assertions.assertFalse(trustMarkListing.isEmpty(), "Found 0 trust marks");
+    final String expected = TestFederationEntities.Authorization.OP_1.getValue();
+    Assertions.assertTrue(trustMarkListing.contains(expected), "Trust " +
+        "Mark Listing does not contain expected value:%s".formatted(expected));
   }
 
   @Test
-  public void testTrustMarkStatusActive() {
-    given()
-        .param("trust_mark_id", "http://test.digg.se/tmi/sdk")
-        .param("sub", "http://test.pensionsmyndigheten.se/openidfed")
-        .when()
-        .post("/trust_mark_status")
-        .then()
-        .statusCode(HttpStatus.OK.value())
-        .contentType(ContentType.JSON)
-        .body("active", is(true))
-        .log().all();
+  public void testTrustMarkStatusActive(final FederationClients clients) {
+    final TrustMarkIssuerController.TrustMarkStatusReply status = clients.authorization().trustMark()
+        .trustMarkStatus(
+            TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+            TRUST_MARK_ID,
+            TestFederationEntities.Authorization.OP_1,
+            null
+        );
+    Assertions.assertTrue(status.active());
   }
 
   @Test
-  public void testTrustMarkStatusNotActive() {
-    given()
-        .param("trust_mark_id", "http://test.digg.se/tmi/sdk")
-        .param("sub", "http://www.pensionsmyndigheten.se/notfound")
-        .when()
-        .post("/trust_mark_status")
-        .then()
-        .statusCode(HttpStatus.OK.value())
-        .contentType(ContentType.JSON)
-        .body("active", is(false))
-        .log().all();
+  public void testTrustMarkStatusNotActive(final FederationClients clients) {
+    final TrustMarkIssuerController.TrustMarkStatusReply status = clients.authorization().trustMark().trustMarkStatus(
+        TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+        TRUST_MARK_ID,
+        TestFederationEntities.Authorization.OP_2,
+        null
+    );
+    Assertions.assertFalse(status.active());
   }
 
 
   @Test
-  public void testTrustMarkStatusError() {
-    given()
-        .param("trust_mark_id", "http://tm.digg.se/notfound")
-        .when()
-        .post("/trust_mark_status")
-        .then().log().all()
-        .statusCode(HttpStatus.NOT_FOUND.value())
-        .contentType(ContentType.JSON)
-        .body("error", is("not_found"))
-        .body("error_description", is("TrustMark can not be found for trust_mark_id:'http://tm.digg.se/notfound'"));
-
+  public void testTrustMarkStatusError(final FederationClients clients) {
+    final Runnable throwingRunnable = () -> clients.authorization().trustMark().trustMarkStatus(
+        TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+        new EntityID("https://authorization.local.swedenconnect.se/not-found"),
+        null,
+        null
+    );
+    Assertions.assertThrows(RuntimeException.class, throwingRunnable::run);
   }
 
 }

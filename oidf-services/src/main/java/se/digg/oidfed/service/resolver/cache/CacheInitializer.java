@@ -16,9 +16,9 @@
  */
 package se.digg.oidfed.service.resolver.cache;
 
-import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import se.digg.oidfed.service.entity.EntitiesInitializedEvent;
 import se.digg.oidfed.service.resolver.OnResolverModuleActive;
 
 /**
@@ -41,7 +41,7 @@ public class CacheInitializer {
   }
 
   @EventListener
-  void handle(final ApplicationStartedEvent event) {
+  void handle(final EntitiesInitializedEvent event) {
     this.registry.getAliases().forEach(this.registry::loadTree);
   }
 }

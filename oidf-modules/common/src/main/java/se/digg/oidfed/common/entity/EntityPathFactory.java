@@ -16,7 +16,13 @@
  */
 package se.digg.oidfed.common.entity;
 
+import com.nimbusds.oauth2.sdk.id.Identifier;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+
+import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Factory class for creating paths.
@@ -24,32 +30,56 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 public class EntityPathFactory {
+
+  private final Pattern pattern = Pattern.compile("^(?<basePath>https://[a-z.-]*)(?<path>/.*)?$");
+
+  private final List<String> allowedBasePaths;
+
   /**
-   * @param record to calculate path for
-   * @param basePath to apply
+   * @param allowedBasePaths for this instance
+   */
+  public EntityPathFactory(final List<String> allowedBasePaths) {
+    this.allowedBasePaths = allowedBasePaths.stream().map(p -> {
+      final Matcher matcher = this.pattern.matcher(p);
+      if (matcher.matches()) {
+        return matcher.group("basePath");
+      }
+      return p;
+    }).toList();
+  }
+
+  /**
+   * @param record   to calculate path for
    * @return relative path of the basepath
    */
-  public static String getPath(final EntityRecord record, final String basePath) {
+  public String getPath(final EntityRecord record) {
     final Optional<String> hostedLocation = Optional.ofNullable(record.getOverrideConfigurationLocation())
         .map(location -> {
-      if (location.startsWith("/")) {
-        return location;
-      }
-      if (location.startsWith(basePath)) {
-        return location.replace(basePath, "");
-      }
-      throw new IllegalArgumentException("Override Configuration Location is not relative or leads to another domain");
-    });
+          if (location.startsWith("/")) {
+            return location;
+          }
+          return this.allowedBasePaths.stream()
+              .filter(location::startsWith)
+              .map(issuer -> location.replace(issuer, ""))
+              .findFirst()
+              .orElseThrow(() -> {
+                final String errorMessage = "Override Configuration Location is not allowed";
+                return new IllegalArgumentException(errorMessage);
+              });
+        });
     if (hostedLocation.isPresent()) {
       return hostedLocation.get();
     }
-    if (!record.getSubject().getValue().contains(basePath)) {
+    final Optional<String> allowedIssuer = this.allowedBasePaths.stream()
+        .filter(basepath -> record.getSubject().getValue().contains(basepath))
+        .findFirst();
+    if (allowedIssuer.isEmpty()) {
       throw new IllegalArgumentException("Failed to determine path for hosted record");
     }
     final String key = record
         .getSubject()
         .getValue()
-        .replace(basePath, "");
+        .replace(allowedIssuer.get(), "");
     if (key.isEmpty() || key.isBlank()) {
       return "/";
     }

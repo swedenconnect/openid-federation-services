@@ -17,47 +17,25 @@
 package se.digg.oidfed.service.trustanchor;
 
 import com.nimbusds.jwt.SignedJWT;
-import io.restassured.RestAssured;
-import org.junit.jupiter.api.BeforeEach;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.client.RestClient;
 import se.digg.oidfed.service.IntegrationTestParent;
+import se.digg.oidfed.service.testclient.FederationClients;
+import se.digg.oidfed.service.testclient.TrustAnchorClient;
 
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Objects;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("integration-test")
 class TrustAnchorIT extends IntegrationTestParent {
 
-  @LocalServerPort
-  int serverPort;
-
-  @BeforeEach
-  public void setup() {
-    RestAssured.port = this.serverPort;
-    RestAssured.basePath = "/ta";
-  }
-
-
   @Test
-  void testListSubordinatesAndFetchEntityStatement() throws ParseException {
-    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(serverPort)).build();
-    final List<?> body = client.get().uri("/ta/subordinate_listing").retrieve().toEntity(List.class).getBody();
-    System.out.println(body);
-    Objects.requireNonNull(body);
-    final String jwt = client.get()
-        .uri("/ta/fetch?sub=%s".formatted(URLEncoder.encode((String) body.getFirst(), Charset.defaultCharset())))
-        .retrieve().body(String.class);
-
-    SignedJWT signedJWT = SignedJWT.parse(jwt);
-    System.out.println(signedJWT.getHeader().toString());
-    System.out.println(signedJWT.getJWTClaimsSet().toString());
+  void testListSubordinatesAndFetchEntityStatement(final FederationClients clients) throws ParseException {
+    final TrustAnchorClient client = clients.authorization().trustAnchor();
+    final List<?> body = client.subordinateListing();
+    Assertions.assertNotNull(body);
+    final SignedJWT signedJWT = client.fetch(new EntityID((String) body.getFirst()));
+    Assertions.assertNotNull(signedJWT);
   }
 }

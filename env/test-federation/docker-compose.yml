@@ -1,6 +1,6 @@
 services:
   authorization-ta:
-    image: local/oidf-services
+    image: ghcr.io/swedenconnect/openid-federation-services:latest
     depends_on:
       - dev-nginx
       - dev-redis-stack
@@ -17,7 +17,7 @@ services:
     volumes:
       - ./config/authorization-ta/:/opt/ta/:ro
   private-ta:
-    image: local/oidf-services
+    image: ghcr.io/swedenconnect/openid-federation-services:latest
     depends_on:
       - dev-nginx
       - dev-redis-stack
@@ -34,7 +34,7 @@ services:
     volumes:
       - ./config/private-ta/:/opt/ta/:ro
   municipality-ta:
-    image: local/oidf-services
+    image: ghcr.io/swedenconnect/openid-federation-services:latest
     depends_on:
       - dev-nginx
       - dev-redis-stack

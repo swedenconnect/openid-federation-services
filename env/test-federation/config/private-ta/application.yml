@@ -22,6 +22,8 @@ logging:
 openid:
   federation:
     entity-registry:
+      sign-key-alias: sign-key-1
+      trust-mark-issuer-client: resolver-integration
       issuers:
         - https://private.local.swedenconnect.se/ta
       jwk-alias:
