@@ -1,12 +1,12 @@
 name: Automated publication of docker image
 on:
   push:
-    tags-ignore:
-      - '**'
+    tags:
+      - '*'
     branches:
       - main
 jobs:
-  build:
+  build-release:
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -30,4 +30,20 @@ jobs:
       - run: sudo echo "127.0.0.1 municipality.local.swedenconnect.se" | sudo tee -a /etc/hosts
       - run: sudo echo "127.0.0.1 private.local.swedenconnect.se" | sudo tee -a /etc/hosts
       - run: mvn clean install --no-transfer-progress
-      - run: cd oidf-services; DOCKER_REPO=ghcr.io mvn clean package jib:build --no-transfer-progress
+      - run: cd oidf-services; DOCKER_REPO=ghcr.io mvn clean package jib:build -Djib.to.tags=$tag --no-transfer-progress
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+  release:
+    name: Release pushed tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}
+        run: |
+          gh release create "$tag" \
+              --repo="$GITHUB_REPOSITORY" \
+              --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
+              --generate-notes
