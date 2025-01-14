@@ -18,6 +18,7 @@ package se.digg.oidfed.resolver;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONObject;
@@ -125,4 +126,8 @@ public class Resolver implements Submodule {
     return this.resolverProperties.alias();
   }
 
+  @Override
+  public List<EntityID> getEntityIds() {
+    return List.of();
+  }
 }

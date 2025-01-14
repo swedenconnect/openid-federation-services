@@ -55,8 +55,6 @@ public class EntityRecordVerifier {
    */
   public List<EntityRecord> verifyEntities(final String jwtString) {
     try {
-
-
       final List<Object> records = this.verify(jwtString)
           .getJWTClaimsSet()
           .getListClaim("entity_records");

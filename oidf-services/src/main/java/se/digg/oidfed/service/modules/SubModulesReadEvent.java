@@ -14,22 +14,16 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.submodule;
+package se.digg.oidfed.service.modules;
 
-import se.digg.oidfed.resolver.Resolver;
-
-import java.util.List;
-import java.util.Optional;
+import jakarta.annotation.Nullable;
 
 /**
- * Interface for exposing resolver modules.
+ * Event to signal submodules have been read.
+ * @param modules
  *
  * @author Felix Hellman
  */
-public interface ResolverModuleRepository {
-  /**
-   * @param alias of the resolver to get
-   * @return a resolver instance from registry or empty
-   */
-  Optional<Resolver> getResolver(final String alias);
+public record SubModulesReadEvent(@Nullable ModuleResponse modules) {
+
 }

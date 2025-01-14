@@ -62,17 +62,5 @@ public class TrustAnchorModuleProperties {
     public TrustAnchorProperties toTrustAnchorProperties() {
       return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier));
     }
-
-    /**
-     * Property for an individual subordinate.
-     *
-     * @author Felix Hellman
-     */
-    @Getter
-    @Setter
-    public static class SubordinateSubModuleProperty {
-      private String entityIdentifier;
-      private String policy;
-    }
   }
 }

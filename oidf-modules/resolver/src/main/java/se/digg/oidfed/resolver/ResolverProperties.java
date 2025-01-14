@@ -36,3 +36,4 @@ import java.util.List;
 public record ResolverProperties(String trustAnchor, Duration resolveResponseDuration, List<JWK> trustedKeys,
     String entityIdentifier, JWK signKey, Duration stepRetryTime, String alias) {
 }
+

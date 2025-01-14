@@ -16,19 +16,14 @@
  */
 package se.digg.oidfed.service.keys;
 
-import com.nimbusds.jose.jwk.JWK;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.keys.KeyProperty;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
-import se.swedenconnect.security.credential.bundle.DefaultCredentialBundleRegistry;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
-
-import java.util.Collections;
-import java.util.Optional;
 
 /**
  * Configuration class for keys and key-registry.

@@ -16,9 +16,16 @@
  */
 package se.digg.oidfed.service.submodule;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
+import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.resolver.Resolver;
+import se.digg.oidfed.service.entity.EntityConfigurationProperties;
+import se.digg.oidfed.service.modules.RestClientSubModuleIntegration;
+import se.digg.oidfed.service.modules.SubModuleVerifier;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 
@@ -30,6 +37,7 @@ import java.util.List;
  * @author Felix Hellman
  */
 @Configuration
+@EnableConfigurationProperties(SubModuleConfigurationProperties.class)
 public class SubmoduleConfiguration {
   @Bean
   InMemorySubModuleRegistry inMemorySubModuleRegistry(
@@ -42,5 +50,18 @@ public class SubmoduleConfiguration {
     inMemorySubModuleRegistry.registerTrustAnchor(trustAnchors);
     inMemorySubModuleRegistry.registerTrustMarkIssuer(trustMarkIssuers);
     return inMemorySubModuleRegistry;
+  }
+
+  @Bean
+  RestClientSubModuleIntegration restClientSubModuleIntegration(
+      @Qualifier("entity-record-integration-client") final RestClient restClient,
+      final SubModuleVerifier verifier) {
+    return new RestClientSubModuleIntegration(restClient, verifier);
+  }
+
+  @Bean
+  SubModuleVerifier subModuleVerifier(final KeyRegistry registry,
+                                      final EntityConfigurationProperties properties) {
+    return new SubModuleVerifier(registry.getSet(properties.getJwkAlias()));
   }
 }

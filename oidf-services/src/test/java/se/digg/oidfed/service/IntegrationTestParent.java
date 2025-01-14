@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -47,6 +48,8 @@ import se.digg.oidfed.common.entity.PolicyRecord;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.entity.EntityInitializer;
 import se.digg.oidfed.service.entity.TestFederationEntities;
+import se.digg.oidfed.service.health.ReadyStateComponent;
+import se.digg.oidfed.service.modules.ModuleSetupCompleteEvent;
 import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
 
 import java.net.URLEncoder;
@@ -65,6 +68,12 @@ public class IntegrationTestParent {
 
   @Autowired
   protected SslBundles bundles;
+
+  @Autowired
+  private List<ReadyStateComponent> readyStateComponents;
+
+  @Autowired
+  protected ApplicationEventPublisher publisher;
 
   @Autowired
   EntityInitializer entityInitializer;
@@ -110,7 +119,13 @@ public class IntegrationTestParent {
   }
 
   @BeforeEach
-  void before() throws JOSEException {
+  void before() throws JOSEException, InterruptedException {
+    while (readyStateComponents.stream().filter(r -> !r.ready()).count() != 0) {
+      log.info("Application not ready yet.. waiting for setup");
+      Thread.sleep(500L);
+    }
+
+
     final JWKSet set = registry.getSet(List.of("sign-key-1"));
     final EntityRecordSigner entityRecordSigner = new EntityRecordSigner(new RSASSASigner(set.getKeys().getFirst().toRSAKey()));
 
@@ -157,5 +172,6 @@ public class IntegrationTestParent {
         new ResponseDefinitionBuilder().withResponseBody(new Body(body)))
     );
     entityInitializer.handleReload(null);
+    publisher.publishEvent(new ModuleSetupCompleteEvent());
   }
 }

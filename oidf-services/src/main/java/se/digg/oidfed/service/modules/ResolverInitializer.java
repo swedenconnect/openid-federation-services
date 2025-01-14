@@ -14,34 +14,39 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver.cache;
+package se.digg.oidfed.service.modules;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import se.digg.oidfed.service.entity.EntitiesInitializedEvent;
-import se.digg.oidfed.service.resolver.OnResolverModuleActive;
+import se.digg.oidfed.service.health.ReadyStateComponent;
+import se.digg.oidfed.service.resolver.cache.CacheRegistry;
 
 /**
- * Initializes state and makes the service ready for traffic.
+ * Readystate component for loading resolvers
  *
  * @author Felix Hellman
  */
 @Component
-@OnResolverModuleActive
-public class CacheInitializer {
+public class ResolverInitializer extends ReadyStateComponent {
 
   private final CacheRegistry registry;
 
   /**
-   * Constructor.
-   * @param registry to use
+   * @param registry of caches
    */
-  public CacheInitializer(final CacheRegistry registry) {
+  public ResolverInitializer(final CacheRegistry registry) {
     this.registry = registry;
   }
 
+  @Override
+  public String name() {
+    return "resolver-init";
+  }
+
   @EventListener
-  void handle(final EntitiesInitializedEvent event) {
-    this.registry.getAliases().forEach(this.registry::loadTree);
+  void handle(final ModuleSetupCompleteEvent event) {
+    this.registry.getAliases()
+        .forEach(this.registry::loadTree);
+    this.markReady();
   }
 }

@@ -14,22 +14,29 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.submodule;
+package se.digg.oidfed.service.health;
 
-import se.digg.oidfed.resolver.Resolver;
-
-import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Interface for exposing resolver modules.
+ * Allows a component to inform the system if it is ready for traffic.
  *
  * @author Felix Hellman
  */
-public interface ResolverModuleRepository {
+public abstract class ReadyStateComponent {
+
+  private final AtomicBoolean ready = new AtomicBoolean(false);
+
+  protected abstract String name();
+
   /**
-   * @param alias of the resolver to get
-   * @return a resolver instance from registry or empty
+   * @return true if this component is ready
    */
-  Optional<Resolver> getResolver(final String alias);
+  public Boolean ready() {
+    return this.ready.get();
+  }
+
+  protected void markReady() {
+    this.ready.set(true);
+  }
 }

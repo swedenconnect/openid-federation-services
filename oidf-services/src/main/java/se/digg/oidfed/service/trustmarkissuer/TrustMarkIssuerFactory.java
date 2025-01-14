@@ -14,22 +14,23 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.submodule;
+package se.digg.oidfed.service.trustmarkissuer;
 
-import se.digg.oidfed.resolver.Resolver;
-
-import java.util.List;
-import java.util.Optional;
+import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
+import se.digg.oidfed.trustmarkissuer.TrustMarkProperties;
 
 /**
- * Interface for exposing resolver modules.
+ * Factory class for creating trust mark issuers. //TODO impl
  *
  * @author Felix Hellman
  */
-public interface ResolverModuleRepository {
+public class TrustMarkIssuerFactory {
   /**
-   * @param alias of the resolver to get
-   * @return a resolver instance from registry or empty
+   * Creates new instance of a TrustMarkIssuer
+   * @param properties to create instance from
+   * @return new instance
    */
-  Optional<Resolver> getResolver(final String alias);
+  public TrustMarkIssuer create(final TrustMarkProperties properties) {
+    return new TrustMarkIssuer(properties);
+  }
 }
