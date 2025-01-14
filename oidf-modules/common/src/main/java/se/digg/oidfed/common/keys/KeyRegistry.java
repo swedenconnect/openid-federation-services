@@ -70,14 +70,10 @@ public class KeyRegistry {
    */
   public void register(final KeyProperty property) {
     try {
-      this.aliasToJwkMap.put(property.getAlias(), parseKey(property.getKey()));
+      this.aliasToJwkMap.put(property.getAlias(), property.getKey());
     }
     catch (final Exception e) {
       throw new IllegalArgumentException("Failed to add key to registry ", e);
     }
-  }
-
-  private static JWK parseKey(final String s) throws ParseException {
-    return JWK.parse(new String(Base64.getDecoder().decode(s), Charset.defaultCharset()));
   }
 }

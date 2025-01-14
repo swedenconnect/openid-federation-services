@@ -19,11 +19,8 @@ package se.digg.oidfed.service.resolver;
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestClient;
 import se.digg.oidfed.service.IntegrationTestParent;
 import se.digg.oidfed.service.entity.TestFederationEntities;
-import se.digg.oidfed.service.rest.RestClientFactory;
-import se.digg.oidfed.service.rest.RestClientProperties;
 import se.digg.oidfed.service.testclient.FederationClients;
 
 class ResolverIT extends IntegrationTestParent {
