@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.common.keys;
 
+import com.nimbusds.jose.jwk.JWK;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,9 +28,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class KeyProperty {
-  /** Base64 encoded json key*/
-  private String key;
-  /** Alias for a given key*/
+  /** Key */
+  private JWK key;
+  /** Alias for a given key */
   private String alias;
 
 }

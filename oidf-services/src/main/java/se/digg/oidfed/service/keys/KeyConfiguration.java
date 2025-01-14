@@ -16,10 +16,16 @@
  */
 package se.digg.oidfed.service.keys;
 
+import com.nimbusds.jose.jwk.JWK;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.common.keys.KeyProperty;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.bundle.CredentialBundles;
+import se.swedenconnect.security.credential.bundle.DefaultCredentialBundleRegistry;
+import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -30,12 +36,19 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 @Configuration
-@EnableConfigurationProperties(KeyConfigurationProperties.class)
 public class KeyConfiguration {
   @Bean
-  KeyRegistry keyRegistry(final KeyConfigurationProperties properties) {
+  KeyRegistry keyRegistry(final CredentialBundles bundles) {
     final KeyRegistry keyRegistry = new KeyRegistry();
-    Optional.ofNullable(properties.getKeys()).orElse(Collections.emptyList()).forEach(keyRegistry::register);
+    final JwkTransformerFunction jwkTransformerFunction = new JwkTransformerFunction();
+    bundles.getRegisteredCredentials().forEach(key -> {
+      final KeyProperty property = new KeyProperty();
+      final PkiCredential credential = bundles.getCredential(key);
+      property.setKey(jwkTransformerFunction.apply(credential));
+      property.setAlias(key);
+      keyRegistry.register(property);
+    });
     return keyRegistry;
   }
+
 }
