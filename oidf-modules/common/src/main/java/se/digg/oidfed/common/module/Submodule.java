@@ -16,6 +16,10 @@
  */
 package se.digg.oidfed.common.module;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+
+import java.util.List;
+
 /**
  * Submodule interface defines information that a module can present about itself.
  *
@@ -26,4 +30,9 @@ public interface Submodule {
    * @return alias of a given module
    */
   String getAlias();
+
+  /**
+   * @return list of all related entities
+   */
+  List<EntityID> getEntityIds();
 }

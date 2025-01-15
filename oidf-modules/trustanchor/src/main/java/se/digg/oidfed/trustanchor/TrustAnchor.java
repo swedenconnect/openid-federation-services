@@ -24,8 +24,6 @@ import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.module.Submodule;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * Implementation of trust anchor.
@@ -97,5 +95,10 @@ public class TrustAnchor implements Submodule {
   @Override
   public String getAlias() {
     return this.properties.getAlias();
+  }
+
+  @Override
+  public List<EntityID> getEntityIds() {
+    return List.of(this.properties.getEntityId());
   }
 }

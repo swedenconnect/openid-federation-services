@@ -21,5 +21,5 @@ package se.digg.oidfed.service.entity;
  *
  * @author Felix Hellman
  */
-public record EntitiesInitializedEvent() {
+public record EntitiesLoadedEvent() {
 }

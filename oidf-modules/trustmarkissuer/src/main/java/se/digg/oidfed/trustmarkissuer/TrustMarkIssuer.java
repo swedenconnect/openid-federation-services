@@ -25,6 +25,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.common.exception.InvalidRequestException;
@@ -267,4 +268,8 @@ public class TrustMarkIssuer implements Submodule {
   }
 
 
+  @Override
+  public List<EntityID> getEntityIds() {
+    return List.of(this.trustMarkProperties.issuerEntityId());
+  }
 }

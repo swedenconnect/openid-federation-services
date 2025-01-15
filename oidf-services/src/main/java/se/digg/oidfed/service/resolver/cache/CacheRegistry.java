@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Registry of multiple caches.
@@ -30,7 +31,7 @@ import java.util.Set;
  */
 @Slf4j
 public class CacheRegistry {
-  private final Map<String, CacheRegistration> registrations = new HashMap<>();
+  private final Map<String, CacheRegistration> registrations = new ConcurrentHashMap<>();
 
   /**
    * @param alias of the cache to register

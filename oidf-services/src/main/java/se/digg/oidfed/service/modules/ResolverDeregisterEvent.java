@@ -14,22 +14,13 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.submodule;
-
-import se.digg.oidfed.resolver.Resolver;
-
-import java.util.List;
-import java.util.Optional;
+package se.digg.oidfed.service.modules;
 
 /**
- * Interface for exposing resolver modules.
+ * Event to remove a resolver.
+ * @param alias to find the resolver to remove
  *
  * @author Felix Hellman
  */
-public interface ResolverModuleRepository {
-  /**
-   * @param alias of the resolver to get
-   * @return a resolver instance from registry or empty
-   */
-  Optional<Resolver> getResolver(final String alias);
+public record ResolverDeregisterEvent(String alias) {
 }

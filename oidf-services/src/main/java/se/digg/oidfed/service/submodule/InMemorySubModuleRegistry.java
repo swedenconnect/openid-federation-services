@@ -16,14 +16,17 @@
  */
 package se.digg.oidfed.service.submodule;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import org.springframework.context.event.EventListener;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * In memory registry for holding submodules.
@@ -32,9 +35,9 @@ import java.util.Optional;
  */
 public class InMemorySubModuleRegistry
     implements ResolverModuleRepository, TrustAnchorRepository, TrustMarkIssuerRepository {
-  private final Map<String, Resolver> resolvers = new HashMap<>();
-  private final Map<String, TrustAnchor> trustAnchors = new HashMap<>();
-  private final Map<String, TrustMarkIssuer> trustMarkIssuers = new HashMap<>();
+  private final Map<String, Resolver> resolvers = new ConcurrentHashMap<>();
+  private final Map<String, TrustAnchor> trustAnchors = new ConcurrentHashMap<>();
+  private final Map<String, TrustMarkIssuer> trustMarkIssuers = new ConcurrentHashMap<>();
 
   /**
    * Takes a list of resolvers and registers them to the repository.
@@ -78,4 +81,14 @@ public class InMemorySubModuleRegistry
     return Optional.ofNullable(this.trustMarkIssuers.get(alias));
   }
 
+  /**
+   * @return entity id of all modules.
+   */
+  public List<EntityID> getAllEntityIds() {
+    final ArrayList<EntityID> entityIDS = new ArrayList<>();
+    entityIDS.addAll(this.resolvers.values().stream().flatMap(r -> r.getEntityIds().stream()).toList());
+    entityIDS.addAll(this.trustAnchors.values().stream().flatMap(r -> r.getEntityIds().stream()).toList());
+    entityIDS.addAll(this.trustMarkIssuers.values().stream().flatMap(r -> r.getEntityIds().stream()).toList());
+    return entityIDS;
+  }
 }

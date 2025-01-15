@@ -35,6 +35,8 @@ logging:
     se.digg: INFO
 openid:
   federation:
+    sub-module-registry:
+      instance-id: 4860ae57-9716-492b-951c-2a8c334f790a
     policy-registry:
       policies:
         - name: authorization-policy

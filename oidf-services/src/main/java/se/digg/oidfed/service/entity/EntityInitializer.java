@@ -18,13 +18,17 @@ package se.digg.oidfed.service.entity;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.health.ReadyStateComponent;
+import se.digg.oidfed.service.modules.ModuleSetupCompleteEvent;
+import se.digg.oidfed.service.submodule.InMemorySubModuleRegistry;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -34,7 +38,7 @@ import java.util.Optional;
  */
 @Component
 @Slf4j
-public class EntityInitializer {
+public class EntityInitializer extends ReadyStateComponent {
 
   private final EntityRouter router;
   private final EntityConfigurationProperties properties;
@@ -42,16 +46,18 @@ public class EntityInitializer {
   private final KeyRegistry keyRegistry;
   private final EntityRecordRegistry registry;
   private final RecordRegistrySource source;
+  private final InMemorySubModuleRegistry subModuleRegistry;
 
   /**
    * Constructor.
    *
-   * @param router           to update
-   * @param properties       to read from
-   * @param policyProperties to read from
-   * @param keyRegistry      to read keys from
-   * @param registry         to add records to
-   * @param source           to get records from
+   * @param router            to update
+   * @param properties        to read from
+   * @param policyProperties  to read from
+   * @param keyRegistry       to read keys from
+   * @param registry          to add records to
+   * @param source            to get records from
+   * @param subModuleRegistry to get modules from
    */
   public EntityInitializer(
       final EntityRouter router,
@@ -59,23 +65,23 @@ public class EntityInitializer {
       final PolicyConfigurationProperties policyProperties,
       final KeyRegistry keyRegistry,
       final EntityRecordRegistry registry,
-      final RecordRegistrySource source) {
-
+      final RecordRegistrySource source,
+      final InMemorySubModuleRegistry subModuleRegistry) {
     this.router = router;
     this.properties = properties;
     this.policyProperties = policyProperties;
     this.keyRegistry = keyRegistry;
     this.registry = registry;
     this.source = source;
+    this.subModuleRegistry = subModuleRegistry;
   }
-
 
   /**
    * @param event to handle
    * @return event to notify the system that entities has been loaded
    */
   @EventListener
-  public EntitiesInitializedEvent handle(final ApplicationStartedEvent event) {
+  public EntitiesLoadedEvent handle(final ModuleSetupCompleteEvent event) {
     this.properties.getEntityRegistry()
         .stream().map(r -> r.toEntityRecord(this.keyRegistry))
         .toList().forEach(this.registry::addEntity);
@@ -90,7 +96,8 @@ public class EntityInitializer {
       this.loadFromRegistry();
     }
     this.router.reevaluteEndpoints();
-    return new EntitiesInitializedEvent();
+    markReady();
+    return new EntitiesLoadedEvent();
   }
 
   /**
@@ -100,17 +107,20 @@ public class EntityInitializer {
    * @return event to notify the system that entities has been loaded
    */
   @EventListener
-  public EntitiesInitializedEvent handleReload(final EntityReloadEvent event) {
+  public EntitiesLoadedEvent handleReload(final EntityReloadEvent event) {
     log.debug("Handling entity reload event");
     this.loadFromRegistry();
     this.router.reevaluteEndpoints();
-    return new EntitiesInitializedEvent();
+    return new EntitiesLoadedEvent();
   }
 
   private void loadFromRegistry() {
-    this.properties.getIssuers().stream()
-        .map(EntityID::new)
-        .forEach(this::loadIssuerFromRegistry);
+
+    final List<EntityID> issuers = new ArrayList<>();
+    //issuers.addAll(this.subModuleRegistry.getAllEntityIds());
+    issuers.addAll(this.properties.getIssuers().stream().map(EntityID::new).toList());
+
+    issuers.forEach(this::loadIssuerFromRegistry);
   }
 
   private void loadIssuerFromRegistry(final EntityID issuer) {
@@ -120,5 +130,10 @@ public class EntityInitializer {
     } catch (final Exception e) {
       log.error("failed to fetch entity records from registry", e);
     }
+  }
+
+  @Override
+  public String name() {
+    return "entity-init";
   }
 }

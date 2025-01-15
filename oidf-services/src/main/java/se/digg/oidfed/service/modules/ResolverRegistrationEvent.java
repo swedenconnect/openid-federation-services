@@ -14,22 +14,15 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.submodule;
+package se.digg.oidfed.service.modules;
 
-import se.digg.oidfed.resolver.Resolver;
-
-import java.util.List;
-import java.util.Optional;
+import se.digg.oidfed.resolver.ResolverProperties;
 
 /**
- * Interface for exposing resolver modules.
+ * Registration of an individual Resolver
+ * @param properties
  *
  * @author Felix Hellman
  */
-public interface ResolverModuleRepository {
-  /**
-   * @param alias of the resolver to get
-   * @return a resolver instance from registry or empty
-   */
-  Optional<Resolver> getResolver(final String alias);
+public record ResolverRegistrationEvent(ResolverProperties properties) {
 }

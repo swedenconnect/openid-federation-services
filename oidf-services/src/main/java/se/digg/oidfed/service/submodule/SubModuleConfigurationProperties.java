@@ -16,20 +16,21 @@
  */
 package se.digg.oidfed.service.submodule;
 
-import se.digg.oidfed.resolver.Resolver;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 /**
- * Interface for exposing resolver modules.
+ * Properties for submodules. Will probably be moved in a later version...
  *
  * @author Felix Hellman
  */
-public interface ResolverModuleRepository {
-  /**
-   * @param alias of the resolver to get
-   * @return a resolver instance from registry or empty
-   */
-  Optional<Resolver> getResolver(final String alias);
+@Getter
+@Setter
+@ConfigurationProperties("openid.federation.sub-module-registry")
+public class SubModuleConfigurationProperties {
+  private UUID instanceId;
+  private Boolean skipSubModuleLoad = false;
 }
