@@ -23,6 +23,8 @@ import org.springframework.stereotype.Component;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.health.ReadyStateComponent;
 import se.digg.oidfed.service.resolver.ResolverConfigurationProperties;
+import se.digg.oidfed.service.trustanchor.TrustAnchorModuleProperties;
+import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,23 +37,30 @@ import java.util.Objects;
 @Component
 public class ModuleSetup extends ReadyStateComponent {
 
-  private final ResolverConfigurationProperties properties;
+  private final ResolverConfigurationProperties resolverProperties;
+  private final TrustAnchorModuleProperties trustAnchorProperties;
+  private final TrustMarkIssuerModuleProperties trustMarkIssuerProperties;
   private final KeyRegistry registry;
   private final ApplicationEventPublisher publisher;
 
 
   /**
    * Constructor.
-   *
-   * @param properties
+   * @param resolverProperties
+   * @param trustAnchorProperties
+   * @param trustMarkIssuerProperties
    * @param registry
    * @param publisher
    */
   public ModuleSetup(
-      final ResolverConfigurationProperties properties,
+      final ResolverConfigurationProperties resolverProperties,
+      final TrustAnchorModuleProperties trustAnchorProperties,
+      final TrustMarkIssuerModuleProperties trustMarkIssuerProperties,
       final KeyRegistry registry,
       final ApplicationEventPublisher publisher) {
-    this.properties = properties;
+    this.resolverProperties = resolverProperties;
+    this.trustAnchorProperties = trustAnchorProperties;
+    this.trustMarkIssuerProperties = trustMarkIssuerProperties;
     this.registry = registry;
     this.publisher = publisher;
   }
@@ -63,9 +72,19 @@ public class ModuleSetup extends ReadyStateComponent {
    */
   @EventListener
   public void handle(final ApplicationStartedEvent event) {
-    this.properties.getResolvers().stream()
+    this.resolverProperties.getResolvers().stream()
         .map(resolver -> resolver.toResolverProperties(this.registry))
         .map(ResolverRegistrationEvent::new)
+        .forEach(this.publisher::publishEvent);
+
+    this.trustAnchorProperties.getAnchors().stream()
+        .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::toTrustAnchorProperties)
+        .map(TrustAnchorRegistrationEvent::new)
+        .forEach(this.publisher::publishEvent);
+
+    this.trustMarkIssuerProperties.getTrustMarkIssuers().stream()
+        .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::toProperties)
+        .map(TrustMarkIssuerRegistrationEvent::new)
         .forEach(this.publisher::publishEvent);
   }
 
@@ -86,8 +105,22 @@ public class ModuleSetup extends ReadyStateComponent {
   }
 
   private void handleModules(final ModuleResponse modules) {
-    final List<ResolverModuleResponse> resolvers = modules.getResolvers();
-    this.handleResolvers(resolvers);
+    this.handleResolvers(modules.getResolvers());
+    this.handleTrustAnchors(modules.getTrustAnchors());
+  }
+
+  private void handleTrustAnchors(final List<TrustAnchorModuleResponse> trustAnchors) {
+    trustAnchors.stream()
+        .filter(TrustAnchorModuleResponse::getActive)
+        .map(TrustAnchorModuleResponse::toProperties)
+        .map(TrustAnchorRegistrationEvent::new)
+        .forEach(this.publisher::publishEvent);
+
+    trustAnchors.stream()
+        .filter(anchor -> !anchor.getActive())
+        .map(TrustAnchorModuleResponse::getAlias)
+        .map(TrustAnchorDeregisterEvent::new)
+        .forEach(this.publisher::publishEvent);
   }
 
   private void handleResolvers(final List<ResolverModuleResponse> resolvers) {

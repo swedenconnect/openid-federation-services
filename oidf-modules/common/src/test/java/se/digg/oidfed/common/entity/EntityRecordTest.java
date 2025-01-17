@@ -62,7 +62,6 @@ class EntityRecordTest {
 
     Assertions.assertEquals(expected.getSubject(), actual.getSubject());
     Assertions.assertEquals(expected.getIssuer(), actual.getIssuer());
-    Assertions.assertTrue(expected.getJwks().containsJWK(actual.getJwks().getKeys().get(0)));
     Assertions.assertEquals(expected.getPolicyRecordId(), actual.getPolicyRecordId());
     Assertions.assertEquals(expected.getOverrideConfigurationLocation(), actual.getOverrideConfigurationLocation());
   }

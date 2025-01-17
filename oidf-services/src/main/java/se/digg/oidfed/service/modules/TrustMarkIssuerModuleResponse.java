@@ -19,7 +19,6 @@ package se.digg.oidfed.service.modules;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubjectLoader;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
@@ -56,9 +55,7 @@ public class TrustMarkIssuerModuleResponse {
    * @param logoUri
    * @param refUri
    * @param delegation
-   * @param trustMarkIssuerSubjectLoader
    */
   public record TrustMarkIssuerProperties(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
-                                          Optional<TrustMarkDelegation> delegation,
-                                          TrustMarkIssuerSubjectLoader trustMarkIssuerSubjectLoader) {}
+                                          Optional<TrustMarkDelegation> delegation) {}
 }

@@ -1,9 +1,10 @@
 package se.digg.oidfed.resolver;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
+import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.common.tree.VersionedInMemoryCache;
 import se.digg.oidfed.resolver.chain.ChainValidationStep;
@@ -24,7 +25,8 @@ import java.util.List;
 
 public class ResolverFactory {
   public static ResolverClient createTestResolver(final ResolverProperties properties, final FederationTree tree,
-                                                  final JWK resolverKey, final StepRecoveryStrategy recoveryStrategy) {
+                                                  final StepRecoveryStrategy recoveryStrategy,
+                                                  final SignerFactory adapter) {
 
     final VersionedInMemoryCache<EntityStatement> dataLayer = new VersionedInMemoryCache<>();
     final EntityStatementTree entityStatementTree = getEntityStatementTree(properties, tree,
@@ -39,7 +41,7 @@ public class ResolverFactory {
     final ChainValidator validator = new ChainValidator(chainValidationSteps);
     final MetadataProcessor processor =
         new MetadataProcessor(new OIDFPolicyOperationFactory(), new DefaultPolicyOperationCombinationValidator());
-    final ResolverResponseFactory factory = new ResolverResponseFactory(Clock.systemUTC(), properties);
+    final ResolverResponseFactory factory = new ResolverResponseFactory(Clock.systemUTC(), properties, adapter);
 
     final Resolver resolver = new Resolver(
         properties,
@@ -48,7 +50,8 @@ public class ResolverFactory {
         processor,
         factory);
 
-    return new ResolverClient(resolver, properties.entityIdentifier(), resolverKey,
+    return new ResolverClient(resolver, properties.entityIdentifier(),
+        adapter.getSignKey(),
         () -> entityStatementTree.load(new EntityStatementTreeLoader(tree, new DFSExecution(), recoveryStrategy,
                 new DefaultErrorContextFactory()).withAdditionalPostHook(
             dataLayer::useNextVersion),

@@ -14,8 +14,18 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service;
+package se.digg.oidfed.service.keys;
 
-public class TestFederationIT extends IntegrationTestParent {
+import com.nimbusds.jose.jwk.JWKSet;
+import lombok.Getter;
 
+/**
+ * Record containing keys used for the service instance.
+ *
+ * @param signKeys for signing
+ * @param validationKeys for validating registry responses
+ *
+ * @author Felix Hellman
+ */
+public record FederationKeys(JWKSet signKeys, JWKSet validationKeys) {
 }

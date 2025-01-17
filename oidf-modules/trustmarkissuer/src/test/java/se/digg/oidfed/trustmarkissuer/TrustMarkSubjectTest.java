@@ -31,7 +31,7 @@ import java.util.Map;
  * @author Per Fredrik Plars
  */
 @Slf4j
-class TrustMarkIssuerSubjectTest {
+class TrustMarkSubjectTest {
 
   @Test
   public void testFromJson() throws ParseException {
@@ -44,7 +44,7 @@ class TrustMarkIssuerSubjectTest {
 
     records.stream()
         .map(o -> (Map<String,Object>)o)
-        .map(TrustMarkIssuerSubject::fromJson)
+        .map(TrustMarkSubject::fromJson)
         .forEach(System.out::println);
   }
 

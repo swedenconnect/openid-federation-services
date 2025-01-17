@@ -19,8 +19,7 @@ package se.digg.oidfed.service.trustmarkissuer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubject;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerSubjectLoader;
+import se.digg.oidfed.trustmarkissuer.TrustMarkSubject;
 import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRecordVerifier;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
@@ -34,7 +33,7 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
-public class TMIRestClientRecordIntegration implements TrustMarkIssuerSubjectLoader {
+public class RestClientTrustMarkSubjectRecordIntegration {
   private final RestClient client;
   private final TrustMarkSubjectRecordVerifier verifier;
 
@@ -44,14 +43,21 @@ public class TMIRestClientRecordIntegration implements TrustMarkIssuerSubjectLoa
    * @param client   to use
    * @param verifier to use
    */
-  public TMIRestClientRecordIntegration(final RestClient client, final TrustMarkSubjectRecordVerifier verifier) {
+  public RestClientTrustMarkSubjectRecordIntegration(
+      final RestClient client, final TrustMarkSubjectRecordVerifier verifier) {
     this.client = client;
     this.verifier = verifier;
   }
 
-  @Override
-  public List<TrustMarkIssuerSubject> loadSubject(final String issuerEntityId, final TrustMarkId trustMarkId,
-      final Optional<String> subject) {
+  /**
+   * Loads subjects from registry.
+   * @param issuerEntityId
+   * @param trustMarkId
+   * @param subject
+   * @return list of subjects
+   */
+  public List<TrustMarkSubject> loadSubject(final String issuerEntityId, final TrustMarkId trustMarkId,
+                                            final Optional<String> subject) {
 
     final Map<String,String> params = new HashMap<>(3);
     params.put("iss",issuerEntityId);

@@ -15,6 +15,8 @@
  *
  */
 /**
- * Package for validation classes
+ * Validation package for oidf services.
+ *
+ * @author Felix Hellman.
  */
-package se.digg.oidfed.trustmarkissuer.validation;
+package se.digg.oidfed.common.validation;

@@ -16,19 +16,23 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.PostConstruct;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
+import se.digg.oidfed.common.validation.FederationAssert;
+import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerProperties;
+import se.digg.oidfed.trustmarkissuer.TrustMarkSubject;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
-import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -42,7 +46,9 @@ import java.util.List;
 public class TrustMarkIssuerModuleProperties {
   public static final String PROPERTY_PATH = "openid.federation.trust-mark-issuer";
 
-  /** Set to true if this module should be active or not. */
+  /**
+   * Set to true if this module should be active or not.
+   */
   private Boolean active;
   /**
    * Rest client to use for entity registry
@@ -55,81 +61,112 @@ public class TrustMarkIssuerModuleProperties {
   private List<String> jwkAlias;
 
 
-  /** TrustmarkIssuers */
-  private List<TrustMarkIssuers> trustMarkIssuers;
+  /**
+   * TrustmarkIssuers
+   */
+  private List<TrustMarkIssuerSubModuleProperty> trustMarkIssuers;
 
   /**
    * Validate data of configuration
    */
   @PostConstruct
-  public void validate(){
+  public void validate() {
     FederationAssert.assertNotEmpty(this.trustMarkIssuers,
         "trustMarkIssuers is empty. Must be configured");
 
-    this.trustMarkIssuers.forEach(TrustMarkIssuers::validate);
+    this.trustMarkIssuers.forEach(TrustMarkIssuerSubModuleProperty::validate);
   }
 
   /**
    * TrustMark issuers
    *
    * @param remoteSubjectRepositoryJwtTrustKeyAlias Trust key when verify signature of trustmark register JWT token
-   * @param trustMarkValidityDuration ValidityDuration of the TrustMark JWT token. Default value is PT30M
-   * @param entityIdentifier EntityId of this trustmark issuer
-   * @param trustMarks List of defined trustmarks
-   * @param alias Alias name for this trust mark issuer
+   * @param trustMarkValidityDuration               ValidityDuration of the TrustMark JWT token. Default value is PT30M
+   * @param entityIdentifier                        EntityId of this trustmark issuer
+   * @param trustMarks                              List of defined trustmarks
+   * @param alias                                   Alias name for this trust mark issuer
    */
-  public record TrustMarkIssuers(
+  public record TrustMarkIssuerSubModuleProperty(
       String alias,
       String entityIdentifier,
 
       String remoteSubjectRepositoryJwtTrustKeyAlias,
       @DefaultValue("PT30M") Duration trustMarkValidityDuration,
-      List<TrustMarkIssuer> trustMarks) {
+      List<TrustMarkProperties> trustMarks) {
     /**
-     *  Validate content of the configuration
+     * Validate content of the configuration
      */
-    public void validate(){
+    public void validate() {
       FederationAssert.assertNotEmpty(this.trustMarks,
           "TrustMarks is empty. Must be configured");
 
-      this.trustMarks.forEach(TrustMarkIssuer::validate);
+      this.trustMarks.forEach(TrustMarkProperties::validate);
+    }
+
+    /**
+     * Converts to properties.
+     * @return new instance
+     */
+    public TrustMarkIssuerProperties toProperties() {
+      return new TrustMarkIssuerProperties(this.trustMarkValidityDuration, new EntityID(this.entityIdentifier),
+          this.trustMarks.stream().map(TrustMarkProperties::toProperties).toList(),
+          this.alias);
     }
 
     /**
      * Definition of trustmark issuer
      *
      * @param trustMarkId The Trust Mark ID
-     * @param logoUri Optional logo for issued Trust Marks
-     * @param refUri Optional URL to information about issued Trust Marks
-     * @param subjects trustMarkIssuerSubject
-     * @param delegation TrustMark delegation
+     * @param logoUri     Optional logo for issued Trust Marks
+     * @param refUri      Optional URL to information about issued Trust Marks
+     * @param subjects    trustMarkIssuerSubject
+     * @param delegation  TrustMark delegation
      */
     @Builder
-    public record TrustMarkIssuer(
+    public record TrustMarkProperties(
         TrustMarkId trustMarkId,
         String logoUri,
         String refUri,
         TrustMarkDelegation delegation,
-        List<TrustMarkSubject> subjects) {
+        List<TrustMarkSubjectProperties> subjects) {
       /**
        * TrustMarkSubject
-       * @param sub EntityId for Subject
+       *
+       * @param sub     EntityId for Subject
        * @param granted Optional granted
        * @param expires Optional expires
        * @param revoked True is trust mark is revoked
        */
-      public record TrustMarkSubject(
+      public record TrustMarkSubjectProperties(
           String sub,
           Instant granted,
           Instant expires,
           boolean revoked) {
+        /**
+         * Converts to TrustMarkSubject
+         * @return new instace
+         */
+        public TrustMarkSubject toSubject() {
+          return new TrustMarkSubject(this.sub, this.granted, this.expires, this.revoked);
+        }
       }
+
       /**
-       *  Validate content of the configuration
+       * Validate content of the configuration
        */
-      public void validate(){
+      public void validate() {
         FederationAssert.assertNotEmpty(this.subjects,
             "trust-mark-issuers[].trust-marks[].subjects is empty. Must be configured");
+      }
+
+      /**
+       * Converts to properties
+       * @return new instance
+       */
+      public TrustMarkIssuerProperties.TrustMarkProperties toProperties() {
+        return new TrustMarkIssuerProperties.TrustMarkProperties(this.trustMarkId, Optional.ofNullable(this.logoUri),
+            Optional.ofNullable(this.refUri),
+            Optional.ofNullable(this.delegation));
       }
     }
   }

@@ -50,7 +50,6 @@ public class KeyRegistry {
    * @return a set of jwks matching the aliases provided
    */
   public JWKSet getSet(final List<String> aliases) {
-
     if (!this.aliasToJwkMap.keySet().containsAll(aliases)) {
       final String message = "Key registry does not contain all requested keys in %s".formatted(aliases);
       throw new IllegalArgumentException(message);
