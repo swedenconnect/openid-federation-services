@@ -16,16 +16,12 @@
  */
 package se.digg.oidfed.service.entity;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.entity.DelegatingEntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityConfigurationFactory;
 import se.digg.oidfed.common.entity.EntityPathFactory;
@@ -43,9 +39,8 @@ import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.TrustMarkIntegration;
 import se.digg.oidfed.common.entity.integration.TrustMarkLoadingCache;
 import se.digg.oidfed.common.jwt.SignerFactory;
-import se.digg.oidfed.common.keys.KeyRegistry;
-import se.digg.oidfed.service.keys.FederationKeyConfigurationProperties;
-import se.digg.oidfed.service.rest.RestClientRegistry;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
+import se.digg.oidfed.service.keys.FederationKeys;
 
 import java.util.List;
 import java.util.Optional;
@@ -57,7 +52,6 @@ import java.util.Optional;
  */
 @Slf4j
 @Configuration
-@EnableConfigurationProperties(EntityConfigurationProperties.class)
 public class EntityConfiguration {
 
   /**
@@ -71,93 +65,41 @@ public class EntityConfiguration {
    * events.
    */
   @Bean
-  EntityRecordRegistry entityRegistry(final EntityConfigurationProperties properties,
+  EntityRecordRegistry entityRegistry(final OpenIdFederationConfigurationProperties properties,
                                       final ApplicationEventPublisher publisher
   ) {
-
-    final EntityID defaultEntity = properties.getEntityRegistry()
-        .stream()
-        .filter(EntityProperty::isDefaultEntity)
-        .findFirst()
-        .map(EntityProperty::getSubject)
-        .map(EntityID::new)
-        .orElse(null);
-
     return new DelegatingEntityRecordRegistry(
-        defaultEntity,
-        new InMemoryEntityRecordRegistry(new EntityPathFactory(properties.getIssuers())),
+        new InMemoryEntityRecordRegistry(
+            new EntityPathFactory(properties.getModules().getIssuers())),
         List.of(er -> publisher.publishEvent(new EntityRegisteredEvent(er))));
   }
 
   /**
    * Factory method to create an instance of {@link EntityConfigurationFactory}.
    *
-   * @param factory for signing
-   * @param properties to determine signing key
+   * @param factory               for signing
    * @param trustMarkLoadingCache for fetching trust marks
    * @return an instance of {@link EntityConfigurationFactory} configured with the specified signing key
    */
   @Bean
   EntityConfigurationFactory entityStatementFactory(final SignerFactory factory,
-                                                    final EntityConfigurationProperties properties,
                                                     final TrustMarkLoadingCache trustMarkLoadingCache
   ) {
     return new EntityConfigurationFactory(factory, trustMarkLoadingCache);
   }
 
   /**
-   * Creates and returns a {@link RestClient} instance for integrating with the entity record service.
-   * The client is retrieved from the provided {@link RestClientRegistry} using the configuration details
-   * from {@link EntityConfigurationProperties}.
-   * <p>
-   * This method is only instantiated when the property 'openid.federation.entity-registry.client'
-   * is enabled in the application configuration.
-   *
-   * @param registry   the {@link RestClientRegistry} used to retrieve the appropriate {@link RestClient}.
-   * @param properties configuration properties for the entity record client, encapsulated in
-   *                   {@link EntityConfigurationProperties}.
-   * @return a {@link RestClient} for the entity record service integration.
-   * @throws IllegalStateException if the specified client cannot be retrieved from the registry.
-   */
-  @Bean
-  @ConditionalOnProperty(value = "openid.federation.entity-registry.client")
-  @Qualifier("entity-record-integration-client")
-  RestClient entityRecordIntegrationClient(final RestClientRegistry registry,
-                                           final EntityConfigurationProperties properties) {
-    return registry.getClient(properties.getClient())
-        .orElseThrow();
-  }
-
-  /**
-   * Configures a RecordRegistryIntegration bean to integrate with an entity record system.
-   * The integration combines a REST client and a verifier for trust mark subject records.
-   *
-   * @param client   the REST client for communication with the entity record integration service
-   * @param verifier the verifier used to validate trust mark subject records
-   * @return the RecordRegistryIntegration instance that facilitates entity record operations
-   */
-  @Bean
-  @ConditionalOnProperty(value = "openid.federation.entity-registry.client")
-  RecordRegistryIntegration entityRecordIntegration(
-      @Qualifier("entity-record-integration-client") final RestClient client,
-      @Qualifier("entity-record-verifier") final EntityRecordVerifier verifier) {
-    return new RestClientRecordIntegration(client, verifier);
-  }
-
-  /**
    * Creates and configures a TrustMarkSubjectRecordVerifier bean.
+   * @param keys federation keys
    *
-   * @param registry   the KeyRegistry used to retrieve cryptographic keys for verification.
-   * @param properties the EntityConfigurationProperties providing configuration details such as JWK aliases.
    * @return a TrustMarkSubjectRecordVerifier instance configured with the keys retrieved from the registry
    * based on the provided properties.
    */
   @Bean
   @Qualifier("entity-record-verifier")
   EntityRecordVerifier entityRecordVerifier(
-      final KeyRegistry registry,
-      final FederationKeyConfigurationProperties properties) {
-    return new EntityRecordVerifier(registry.getSet(properties.getValidation()));
+      final FederationKeys keys) {
+    return new EntityRecordVerifier(keys.validationKeys());
   }
 
   /**
@@ -169,7 +111,6 @@ public class EntityConfiguration {
    * @return a {@link RecordRegistrySource} instance utilizing the provided integration and cache.
    */
   @Bean
-  @ConditionalOnProperty(value = "openid.federation.entity-registry.client")
   RecordRegistrySource recordRegistrySource(
       final RecordRegistryIntegration integration,
       final RecordRegistryCache cache) {
@@ -221,15 +162,5 @@ public class EntityConfiguration {
   @Bean
   TrustMarkLoadingCache trustMarkLoadingCache(final TrustMarkIntegration integration) {
     return new TrustMarkLoadingCache(new InMemoryTrustMarkCache(), integration);
-  }
-
-  @Bean
-  TrustMarkIntegration trustMarkIntegration(@Qualifier("trustMarkRestClient") final RestClient client) {
-    return new RestClientTrustMarkIntegration(client);
-  }
-
-  @Bean
-  RestClient trustMarkRestClient(final RestClientRegistry registry, final EntityConfigurationProperties properties) {
-    return registry.getClient(properties.getTrustMarkIssuerClient()).orElseThrow();
   }
 }

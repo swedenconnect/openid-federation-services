@@ -36,15 +36,16 @@ public interface TrustMarkSubjectRepository {
 
   /**
    * @param trustMarkId to search
-   * @param subject to find
+   * @param subject     to find
    * @return optional of subject if it exists
    */
   Optional<TrustMarkSubject> getSubject(final TrustMarkId trustMarkId, final EntityID subject);
 
   /**
    * Registers a subject to a trust mark
+   *
    * @param trustMarkId to register for
-   * @param subject to register
+   * @param subject     to register
    */
   void register(final TrustMarkId trustMarkId, final TrustMarkSubject subject);
 }

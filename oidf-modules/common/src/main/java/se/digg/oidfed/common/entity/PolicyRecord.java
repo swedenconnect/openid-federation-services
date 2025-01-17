@@ -40,6 +40,12 @@ public class PolicyRecord {
     this.policy = policy;
   }
 
+  /**
+   * Default constructor.
+   */
+  public PolicyRecord() {
+  }
+
   private String id;
   private Map<String, Object> policy;
 

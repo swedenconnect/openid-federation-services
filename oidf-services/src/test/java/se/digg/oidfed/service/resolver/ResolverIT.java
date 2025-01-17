@@ -27,7 +27,7 @@ class ResolverIT extends IntegrationTestParent {
 
 
   @Test
-  void resolveFederation(final FederationClients clients) {
+  void resolveFederation(final FederationClients clients) throws InterruptedException {
     final SignedJWT resolve = clients.municipality().resolver()
         .resolve(TestFederationEntities.Authorization.OP_1, TestFederationEntities.Municipality.TRUST_ANCHOR, null);
 

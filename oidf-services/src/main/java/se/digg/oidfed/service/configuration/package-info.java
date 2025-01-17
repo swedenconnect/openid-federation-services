@@ -14,24 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
 /**
- * Interface to annotate components and configurations to only be used if the resolver module is active
+ * Configuration package for oidf services.
  *
  * @author Felix Hellman
  */
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnProperty(value = ResolverConfigurationProperties.PROPERTY_PATH + ".active", havingValue = "true")
-public @interface OnResolverModuleActive {
-}
-
-
+package se.digg.oidfed.service.configuration;

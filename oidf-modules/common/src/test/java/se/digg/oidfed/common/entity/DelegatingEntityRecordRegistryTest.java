@@ -31,10 +31,9 @@ class DelegatingEntityRecordRegistryTest {
     final EntityID hostedSubject = new EntityID("http://root.test/sub");
     final EntityID selfHostedSubject = new EntityID("http://other.test/selfsub");
     final List<EntityRecord> recordsRegistred = new ArrayList<>();
-    final DelegatingEntityRecordRegistry registry = new DelegatingEntityRecordRegistry(root,
+    final DelegatingEntityRecordRegistry registry = new DelegatingEntityRecordRegistry(
         new InMemoryEntityRecordRegistry(new EntityPathFactory(List.of("http://root.test"))),
         List.of(recordsRegistred::add));
-    final JWKSet jwks = new JWKSet(List.of());
 
     final EntityRecord rootEntity = EntityRecord.builder()
         .issuer(root)

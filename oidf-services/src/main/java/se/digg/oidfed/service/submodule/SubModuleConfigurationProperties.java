@@ -18,7 +18,6 @@ package se.digg.oidfed.service.submodule;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.UUID;
 
@@ -29,7 +28,6 @@ import java.util.UUID;
  */
 @Getter
 @Setter
-@ConfigurationProperties("openid.federation.sub-module-registry")
 public class SubModuleConfigurationProperties {
   private UUID instanceId;
   private Boolean skipSubModuleLoad = false;

@@ -29,7 +29,6 @@ import java.util.List;
  */
 @Getter
 @Setter
-@ConfigurationProperties("openid.federation.rest-client-registry")
 public class RestClientProperties {
 
   private List<RestClientProperty> clients;

@@ -44,7 +44,7 @@ public class ResolverInitializer extends ReadyStateComponent {
   }
 
   @EventListener
-  void handle(final ModuleSetupCompleteEvent event) {
+  void handle(final TrustMarkIssuerInitializedEvent event) {
     this.registry.getAliases()
         .forEach(this.registry::loadTree);
     this.markReady();

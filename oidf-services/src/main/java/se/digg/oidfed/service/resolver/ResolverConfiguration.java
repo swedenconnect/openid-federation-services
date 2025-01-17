@@ -23,18 +23,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
-import se.digg.oidfed.common.keys.KeyRegistry;
-import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.resolver.ResolverProperties;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.metadata.OIDFPolicyOperationFactory;
@@ -45,7 +39,6 @@ import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
 import se.digg.oidfed.service.resolver.cache.CacheRegistry;
 import se.digg.oidfed.service.resolver.cache.RedisOperations;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
-import se.digg.oidfed.service.rest.RestClientRegistry;
 
 import java.util.List;
 
@@ -55,36 +48,13 @@ import java.util.List;
  * @author Felix Hellman
  */
 @Configuration
-@EnableConfigurationProperties(ResolverConfigurationProperties.class)
-@OnResolverModuleActive
 @Slf4j
 public class ResolverConfiguration {
-  @Bean
-  List<Resolver> resolvers(final List<ResolverProperties> resolverProperties,
-      final ResolverFactory resolverFactory
-  ) {
-    return resolverProperties.stream().map(resolverFactory::create).toList();
-  }
-
-  @Bean
-  List<ResolverProperties> resolverProperties(
-      final ResolverConfigurationProperties properties,
-      final KeyRegistry registry) {
-    return properties.getResolvers()
-        .stream()
-        .map(resolverProperties -> resolverProperties.toResolverProperties(registry))
-        .toList();
-  }
-
   @Bean
   ExecutionStrategy resolutionStrategy() {
     return new DFSExecution();
   }
 
-  @Bean
-  EntityStatementIntegration integration(@Qualifier("resolver-client") final RestClient client) {
-    return new RestClientEntityStatementIntegration(client);
-  }
 
   @Bean
   MetadataProcessor metadataProcessor() {
@@ -99,7 +69,7 @@ public class ResolverConfiguration {
       final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory,
       final CacheRegistry registry,
       final SignerFactory adapter
-      ) {
+  ) {
     return new ResolverFactory(versionTemplate, redisOperations, processor, entityStatementTreeLoaderFactory,
         registry, adapter);
   }
@@ -152,14 +122,6 @@ public class ResolverConfiguration {
       );
       return new ObservableErrorContext(factory.create(location), counter);
     };
-  }
-
-  @Bean
-  @Qualifier("resolver-client")
-  RestClient resolverClient(final ResolverConfigurationProperties properties, final RestClientRegistry registry) {
-    return registry
-        .getClient(properties.getClient())
-        .orElseThrow();
   }
 
   @Bean

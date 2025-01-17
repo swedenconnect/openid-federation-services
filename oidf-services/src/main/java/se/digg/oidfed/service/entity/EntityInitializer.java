@@ -23,9 +23,10 @@ import org.springframework.stereotype.Component;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.health.ReadyStateComponent;
+import se.digg.oidfed.service.keys.FederationKeys;
 import se.digg.oidfed.service.modules.ModuleSetupCompleteEvent;
-import se.digg.oidfed.service.submodule.InMemorySubModuleRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,39 +42,34 @@ import java.util.Optional;
 public class EntityInitializer extends ReadyStateComponent {
 
   private final EntityRouter router;
-  private final EntityConfigurationProperties properties;
-  private final PolicyConfigurationProperties policyProperties;
+  private final OpenIdFederationConfigurationProperties properties;
   private final KeyRegistry keyRegistry;
+  private final FederationKeys keys;
   private final EntityRecordRegistry registry;
   private final RecordRegistrySource source;
-  private final InMemorySubModuleRegistry subModuleRegistry;
 
   /**
-   * Constructor.
-   *
-   * @param router            to update
-   * @param properties        to read from
-   * @param policyProperties  to read from
-   * @param keyRegistry       to read keys from
-   * @param registry          to add records to
-   * @param source            to get records from
-   * @param subModuleRegistry to get modules from
+   * Constructor
+   * @param router
+   * @param properties
+   * @param keyRegistry
+   * @param keys
+   * @param registry
+   * @param source
    */
   public EntityInitializer(
       final EntityRouter router,
-      final EntityConfigurationProperties properties,
-      final PolicyConfigurationProperties policyProperties,
+      final OpenIdFederationConfigurationProperties properties,
       final KeyRegistry keyRegistry,
+      final FederationKeys keys,
       final EntityRecordRegistry registry,
-      final RecordRegistrySource source,
-      final InMemorySubModuleRegistry subModuleRegistry) {
+      final RecordRegistrySource source) {
     this.router = router;
     this.properties = properties;
-    this.policyProperties = policyProperties;
     this.keyRegistry = keyRegistry;
+    this.keys = keys;
     this.registry = registry;
     this.source = source;
-    this.subModuleRegistry = subModuleRegistry;
   }
 
   /**
@@ -82,19 +78,16 @@ public class EntityInitializer extends ReadyStateComponent {
    */
   @EventListener
   public EntitiesLoadedEvent handle(final ModuleSetupCompleteEvent event) {
-    this.properties.getEntityRegistry()
-        .stream().map(r -> r.toEntityRecord(this.keyRegistry))
+    this.properties.getEntities()
+        .stream().map(r -> r.toEntityRecord(this.keyRegistry, this.keys))
         .toList().forEach(this.registry::addEntity);
 
-    Optional.ofNullable(this.policyProperties.getPolicies()).ifPresent(
+    Optional.ofNullable(this.properties.getPolicies()).ifPresent(
         pp -> pp.stream()
             .map(PolicyConfigurationProperties.PolicyRecordProperty::toRecord)
             .forEach(this.source::addPolicy)
     );
 
-    if (!this.properties.isSkipRegistryInit()) {
-      this.loadFromRegistry();
-    }
     this.router.reevaluteEndpoints();
     markReady();
     return new EntitiesLoadedEvent();
@@ -115,12 +108,20 @@ public class EntityInitializer extends ReadyStateComponent {
   }
 
   private void loadFromRegistry() {
+    final List<OpenIdFederationConfigurationProperties.Registry.Step> skipInit = this.properties
+        .getRegistry()
+        .getIntegration()
+        .getSkipInit();
 
-    final List<EntityID> issuers = new ArrayList<>();
-    //issuers.addAll(this.subModuleRegistry.getAllEntityIds());
-    issuers.addAll(this.properties.getIssuers().stream().map(EntityID::new).toList());
-
-    issuers.forEach(this::loadIssuerFromRegistry);
+    if (!skipInit.contains(OpenIdFederationConfigurationProperties.Registry.Step.ENTITY)) {
+      final List<EntityID> issuers = new ArrayList<>(this.properties.getModules()
+          .getIssuers()
+          .stream()
+          .map(EntityID::new)
+          .toList()
+      );
+      issuers.forEach(this::loadIssuerFromRegistry);
+    }
   }
 
   private void loadIssuerFromRegistry(final EntityID issuer) {

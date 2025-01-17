@@ -37,7 +37,7 @@ public class TrustMarkIssuerModuleResponse {
   private Duration trustMarkValidityDuration;
   private EntityID entityIdentifier;
   private JWK jwk;
-  private List<TrustMarkIssuerProperties> trustMarks;
+  private List<TrustMarkResponse> trustMarks;
   private String alias;
   private Boolean active;
 
@@ -56,6 +56,6 @@ public class TrustMarkIssuerModuleResponse {
    * @param refUri
    * @param delegation
    */
-  public record TrustMarkIssuerProperties(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
-                                          Optional<TrustMarkDelegation> delegation) {}
+  public record TrustMarkResponse(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
+                                  Optional<TrustMarkDelegation> delegation) {}
 }

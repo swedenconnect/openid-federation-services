@@ -1,3 +1,8 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 credential:
   bundles:
     keystore:
@@ -33,166 +38,36 @@ logging:
   level:
     ROOT: INFO
     se.digg: DEBUG
+
 openid:
   federation:
-    keys:
-      sign:
-        - sign-key-1
-      validation:
-        - sign-key-1
-    sub-module-registry:
-      instance-id: 4860ae57-9716-492b-951c-2a8c334f790a
-    policy-registry:
-      policies:
-        - name: authorization-policy
-          policy:
-            resource: classpath:authorization-policy.json
-    entity-registry:
-      skip-registry-init: true
-      client: registry-integration
-      trust-mark-issuer-client: resolver-integration
-      issuers:
-        - https://municipality.local.swedenconnect.se/municipality-ta
-        - https://authorization.local.swedenconnect.se/authorization-ta
-        - https://private.local.swedenconnect.se/private-ta
+    sign:
+      - sign-key-1
+    registry:
+      integration:
+        instance-id: 4860ae57-9716-492b-951c-2a8c334f790a
+        endpoints:
+          base-path: https://registry.local.swedenconncet.se
+        validation-keys:
+          - sign-key-1
+        skip-init:
+          - submodule
+          - trust-mark-subject
+    modules:
       base-path: https://municipality.local.swedenconnect.se/
-      entity-registry:
-        - subject: https://authorization.local.swedenconnect.se/authorization-tmi
-          issuer: https://authorization.local.swedenconnect.se/authorization-tmi
-          jwk-alias:
-            - sign-key-1
-          hosted-record:
-            metadata:
-              json: |
-                {
-                  "federation_entity": { 
-                    "organization_name": "Authorization"
-                  }
-                }
-        - subject: https://authorization.local.swedenconnect.se/authorization-ta
-          issuer: https://authorization.local.swedenconnect.se/authorization-ta
-          jwk-alias:
-            - sign-key-1
-          hosted-record:
-            metadata:
-              json: |
-                {
-                  "federation_entity": {
-                    "organization_name": "Authorization",
-                    "federation_fetch_endpoint": "https://authorization.local.swedenconnect.se/authorization-ta/fetch",
-                    "federation_list_endpoint": "https://authorization.local.swedenconnect.se/authorization-ta/subordinate_listing"
-                  }
-                }
-        - subject: https://municipality.local.swedenconnect.se/municipality-ta
-          issuer: https://municipality.local.swedenconnect.se/municipality-ta
-          jwk-alias:
-            - sign-key-1
-          hosted-record:
-            metadata:
-              json: |
-                {
-                  "federation_entity": {
-                    "organization_name": "Municipality",
-                    "federation_fetch_endpoint": "https://municipality.local.swedenconnect.se/municipality-ta/fetch",
-                    "federation_list_endpoint": "https://municipality.local.swedenconnect.se/municipality-ta/subordinate_listing"
-                  }
-                }
-        - subject: https://municipality.local.swedenconnect.se/municipality-resolver
-          issuer: https://municipality.local.swedenconnect.se/municipality-resolver
-          jwk-alias:
-            - sign-key-1
-          hosted-record:
-            metadata:
-              json: |
-                {
-                  "federation_entity": {
-                    "organization_name": "Municipality"
-                  }
-                }
-        - subject: https://private.local.swedenconnect.se/private-ta
-          issuer: https://private.local.swedenconnect.se/private-ta
-          jwk-alias:
-            - sign-key-1
-          hosted-record:
-            metadata:
-              json: |
-                {
-                  "federation_entity": {
-                    "organization_name": "Municipality",
-                    "federation_fetch_endpoint": "https://private.local.swedenconnect.se/private-ta/fetch",
-                    "federation_list_endpoint": "https://private.local.swedenconnect.se/private-ta/subordinate_listing"
-                  }
-                }
-        - subject: https://authorization.local.swedenconnect.se/authorization-ta
-          issuer: https://municipality.local.swedenconnect.se/municipality-ta
-          jwk-alias:
-            - sign-key-1
-          policy-name: authorization-policy
-        - subject: https://private.local.swedenconnect.se/private-ta
-          issuer: https://authorization.local.swedenconnect.se/authorization-ta
-          jwk-alias:
-            - sign-key-1
-        - subject: https://authorization.local.swedenconnect.se/op-1
-          issuer: https://authorization.local.swedenconnect.se/authorization-ta
-          jwk-alias:
-            - sign-key-1
-          hosted-record:
-            trust-mark-sources:
-              - issuer: https://authorization.local.swedenconnect.se/authorization-tmi
-                trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/certified
-            metadata:
-              json: |
-                { "federation_entity": { "organization_name": "Authorization" },
-                  "openid_provider": {
-                    "authorization_endpoint": "https://authorization.local.swedenconnect.se/op-1/authorization",
-                    "token_endpoint": "https://authorization.local.swedenconnect.se/op-1/token",
-                    "id_token_signing_alg_values_supported": [ "RS256" ],
-                    "issuer": "https://authorization.local.swedenconnect.se/op-1"
-                    }
-                  }
-        - subject: https://authorization.local.swedenconnect.se/op-2
-          issuer: https://authorization.local.swedenconnect.se/authorization-ta
-          jwk-alias:
-            - sign-key-1
-          hosted-record:
-            metadata:
-              json: |
-                { "federation_entity": { "organization_name": "Authorization" },
-                  "openid_provider": {
-                    "authorization_endpoint": "https://authorization.local.swedenconnect.se/op-2/authorization",
-                    "token_endpoint": "https://authorization.local.swedenconnect.se/op-2/token",
-                    "id_token_signing_alg_values_supported": [ "HS256" ],
-                    "issuer": "https://authorization.local.swedenconnect.se/op-2"
-                    }
-                  }
-      validation-keys:
-        - sign-key-1
-    rest-client-registry:
-      clients:
-        - name: resolver-integration
-          trust-store-bundle-name: oidf-internal
-        - name: registry-integration
-          base-uri: "http://localhost:9090"
-    resolver:
-      active: true
-      client: resolver-integration
       resolvers:
         - trusted-keys:
             - sign-key-1
           entity-identifier: https://municipality.local.swedenconnect.se/municipality-resolver
           trust-anchor: https://municipality.local.swedenconnect.se/municipality-ta
           alias: municipality-resolver
-    trust-anchor:
-      active: true
-      anchors:
+      trust-anchors:
         - alias: municipality-ta
           entity-identifier: https://municipality.local.swedenconnect.se/municipality-ta
         - alias: authorization-ta
           entity-identifier: https://authorization.local.swedenconnect.se/authorization-ta
         - alias: private-ta
           entity-identifier: https://private.local.swedenconnect.se/private-ta
-    trust-mark-issuer:
-      active: true
       trust-mark-issuers:
         - alias: authorization-tmi
           entity-identifier: https://authorization.local.swedenconnect.se/authorization-tmi
@@ -209,8 +84,102 @@ openid:
                   granted: "2024-01-01T10:00:00Z"
                   expires: "2030-01-01T10:00:00Z"
                   revoked: true
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
+    entities:
+      - subject: https://authorization.local.swedenconnect.se/authorization-tmi
+        issuer: https://authorization.local.swedenconnect.se/authorization-tmi
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": { 
+                  "organization_name": "Authorization"
+                }
+              }
+      - subject: https://authorization.local.swedenconnect.se/authorization-ta
+        issuer: https://authorization.local.swedenconnect.se/authorization-ta
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": {
+                  "organization_name": "Authorization",
+                  "federation_fetch_endpoint": "https://authorization.local.swedenconnect.se/authorization-ta/fetch",
+                  "federation_list_endpoint": "https://authorization.local.swedenconnect.se/authorization-ta/subordinate_listing"
+                }
+              }
+      - subject: https://municipality.local.swedenconnect.se/municipality-ta
+        issuer: https://municipality.local.swedenconnect.se/municipality-ta
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": {
+                  "organization_name": "Municipality",
+                  "federation_fetch_endpoint": "https://municipality.local.swedenconnect.se/municipality-ta/fetch",
+                  "federation_list_endpoint": "https://municipality.local.swedenconnect.se/municipality-ta/subordinate_listing"
+                }
+              }
+      - subject: https://municipality.local.swedenconnect.se/municipality-resolver
+        issuer: https://municipality.local.swedenconnect.se/municipality-resolver
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": {
+                  "organization_name": "Municipality"
+                }
+              }
+      - subject: https://private.local.swedenconnect.se/private-ta
+        issuer: https://private.local.swedenconnect.se/private-ta
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": {
+                  "organization_name": "Municipality",
+                  "federation_fetch_endpoint": "https://private.local.swedenconnect.se/private-ta/fetch",
+                  "federation_list_endpoint": "https://private.local.swedenconnect.se/private-ta/subordinate_listing"
+                }
+              }
+      - subject: https://authorization.local.swedenconnect.se/authorization-ta
+        issuer: https://municipality.local.swedenconnect.se/municipality-ta
+        public-keys:
+          - sign-key-1
+        policy-name: authorization-policy
+      - subject: https://private.local.swedenconnect.se/private-ta
+        issuer: https://authorization.local.swedenconnect.se/authorization-ta
+        public-keys:
+          - sign-key-1
+      - subject: https://authorization.local.swedenconnect.se/op-1
+        issuer: https://authorization.local.swedenconnect.se/authorization-ta
+        hosted-record:
+          trust-mark-sources:
+            - issuer: https://authorization.local.swedenconnect.se/authorization-tmi
+              trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/certified
+          metadata:
+            json: |
+              { "federation_entity": { "organization_name": "Authorization" },
+                "openid_provider": {
+                  "authorization_endpoint": "https://authorization.local.swedenconnect.se/op-1/authorization",
+                  "token_endpoint": "https://authorization.local.swedenconnect.se/op-1/token",
+                  "id_token_signing_alg_values_supported": [ "RS256" ],
+                  "issuer": "https://authorization.local.swedenconnect.se/op-1"
+                  }
+                }
+      - subject: https://authorization.local.swedenconnect.se/op-2
+        issuer: https://authorization.local.swedenconnect.se/authorization-ta
+        hosted-record:
+          metadata:
+            json: |
+              { "federation_entity": { "organization_name": "Authorization" },
+                "openid_provider": {
+                  "authorization_endpoint": "https://authorization.local.swedenconnect.se/op-2/authorization",
+                  "token_endpoint": "https://authorization.local.swedenconnect.se/op-2/token",
+                  "id_token_signing_alg_values_supported": [ "HS256" ],
+                  "issuer": "https://authorization.local.swedenconnect.se/op-2"
+                  }
+                }
+    policies:
+      - id: authorization-policy
+        policy:
+          resource: classpath:authorization-policy.json

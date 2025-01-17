@@ -16,8 +16,9 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
-import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
+import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 import se.digg.oidfed.trustanchor.TrustAnchorProperties;
@@ -30,16 +31,23 @@ import se.digg.oidfed.trustanchor.TrustAnchorProperties;
 public class TrustAnchorFactory {
 
   private final EntityRecordRegistry registry;
-  private final SubordinateStatementFactory factory;
+  private final RecordRegistrySource source;
+  private final SignerFactory signerFactory;
 
   /**
    * Constructor.
+   *
    * @param registry to use
-   * @param factory to use
+   * @param source   to use
+   * @param signerFactory to use
    */
-  public TrustAnchorFactory(final EntityRecordRegistry registry, final SubordinateStatementFactory factory) {
+  public TrustAnchorFactory(
+      final EntityRecordRegistry registry,
+      final RecordRegistrySource source,
+      final SignerFactory signerFactory) {
     this.registry = registry;
-    this.factory = factory;
+    this.source = source;
+    this.signerFactory = signerFactory;
   }
 
   /**
@@ -47,6 +55,7 @@ public class TrustAnchorFactory {
    * @return new instance
    */
   public TrustAnchor create(final TrustAnchorProperties properties) {
-    return new TrustAnchor(this.registry, properties, this.factory);
+    return new TrustAnchor(this.registry, properties, new SubordinateStatementFactory(this.source, this.signerFactory,
+        properties.getBasePath()));
   }
 }

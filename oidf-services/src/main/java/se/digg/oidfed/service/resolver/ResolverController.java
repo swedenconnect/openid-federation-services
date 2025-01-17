@@ -36,7 +36,6 @@ import java.util.List;
  * @author Felix Hellman
  */
 @RestController
-@OnResolverModuleActive
 public class ResolverController implements ApplicationModule {
 
   private final ResolverModuleRepository repository;

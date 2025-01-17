@@ -18,6 +18,7 @@ package se.digg.oidfed.service.modules;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.health.ReadyStateComponent;
 import se.digg.oidfed.service.trustmarkissuer.RestClientTrustMarkSubjectRecordIntegration;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
@@ -34,7 +35,7 @@ import java.util.Optional;
 @Component
 public class TrustMarkIssuerInitializer extends ReadyStateComponent {
 
-  private final TrustMarkIssuerModuleProperties properties;
+  private final OpenIdFederationConfigurationProperties properties;
   private final TrustMarkSubjectRepository repository;
   private final RestClientTrustMarkSubjectRecordIntegration integration;
 
@@ -45,7 +46,7 @@ public class TrustMarkIssuerInitializer extends ReadyStateComponent {
    * @param integration
    */
   public TrustMarkIssuerInitializer(
-      final TrustMarkIssuerModuleProperties properties,
+      final OpenIdFederationConfigurationProperties properties,
       final TrustMarkSubjectRepository repository,
       final RestClientTrustMarkSubjectRecordIntegration integration) {
     this.properties = properties;
@@ -56,21 +57,29 @@ public class TrustMarkIssuerInitializer extends ReadyStateComponent {
   /**
    * Trigger setup on module setup completed.
    * @param event to handle
+   * @return event to signal that trust mark issuers have been loaded
    */
   @EventListener
-  public void handle(final ModuleSetupCompleteEvent event) {
-    this.properties.getTrustMarkIssuers().stream()
+  public TrustMarkIssuerInitializedEvent handle(final ModuleSetupCompleteEvent event) {
+    this.properties.getModules().getTrustMarkIssuers().stream()
         .flatMap(tmi -> tmi.trustMarks().stream())
-        .forEach(tm -> tm.subjects().forEach(sub -> this.repository.register(tm.trustMarkId(), sub.toSubject())));
+        .forEach(tm -> tm.subjects().forEach(sub -> {
+          this.repository.register(tm.trustMarkId(), sub.toSubject());
+        }));
+    final OpenIdFederationConfigurationProperties.Registry.Integration integrationProperties = this.properties
+        .getRegistry()
+        .getIntegration();
 
-    this.properties.getTrustMarkIssuers()
-        .forEach(tmi -> tmi.trustMarks()
-            .forEach(tm -> this.integration.loadSubject(tmi.entityIdentifier(), tm.trustMarkId(), Optional.empty())
-                .forEach(subject -> this.repository.register(tm.trustMarkId(), subject))
-            )
-        );
-
+    if (integrationProperties.shouldExecute(OpenIdFederationConfigurationProperties.Registry.Step.TRUST_MARK_SUBJECT)) {
+      this.properties.getModules().getTrustMarkIssuers()
+          .forEach(tmi -> tmi.trustMarks()
+              .forEach(tm -> this.integration.loadSubject(tmi.entityIdentifier(), tm.trustMarkId(), Optional.empty())
+                  .forEach(subject -> this.repository.register(tm.trustMarkId(), subject))
+              )
+          );
+    }
     markReady();
+    return new TrustMarkIssuerInitializedEvent();
   }
 
   @Override

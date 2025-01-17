@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.health.ReadyStateComponent;
-import se.digg.oidfed.service.submodule.SubModuleConfigurationProperties;
 
 /**
  * Handles initialization of modules.
@@ -33,25 +33,30 @@ import se.digg.oidfed.service.submodule.SubModuleConfigurationProperties;
 public class SubModuleInitializer extends ReadyStateComponent {
 
   private final RestClientSubModuleIntegration integration;
-  private final SubModuleConfigurationProperties properties;
+  private final OpenIdFederationConfigurationProperties properties;
 
   /**
    * Constructor.
+   *
    * @param integration
    * @param properties
    */
   public SubModuleInitializer(
       final RestClientSubModuleIntegration integration,
-      final SubModuleConfigurationProperties properties) {
+      final OpenIdFederationConfigurationProperties properties) {
     this.integration = integration;
     this.properties = properties;
   }
 
   @EventListener
   SubModulesReadEvent handle(final ApplicationStartedEvent event) {
-    if (!this.properties.getSkipSubModuleLoad()) {
+    final OpenIdFederationConfigurationProperties.Registry.Integration integrationProperties = this.properties
+        .getRegistry()
+        .getIntegration();
+
+    if (integrationProperties.shouldExecute(OpenIdFederationConfigurationProperties.Registry.Step.SUBMODULE)) {
       try {
-        return new SubModulesReadEvent(this.integration.fetch(this.properties.getInstanceId()));
+        return new SubModulesReadEvent(this.integration.fetch(integrationProperties.getInstanceId()));
       } catch (final Exception e) {
         log.warn("Failed to communicate with registry, continuing ...", e);
         //throw new RuntimeException(e);

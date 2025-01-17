@@ -41,7 +41,6 @@ import java.util.List;
  * @author Felix Hellman
  */
 @RestController
-@ConditionalOnProperty(value = TrustAnchorModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustAnchorController implements ApplicationModule {
 
   private final TrustAnchorRepository repository;

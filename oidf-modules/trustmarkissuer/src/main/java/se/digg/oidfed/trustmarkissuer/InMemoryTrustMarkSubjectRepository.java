@@ -18,6 +18,7 @@ package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
 import java.time.Clock;
@@ -60,9 +61,9 @@ public class InMemoryTrustMarkSubjectRepository implements TrustMarkSubjectRepos
 
   @Override
   public List<TrustMarkSubject> getAll(final TrustMarkId trustMarkId) {
-    return this.trustMarkIdToSubjectList.get(trustMarkId.getTrustMarkId()).stream()
-        .filter(this::isSubjectValid)
-        .toList();
+    return Optional.ofNullable(this.trustMarkIdToSubjectList.get(trustMarkId.getTrustMarkId()))
+        .map(subjectList -> subjectList.stream().filter(this::isSubjectValid).toList())
+        .orElseGet(List::of);
   }
 
   @Override
@@ -71,6 +72,7 @@ public class InMemoryTrustMarkSubjectRepository implements TrustMarkSubjectRepos
     if (trustMarkSubjects != null) {
       return trustMarkSubjects.stream()
           .filter(s -> s.sub().equals(subject.getValue()))
+          .filter(this::isSubjectValid)
           .findFirst();
     }
     return Optional.empty();

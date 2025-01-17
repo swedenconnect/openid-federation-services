@@ -27,7 +27,6 @@ import java.util.List;
  *
  * @author Felix Hellman
  */
-@ConfigurationProperties("openid.federation.keys")
 @Getter
 @Setter
 public class FederationKeyConfigurationProperties {

@@ -37,15 +37,4 @@ public class EntityClient {
       throw new RuntimeException("Failed to fetch entity configiration for entity %s".formatted(entity.getValue()));
     }
   }
-
-  public EntityStatement getEntityConfiguration(final String url) {
-    try {
-      final String body = client.get().uri(url)
-          .retrieve()
-          .body(String.class);
-      return EntityStatement.parse(body);
-    } catch (final Exception e) {
-      throw new RuntimeException("Failed to fetch entity configiration for custom location %s".formatted(url));
-    }
-  }
 }

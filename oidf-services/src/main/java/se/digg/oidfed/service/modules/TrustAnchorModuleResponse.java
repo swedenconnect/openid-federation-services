@@ -37,6 +37,8 @@ public class TrustAnchorModuleResponse {
   private String entityIdentifier;
   /** Is the module qctive */
   private Boolean active;
+  /** Base path for trust anchor */
+  private String basePath;
 
   /**
    * Converts this instance to json object {@link HashMap}
@@ -68,7 +70,7 @@ public class TrustAnchorModuleResponse {
    * @return properties instance
    */
   public TrustAnchorProperties toProperties() {
-    return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier));
+    return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier), this.basePath);
   }
 
 }

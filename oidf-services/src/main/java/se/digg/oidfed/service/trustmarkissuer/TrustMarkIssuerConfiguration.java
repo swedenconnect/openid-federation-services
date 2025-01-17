@@ -19,7 +19,6 @@ package se.digg.oidfed.service.trustmarkissuer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
@@ -33,12 +32,11 @@ import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRecordVerifier;
  */
 @Slf4j
 @Configuration
-@EnableConfigurationProperties(TrustMarkIssuerModuleProperties.class)
-@ConditionalOnProperty(value = TrustMarkIssuerModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustMarkIssuerConfiguration {
   @Bean
-  RestClientTrustMarkSubjectRecordIntegration restClientTrustMarkSubjectRecordIntegration(@Qualifier("entity-record" +
-      "-integration-client") final RestClient client, final TrustMarkSubjectRecordVerifier verifier) {
+  RestClientTrustMarkSubjectRecordIntegration restClientTrustMarkSubjectRecordIntegration(
+      @Qualifier("registry-client") final RestClient client,
+      final TrustMarkSubjectRecordVerifier verifier) {
     return new RestClientTrustMarkSubjectRecordIntegration(client, verifier);
   }
 

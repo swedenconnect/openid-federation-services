@@ -41,7 +41,6 @@ import java.util.List;
  * @author Felix Hellman
  */
 @RestController
-@ConditionalOnProperty(value = TrustMarkIssuerModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
 public class TrustMarkIssuerController implements ApplicationModule {
 
   private final TrustMarkIssuerRepository repository;
