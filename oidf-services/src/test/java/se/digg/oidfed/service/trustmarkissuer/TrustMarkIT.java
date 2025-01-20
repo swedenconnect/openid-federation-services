@@ -42,7 +42,7 @@ class TrustMarkIT extends IntegrationTestParent {
   public void setup() throws InterruptedException {
     RestAssured.port = this.serverPort;
     RestAssured.basePath = "/tm";
-    while (!applicationReadyEndpoint.getResolverReady()) {
+    while (!applicationReadyEndpoint.applicationReady()) {
       log.info("Application not ready yet.. waiting for setup");
       Thread.sleep(500L);
     }

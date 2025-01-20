@@ -27,6 +27,7 @@ import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -71,8 +72,26 @@ public class TrustMarkIssuer implements Submodule {
    */
   public List<String> trustMarkListing(final TrustMarkListingRequest request)
       throws InvalidRequestException, NotFoundException {
+    if (Objects.isNull(request)) {
+      throw new InvalidRequestException("Request can not be null");
+    }
+    if (Objects.isNull(request.trustMarkId())) {
+      throw new InvalidRequestException("Trust mark id can not be null");
+    }
     final TrustMarkId id = TrustMarkId.validate(request.trustMarkId(), InvalidRequestException::new);
-    return this.subjectRepository.getAll(id).stream().map(TrustMarkSubject::sub).toList();
+    final List<String> result = this.subjectRepository
+        .getAll(id)
+        .stream()
+        .map(TrustMarkSubject::sub)
+        .toList();
+    if (result.isEmpty()) {
+      throw new NotFoundException("Could not find any subjects.");
+    }
+    if (Objects.nonNull(request.subject())) {
+      return result.stream().filter(sub -> sub.equals(request.subject())).map(List::of).findFirst()
+          .orElseGet(List::of);
+    }
+    return result;
   }
 
   /**

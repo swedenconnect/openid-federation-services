@@ -18,7 +18,6 @@ package se.digg.oidfed.service.resolver.cache;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import se.digg.oidfed.service.resolver.OnResolverModuleActive;
 
 /**
  * Event listener for cache operations.
@@ -26,7 +25,6 @@ import se.digg.oidfed.service.resolver.OnResolverModuleActive;
  * @author Felix Hellman
  */
 @Component
-@OnResolverModuleActive
 public class CacheEventListener {
 
   private final CacheRegistry registry;

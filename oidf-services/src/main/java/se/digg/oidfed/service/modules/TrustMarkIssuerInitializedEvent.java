@@ -14,22 +14,12 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.entity;
-
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-import java.util.Collections;
-import java.util.Optional;
+package se.digg.oidfed.service.modules;
 
 /**
- * Configuration class for policy.
+ * Event for when trust mark issuer has been initialized.
  *
  * @author Felix Hellman
  */
-@Configuration
-@EnableConfigurationProperties(PolicyConfigurationProperties.class)
-public class PolicyConfiguration {
-
+public record TrustMarkIssuerInitializedEvent() {
 }

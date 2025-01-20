@@ -16,18 +16,11 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
-import se.digg.oidfed.common.entity.integration.CachedRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
-import se.digg.oidfed.service.entity.EntityConfigurationProperties;
-import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
-import se.digg.oidfed.trustanchor.TrustAnchor;
-
-import java.util.List;
+import se.digg.oidfed.common.jwt.SignerFactory;
 
 /**
  * Configuration for Trust Anchor.
@@ -35,19 +28,13 @@ import java.util.List;
  * @author Felix Hellman
  */
 @Configuration
-@ConditionalOnProperty(value = TrustAnchorModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
-@EnableConfigurationProperties(TrustAnchorModuleProperties.class)
 public class TrustAnchorConfiguration {
   @Bean
-  SubordinateStatementFactory trustAnchorEntityStatementFactory(final RecordRegistrySource source,
-                                                                final EntityConfigurationProperties properties) {
-    return new SubordinateStatementFactory(source, properties.getBasePath());
-  }
-
-  @Bean
   TrustAnchorFactory trustAnchorFactory(
+      final RecordRegistrySource source,
       final EntityRecordRegistry registry,
-      final SubordinateStatementFactory factory) {
-    return new TrustAnchorFactory(registry, factory);
+      final SignerFactory signerFactory
+  ) {
+    return new TrustAnchorFactory(registry, source, signerFactory);
   }
 }

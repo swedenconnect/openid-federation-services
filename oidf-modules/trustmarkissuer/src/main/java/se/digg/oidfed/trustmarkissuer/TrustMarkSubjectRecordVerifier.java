@@ -17,11 +17,18 @@
 package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKMatcher;
+import com.nimbusds.jose.jwk.JWKSelector;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jwt.SignedJWT;
 import se.digg.oidfed.common.entity.RecordVerificationException;
 import se.digg.oidfed.common.entity.EntityRecordVerifier;
 import se.digg.oidfed.common.validation.FederationAssert;
 
+import java.security.Key;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
@@ -31,16 +38,16 @@ import java.util.Map;
  *
  * @author Per Fredrik Plars
  */
-public class TrustMarkSubjectRecordVerifier extends EntityRecordVerifier {
+public class TrustMarkSubjectRecordVerifier {
 
+  private final JWKSet jwks;
 
   /**
-   * Constructor.
-   *
-   * @param jwks to trust
+   * Constructor
+   * @param jwks
    */
   public TrustMarkSubjectRecordVerifier(final JWKSet jwks) {
-    super(jwks);
+    this.jwks = jwks;
   }
 
   /**
@@ -49,7 +56,7 @@ public class TrustMarkSubjectRecordVerifier extends EntityRecordVerifier {
    */
   public List<TrustMarkSubject> verifyTrustMarkSubjects(final String jwtString) {
     try {
-      final List<Object> records = verify(jwtString)
+      final List<Object> records = this.verify(jwtString)
           .getJWTClaimsSet()
           .getListClaim("trustmark_records");
       FederationAssert.assertNotEmpty(records,"Missing claim for:'trustmark_records' ");
@@ -63,4 +70,36 @@ public class TrustMarkSubjectRecordVerifier extends EntityRecordVerifier {
     }
   }
 
+  protected SignedJWT verify(final String jwtString) throws JOSEException, ParseException {
+    final SignedJWT jwt = SignedJWT.parse(jwtString);
+    final Key key = this.selectKey(jwt);
+
+    final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory()
+        .createJWSVerifier(jwt.getHeader(), key);
+
+    if(!jwt.verify(jwsVerifier)){
+      throw new RecordVerificationException("Failed to verify signature on record");
+    }
+    return jwt;
+  }
+
+
+  protected Key selectKey(final SignedJWT jwt) throws JOSEException {
+    final JWKSelector selector = new JWKSelector(new JWKMatcher.Builder()
+        .keyID(jwt.getHeader().getKeyID())
+        .build());
+
+    final JWK jwk = selector
+        .select(this.jwks)
+        .stream()
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Unable to resolve key for JWT with kid:'%s' "
+            .formatted(jwt.getHeader().getKeyID())));
+
+    return switch (jwk.getKeyType().getValue()) {
+      case "EC" -> jwk.toECKey().toKeyPair().getPublic();
+      case "RSA" -> jwk.toRSAKey().toKeyPair().getPublic();
+      case null, default -> throw new IllegalArgumentException("Unsupported key type");
+    };
+  }
 }

@@ -18,6 +18,7 @@ package se.digg.oidfed.service.submodule;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.service.modules.ResolverRegistrationEvent;
 import se.digg.oidfed.service.modules.TrustAnchorRegistrationEvent;
@@ -41,7 +42,6 @@ public class SubModuleRegistrar {
   private final ResolverFactory resolverFactory;
   private final TrustAnchorFactory trustAnchorFactory;
   private final TrustMarkIssuerFactory trustMarkIssuerFactory;
-
 
   /**
    * Constructor.

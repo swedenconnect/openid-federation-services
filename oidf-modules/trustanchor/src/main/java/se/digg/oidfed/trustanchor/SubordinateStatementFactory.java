@@ -23,10 +23,12 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
+import se.digg.oidfed.common.jwt.SignerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -38,19 +40,23 @@ public class SubordinateStatementFactory {
 
   private final RecordRegistrySource source;
 
+  private final SignerFactory factory;
+
   private final String baseUri;
 
   /**
    * Constructor.
    *
    * @param source of policies
+   * @param factory for signing hosted records
    * @param baseUri for hosted records
    */
   public SubordinateStatementFactory(
       final RecordRegistrySource source,
-      final String baseUri
-  ) {
+      final SignerFactory factory,
+      final String baseUri) {
     this.source = source;
+    this.factory = factory;
     this.baseUri = baseUri;
   }
 
@@ -92,7 +98,7 @@ public class SubordinateStatementFactory {
           .build();
 
       final EntityStatement entityStatement =
-          EntityStatement.sign(new EntityStatementClaimsSet(jwtClaimsSet), issuer.getJwks().getKeys().getFirst());
+          EntityStatement.sign(new EntityStatementClaimsSet(jwtClaimsSet), this.factory.getSignKey());
       return entityStatement.getSignedStatement();
     } catch (final Exception e) {
       throw new EntityStatementSignException("Failed to sign entity statement", e);

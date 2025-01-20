@@ -42,7 +42,6 @@ import java.util.Optional;
  */
 @Getter
 @Setter
-@ConfigurationProperties(TrustMarkIssuerModuleProperties.PROPERTY_PATH)
 public class TrustMarkIssuerModuleProperties {
   public static final String PROPERTY_PATH = "openid.federation.trust-mark-issuer";
 

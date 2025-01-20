@@ -109,6 +109,7 @@ public class IntegrationTestParent {
   @DynamicPropertySource
   static void registerRedisProperties(final DynamicPropertyRegistry registry) {
     registry.add("spring.data.redis.url", redis::getRedisURI);
+    registry.add("openid.federation.registry.integration.endpoints.base-path", () -> "http://localhost:9090");
   }
 
 
@@ -119,8 +120,8 @@ public class IntegrationTestParent {
   }
 
   @BeforeEach
-  public void integrationTestBefore() throws JOSEException, InterruptedException {
-    while (!applicationReadyEndpoint.getResolverReady()) {
+  void integrationTestBefore() throws JOSEException, InterruptedException {
+    while (!applicationReadyEndpoint.applicationReady()) {
       log.info("Application not ready yet.. waiting for setup");
       Thread.sleep(500L);
     }

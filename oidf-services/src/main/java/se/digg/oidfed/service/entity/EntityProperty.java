@@ -20,14 +20,18 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.util.Assert;
 import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.HostedRecord;
 import se.digg.oidfed.common.entity.TrustMarkSource;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.JsonObjectProperty;
+import se.digg.oidfed.service.keys.FederationKeys;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -37,15 +41,15 @@ import java.util.Optional;
  */
 @Getter
 @Setter
+@Slf4j
 public class EntityProperty {
   private String issuer;
   private String subject;
   private String policyName;
   private String overrideConfigurationLocation;
-  private List<String> jwkAlias;
+  private List<String> publicKeys;
   @NestedConfigurationProperty
-  private HostedEntityProperty hostedRecord;
-  private boolean isDefaultEntity;
+  private HostedRecordProperty hostedRecord;
 
   /**
    * Properties for hosted records
@@ -54,7 +58,7 @@ public class EntityProperty {
    */
   @Getter
   @Setter
-  public static class HostedEntityProperty {
+  public static class HostedRecordProperty {
     private JsonObjectProperty metadata;
     @NestedConfigurationProperty
     private List<TrustMarkSourceProperty> trustMarkSources;
@@ -84,20 +88,40 @@ public class EntityProperty {
    * Converts the properties to the correct format.
    *
    * @param registry to load keys from
+   * @param keys for default keys
    * @return new instance
    */
-  public EntityRecord toEntityRecord(final KeyRegistry registry) {
+  public EntityRecord toEntityRecord(final KeyRegistry registry, final FederationKeys keys) {
+
+    JWKSet jwkSet = null;
+
+    if (Objects.isNull(this.hostedRecord)) {
+      Assert.isTrue(Objects.nonNull(this.publicKeys),
+          "Public keys can not be null for a non-hosted entity %s %s".formatted(this.issuer, this.subject));
+      Assert.isTrue(!this.publicKeys.isEmpty(),
+          "Public keys can not be empty for a non-hosted entity %s %s".formatted(this.issuer, this.subject));
+      jwkSet = registry.getSet(this.publicKeys);
+    } else {
+      if (Objects.nonNull(this.publicKeys) && !this.publicKeys.isEmpty()) {
+        log.warn("Hosted record with issuer:{} subject:{} was configured with one or more public-key which will be " +
+                "ignored.",
+            this.issuer, this.subject);
+      }
+      jwkSet = keys.validationKeys();
+    }
+
+
     return new EntityRecord(
         new EntityID(this.issuer),
         new EntityID(this.subject),
         this.policyName,
-        new JWKSet(this.jwkAlias.stream().map(registry::getKey).map(Optional::get).toList()),
+        jwkSet,
         this.overrideConfigurationLocation,
         this.hostedRecord(this.hostedRecord).orElse(null)
     );
   }
 
-  private Optional<HostedRecord> hostedRecord(final HostedEntityProperty property) {
+  private Optional<HostedRecord> hostedRecord(final HostedRecordProperty property) {
     if (property == null) {
       return Optional.empty();
     }
@@ -106,7 +130,7 @@ public class EntityProperty {
         property.metadata.toJsonObject(),
         Optional.ofNullable(property.trustMarkSources)
             .map(tms -> tms.stream()
-                .map(tm -> tm.toTrustMarkSource())
+                .map(HostedRecordProperty.TrustMarkSourceProperty::toTrustMarkSource)
                 .toList()
             ).orElse(List.of()),
         property.authorityHints

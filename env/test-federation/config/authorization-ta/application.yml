@@ -31,7 +31,7 @@ openid:
       trust-mark-issuer-client: resolver-integration
       issuers:
         - https://authorization.local.swedenconnect.se/ta
-      jwk-alias:
+      public-keys:
         - sign-key-1
       base-path: https://authorization.local.swedenconnect.se/
       entity-registry:

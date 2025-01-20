@@ -31,15 +31,11 @@ import java.util.function.Predicate;
  * @author Felix Hellman
  */
 public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
-  private final EntityID defaultEntity;
   private final EntityRecordRegistry registry;
   private final List<Consumer<EntityRecord>> entityRecordRegistrationHook;
 
   @Override
   public Optional<EntityRecord> getEntity(final String path) {
-    if (Objects.isNull(path) || path.isEmpty() || path.equalsIgnoreCase("/")) {
-      return this.registry.getEntity(this.defaultEntity);
-    }
     return this.registry.getEntity(path);
   }
 
@@ -54,16 +50,12 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
   }
 
   /**
-   * @param defaultEntity to find under the "/" or empty path
    * @param registry to perform serach upon
    * @param entityRecordRegistrationHook to execute when a record has been added
    */
   public DelegatingEntityRecordRegistry(
-      final EntityID defaultEntity,
       final EntityRecordRegistry registry,
       final List<Consumer<EntityRecord>> entityRecordRegistrationHook) {
-
-    this.defaultEntity = defaultEntity;
     this.registry = registry;
     this.entityRecordRegistrationHook = entityRecordRegistrationHook;
   }

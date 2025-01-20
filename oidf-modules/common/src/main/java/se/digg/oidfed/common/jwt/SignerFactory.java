@@ -89,6 +89,7 @@ public class SignerFactory {
       final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().get();
       final JWSHeader header = new JWSHeader.Builder(alg)
           .type(type)
+          .keyID(this.signKey.getKeyID())
           .build();
       final SignedJWT signedJWT = new SignedJWT(header, claims);
       signedJWT.sign(signer);

@@ -26,7 +26,6 @@ import se.digg.oidfed.service.testclient.TrustAnchorClient;
 
 import java.text.ParseException;
 import java.util.List;
-import java.util.Objects;
 
 class TrustAnchorIT extends IntegrationTestParent {
 

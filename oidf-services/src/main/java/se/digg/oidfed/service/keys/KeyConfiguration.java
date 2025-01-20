@@ -17,11 +17,11 @@
 package se.digg.oidfed.service.keys;
 
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.keys.KeyProperty;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
@@ -32,7 +32,6 @@ import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
  * @author Felix Hellman
  */
 @Configuration
-@EnableConfigurationProperties(FederationKeyConfigurationProperties.class)
 public class KeyConfiguration {
   @Bean
   KeyRegistry keyRegistry(final CredentialBundles bundles) {
@@ -50,9 +49,10 @@ public class KeyConfiguration {
 
   @Bean
   FederationKeys federationKeys(
-      final FederationKeyConfigurationProperties properties,
+      final OpenIdFederationConfigurationProperties properties,
       final KeyRegistry registry) {
-    return new FederationKeys(registry.getSet(properties.getSign()), registry.getSet(properties.getSign()));
+    return new FederationKeys(registry.getSet(properties.getSign()),
+        registry.getSet(properties.getRegistry().getIntegration().getValidationKeys()));
   }
 
 }

@@ -20,7 +20,6 @@ import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.common.validation.FederationAssert;
@@ -38,7 +37,6 @@ import java.util.Optional;
  */
 @Getter
 @Setter
-@ConfigurationProperties(ResolverConfigurationProperties.PROPERTY_PATH)
 public class ResolverConfigurationProperties {
 
   /**

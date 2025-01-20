@@ -19,7 +19,6 @@ package se.digg.oidfed.service.entity;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import se.digg.oidfed.common.entity.PolicyRecord;
 import se.digg.oidfed.common.validation.FederationAssert;
 import se.digg.oidfed.service.JsonObjectProperty;
@@ -35,7 +34,6 @@ import java.util.Optional;
  */
 @Getter
 @Setter
-@ConfigurationProperties("openid.federation.policy-registry")
 public class PolicyConfigurationProperties {
   private List<PolicyRecordProperty> policies;
 
@@ -56,13 +54,13 @@ public class PolicyConfigurationProperties {
   @Setter
   public static class PolicyRecordProperty {
     private JsonObjectProperty policy;
-    private String name;
+    private String id;
 
     /**
      * @return converted policy record
      */
     public PolicyRecord toRecord() {
-      return new PolicyRecord(this.name, this.policy.toJsonObject());
+      return new PolicyRecord(this.id, this.policy.toJsonObject());
     }
 
     /**
@@ -73,7 +71,7 @@ public class PolicyConfigurationProperties {
 
       FederationAssert.assertNotEmpty(this.policy,
           "openid.federation.policy-registry.policies[].policy is empty. Must be configured");
-      FederationAssert.assertNotEmpty(this.name,
+      FederationAssert.assertNotEmpty(this.id,
           "openid.federation.policy-registry.policies[].name is empty. Must be configured");
     }
   }

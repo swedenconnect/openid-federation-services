@@ -31,7 +31,6 @@ import java.util.List;
  */
 @Getter
 @Setter
-@ConfigurationProperties(TrustAnchorModuleProperties.PROPERTY_PATH)
 public class TrustAnchorModuleProperties {
   /** Property path for this module */
   public static final String PROPERTY_PATH = "openid.federation.trust-anchor";
@@ -54,13 +53,15 @@ public class TrustAnchorModuleProperties {
     private String alias;
     /** EntityId for the trust anchor */
     private String entityIdentifier;
+    /** Base path for trust anchor */
+    private String basePath;
 
     /**
      * Converts this to {@link TrustAnchorProperties}
      * @return property
      */
     public TrustAnchorProperties toTrustAnchorProperties() {
-      return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier));
+      return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier), this.basePath);
     }
   }
 }

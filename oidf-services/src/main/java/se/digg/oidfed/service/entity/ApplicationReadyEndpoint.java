@@ -49,7 +49,7 @@ public class ApplicationReadyEndpoint {
    * @return true if all modules have been loaded.
    */
   @ReadOperation
-  public boolean getResolverReady() {
+  public boolean applicationReady() {
     final long nonReadyComponents = this.readyStateComponents
         .stream()
         .filter(c -> !c.ready())

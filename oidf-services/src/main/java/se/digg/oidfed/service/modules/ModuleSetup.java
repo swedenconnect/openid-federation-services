@@ -21,8 +21,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.health.ReadyStateComponent;
-import se.digg.oidfed.service.resolver.ResolverConfigurationProperties;
 import se.digg.oidfed.service.trustanchor.TrustAnchorModuleProperties;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
 
@@ -37,30 +37,22 @@ import java.util.Objects;
 @Component
 public class ModuleSetup extends ReadyStateComponent {
 
-  private final ResolverConfigurationProperties resolverProperties;
-  private final TrustAnchorModuleProperties trustAnchorProperties;
-  private final TrustMarkIssuerModuleProperties trustMarkIssuerProperties;
+  private final OpenIdFederationConfigurationProperties properties;
   private final KeyRegistry registry;
   private final ApplicationEventPublisher publisher;
 
 
   /**
    * Constructor.
-   * @param resolverProperties
-   * @param trustAnchorProperties
-   * @param trustMarkIssuerProperties
+   * @param properties
    * @param registry
    * @param publisher
    */
   public ModuleSetup(
-      final ResolverConfigurationProperties resolverProperties,
-      final TrustAnchorModuleProperties trustAnchorProperties,
-      final TrustMarkIssuerModuleProperties trustMarkIssuerProperties,
+      final OpenIdFederationConfigurationProperties properties,
       final KeyRegistry registry,
       final ApplicationEventPublisher publisher) {
-    this.resolverProperties = resolverProperties;
-    this.trustAnchorProperties = trustAnchorProperties;
-    this.trustMarkIssuerProperties = trustMarkIssuerProperties;
+    this.properties = properties;
     this.registry = registry;
     this.publisher = publisher;
   }
@@ -72,17 +64,17 @@ public class ModuleSetup extends ReadyStateComponent {
    */
   @EventListener
   public void handle(final ApplicationStartedEvent event) {
-    this.resolverProperties.getResolvers().stream()
+    this.properties.getModules().getResolvers().stream()
         .map(resolver -> resolver.toResolverProperties(this.registry))
         .map(ResolverRegistrationEvent::new)
         .forEach(this.publisher::publishEvent);
 
-    this.trustAnchorProperties.getAnchors().stream()
+    this.properties.getModules().getTrustAnchors().stream()
         .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::toTrustAnchorProperties)
         .map(TrustAnchorRegistrationEvent::new)
         .forEach(this.publisher::publishEvent);
 
-    this.trustMarkIssuerProperties.getTrustMarkIssuers().stream()
+    this.properties.getModules().getTrustMarkIssuers().stream()
         .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::toProperties)
         .map(TrustMarkIssuerRegistrationEvent::new)
         .forEach(this.publisher::publishEvent);
