@@ -23,9 +23,8 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.common.validation.FederationAssert;
 import se.digg.oidfed.resolver.ResolverProperties;
-import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
-import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -42,16 +41,24 @@ import java.util.Optional;
 @ConfigurationProperties(ResolverConfigurationProperties.PROPERTY_PATH)
 public class ResolverConfigurationProperties {
 
-  /** Property path */
+  /**
+   * Property path
+   */
   public static final String PROPERTY_PATH = "openid.federation.resolver";
 
 
-  /**List of Resolver Module Properties*/
+  /**
+   * List of Resolver Module Properties
+   */
   @NestedConfigurationProperty
   private List<ResolverModuleProperties> resolvers;
-  /** Name of the rest client to use*/
+  /**
+   * Name of the rest client to use
+   */
   private String client;
-  /** Set to true if this module should be active or not. */
+  /**
+   * Set to true if this module should be active or not.
+   */
   private Boolean active;
 
 
@@ -59,7 +66,7 @@ public class ResolverConfigurationProperties {
    * Validate data of configuration
    */
   @PostConstruct
-  public void validate(){
+  public void validate() {
     FederationAssert.assertNotEmpty(this.resolvers,
         "resolvers is empty. Must be configured");
 
@@ -75,10 +82,14 @@ public class ResolverConfigurationProperties {
   @Setter
   public static class ResolverModuleProperties {
 
-    /** Supported trustAnchor for this resolver */
+    /**
+     * Supported trustAnchor for this resolver
+     */
     private String trustAnchor;
 
-    /** Duration for resolve responses */
+    /**
+     * Duration for resolve responses
+     */
     private Duration duration = Duration.of(7, ChronoUnit.DAYS);
 
     private List<String> trustedKeys;
@@ -104,9 +115,6 @@ public class ResolverConfigurationProperties {
           this.duration,
           list,
           this.entityIdentifier,
-          registry.getKey(this.signKeyAlias)
-              .orElseThrow(() -> new IllegalArgumentException("Unable to find key for key alias:'%s'"
-                  .formatted(this.signKeyAlias))),
           Duration.ofSeconds(10),
           this.alias
       );
@@ -115,10 +123,10 @@ public class ResolverConfigurationProperties {
     /**
      * Validate configuration data
      */
-    public void validate(){
+    public void validate() {
+
       FederationAssert.assertNotEmpty(this.trustAnchor,
           "trustAnchor is empty. Must be configured");
-
     }
 
   }

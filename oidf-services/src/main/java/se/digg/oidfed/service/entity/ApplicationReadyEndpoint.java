@@ -32,7 +32,7 @@ import java.util.List;
 @Component
 @Endpoint(id = "ready")
 @Slf4j
-public class EntityReadyEndpoint {
+public class ApplicationReadyEndpoint {
 
   private final List<ReadyStateComponent> readyStateComponents;
 
@@ -41,7 +41,7 @@ public class EntityReadyEndpoint {
    *
    * @param readyStateComponents to load
    */
-  public EntityReadyEndpoint(final List<ReadyStateComponent> readyStateComponents) {
+  public ApplicationReadyEndpoint(final List<ReadyStateComponent> readyStateComponents) {
     this.readyStateComponents = readyStateComponents;
   }
 

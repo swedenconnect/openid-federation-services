@@ -46,9 +46,9 @@ import se.digg.oidfed.common.entity.EntityRecordSigner;
 import se.digg.oidfed.common.entity.HostedRecord;
 import se.digg.oidfed.common.entity.PolicyRecord;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.entity.ApplicationReadyEndpoint;
 import se.digg.oidfed.service.entity.EntityInitializer;
 import se.digg.oidfed.service.entity.TestFederationEntities;
-import se.digg.oidfed.service.health.ReadyStateComponent;
 import se.digg.oidfed.service.modules.ModuleSetupCompleteEvent;
 import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
 
@@ -70,7 +70,7 @@ public class IntegrationTestParent {
   protected SslBundles bundles;
 
   @Autowired
-  private List<ReadyStateComponent> readyStateComponents;
+  protected ApplicationReadyEndpoint applicationReadyEndpoint;
 
   @Autowired
   protected ApplicationEventPublisher publisher;
@@ -119,8 +119,8 @@ public class IntegrationTestParent {
   }
 
   @BeforeEach
-  void before() throws JOSEException, InterruptedException {
-    while (readyStateComponents.stream().filter(r -> !r.ready()).count() != 0) {
+  public void integrationTestBefore() throws JOSEException, InterruptedException {
+    while (!applicationReadyEndpoint.getResolverReady()) {
       log.info("Application not ready yet.. waiting for setup");
       Thread.sleep(500L);
     }

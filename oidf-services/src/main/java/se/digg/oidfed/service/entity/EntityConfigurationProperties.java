@@ -21,7 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
-import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
+import se.digg.oidfed.common.validation.FederationAssert;
 
 import java.util.List;
 
@@ -44,11 +44,6 @@ public class EntityConfigurationProperties {
    * Rest client to use for entity registry
    */
   private String client;
-
-  /**
-   * Alias of all keys that can verify entity records
-   */
-  private List<String> jwkAlias;
 
   /**
    * List of issuers that is configured for this node.
@@ -98,8 +93,6 @@ public class EntityConfigurationProperties {
 
     FederationAssert.assertNotEmpty(this.basePath,
         "openid.federation.entity-registry.basePath has to be set");
-
-
   }
 }
 

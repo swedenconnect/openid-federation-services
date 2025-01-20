@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.common.entity;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
@@ -26,7 +25,6 @@ import lombok.Getter;
 import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * Data class for entity record.
@@ -77,8 +75,6 @@ public class EntityRecord {
     builder.claim("issuer", this.issuer.getValue());
     builder.claim("subject", this.subject.getValue());
     builder.claim("policy_record_id", this.policyRecordId);
-    Optional.ofNullable(this.jwks).map(JWKSet::toJSONObject)
-        .ifPresent(jwks -> builder.claim("jwks", jwks));
 
     Optional.ofNullable(this.hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
     Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
@@ -86,25 +82,6 @@ public class EntityRecord {
     final JWTClaimsSet build = builder
         .build();
     return build.toJSONObject();
-  }
-
-  /**
-   * @return first key
-   */
-  public JWK getSignKey() {
-    return this.getSignKey((jwk) -> true);
-  }
-
-  /**
-   * @param selector to match a key towards
-   * @return first found key with the given selector
-   */
-  public JWK getSignKey(final Predicate<JWK> selector) {
-    return this.jwks.getKeys()
-        .stream()
-        .filter(selector)
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("No such key exits for this entity"));
   }
 
   /**

@@ -42,7 +42,9 @@ import se.digg.oidfed.common.entity.integration.RecordRegistryIntegration;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.TrustMarkIntegration;
 import se.digg.oidfed.common.entity.integration.TrustMarkLoadingCache;
+import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.keys.KeyRegistry;
+import se.digg.oidfed.service.keys.FederationKeyConfigurationProperties;
 import se.digg.oidfed.service.rest.RestClientRegistry;
 
 import java.util.List;
@@ -90,17 +92,17 @@ public class EntityConfiguration {
   /**
    * Factory method to create an instance of {@link EntityConfigurationFactory}.
    *
-   * @param registry the {@link KeyRegistry} to retrieve the signing key used for creating entity statements
+   * @param factory for signing
    * @param properties to determine signing key
    * @param trustMarkLoadingCache for fetching trust marks
    * @return an instance of {@link EntityConfigurationFactory} configured with the specified signing key
    */
   @Bean
-  EntityConfigurationFactory entityStatementFactory(final KeyRegistry registry,
+  EntityConfigurationFactory entityStatementFactory(final SignerFactory factory,
                                                     final EntityConfigurationProperties properties,
                                                     final TrustMarkLoadingCache trustMarkLoadingCache
   ) {
-    return new EntityConfigurationFactory(registry.getKey(properties.getSignKeyAlias()).get(), trustMarkLoadingCache);
+    return new EntityConfigurationFactory(factory, trustMarkLoadingCache);
   }
 
   /**
@@ -154,8 +156,8 @@ public class EntityConfiguration {
   @Qualifier("entity-record-verifier")
   EntityRecordVerifier entityRecordVerifier(
       final KeyRegistry registry,
-      final EntityConfigurationProperties properties) {
-    return new EntityRecordVerifier(registry.getSet(properties.getJwkAlias()));
+      final FederationKeyConfigurationProperties properties) {
+    return new EntityRecordVerifier(registry.getSet(properties.getValidation()));
   }
 
   /**

@@ -28,12 +28,11 @@ import java.util.List;
  * @param resolveResponseDuration The validity duration of issued resolve responses
  * @param trustedKeys Keys trusted by this resolver to validate Entity Statement chains
  * @param entityIdentifier for the resolver
- * @param signKey for the resolver to sign responses with
  * @param stepRetryTime time to wait before retrying a step that has failed
  * @param alias of the module
  * @author Felix Hellman
  */
 public record ResolverProperties(String trustAnchor, Duration resolveResponseDuration, List<JWK> trustedKeys,
-    String entityIdentifier, JWK signKey, Duration stepRetryTime, String alias) {
+    String entityIdentifier, Duration stepRetryTime, String alias) {
 }
 

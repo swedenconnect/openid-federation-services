@@ -20,7 +20,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.service.modules.ResolverRegistrationEvent;
+import se.digg.oidfed.service.modules.TrustAnchorRegistrationEvent;
+import se.digg.oidfed.service.modules.TrustMarkIssuerRegistrationEvent;
 import se.digg.oidfed.service.resolver.ResolverFactory;
+import se.digg.oidfed.service.trustanchor.TrustAnchorFactory;
+import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerFactory;
+import se.digg.oidfed.trustanchor.TrustAnchor;
+import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 
 import java.util.List;
 
@@ -32,25 +38,60 @@ import java.util.List;
 @Component
 public class SubModuleRegistrar {
   private final InMemorySubModuleRegistry registry;
-  private final ResolverFactory factory;
+  private final ResolverFactory resolverFactory;
+  private final TrustAnchorFactory trustAnchorFactory;
+  private final TrustMarkIssuerFactory trustMarkIssuerFactory;
+
 
   /**
    * Constructor.
+   *
    * @param registry
-   * @param factory
+   * @param resolverFactory
+   * @param trustAnchorFactory
+   * @param trustMarkIssuerFactory
    */
-  public SubModuleRegistrar(final InMemorySubModuleRegistry registry, final ResolverFactory factory) {
+  public SubModuleRegistrar(
+      final InMemorySubModuleRegistry registry,
+      final ResolverFactory resolverFactory,
+      final TrustAnchorFactory trustAnchorFactory,
+      final TrustMarkIssuerFactory trustMarkIssuerFactory) {
     this.registry = registry;
-    this.factory = factory;
+    this.resolverFactory = resolverFactory;
+    this.trustAnchorFactory = trustAnchorFactory;
+    this.trustMarkIssuerFactory = trustMarkIssuerFactory;
   }
 
   /**
    * Resolver registration.
+   *
    * @param event to handle
    */
   @EventListener
   public void handle(final ResolverRegistrationEvent event) {
-    final Resolver resolver = this.factory.create(event.properties());
+    final Resolver resolver = this.resolverFactory.create(event.properties());
     this.registry.registerResolvers(List.of(resolver));
+  }
+
+  /**
+   * Trust-anchor registration.
+   *
+   * @param event to handle
+   */
+  @EventListener
+  public void handle(final TrustAnchorRegistrationEvent event) {
+    final TrustAnchor trustAnchor = this.trustAnchorFactory.create(event.properties());
+    this.registry.registerTrustAnchor(List.of(trustAnchor));
+  }
+
+  /**
+   * Trust mark issuer registration.
+   *
+   * @param event to handle
+   */
+  @EventListener
+  public void handle(final TrustMarkIssuerRegistrationEvent event) {
+    final TrustMarkIssuer trustMarkIssuer = this.trustMarkIssuerFactory.create(event.property());
+    this.registry.registerTrustMarkIssuer(List.of(trustMarkIssuer));
   }
 }

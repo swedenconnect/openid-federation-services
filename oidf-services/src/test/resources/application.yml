@@ -32,9 +32,14 @@ server:
 logging:
   level:
     ROOT: INFO
-    se.digg: INFO
+    se.digg: DEBUG
 openid:
   federation:
+    keys:
+      sign:
+        - sign-key-1
+      validation:
+        - sign-key-1
     sub-module-registry:
       instance-id: 4860ae57-9716-492b-951c-2a8c334f790a
     policy-registry:
@@ -45,14 +50,11 @@ openid:
     entity-registry:
       skip-registry-init: true
       client: registry-integration
-      sign-key-alias: sign-key-1
       trust-mark-issuer-client: resolver-integration
       issuers:
         - https://municipality.local.swedenconnect.se/municipality-ta
         - https://authorization.local.swedenconnect.se/authorization-ta
         - https://private.local.swedenconnect.se/private-ta
-      jwk-alias:
-        - sign-key-1
       base-path: https://municipality.local.swedenconnect.se/
       entity-registry:
         - subject: https://authorization.local.swedenconnect.se/authorization-tmi
@@ -163,6 +165,8 @@ openid:
                     "issuer": "https://authorization.local.swedenconnect.se/op-2"
                     }
                   }
+      validation-keys:
+        - sign-key-1
     rest-client-registry:
       clients:
         - name: resolver-integration
@@ -177,7 +181,6 @@ openid:
             - sign-key-1
           entity-identifier: https://municipality.local.swedenconnect.se/municipality-resolver
           trust-anchor: https://municipality.local.swedenconnect.se/municipality-ta
-          sign-key-alias: sign-key-1
           alias: municipality-resolver
     trust-anchor:
       active: true

@@ -28,6 +28,7 @@ import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONObject;
 import se.digg.oidfed.common.entity.integration.TrustMarkLoadingCache;
 import se.digg.oidfed.common.entity.integration.TrustMarkRequest;
+import se.digg.oidfed.common.jwt.SignerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -42,16 +43,17 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 public class EntityConfigurationFactory {
-  private final JWK signKey;
+
+  private final SignerFactory signerFactory;
 
   private final TrustMarkLoadingCache trustMarks;
 
   /**
-   * @param signKey to sign entity statements with
+   * @param signerFactory to sign entity statements with
    * @param trustMarks to supply eventual trust marks
    */
-  public EntityConfigurationFactory(final JWK signKey, final TrustMarkLoadingCache trustMarks) {
-    this.signKey = signKey;
+  public EntityConfigurationFactory(final SignerFactory signerFactory, final TrustMarkLoadingCache trustMarks) {
+    this.signerFactory = signerFactory;
     this.trustMarks = trustMarks;
   }
 
@@ -68,10 +70,9 @@ public class EntityConfigurationFactory {
       builder.expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)));
       builder.claim("metadata", record.getHostedRecord().getMetadata());
       builder.claim("authority_hint", record.getIssuer());
+      builder.claim("jwks", this.signerFactory.getSignKeys().toPublicJWKSet().toJSONObject());
       if (Objects.isNull(record.getHostedRecord())) {
-        builder.claim("jwks", record.getJwks().toJSONObject());
-        final JWK signKey = record.getSignKey();
-        return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), signKey);
+        return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signerFactory.getSignKey());
       }
       final List<TrustMarkSource> trustMarkSources = record.getHostedRecord().getTrustMarkSources();
       if (Objects.nonNull(trustMarkSources)) {
@@ -86,8 +87,7 @@ public class EntityConfigurationFactory {
         builder.claim("trust_marks", trustMarks);
       }
       builder.issuer(record.getSubject().getValue());
-      builder.claim("jwks", new JWKSet(List.of(this.signKey)).toJSONObject());
-      return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signKey);
+      return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signerFactory.getSignKey());
     }
     catch (JOSEException | ParseException e) {
       throw new IllegalArgumentException("Failed to sign entity configuration", e);

@@ -21,8 +21,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import se.digg.oidfed.common.entity.PolicyRecord;
+import se.digg.oidfed.common.validation.FederationAssert;
 import se.digg.oidfed.service.JsonObjectProperty;
-import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
 
 import java.util.Collections;
 import java.util.List;
@@ -70,11 +70,11 @@ public class PolicyConfigurationProperties {
      */
     @PostConstruct
     public void validate() {
+
       FederationAssert.assertNotEmpty(this.policy,
           "openid.federation.policy-registry.policies[].policy is empty. Must be configured");
       FederationAssert.assertNotEmpty(this.name,
           "openid.federation.policy-registry.policies[].name is empty. Must be configured");
-
     }
   }
 }

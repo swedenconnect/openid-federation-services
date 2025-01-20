@@ -16,7 +16,9 @@
  */
 package se.digg.oidfed.service.modules;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
+import se.digg.oidfed.trustanchor.TrustAnchorProperties;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,6 +61,14 @@ public class TrustAnchorModuleResponse {
     trustAnchorModuleResponse.entityIdentifier = (String) json.get("entity-identifier");
     trustAnchorModuleResponse.active = (Boolean) json.get("active");
     return trustAnchorModuleResponse;
+  }
+
+  /**
+   * Concerts response to properties.
+   * @return properties instance
+   */
+  public TrustAnchorProperties toProperties() {
+    return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier));
   }
 
 }

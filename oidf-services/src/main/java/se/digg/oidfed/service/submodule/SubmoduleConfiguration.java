@@ -21,14 +21,21 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
+import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.service.entity.EntityConfigurationProperties;
+import se.digg.oidfed.service.keys.FederationKeyConfigurationProperties;
+import se.digg.oidfed.service.keys.FederationKeys;
 import se.digg.oidfed.service.modules.RestClientSubModuleIntegration;
 import se.digg.oidfed.service.modules.SubModuleVerifier;
+import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
+import se.digg.oidfed.trustmarkissuer.InMemoryTrustMarkSubjectRepository;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
+import se.digg.oidfed.trustmarkissuer.TrustMarkSigner;
+import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRepository;
 
+import java.time.Clock;
 import java.util.List;
 
 /**
@@ -43,8 +50,7 @@ public class SubmoduleConfiguration {
   InMemorySubModuleRegistry inMemorySubModuleRegistry(
       final List<Resolver> resolvers,
       final List<TrustAnchor> trustAnchors,
-      final List<TrustMarkIssuer> trustMarkIssuers
-  ) {
+      final List<TrustMarkIssuer> trustMarkIssuers) {
     final InMemorySubModuleRegistry inMemorySubModuleRegistry = new InMemorySubModuleRegistry();
     inMemorySubModuleRegistry.registerResolvers(resolvers);
     inMemorySubModuleRegistry.registerTrustAnchor(trustAnchors);
@@ -61,7 +67,35 @@ public class SubmoduleConfiguration {
 
   @Bean
   SubModuleVerifier subModuleVerifier(final KeyRegistry registry,
-                                      final EntityConfigurationProperties properties) {
-    return new SubModuleVerifier(registry.getSet(properties.getJwkAlias()));
+                                      final FederationKeyConfigurationProperties properties) {
+    return new SubModuleVerifier(registry.getSet(properties.getValidation()));
+  }
+
+  @Bean
+  TrustMarkIssuerFactory factory(
+      final TrustMarkSigner signer,
+      final TrustMarkSubjectRepository repository
+  ) {
+    return new TrustMarkIssuerFactory(signer, repository);
+  }
+
+  @Bean
+  TrustMarkSigner trustMarkSigner(final SignerFactory adapter, final Clock clock) {
+    return new TrustMarkSigner(adapter, clock);
+  }
+
+  @Bean
+  SignerFactory entityToSignerAdapter(final FederationKeys keys) {
+    return new SignerFactory(keys.signKeys());
+  }
+
+  @Bean
+  TrustMarkSubjectRepository trustMarkSubjectRepository(final Clock clock) {
+    return new InMemoryTrustMarkSubjectRepository(clock);
+  }
+
+  @Bean
+  Clock clock() {
+    return Clock.systemDefaultZone();
   }
 }

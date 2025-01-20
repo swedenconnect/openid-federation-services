@@ -17,16 +17,14 @@
 package se.digg.oidfed.resolver;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import se.digg.oidfed.common.jwt.SignerFactory;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -41,6 +39,7 @@ import java.util.Map;
 public class ResolverResponseFactory {
   private final Clock clock;
   private final ResolverProperties properties;
+  private final SignerFactory adapter;
 
   private final Map<KeyType, JWSAlgorithm> keyTypeJWSAlgorithmMap = Map.of(
       KeyType.EC, JWSAlgorithm.ES256,
@@ -52,10 +51,12 @@ public class ResolverResponseFactory {
    *
    * @param clock for determining current time
    * @param properties for response parameters
+   * @param adapter for finding a signer
    */
-  public ResolverResponseFactory(final Clock clock, final ResolverProperties properties) {
+  public ResolverResponseFactory(final Clock clock, final ResolverProperties properties, final SignerFactory adapter) {
     this.clock = clock;
     this.properties = properties;
+    this.adapter = adapter;
   }
 
   /**
@@ -66,7 +67,6 @@ public class ResolverResponseFactory {
    * @throws JOSEException
    */
   public String sign(final ResolverResponse resolverResponse) throws ParseException, JOSEException {
-    final JWK signingKey = this.properties.signKey();
     final Instant now = Instant.now(this.clock);
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder(resolverResponse.entityStatement().getClaimsSet().toJWTClaimsSet())
@@ -81,20 +81,8 @@ public class ResolverResponseFactory {
                 resolverResponse.trustChain().stream().map(statement -> statement.getSignedStatement().serialize())
                     .toList())
             .build();
-    final SignedJWT jwt =
-        new SignedJWT(new JWSHeader(this.keyTypeJWSAlgorithmMap.get(signingKey.getKeyType())), claims);
-    jwt.sign(this.getSigner(signingKey));
-    return jwt.serialize();
-  }
-
-  private JWSSigner getSigner(final JWK signingKey) throws JOSEException {
-    final KeyType keyType = signingKey.getKeyType();
-    if (keyType.equals(KeyType.EC)) {
-      return new ECDSASigner(signingKey.toECKey());
-    }
-    if (keyType.equals(KeyType.RSA)) {
-      return new RSASSASigner(signingKey.toRSAKey());
-    }
-    throw new JOSEException("Unsupported key type");
+    return this.adapter.createSigner()
+        .sign(new JOSEObjectType("resolve-response+jwt"), claims)
+        .serialize();
   }
 }

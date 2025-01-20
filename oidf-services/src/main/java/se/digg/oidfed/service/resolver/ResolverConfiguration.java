@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.client.RestClient;
+import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.resolver.ResolverProperties;
@@ -47,7 +48,6 @@ import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
 import se.digg.oidfed.service.rest.RestClientRegistry;
 
 import java.util.List;
-import java.util.concurrent.Executors;
 
 /**
  * Configuration class for Resolver.
@@ -97,9 +97,11 @@ public class ResolverConfiguration {
       final RedisOperations redisOperations,
       final MetadataProcessor processor,
       final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory,
-      final CacheRegistry registry
-  ) {
-    return new ResolverFactory(versionTemplate, redisOperations, processor, entityStatementTreeLoaderFactory, registry);
+      final CacheRegistry registry,
+      final SignerFactory adapter
+      ) {
+    return new ResolverFactory(versionTemplate, redisOperations, processor, entityStatementTreeLoaderFactory,
+        registry, adapter);
   }
 
   @Bean

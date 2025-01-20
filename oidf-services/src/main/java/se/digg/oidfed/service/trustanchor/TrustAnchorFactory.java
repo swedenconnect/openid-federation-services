@@ -20,6 +20,7 @@ import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
+import se.digg.oidfed.trustanchor.TrustAnchorProperties;
 
 /**
  * Factory class for creating trust anchors.
@@ -27,18 +28,25 @@ import se.digg.oidfed.trustanchor.TrustAnchor;
  * @author Felix Hellman
  */
 public class TrustAnchorFactory {
+
+  private final EntityRecordRegistry registry;
+  private final SubordinateStatementFactory factory;
+
   /**
-   * Creates a new trust anchor instance from the given parameters.
-   * @param registry to use for this trust anchor
-   * @param properties to use for this trust anchor
-   * @param factory to use for this trust anchor
-   * @return a new instance
+   * Constructor.
+   * @param registry to use
+   * @param factory to use
    */
-  public static TrustAnchor create(
-      final EntityRecordRegistry registry,
-      final TrustAnchorModuleProperties.TrustAnchorSubModuleProperties properties,
-      final SubordinateStatementFactory factory
-  ) {
-    return new TrustAnchor(registry, properties.toTrustAnchorProperties(), factory);
+  public TrustAnchorFactory(final EntityRecordRegistry registry, final SubordinateStatementFactory factory) {
+    this.registry = registry;
+    this.factory = factory;
+  }
+
+  /**
+   * @param properties for trust anchor
+   * @return new instance
+   */
+  public TrustAnchor create(final TrustAnchorProperties properties) {
+    return new TrustAnchor(this.registry, properties, this.factory);
   }
 }

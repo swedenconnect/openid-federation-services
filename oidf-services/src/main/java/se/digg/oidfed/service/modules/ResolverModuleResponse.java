@@ -94,7 +94,6 @@ public class ResolverModuleResponse {
         this.resolveResponseDuration,
         this.trustedKeys.getKeys(),
         this.entityIdentifier,
-        this.signKey,
         this.stepRetryTime,
         this.alias);
   }

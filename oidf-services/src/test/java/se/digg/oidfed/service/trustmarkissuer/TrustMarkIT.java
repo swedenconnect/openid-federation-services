@@ -19,39 +19,33 @@ package se.digg.oidfed.service.trustmarkissuer;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.client.RestClient;
 import se.digg.oidfed.service.IntegrationTestParent;
 import se.digg.oidfed.service.entity.TestFederationEntities;
-import se.digg.oidfed.service.rest.RestClientFactory;
-import se.digg.oidfed.service.rest.RestClientProperties;
 import se.digg.oidfed.service.testclient.FederationClients;
-import wiremock.Run;
 
 import java.text.ParseException;
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-
-@ActiveProfiles({"integration-test" })
+@ActiveProfiles({"integration-test"})
+@Slf4j
 class TrustMarkIT extends IntegrationTestParent {
 
 
   public static final EntityID TRUST_MARK_ID = new EntityID("https://authorization.local.swedenconnect.se/authorization-tmi/certified");
 
   @BeforeEach
-  public void setup() {
+  public void setup() throws InterruptedException {
     RestAssured.port = this.serverPort;
     RestAssured.basePath = "/tm";
+    while (!applicationReadyEndpoint.getResolverReady()) {
+      log.info("Application not ready yet.. waiting for setup");
+      Thread.sleep(500L);
+    }
   }
 
   @Test
@@ -92,7 +86,8 @@ class TrustMarkIT extends IntegrationTestParent {
   }
 
   @Test
-  public void testTrustMarkStatusNotActive(final FederationClients clients) {
+  public void testTrustMarkStatusNotActive(final FederationClients clients) throws InterruptedException {
+    Thread.sleep(3000L);
     final TrustMarkIssuerController.TrustMarkStatusReply status = clients.authorization().trustMark().trustMarkStatus(
         TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
         TRUST_MARK_ID,

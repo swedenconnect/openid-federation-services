@@ -49,36 +49,31 @@ import java.util.UUID;
  */
 public class TestDataSetup {
 
-  public static TrustMarkProperties trustMarkProperties() throws JOSEException {
+  public static TrustMarkIssuerProperties trustMarkProperties() throws JOSEException {
 
-    final TrustMarkProperties trustMarkProperties = TrustMarkProperties.builder()
+    final TrustMarkIssuerProperties trustMarkIssuerProperties = TrustMarkIssuerProperties.builder()
         .trustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES))
         .issuerEntityId(new EntityID("https://tmissuer.digg.se"))
-        .signKey(TestDataSetup::generateKey)
         .trustMarks(new ArrayList<>())
         .alias("tm")
         .build();
 
-    final TrustMarkIssuerSubject sub1 =
-        TrustMarkIssuerSubject.builder()
+    final TrustMarkSubject sub1 =
+        TrustMarkSubject.builder()
             .sub("http://tm1.digg.se/sub1")
-            .expires(Optional.of(Instant.now().plus(10, ChronoUnit.MINUTES)))
-            .granted(Optional.of(Instant.now()))
+            .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
+            .granted(Instant.now())
             .build();
 
-    final TrustMarkIssuerSubjectInMemLoader trustMarkIssuerSubjectLoader = new TrustMarkIssuerSubjectInMemLoader();
-    trustMarkIssuerSubjectLoader.register(sub1);
-
-    trustMarkProperties.trustMarks()
-        .add(TrustMarkProperties.TrustMarkIssuerProperties.builder()
+    trustMarkIssuerProperties.trustMarks()
+        .add(TrustMarkIssuerProperties.TrustMarkProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm.digg.se/default"))
             .logoUri(Optional.empty())
             .refUri(Optional.empty())
             .delegation(Optional.empty())
-            .trustMarkIssuerSubjectLoader(trustMarkIssuerSubjectLoader)
             .build());
 
-    return trustMarkProperties;
+    return trustMarkIssuerProperties;
   }
 
   public static SignedJWT createTrustMarkDelegation() throws JOSEException, ParseException {

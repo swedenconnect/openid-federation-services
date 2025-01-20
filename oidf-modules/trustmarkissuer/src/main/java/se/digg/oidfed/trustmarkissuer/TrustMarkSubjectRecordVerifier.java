@@ -20,14 +20,14 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWKSet;
 import se.digg.oidfed.common.entity.RecordVerificationException;
 import se.digg.oidfed.common.entity.EntityRecordVerifier;
-import se.digg.oidfed.trustmarkissuer.validation.FederationAssert;
+import se.digg.oidfed.common.validation.FederationAssert;
 
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Verifier for {@link TrustMarkIssuerSubject}
+ * Verifier for {@link TrustMarkSubject}
  *
  * @author Per Fredrik Plars
  */
@@ -47,7 +47,7 @@ public class TrustMarkSubjectRecordVerifier extends EntityRecordVerifier {
    * @param jwtString containing trustmarksubject records
    * @return list of TrustMarkIssuerSubjects
    */
-  public List<TrustMarkIssuerSubject> verifyTrustMarkSubjects(final String jwtString) {
+  public List<TrustMarkSubject> verifyTrustMarkSubjects(final String jwtString) {
     try {
       final List<Object> records = verify(jwtString)
           .getJWTClaimsSet()
@@ -55,7 +55,7 @@ public class TrustMarkSubjectRecordVerifier extends EntityRecordVerifier {
       FederationAssert.assertNotEmpty(records,"Missing claim for:'trustmark_records' ");
       return records.stream()
           .map(o -> (Map<String,Object>)o)
-          .map(TrustMarkIssuerSubject::fromJson)
+          .map(TrustMarkSubject::fromJson)
           .toList();
 
     } catch (final ParseException | JOSEException e) {

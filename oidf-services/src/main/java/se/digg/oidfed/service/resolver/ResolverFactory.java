@@ -19,6 +19,7 @@ package se.digg.oidfed.service.resolver;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.RedisTemplate;
+import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.resolver.ResolverProperties;
@@ -49,6 +50,7 @@ public class ResolverFactory {
   private final MetadataProcessor processor;
   private final EntityStatementTreeLoaderFactory treeLoaderFactory;
   private final CacheRegistry registry;
+  private final SignerFactory signerAdapter;
 
   /**
    * Constructor.
@@ -58,15 +60,22 @@ public class ResolverFactory {
    * @param processor to use for metadata
    * @param treeLoaderFactory to use for creating tree loaders
    * @param registry for caches
+   * @param signerAdapter to use
    */
-  public ResolverFactory(final RedisTemplate<String, Integer> versionTemplate, final RedisOperations redisOperations,
-      final MetadataProcessor processor, final EntityStatementTreeLoaderFactory treeLoaderFactory,
-      final CacheRegistry registry) {
+  public ResolverFactory(
+      final RedisTemplate<String, Integer> versionTemplate,
+      final RedisOperations redisOperations,
+      final MetadataProcessor processor,
+      final EntityStatementTreeLoaderFactory treeLoaderFactory,
+      final CacheRegistry registry,
+      final SignerFactory signerAdapter) {
+
     this.versionTemplate = versionTemplate;
     this.redisOperations = redisOperations;
     this.processor = processor;
     this.treeLoaderFactory = treeLoaderFactory;
     this.registry = registry;
+    this.signerAdapter = signerAdapter;
   }
 
   /**
@@ -102,6 +111,6 @@ public class ResolverFactory {
   }
 
   private ResolverResponseFactory resolverResponseFactory(final ResolverProperties properties) {
-    return new ResolverResponseFactory(Clock.systemUTC(), properties);
+    return new ResolverResponseFactory(Clock.systemUTC(), properties, this.signerAdapter);
   }
 }

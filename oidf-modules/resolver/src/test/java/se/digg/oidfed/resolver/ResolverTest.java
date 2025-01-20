@@ -4,11 +4,16 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicyEntry;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import se.digg.oidfed.common.entity.EntityPathFactory;
+import se.digg.oidfed.common.entity.EntityRecord;
+import se.digg.oidfed.common.entity.InMemoryEntityRecordRegistry;
+import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.resolver.metadata.MetadataFactory;
 import se.digg.oidfed.resolver.metadata.MetadataPolicyFactory;
 import se.digg.oidfed.resolver.tree.resolution.DeferredStepRecoveryStrategy;
@@ -151,13 +156,16 @@ class ResolverTest {
 
     final ResolverProperties properties =
         new ResolverProperties(trustAnchorIdentifier, Duration.ZERO, tree.findAllKeys().getKeys(), resolverIdentifier
-            , resolverKey, Duration.ofSeconds(10), "alias");
+            , Duration.ofSeconds(10), "alias");
     final DeferredStepRecoveryStrategy deferredStepRecoveryStrategy = new DeferredStepRecoveryStrategy();
 
     //Fail relyingparty first time we try it
     tree.setFailOnce(relyingPartyIdentifier + "/.well-known/openid-federation");
     tree.setFailOnce(trustMarkIssuerIdentifier + "/.well-known/openid-federation");
-    final ResolverClient resolver = ResolverFactory.createTestResolver(properties, tree, resolverKey, deferredStepRecoveryStrategy);
+    final JWKSet jwks = new JWKSet(List.of(resolverKey));
+    final SignerFactory adapter = new SignerFactory(jwks);
+    final ResolverClient resolver = ResolverFactory.createTestResolver(properties, tree, deferredStepRecoveryStrategy
+        , adapter);
     //Re-run resolution of the steps that failed
     deferredStepRecoveryStrategy.retry();
     final ResolverRequest request = new ResolverRequest(relyingPartyIdentifier, trustAnchorIdentifier, null);

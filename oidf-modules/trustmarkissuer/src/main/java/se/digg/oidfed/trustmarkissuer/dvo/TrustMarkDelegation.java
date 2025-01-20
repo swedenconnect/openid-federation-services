@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package se.digg.oidfed.trustmarkissuer.dvo;
 
 import com.nimbusds.jose.JWSHeader;
@@ -21,12 +20,11 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import se.digg.oidfed.common.validation.FederationAssert;
 
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.function.Function;
-
-import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertNotEmptyThrows;
 
 /**
  * TrustMarkDelegation according to 7.2.1 in OpenID Federation 1.0 draft 40
@@ -38,16 +36,19 @@ import static se.digg.oidfed.trustmarkissuer.validation.FederationAssert.assertN
 public class TrustMarkDelegation implements Serializable {
   public static final String DELEGATION_TYPE = "trust-mark-delegation+jwt";
   private final String delegation;
+
   /**
    * Testing DelegationJWT so that it is compliant with specification.
+   *
    * @param delegation delegationJWT
    */
   public TrustMarkDelegation(final String delegation) throws IllegalArgumentException {
-    this.delegation = validateInternal(delegation,IllegalArgumentException::new);
+    this.delegation = validateInternal(delegation, IllegalArgumentException::new);
   }
 
   /**
    * Static method to create TrustMarkDelegation
+   *
    * @param trustMarkDelegation trustMarkDelegation JWT
    * @return TrustMarkDelegation
    */
@@ -64,24 +65,24 @@ public class TrustMarkDelegation implements Serializable {
       final SignedJWT delegationJWT = SignedJWT.parse(delegation);
       final JWSHeader jwsHeader = delegationJWT.getHeader();
 
-      assertNotEmptyThrows(jwsHeader.getKeyID(), () -> ex.apply("KeyId is expected in JWT header"));
-      assertNotEmptyThrows(jwsHeader.getType(), () -> ex.apply("Type is expected in JWT header"));
-      assertNotEmptyThrows(jwsHeader.getType().getType(),
+      FederationAssert.assertNotEmptyThrows(jwsHeader.getKeyID(), () -> ex.apply("KeyId is expected in JWT header"));
+      FederationAssert.assertNotEmptyThrows(jwsHeader.getType(), () -> ex.apply("Type is expected in JWT header"));
+      FederationAssert.assertNotEmptyThrows(jwsHeader.getType().getType(),
           () -> ex.apply("Type is expected in JWT header"));
 
-      if(!jwsHeader.getType().getType().equals(DELEGATION_TYPE)){
+      if (!jwsHeader.getType().getType().equals(DELEGATION_TYPE)) {
         ex.apply("Delegation header type is expected to be:'" + DELEGATION_TYPE +
             "' actual value:'" + jwsHeader.getType().getType() + "'");
       }
 
       final JWTClaimsSet claimsSet = delegationJWT.getJWTClaimsSet();
-      assertNotEmptyThrows(claimsSet.getIssuer(), () -> ex.apply("Issuer is expected in JWT claim"));
-      assertNotEmptyThrows(claimsSet.getSubject(), () -> ex.apply("Subject is expected in JWT claim"));
-      assertNotEmptyThrows(claimsSet.getClaim("id"), () -> ex.apply("ID is expected in JWT claim"));
-      assertNotEmptyThrows(claimsSet.getIssueTime(), () -> ex.apply("IssueTime is expected in JWT claim"));
 
-    }
-    catch (final ParseException e) {
+      FederationAssert.assertNotEmptyThrows(claimsSet.getIssuer(), () -> ex.apply("Issuer is expected in JWT claim"));
+      FederationAssert.assertNotEmptyThrows(claimsSet.getSubject(), () -> ex.apply("Subject is expected in JWT claim"));
+      FederationAssert.assertNotEmptyThrows(claimsSet.getClaim("id"), () -> ex.apply("ID is expected in JWT claim"));
+      FederationAssert.assertNotEmptyThrows(
+          claimsSet.getIssueTime(), () -> ex.apply("IssueTime is expected in JWT claim"));
+    } catch (final ParseException e) {
       throw ex.apply("Unable to parse delegation JWT: '" + e.getMessage() + "'");
     }
     return delegation;
@@ -89,16 +90,17 @@ public class TrustMarkDelegation implements Serializable {
 
   /**
    * Validated TrustMark, if it failes then exception is thrown according to ex
+   *
    * @param trustMarkDelegation TrustMarkDelegation JWT
-   * @param ex Function called to get an exception. A error string is supplied with the problem.
+   * @param ex                  Function called to get an exception. A error string is supplied with the problem.
+   * @param <EX>                Exception
    * @return TrustMarkId
-   * @param <EX> Exception
-   * @throws EX  Exception thrown if trustmark is not validated
+   * @throws EX Exception thrown if trustmark is not validated
    */
   public static <EX extends Exception> TrustMarkDelegation validate(final String trustMarkDelegation,
-                                                                    final Function<String,EX> ex)
-      throws EX{
-    return new TrustMarkDelegation(validateInternal(trustMarkDelegation,ex));
+                                                                    final Function<String, EX> ex)
+      throws EX {
+    return new TrustMarkDelegation(validateInternal(trustMarkDelegation, ex));
   }
 
   @Override

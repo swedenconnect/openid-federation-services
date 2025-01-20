@@ -38,19 +38,16 @@ import java.util.List;
 @ConditionalOnProperty(value = TrustAnchorModuleProperties.PROPERTY_PATH + ".active", havingValue = "true")
 @EnableConfigurationProperties(TrustAnchorModuleProperties.class)
 public class TrustAnchorConfiguration {
-
-  @Bean
-  List<TrustAnchor> trustAnchor(final EntityRecordRegistry registry, final TrustAnchorModuleProperties properties, final
-  SubordinateStatementFactory factory) {
-    return properties.getAnchors()
-        .stream()
-        .map(a -> TrustAnchorFactory.create(registry, a, factory))
-        .toList();
-  }
-
   @Bean
   SubordinateStatementFactory trustAnchorEntityStatementFactory(final RecordRegistrySource source,
                                                                 final EntityConfigurationProperties properties) {
     return new SubordinateStatementFactory(source, properties.getBasePath());
+  }
+
+  @Bean
+  TrustAnchorFactory trustAnchorFactory(
+      final EntityRecordRegistry registry,
+      final SubordinateStatementFactory factory) {
+    return new TrustAnchorFactory(registry, factory);
   }
 }
