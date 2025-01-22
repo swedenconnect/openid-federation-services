@@ -62,6 +62,10 @@ import java.util.Map;
 @ExtendWith(TestFederationClientParameterResolver.class)
 @Slf4j
 public class IntegrationTestParent {
+
+  public IntegrationTestParent() {
+  }
+
   public static final EntityID RP_FROM_REGISTRY_ENTITY = new EntityID("https://municipality.local.swedenconnect.se/rp-from-registry");
   @LocalServerPort
   public int serverPort;

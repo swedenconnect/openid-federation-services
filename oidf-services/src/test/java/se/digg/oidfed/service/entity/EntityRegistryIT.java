@@ -21,16 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.ssl.SslBundles;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.IntegrationTestParent;
-import se.digg.oidfed.service.rest.RestClientFactory;
-import se.digg.oidfed.service.rest.RestClientProperties;
 import se.digg.oidfed.service.testclient.FederationClients;
-
-import java.text.ParseException;
 
 @ActiveProfiles("integration-test")
 @Slf4j

@@ -36,7 +36,7 @@ public class ResolverClient {
     try {
       final StringBuilder builder = new StringBuilder("/resolve?");
       builder.append("sub=%s".formatted(subject.getValue()));
-      builder.append("&anchor=%s".formatted(anchor.getValue()));
+      builder.append("&trust_anchor=%s".formatted(anchor.getValue()));
       Optional.ofNullable(type).ifPresent(t -> builder.append("&type=%s".formatted(t.getValue())));
       final String body = client.get()
           .uri(resolver.getValue() + builder)

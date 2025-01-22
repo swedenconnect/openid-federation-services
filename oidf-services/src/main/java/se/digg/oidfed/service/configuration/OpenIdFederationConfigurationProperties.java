@@ -28,6 +28,7 @@ import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -40,21 +41,31 @@ import java.util.UUID;
 @Setter
 @ConfigurationProperties("openid.federation")
 public class OpenIdFederationConfigurationProperties {
-  /** Name of sign keys used for this instance */
+  /**
+   * Name of sign keys used for this instance
+   */
   private List<String> sign;
 
-  /** Registry properties */
+  /**
+   * Registry properties
+   */
   @NestedConfigurationProperty
   private Registry registry;
-  /** Module properties */
+  /**
+   * Module properties
+   */
   @NestedConfigurationProperty
   private Modules modules;
 
-  /** Entity configuration properties */
+  /**
+   * Entity configuration properties
+   */
   @NestedConfigurationProperty
   private List<EntityProperty> entities;
 
-  /** Policy configuration properties */
+  /**
+   * Policy configuration properties
+   */
   @NestedConfigurationProperty
   private List<PolicyConfigurationProperties.PolicyRecordProperty> policies;
 
@@ -86,6 +97,7 @@ public class OpenIdFederationConfigurationProperties {
 
       /**
        * Checks if a step should be executed or not.
+       *
        * @param step to check
        * @return true if step should be executed, false if not
        */
@@ -154,15 +166,22 @@ public class OpenIdFederationConfigurationProperties {
      */
     public List<String> getIssuers() {
       final List<String> issuers = new ArrayList<>();
-      this.resolvers.stream()
-          .map(ResolverConfigurationProperties.ResolverModuleProperties::getEntityIdentifier)
-          .forEach(issuers::add);
-      this.trustAnchors.stream()
-          .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::getEntityIdentifier)
-          .forEach(issuers::add);
-      this.trustMarkIssuers.stream()
-          .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::entityIdentifier)
-          .forEach(issuers::add);
+
+      Optional.ofNullable(this.resolvers)
+          .ifPresent(resolvers -> resolvers.stream()
+              .map(ResolverConfigurationProperties.ResolverModuleProperties::getEntityIdentifier)
+              .forEach(issuers::add));
+
+      Optional.ofNullable(this.trustAnchors)
+          .ifPresent(trustAnchors -> trustAnchors.stream()
+              .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::getEntityIdentifier)
+              .forEach(issuers::add));
+
+      Optional.ofNullable(this.trustMarkIssuers)
+          .ifPresent(tmi -> tmi.stream()
+                  .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::entityIdentifier)
+                  .forEach(issuers::add));
+
       return issuers;
     }
   }
