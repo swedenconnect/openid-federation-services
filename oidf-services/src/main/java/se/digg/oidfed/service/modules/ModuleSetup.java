@@ -28,6 +28,7 @@ import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Responsible for converting properties to de/registration events.
@@ -64,20 +65,29 @@ public class ModuleSetup extends ReadyStateComponent {
    */
   @EventListener
   public void handle(final ApplicationStartedEvent event) {
-    this.properties.getModules().getResolvers().stream()
-        .map(resolver -> resolver.toResolverProperties(this.registry))
-        .map(ResolverRegistrationEvent::new)
-        .forEach(this.publisher::publishEvent);
+    Optional.ofNullable(this.properties.getModules())
+            .ifPresent(modules -> this.configureFromProperties());
+  }
 
-    this.properties.getModules().getTrustAnchors().stream()
-        .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::toTrustAnchorProperties)
-        .map(TrustAnchorRegistrationEvent::new)
-        .forEach(this.publisher::publishEvent);
+  private void configureFromProperties() {
+    Optional.ofNullable(this.properties.getModules().getResolvers())
+        .ifPresent(resolvers -> resolvers.stream()
+            .map(resolver -> resolver.toResolverProperties(this.registry))
+            .map(ResolverRegistrationEvent::new)
+            .forEach(this.publisher::publishEvent));
 
-    this.properties.getModules().getTrustMarkIssuers().stream()
-        .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::toProperties)
-        .map(TrustMarkIssuerRegistrationEvent::new)
-        .forEach(this.publisher::publishEvent);
+
+    Optional.ofNullable(this.properties.getModules().getTrustAnchors())
+        .ifPresent(ta -> ta.stream()
+            .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::toTrustAnchorProperties)
+            .map(TrustAnchorRegistrationEvent::new)
+            .forEach(this.publisher::publishEvent));
+
+    Optional.ofNullable(this.properties.getModules().getTrustMarkIssuers())
+        .ifPresent(tmi -> tmi.stream()
+            .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::toProperties)
+            .map(TrustMarkIssuerRegistrationEvent::new)
+            .forEach(this.publisher::publishEvent));
   }
 
   /**

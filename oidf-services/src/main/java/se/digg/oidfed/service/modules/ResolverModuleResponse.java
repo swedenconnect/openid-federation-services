@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.modules;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import lombok.Getter;
 import se.digg.oidfed.resolver.ResolverProperties;
@@ -38,7 +37,6 @@ public class ResolverModuleResponse {
   private Duration resolveResponseDuration;
   private JWKSet trustedKeys;
   private String entityIdentifier;
-  private JWK signKey;
   private Duration stepRetryTime;
   private String alias;
   private Boolean active;
@@ -54,7 +52,6 @@ public class ResolverModuleResponse {
     json.put("resolve-response-duration", this.resolveResponseDuration);
     json.put("trusted-keys", this.trustedKeys);
     json.put("entity-identifier", this.entityIdentifier);
-    json.put("sign-key", this.signKey);
     json.put("step-retry-time", this.stepRetryTime);
     json.put("alias", this.alias);
     json.put("active", this.active);
@@ -76,7 +73,6 @@ public class ResolverModuleResponse {
       resolver.resolveResponseDuration = (Duration) json.get("resolve-response-duration");
       resolver.trustedKeys = (JWKSet) json.get("trusted-keys");
       resolver.entityIdentifier = (String) json.get("entity-identifier");
-      resolver.signKey = (JWK) json.get("sign-key");
       resolver.stepRetryTime = (Duration) json.get("step-retry-time");
       resolver.alias = (String) json.get("alias");
     }

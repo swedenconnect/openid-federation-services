@@ -61,11 +61,13 @@ public class TrustMarkIssuerInitializer extends ReadyStateComponent {
    */
   @EventListener
   public TrustMarkIssuerInitializedEvent handle(final ModuleSetupCompleteEvent event) {
-    this.properties.getModules().getTrustMarkIssuers().stream()
-        .flatMap(tmi -> tmi.trustMarks().stream())
-        .forEach(tm -> tm.subjects().forEach(sub -> {
-          this.repository.register(tm.trustMarkId(), sub.toSubject());
-        }));
+    Optional.ofNullable(this.properties.getModules().getTrustMarkIssuers())
+        .ifPresent(trustmarkIssuers -> trustmarkIssuers.stream()
+            .flatMap(tmi -> tmi.trustMarks().stream())
+            .forEach(tm -> tm.subjects().forEach(sub -> {
+              this.repository.register(tm.trustMarkId(), sub.toSubject());
+            })));
+
     final OpenIdFederationConfigurationProperties.Registry.Integration integrationProperties = this.properties
         .getRegistry()
         .getIntegration();

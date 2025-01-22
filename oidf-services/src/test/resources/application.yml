@@ -72,7 +72,6 @@ openid:
         - alias: authorization-tmi
           entity-identifier: https://authorization.local.swedenconnect.se/authorization-tmi
           trust-mark-validity-duration: PT29M
-
           trust-marks:
             - trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/certified
               subjects:

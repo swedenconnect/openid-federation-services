@@ -62,7 +62,7 @@ public class ResolverController implements ApplicationModule {
   public String resolveEntity(
       @PathVariable(name = "alias") final String alias,
       @RequestParam(name = "sub", required = false) final String subject,
-      @RequestParam(name = "anchor", required = false) final String trustAnchor,
+      @RequestParam(name = "trust_anchor", required = false) final String trustAnchor,
       @RequestParam(name = "type", required = false) final String type) throws NotFoundException {
     final ResolverRequest resolverRequest = new ResolverRequest(subject, trustAnchor, type);
     final Resolver resolver = this.repository.getResolver(alias)
