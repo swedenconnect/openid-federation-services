@@ -17,3 +17,5 @@ jobs:
       - run: sudo echo "127.0.0.1 municipality.local.swedenconnect.se" | sudo tee -a /etc/hosts
       - run: sudo echo "127.0.0.1 private.local.swedenconnect.se" | sudo tee -a /etc/hosts
       - run: mvn clean verify --no-transfer-progress
+        env:
+          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
