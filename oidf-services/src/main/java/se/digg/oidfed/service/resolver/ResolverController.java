@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2024-2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class ResolverController implements ApplicationModule {
   @GetMapping(value = "/{alias}/discovery", produces = MediaType.APPLICATION_JSON_VALUE)
   public List<String> discovery(
       @PathVariable(name = "alias") final String alias,
-      @RequestParam(name = "anchor", required = false) final String trustAnchor,
+      @RequestParam(name = "trust_anchor", required = false) final String trustAnchor,
       @RequestParam(name = "type", required = false) final List<String> types,
       @RequestParam(name = "trust_mark_id", required = false) final List<String> trustMarkIds)
       throws NotFoundException {

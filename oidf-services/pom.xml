@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2024 Sweden Connect
+  ~ Copyright 2024-2025 Sweden Connect
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -21,14 +21,24 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>oidf-services</artifactId>
+    <name>OpenID Federation :: Service</name>
+
     <version>1.0.0-SNAPSHOT</version>
-    <name>OIDF :: Service</name>
 
     <parent>
-        <groupId>se.digg.oidc-fed</groupId>
-        <artifactId>oidf-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <groupId>se.swedenconnect.oidf</groupId>
+        <artifactId>openid-federation-parent</artifactId>
+        <version>0.3.3</version>
+        <relativePath/>
     </parent>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Sweden Connect Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/swedenconnect/openid-federation-commons</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -36,19 +46,17 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>3.3.4</spring.boot.version>
-        <oidf.modules.version>${project.version}</oidf.modules.version>
+        <oidf.modules.version>1.0.0-SNAPSHOT</oidf.modules.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>se.swedenconnect.security</groupId>
             <artifactId>credentials-support-spring-boot-starter</artifactId>
-            <version>${credentials-support.version}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.security</groupId>
             <artifactId>credentials-support-nimbus</artifactId>
-            <version>${credentials-support.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -73,23 +81,22 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.34</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidc-fed</groupId>
+            <groupId>se.digg.oidf</groupId>
             <artifactId>resolver</artifactId>
             <version>${oidf.modules.version}</version>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidc-fed</groupId>
+            <groupId>se.digg.oidf</groupId>
             <artifactId>trustanchor</artifactId>
             <version>${oidf.modules.version}</version>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidc-fed</groupId>
+            <groupId>se.digg.oidf</groupId>
             <artifactId>trustmarkissuer</artifactId>
-            <version>${oidf.modules.version}</version>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -127,7 +134,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidc-fed</groupId>
+            <groupId>se.digg.oidf</groupId>
             <artifactId>test</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
