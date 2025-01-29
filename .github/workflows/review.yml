@@ -13,7 +13,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - run: sudo echo "127.0.0.1 authorization.local.swedenconnect.se" | sudo tee -a /etc/hosts
-      - run: sudo echo "127.0.0.1 municipality.local.swedenconnect.se" | sudo tee -a /etc/hosts
-      - run: sudo echo "127.0.0.1 private.local.swedenconnect.se" | sudo tee -a /etc/hosts
-      - run: mvn clean verify --no-transfer-progress
+      - run: |
+          sudo echo "127.0.0.1 authorization.local.swedenconnect.se" | sudo tee -a /etc/hosts
+          sudo echo "127.0.0.1 municipality.local.swedenconnect.se" | sudo tee -a /etc/hosts
+          sudo echo "127.0.0.1 private.local.swedenconnect.se" | sudo tee -a /etc/hosts
+      - uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-review.yml@main
