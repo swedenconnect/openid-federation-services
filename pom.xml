@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2024 Sweden Connect
+  ~ Copyright 2024-2025 Sweden Connect
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <name>OIDF :: Parent</name>
-    <groupId>se.digg.oidc-fed</groupId>
+    <name>OpenID Federation :: Parent</name>
+    <groupId>se.digg.oidf</groupId>
     <artifactId>oidf-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <url>https://docs.swedenconnect.se/openid-federation-services</url>
-
-    <description>Parent pom for OIDF-Node</description>
+    <description>Parent pom for oidf services</description>
     <packaging>pom</packaging>
     <properties>
         <java.version>21</java.version>
@@ -111,8 +110,8 @@
                     <excludes>**/test/**/*</excludes>
                     <checkstyleRules>
                         <module name="Checker">
-                            <module name="Header">
-                                <property name="header" value="/*\n * Copyright 2024 Sweden Connect"/>
+                            <module name="RegexpHeader">
+                                <property name="header" value="/*\n * Copyright (2024-)?2025 Sweden Connect"/>
                             </module>
                             <module name="LineLength">
                                 <property name="max" value="120"/>
