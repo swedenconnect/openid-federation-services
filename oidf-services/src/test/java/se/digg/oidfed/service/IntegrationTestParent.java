@@ -51,6 +51,7 @@ import se.digg.oidfed.service.entity.EntityInitializer;
 import se.digg.oidfed.service.entity.TestFederationEntities;
 import se.digg.oidfed.service.modules.ModuleSetupCompleteEvent;
 import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
+import se.digg.oidfed.test.testcontainer.RelyingPartyContainer;
 
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
@@ -89,6 +90,8 @@ public class IntegrationTestParent {
 
   private static final NginxContainer nginx = new NginxContainer(DockerImageName.parse("nginx:stable"));
 
+  private static final RelyingPartyContainer relyingParty = new RelyingPartyContainer();
+
   static {
     nginx.withNetworkAliases(
         "authorization.local.swedenconnect.se",
@@ -102,10 +105,15 @@ public class IntegrationTestParent {
     nginx.withCopyFileToContainer(MountableFile.forClasspathResource("/nginx/server.key"), "/etc/nginx/server.key");
     nginx.withLogConsumer(new Slf4jLogConsumer(log));
     redis.withLogConsumer(new Slf4jLogConsumer(log));
+    relyingParty.withLogConsumer(new Slf4jLogConsumer(log));
     Testcontainers.exposeHostPorts(6000);
+    Testcontainers.exposeHostPorts(11000);
     nginx.withExposedPorts(443);
+    relyingParty.withExposedPorts(11000);
     nginx.withAccessToHost(true);
     nginx.setPortBindings(List.of("443:443"));
+    relyingParty.setPortBindings(List.of("11000:11000"));
+    relyingParty.start();
     nginx.start();
     redis.start();
   }

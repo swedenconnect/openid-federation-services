@@ -48,6 +48,14 @@ server {
     ssl_certificate_key server.key;
     ssl_protocols       TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
     ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    location ~ /misconfigured {
+                proxy_set_header x-forwarded-host "municipality.local.swedenconnect.se";
+                proxy_set_header x-forwarded-port "443";
+                proxy_set_header x-forwarded-proto "https";
+                proxy_pass http://host.testcontainers.internal:11000;
+        }
+
     location / {
             proxy_set_header x-forwarded-host "municipality.local.swedenconnect.se";
             proxy_set_header x-forwarded-port "443";

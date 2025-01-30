@@ -159,7 +159,6 @@ class ResolverIT extends IntegrationTestParent {
   }
 
   @Test
-  @Disabled
   void brokenTrustChain400(final FederationClients clients) {
     final Runnable shouldThrow400 = () -> {
       clients.municipality().resolver()
@@ -173,7 +172,10 @@ class ResolverIT extends IntegrationTestParent {
     final HttpClientErrorException.BadRequest exception = Assertions.assertThrows(HttpClientErrorException.BadRequest.class, shouldThrow400::run);
     final ProblemDetail problem = exception.getResponseBodyAs(ProblemDetail.class);
     Assertions.assertEquals("invalid_trust_chain", problem.getProperties().get("error"));
-    Assertions.assertEquals("The Trust Chain cannot be validated.", problem.getProperties().get(
+    Assertions.assertEquals(
+        "Failed to validate trust chain:[se.digg.oidfed.resolver.chain.SignatureValidationStep]" +
+            " messages:[Failed to validate trustchain signatures]"
+        , problem.getProperties().get(
         "error_description"));
   }
 
@@ -191,6 +193,4 @@ class ResolverIT extends IntegrationTestParent {
       );
     }
   }
-
-  //TODO create a broken trust chain
 }
