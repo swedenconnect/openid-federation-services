@@ -10,10 +10,20 @@ credential:
         location: classpath:signkey.p12
         password: changeit
         type: JKS
+      sign-key-store-2:
+        location: classpath:signkey-2.p12
+        password: changeit
+        type: JKS
     jks:
       sign-key-1:
         store-reference: sign-key-store
         name: "Sign key 1"
+        key:
+          alias: 1
+          key-password: changeit
+      sign-key-2:
+        store-reference: sign-key-store-2
+        name: "Sign key 2"
         key:
           alias: 1
           key-password: changeit
@@ -140,6 +150,10 @@ openid:
                   "federation_list_endpoint": "https://private.local.swedenconnect.se/private-ta/subordinate_listing"
                 }
               }
+      - subject: https://municipality.local.swedenconnect.se/misconfigured
+        issuer: https://municipality.local.swedenconnect.se/municipality-ta
+        public-keys:
+          - sign-key-2
       - subject: https://authorization.local.swedenconnect.se/authorization-ta
         issuer: https://municipality.local.swedenconnect.se/municipality-ta
         public-keys:

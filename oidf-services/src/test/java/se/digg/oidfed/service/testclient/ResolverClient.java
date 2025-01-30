@@ -17,10 +17,15 @@
 package se.digg.oidfed.service.testclient;
 
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
+import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.text.ParseException;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ResolverClient {
@@ -32,19 +37,28 @@ public class ResolverClient {
     this.resolver = resolver;
   }
 
-  public SignedJWT resolve(final EntityID subject, final EntityID anchor, final EntityType type) {
+  public SignedJWT resolve(
+      @Nullable final EntityID subject,
+      @Nullable final EntityID anchor,
+      @Nullable final EntityType type) {
     try {
       final StringBuilder builder = new StringBuilder("/resolve?");
-      builder.append("sub=%s".formatted(subject.getValue()));
-      builder.append("&trust_anchor=%s".formatted(anchor.getValue()));
+
+      if (Objects.isNull(subject)) {
+        builder.append("trust_anchor=%s".formatted(anchor.getValue()));
+      } else {
+        builder.append("sub=%s".formatted(subject.getValue()));
+        Optional.ofNullable(anchor).map(Identifier::getValue).ifPresent(a -> builder.append("&trust_anchor=%s".formatted(anchor.getValue())));
+      }
       Optional.ofNullable(type).ifPresent(t -> builder.append("&type=%s".formatted(t.getValue())));
-      final String body = client.get()
+
+      final ResponseEntity<String> entity = client.get()
           .uri(resolver.getValue() + builder)
           .retrieve()
-          .body(String.class);
-      return SignedJWT.parse(body);
-    } catch (final Exception e) {
-      throw new RuntimeException("Failed to resolve for resolver %s".formatted(resolver.getValue()));
+          .toEntity(String.class);
+      return SignedJWT.parse(entity.getBody());
+    } catch (final ParseException e) {
+      throw new RuntimeException("Failed to parse resolve response for resolver %s".formatted(resolver.getValue()));
     }
   }
 }

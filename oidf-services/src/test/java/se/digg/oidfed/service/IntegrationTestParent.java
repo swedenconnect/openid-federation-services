@@ -130,7 +130,6 @@ public class IntegrationTestParent {
       Thread.sleep(500L);
     }
 
-
     final JWKSet set = registry.getSet(List.of("sign-key-1"));
     final EntityRecordSigner entityRecordSigner = new EntityRecordSigner(new RSASSASigner(set.getKeys().getFirst().toRSAKey()));
 

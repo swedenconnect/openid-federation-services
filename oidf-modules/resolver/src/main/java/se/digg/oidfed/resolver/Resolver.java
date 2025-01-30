@@ -22,6 +22,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONObject;
+import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.resolver.chain.ChainValidationResult;
 import se.digg.oidfed.resolver.chain.ChainValidator;
@@ -72,7 +73,7 @@ public class Resolver implements Submodule {
    * @return response
    * @throws JOSEException
    */
-  public String resolve(final ResolverRequest request) {
+  public String resolve(final ResolverRequest request) throws NotFoundException {
 
     /*
      * 1) resolve the chain
@@ -91,6 +92,9 @@ public class Resolver implements Submodule {
     }
 
     final Set<EntityStatement> chain = this.tree.getTrustChain(request);
+    if (chain.isEmpty()) {
+      throw new NotFoundException("Resolver found no subject with requested EntityID:%s".formatted(request.subject()));
+    }
     final ChainValidationResult chainValidationResult = this.validator.validate(chain.stream().toList());
 
     final JSONObject processedMetadata = this.processor.processMetadata(chainValidationResult.chain());
