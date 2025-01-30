@@ -126,6 +126,7 @@ public class EntityStatementTreeLoader {
       final CacheSnapshot<EntityStatement> snapshot,
       final ErrorContext context, final ResolutionContext resolutionContext
   ) {
+    log.debug("Resolving %s".formatted(parentLocation));
     try {
       final Optional<LocationInformationFactory.AuthorityInformation> authorityInformation = LocationInformationFactory
           .getAuthorityInformation(parent);

@@ -37,4 +37,9 @@ class TrustAnchorIT extends IntegrationTestParent {
     final SignedJWT signedJWT = client.fetch(new EntityID((String) body.getFirst()));
     Assertions.assertNotNull(signedJWT);
   }
+
+  @Test
+  void testListSubordinates(final FederationClients clients) {
+    System.out.println(clients.municipality().trustAnchor().subordinateListing());
+  }
 }
