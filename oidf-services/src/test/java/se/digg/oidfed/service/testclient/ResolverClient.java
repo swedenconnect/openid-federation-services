@@ -50,7 +50,7 @@ public class ResolverClient {
         builder.append("sub=%s".formatted(subject.getValue()));
         Optional.ofNullable(anchor).map(Identifier::getValue).ifPresent(a -> builder.append("&trust_anchor=%s".formatted(anchor.getValue())));
       }
-      Optional.ofNullable(type).ifPresent(t -> builder.append("&type=%s".formatted(t.getValue())));
+      Optional.ofNullable(type).ifPresent(t -> builder.append("&entity_type=%s".formatted(t.getValue())));
 
       final ResponseEntity<String> entity = client.get()
           .uri(resolver.getValue() + builder)

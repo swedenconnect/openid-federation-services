@@ -14,12 +14,13 @@ When this service is running in managed mode it loads its instance configuration
 See below for a simplified startup diagram of the service.
 
 ```mermaid
-graph LR;
+graph LR
+;
     app_started("Application Started") --> 
-    Modules("Load Modules From Registry") --> 
-    Entities("Load Entities From Registry") --> 
-    InitModules("Initialize Modules in Service") --> 
-    Ready("All modules are loaded - Application Ready")
+    Modules("Load Modules From Registry") -->
+Entities("Load Entities From Registry") -->
+InitModules("Initialize Modules in Service") -->
+Ready("All modules are loaded - Application Ready")
 ```
 
 Loading of managed configuration happens _after_ startup, which means application will not be ready for traffic
@@ -29,10 +30,11 @@ ready for traffic.
 ### Instance groups
 
 To load modules from the registry the service needs to have an instance-id configured.
-This informs the service about what instance group it belongs to. Multiple instance that should be configured in the same way and loadbalanced **should** 
+This informs the service about what instance group it belongs to. Multiple instance that should be configured in the same way and loadbalanced **should**
 share the same instance id.
 
 E.g. Pseudo Configuration of 4 nodes that is divided into two instance groups
+
 ```mermaid
 graph LR
     subgraph Instance-987
@@ -156,7 +158,7 @@ for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1
 |----------|--------------|----------------------------------------------------------------|
 | Yes      | sub          | Subject to resolve                                             |
 | Yes      | trust_anchor | Trust Anchor to resolve via                                    |
-| No       | type         | Filter response to only contain entities with this entity type |
+| No       | entity_type  | Filter response to only contain entities with this entity type |
 
 #### Discovery
 
@@ -170,7 +172,7 @@ for: **[Version: 1.0 - draft 05 - 2024-06-14](https://github.com/oidc-sweden/spe
 | Required | Name          | Description                                                    |
 |----------|---------------|----------------------------------------------------------------|
 | Yes      | trust_anchor  | Trust Anchor to resolve via                                    |
-| No       | type          | Filter response to only contain entities with this entity type |
+| No       | entity_type   | Filter response to only contain entities with this entity type |
 | No       | trust_mark_id | Filter response to only contain entities with this trust mark  |
 
 ## Creating a release
