@@ -17,6 +17,7 @@
 package se.digg.oidfed.resolver.chain;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.digg.oidfed.common.exception.InvalidTrustChainException;
 
 import java.util.List;
 import java.util.Set;
@@ -43,11 +44,12 @@ public class ChainValidator {
   /**
    * @param chain to validate
    * @return a validation result if the chain passed validation
+   * @throws InvalidTrustChainException if validation fails
    */
-  public ChainValidationResult validate(final List<EntityStatement> chain) {
+  public ChainValidationResult validate(final List<EntityStatement> chain) throws InvalidTrustChainException {
     // Check that chain has at least length = 3
     if (chain.size() < 3) {
-      throw new IllegalArgumentException("Chain does not include at least three statements");
+      throw new InvalidTrustChainException("Chain does not include at least three statements");
     }
 
     final List<ChainValidationStepResult> failedValidationSteps =
@@ -63,7 +65,7 @@ public class ChainValidator {
       final List<String> messages = failedValidationSteps.stream().map(s -> s.error().getMessage()).toList();
       final String exceptionMessage =
           "Failed to validate trust chain:%s messages:%s".formatted(failedValidationStepNames, messages);
-      throw new IllegalStateException(exceptionMessage);
+      throw new InvalidTrustChainException(exceptionMessage);
     }
 
     return new ChainValidationResult(chain);
