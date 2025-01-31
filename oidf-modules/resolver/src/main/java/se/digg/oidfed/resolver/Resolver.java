@@ -22,6 +22,8 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONObject;
+import se.digg.oidfed.common.exception.FederationException;
+import se.digg.oidfed.common.exception.InvalidTrustAnchorException;
 import se.digg.oidfed.common.exception.InvalidTrustChainException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.module.Submodule;
@@ -74,7 +76,7 @@ public class Resolver implements Submodule {
    * @return response
    * @throws JOSEException
    */
-  public String resolve(final ResolverRequest request) throws NotFoundException, InvalidTrustChainException {
+  public String resolve(final ResolverRequest request) throws FederationException {
 
     /*
      * 1) resolve the chain
@@ -89,7 +91,7 @@ public class Resolver implements Submodule {
      */
 
     if (!request.trustAnchor().equalsIgnoreCase(this.resolverProperties.trustAnchor())) {
-      throw new IllegalArgumentException("Requested Trust Anchor is not supported");
+      throw new InvalidTrustAnchorException("The Trust Anchor cannot be found or used.");
     }
 
     final Set<EntityStatement> chain = this.tree.getTrustChain(request);

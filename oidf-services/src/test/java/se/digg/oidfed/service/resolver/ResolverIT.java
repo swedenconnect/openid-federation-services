@@ -159,6 +159,27 @@ class ResolverIT extends IntegrationTestParent {
   }
 
   @Test
+  @DisplayName("Resolve Wrong Trust Anchor: 400")
+  void respondsWith404WhenRequiredParameterTrustAnchorWrong(final FederationClients clients) {
+    final Runnable shouldThrow404 = () -> {
+      clients.municipality().resolver()
+          .resolve(
+              TestFederationEntities.Authorization.OP_1,
+              TestFederationEntities.PrivateSector.TRUST_ANCHOR,
+              EntityType.OPENID_RELYING_PARTY
+          );
+    };
+
+    final HttpClientErrorException.NotFound exception = Assertions.assertThrows(HttpClientErrorException.NotFound.class,
+        shouldThrow404::run);
+    final ProblemDetail problem = exception.getResponseBodyAs(ProblemDetail.class);
+    Assertions.assertEquals("invalid_trust_anchor", problem.getProperties().get("error"));
+    Assertions.assertEquals("The Trust Anchor cannot be found or used.", problem.getProperties().get(
+        "error_description"));
+  }
+
+  @Test
+  @DisplayName("Resolve Broken Trust Chain: 400")
   void brokenTrustChain400(final FederationClients clients) {
     final Runnable shouldThrow400 = () -> {
       clients.municipality().resolver()

@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidTrustChainException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.resolver.DiscoveryRequest;
@@ -73,7 +74,7 @@ public class ResolverController implements ApplicationModule {
       @RequestParam(name = "sub") final String subject,
       @RequestParam(name = "trust_anchor") final String trustAnchor,
       @RequestParam(name = "type", required = false) final String type)
-      throws NotFoundException, InvalidTrustChainException {
+      throws FederationException {
     final ResolverRequest resolverRequest = new ResolverRequest(subject, trustAnchor, type);
     final Resolver resolver = this.repository.getResolver(alias)
         .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
