@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidIssuerException;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
@@ -68,7 +69,7 @@ public class TrustAnchorController implements ApplicationModule {
    */
   @GetMapping(value = "/{alias}/fetch", produces = "application/entity-statement+jwt")
   public String fetchEntityStatement(@PathVariable(name = "alias") final String alias,
-      @RequestParam(name = "sub", required = false) final String subject)
+      @RequestParam(name = "sub") final String subject)
       throws NotFoundException, InvalidRequestException, InvalidIssuerException {
     final TrustAnchor trustAnchor = this.repository.getTrustAnchor(alias)
             .orElseThrow(() ->
@@ -97,11 +98,15 @@ public class TrustAnchorController implements ApplicationModule {
       @RequestParam(name = "trust_marked", required = false) final Boolean trustMarked,
       @RequestParam(name = "trust_mark_id", required = false) final String trustMarkId,
       @RequestParam(name = "intermediate", required = false) final Boolean intermediate
-  ) throws NotFoundException {
+  ) throws FederationException {
     final TrustAnchor trustAnchor = this.repository.getTrustAnchor(alias)
         .orElseThrow(() -> new NotFoundException("Could not find given trust anchor"));
-    return trustAnchor.subordinateListing(
-        new SubordinateListingRequest(alias, entityType, trustMarked, trustMarkId, intermediate));
+    final List<String> listing = trustAnchor.subordinateListing(
+        new SubordinateListingRequest(entityType, trustMarked, trustMarkId, intermediate));
+    if (listing.isEmpty()) {
+      throw new NotFoundException("The requested Entity Identifiers cannot be found");
+    }
+    return listing;
   }
 
   @Override

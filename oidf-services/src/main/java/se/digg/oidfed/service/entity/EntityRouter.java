@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.service.entity;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -36,6 +37,7 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
  * @author Felix Hellman
  */
 @Component
+@Slf4j
 public class EntityRouter {
 
   private final EntityRecordRegistry registry;
@@ -77,6 +79,7 @@ public class EntityRouter {
 
     this.registry.getPaths().forEach(path -> {
       route.GET( r -> r.path().equals("%s/.well-known/openid-federation".formatted(path)), r -> {
+        log.info("New entity-configuration at {}", "%s/.well-known/openid-federation".formatted(path));
         return ServerResponse.ok().body(
             this.registry.getEntity(path)
                 .map(this.factory::createEntityConfiguration)

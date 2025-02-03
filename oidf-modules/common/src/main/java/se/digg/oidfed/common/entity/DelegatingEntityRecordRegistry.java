@@ -19,7 +19,6 @@ package se.digg.oidfed.common.entity;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -50,7 +49,7 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
   }
 
   /**
-   * @param registry to perform serach upon
+   * @param registry                     to perform serach upon
    * @param entityRecordRegistrationHook to execute when a record has been added
    */
   public DelegatingEntityRecordRegistry(

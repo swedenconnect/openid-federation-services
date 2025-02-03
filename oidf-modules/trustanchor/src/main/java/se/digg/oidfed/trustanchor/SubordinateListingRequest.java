@@ -16,14 +16,83 @@
  */
 package se.digg.oidfed.trustanchor;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import com.nimbusds.openid.connect.sdk.federation.entities.FederationEntityMetadata;
+import net.minidev.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
 /**
- * @param path
  * @param entityType
  * @param trustMarked
  * @param trustMarkId
  * @param intermediate
  * @author Felix Hellman
  */
-public record SubordinateListingRequest(String path, String entityType, Boolean trustMarked, String trustMarkId,
+public record SubordinateListingRequest(String entityType, Boolean trustMarked, String trustMarkId,
     Boolean intermediate) {
+
+  /**
+   * @return true if any parameter is set
+   */
+  public boolean requiresFiltering() {
+    return Stream.of(this.entityType, this.trustMarkId, this.trustMarked, this.intermediate)
+        .anyMatch(Objects::nonNull);
+  }
+
+  /**
+   * Converts the request into an {@link EntityStatement} predicate
+   * @return request as predicate
+   */
+  public Predicate<EntityStatement> toPredicate() {
+    final List<Predicate<EntityStatement>> predicates = new ArrayList<>();
+
+    Optional.ofNullable(this.entityType).ifPresent(type -> {
+       predicates.add(es -> Objects.nonNull(es.getClaimsSet().getMetadata(new EntityType(type))));
+    });
+
+    Optional.ofNullable(this.trustMarkId).ifPresent(tmid -> {
+      final Predicate<EntityStatement> predicate =
+          es -> es.getClaimsSet().getTrustMarks().stream()
+              .anyMatch(tme -> tme.getID().getValue().equals(tmid));
+      predicates.add(predicate);
+    });
+
+    Optional.ofNullable(this.trustMarked).ifPresent(marked -> {
+      if (marked) {
+        predicates.add(es -> {
+          return Objects.nonNull(es.getClaimsSet().getTrustMarks())
+              && !es.getClaimsSet().getTrustMarks().isEmpty();
+        });
+      } else {
+        predicates.add(es -> {
+          return Objects.isNull(es.getClaimsSet().getTrustMarks()) || es.getClaimsSet().getTrustMarks().isEmpty();
+        });
+      }
+    });
+
+    Optional.ofNullable(this.intermediate).ifPresent(intermediate -> {
+      if (intermediate) {
+        predicates.add(es -> {
+          final FederationEntityMetadata federationEntityMetadata = es.getClaimsSet().getFederationEntityMetadata();
+          return Objects.nonNull(federationEntityMetadata.getFederationFetchEndpointURI())
+              && Objects.nonNull(federationEntityMetadata.getFederationListEndpointURI());
+        });
+      } else {
+        predicates.add(es -> {
+          final FederationEntityMetadata federationEntityMetadata = es.getClaimsSet().getFederationEntityMetadata();
+          return Objects.isNull(federationEntityMetadata.getFederationFetchEndpointURI())
+              && Objects.isNull(federationEntityMetadata.getFederationListEndpointURI());
+        });
+      }
+    });
+
+    return predicates.stream().reduce((p) -> true, Predicate::and);
+  }
 }
