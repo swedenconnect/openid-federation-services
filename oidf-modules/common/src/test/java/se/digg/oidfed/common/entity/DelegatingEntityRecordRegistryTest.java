@@ -16,11 +16,15 @@
  */
 package se.digg.oidfed.common.entity;
 
-import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import se.digg.oidfed.common.entity.integration.InMemoryCache;
+import se.digg.oidfed.common.entity.integration.InMemoryListCache;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.HostedRecord;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +36,12 @@ class DelegatingEntityRecordRegistryTest {
     final EntityID selfHostedSubject = new EntityID("http://other.test/selfsub");
     final List<EntityRecord> recordsRegistred = new ArrayList<>();
     final DelegatingEntityRecordRegistry registry = new DelegatingEntityRecordRegistry(
-        new InMemoryEntityRecordRegistry(new EntityPathFactory(List.of("http://root.test"))),
+        new CachedEntityRecordRegistry(
+            new InMemoryCache<>(Clock.systemDefaultZone()),
+            new InMemoryListCache<>(),
+            new EntityPathFactory(List.of(
+            "http://root.test")),
+            "instance-id"),
         List.of(recordsRegistred::add));
 
     final EntityRecord rootEntity = EntityRecord.builder()
@@ -62,7 +71,7 @@ class DelegatingEntityRecordRegistryTest {
     Assertions.assertEquals(hostedSubject, registry.getEntity("/sub").get().getSubject());
     Assertions.assertTrue(registry.getEntity("/selfsub").isEmpty());
 
-    Assertions.assertTrue(registry.getEntity(selfHostedSubject).isPresent());
+    Assertions.assertTrue(registry.getSubordinateRecord(selfHostedSubject).isPresent());
     Assertions.assertTrue(registry.getEntity(hostedSubject).isPresent());
 
     Assertions.assertEquals(3, recordsRegistred.size());

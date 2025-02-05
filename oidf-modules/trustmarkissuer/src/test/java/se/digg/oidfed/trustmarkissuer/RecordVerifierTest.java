@@ -14,7 +14,6 @@
  * limitations under the License.
  *
  */
-
 package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.jose.JOSEException;
@@ -30,13 +29,20 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
 import se.digg.oidfed.common.entity.RecordVerificationException;
+import se.digg.oidfed.common.entity.integration.registry.JWSRegistryVerifier;
+import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * openid-federation-services
@@ -47,6 +53,7 @@ class RecordVerifierTest {
 
   @Test
   void verifyTrustMarkSubjects() throws JOSEException {
+
     final JWK key = new RSAKeyGenerator(2048)
         .keyUse(KeyUse.SIGNATURE)
         .keyID(UUID.randomUUID().toString())
@@ -73,12 +80,13 @@ class RecordVerifierTest {
         .jwtID(UUID.randomUUID().toString())
         .issuer("http://myunittest.test.se")
         .claim("trustmark_records", List.of(Map.of("subject","http://sub.pm.se","revoked",true)))
+        .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
         .build();
 
     final SignedJWT jwt = signJWT("trustmark_records",key,claim);
 
-    final TrustMarkSubjectRecordVerifier verifier = new TrustMarkSubjectRecordVerifier(jwkSet);
-    final List<TrustMarkSubject> checkedResult = verifier.verifyTrustMarkSubjects(jwt.serialize());
+    final RegistryVerifier verifier = new JWSRegistryVerifier(jwkSet);
+    final List<TrustMarkSubject> checkedResult = verifier.verifyTrustMarkSubjects(jwt.serialize()).getValue();
     assertEquals(1,checkedResult.size());
     assertEquals("http://sub.pm.se",checkedResult.get(0).sub());
     assertTrue(checkedResult.get(0).revoked());
@@ -109,4 +117,5 @@ class RecordVerifierTest {
     jwt.sign(signer);
     return jwt;
   }
+
 }

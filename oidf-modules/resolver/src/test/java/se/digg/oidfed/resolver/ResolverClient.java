@@ -22,6 +22,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.util.Pair;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,7 @@ public class ResolverClient {
     }
   }
 
-  public ResolverClientResponse resolve(final ResolverRequest request) {
+  public ResolverClientResponse resolve(final ResolveRequest request) {
     try {
       final SignedJWT jwt = SignedJWT.parse(resolver.resolve(request));
       jwt.verify(verifier);

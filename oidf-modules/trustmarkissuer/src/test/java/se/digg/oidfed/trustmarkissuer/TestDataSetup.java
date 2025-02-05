@@ -32,8 +32,10 @@ import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.id.Subject;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
-import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
-import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
 
 import java.time.Duration;
 import java.time.Instant;

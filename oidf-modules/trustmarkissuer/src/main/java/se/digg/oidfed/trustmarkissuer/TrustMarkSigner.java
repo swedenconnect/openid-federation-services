@@ -23,6 +23,8 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.Nullable;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
 import se.digg.oidfed.common.exception.ServerErrorException;
 import se.digg.oidfed.common.jwt.SignerFactory;
 

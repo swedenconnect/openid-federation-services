@@ -19,8 +19,8 @@ package se.digg.oidfed.service.trustanchor;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import org.junit.jupiter.params.provider.Arguments;
 import org.springframework.web.client.HttpClientErrorException;
+import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
 import se.digg.oidfed.service.entity.TestFederationEntities;
-import se.digg.oidfed.trustanchor.SubordinateListingRequest;
 
 import java.util.List;
 import java.util.stream.Stream;

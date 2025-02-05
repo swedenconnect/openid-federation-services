@@ -17,18 +17,26 @@
 package se.digg.oidfed.resolver.tree.resolution;
 
 
+import se.digg.oidfed.common.tree.NodeKey;
+import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
+
 /**
  * Factory for creating error context.
  * Allows externally created error contexts for ease of monitoring.
  *
  * @author Felix Hellman
  */
-@FunctionalInterface
 public interface ErrorContextFactory {
   /**
    * Create error context with a given name.
-   * @param errorName of the error
+   * @param key of the step
+   * @param stepName of the step
    * @return new instance of context
    */
-  ErrorContext create(final String errorName);
+  ErrorContext create(final NodeKey key, final EntityStatementTreeLoader.StepName stepName);
+
+  /**
+   * @return empty context
+   */
+  ErrorContext createEmpty();
 }

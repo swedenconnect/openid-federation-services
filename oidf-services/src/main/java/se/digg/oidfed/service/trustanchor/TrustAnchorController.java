@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,8 +27,8 @@ import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.service.ApplicationModule;
 import se.digg.oidfed.service.submodule.TrustAnchorRepository;
-import se.digg.oidfed.trustanchor.EntityStatementRequest;
-import se.digg.oidfed.trustanchor.SubordinateListingRequest;
+import se.digg.oidfed.common.entity.integration.federation.FetchRequest;
+import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
 import se.digg.oidfed.trustanchor.TrustAnchor;
 
 import java.net.URLDecoder;
@@ -74,8 +73,8 @@ public class TrustAnchorController implements ApplicationModule {
     final TrustAnchor trustAnchor = this.repository.getTrustAnchor(alias)
             .orElseThrow(() ->
                 new NotFoundException("Could not find given trust anchor for alias:'%s'".formatted(alias)));
-    final EntityStatementRequest request =
-        new EntityStatementRequest(URLDecoder.decode(subject, Charset.defaultCharset()));
+    final FetchRequest request =
+        new FetchRequest(URLDecoder.decode(subject, Charset.defaultCharset()));
     return trustAnchor.fetchEntityStatement(request);
   }
 
@@ -101,12 +100,12 @@ public class TrustAnchorController implements ApplicationModule {
   ) throws FederationException {
     final TrustAnchor trustAnchor = this.repository.getTrustAnchor(alias)
         .orElseThrow(() -> new NotFoundException("Could not find given trust anchor"));
-    final List<String> listing = trustAnchor.subordinateListing(
+    final List<String> subordinateListing = trustAnchor.subordinateListing(
         new SubordinateListingRequest(entityType, trustMarked, trustMarkId, intermediate));
-    if (listing.isEmpty()) {
-      throw new NotFoundException("The requested Entity Identifiers cannot be found");
+    if (subordinateListing.isEmpty()) {
+      throw new NotFoundException("No subordinates mathcing request.");
     }
-    return listing;
+    return subordinateListing;
   }
 
   @Override

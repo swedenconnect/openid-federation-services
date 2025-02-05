@@ -25,15 +25,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class AtomicIntegerErrorContext implements ErrorContext {
 
-  private final String location;
   private final AtomicInteger count = new AtomicInteger(0);
 
   /**
    * Constructor.
-   * @param location of the error
    */
-  public AtomicIntegerErrorContext(final String location) {
-    this.location = location;
+  public AtomicIntegerErrorContext() {
   }
 
   @Override
@@ -45,10 +42,5 @@ public class AtomicIntegerErrorContext implements ErrorContext {
   @Override
   public int getErrorCount() {
     return this.count.get();
-  }
-
-  @Override
-  public String getLocation() {
-    return this.location;
   }
 }

@@ -18,12 +18,11 @@ package se.digg.oidfed.service.entity;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.servlet.function.support.RouterFunctionMapping;
-import se.digg.oidfed.common.entity.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityConfigurationFactory;
 
@@ -51,7 +50,8 @@ public class EntityRouter {
    * @param factory  to construct entity configurations
    * @param mapping  to reload
    */
-  public EntityRouter(final EntityRecordRegistry registry, final EntityConfigurationFactory factory,
+  public EntityRouter(final EntityRecordRegistry registry,
+                      final EntityConfigurationFactory factory,
                       final RouterFunctionMapping mapping) {
     this.registry = registry;
     this.factory = factory;
@@ -78,8 +78,8 @@ public class EntityRouter {
 
 
     this.registry.getPaths().forEach(path -> {
+      log.info("New entity-configuration at {}", "%s/.well-known/openid-federation".formatted(path));
       route.GET( r -> r.path().equals("%s/.well-known/openid-federation".formatted(path)), r -> {
-        log.info("New entity-configuration at {}", "%s/.well-known/openid-federation".formatted(path));
         return ServerResponse.ok().body(
             this.registry.getEntity(path)
                 .map(this.factory::createEntityConfiguration)

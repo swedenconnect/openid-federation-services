@@ -29,7 +29,7 @@ import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.resolver.DiscoveryRequest;
 import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.resolver.ResolverRequest;
+import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 import se.digg.oidfed.service.ApplicationModule;
 import se.digg.oidfed.service.submodule.ResolverModuleRepository;
 
@@ -72,10 +72,10 @@ public class ResolverController implements ApplicationModule {
       @RequestParam(name = "trust_anchor") final String trustAnchor,
       @RequestParam(name = "entity_type", required = false) final String type)
       throws FederationException {
-    final ResolverRequest resolverRequest = new ResolverRequest(subject, trustAnchor, type);
+    final ResolveRequest resolveRequest = new ResolveRequest(subject, trustAnchor, type);
     final Resolver resolver = this.repository.getResolver(alias)
         .orElseThrow(() -> new NotFoundException("Could not find resolver with alias %s".formatted(alias)));
-    return resolver.resolve(resolverRequest);
+    return resolver.resolve(resolveRequest);
   }
 
   /**

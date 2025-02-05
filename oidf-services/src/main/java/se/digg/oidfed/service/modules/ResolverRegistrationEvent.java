@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.service.modules;
 
-import se.digg.oidfed.resolver.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 
 /**
  * Registration of an individual Resolver

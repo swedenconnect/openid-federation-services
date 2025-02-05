@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,7 +28,7 @@ import se.digg.oidfed.common.exception.ServerErrorException;
 import se.digg.oidfed.service.ApplicationModule;
 import se.digg.oidfed.service.submodule.TrustMarkIssuerRepository;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
-import se.digg.oidfed.trustmarkissuer.TrustMarkListingRequest;
+import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkStatusRequest;
 

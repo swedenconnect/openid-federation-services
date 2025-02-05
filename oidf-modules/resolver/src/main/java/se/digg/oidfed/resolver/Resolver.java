@@ -22,9 +22,10 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONObject;
+import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidTrustAnchorException;
-import se.digg.oidfed.common.exception.InvalidTrustChainException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.resolver.chain.ChainValidationResult;
@@ -76,7 +77,7 @@ public class Resolver implements Submodule {
    * @return response
    * @throws JOSEException
    */
-  public String resolve(final ResolverRequest request) throws FederationException {
+  public String resolve(final ResolveRequest request) throws FederationException {
 
     /*
      * 1) resolve the chain

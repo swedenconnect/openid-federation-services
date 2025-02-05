@@ -17,25 +17,26 @@
 package se.digg.oidfed.common.entity;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
-import net.minidev.json.JSONObject;
-import se.digg.oidfed.common.entity.integration.TrustMarkLoadingCache;
-import se.digg.oidfed.common.entity.integration.TrustMarkRequest;
+import se.digg.oidfed.common.entity.integration.federation.FederationClient;
+import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
+import se.digg.oidfed.common.entity.integration.federation.TrustMarkRequest;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSource;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Factory class for creating entity statements.
@@ -46,15 +47,15 @@ public class EntityConfigurationFactory {
 
   private final SignerFactory signerFactory;
 
-  private final TrustMarkLoadingCache trustMarks;
+  private final FederationClient federationClient;
 
   /**
-   * @param signerFactory to sign entity statements with
-   * @param trustMarks to supply eventual trust marks
+   * @param signerFactory    to sign entity statements with
+   * @param federationClient to supply eventual trust marks
    */
-  public EntityConfigurationFactory(final SignerFactory signerFactory, final TrustMarkLoadingCache trustMarks) {
+  public EntityConfigurationFactory(final SignerFactory signerFactory, final FederationClient federationClient) {
     this.signerFactory = signerFactory;
-    this.trustMarks = trustMarks;
+    this.federationClient = federationClient;
   }
 
   /**
@@ -76,20 +77,19 @@ public class EntityConfigurationFactory {
       }
       final List<TrustMarkSource> trustMarkSources = record.getHostedRecord().getTrustMarkSources();
       if (Objects.nonNull(trustMarkSources)) {
-        final List<JSONObject> trustMarks = trustMarkSources.stream().map(s -> new TrustMarkRequest(record.getSubject(),
-                s.getIssuer(),
-                new EntityID(s.getTrustMarkId())))
-            .map(this.trustMarks::getTrustMark)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .map(TrustMarkEntry::toJSONObject)
+        final List<TrustMarkEntry> trustMarks = trustMarkSources.stream()
+            .map(s -> new TrustMarkRequest(record.getSubject(), s.getIssuer(), new EntityID(s.getTrustMarkId())))
+            .map(request -> {
+              final SignedJWT signedJWT =
+                  this.federationClient.trustMark(new FederationRequest<>(request, Map.of(), true));
+              return new TrustMarkEntry(request.trustMarkId(), signedJWT);
+            })
             .toList();
-        builder.claim("trust_marks", trustMarks);
+        builder.claim("trust_marks", trustMarks.stream().map(TrustMarkEntry::toJSONObject).toList());
       }
       builder.issuer(record.getSubject().getValue());
       return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signerFactory.getSignKey());
-    }
-    catch (JOSEException | ParseException e) {
+    } catch (JOSEException | ParseException e) {
       throw new IllegalArgumentException("Failed to sign entity configuration", e);
     }
   }

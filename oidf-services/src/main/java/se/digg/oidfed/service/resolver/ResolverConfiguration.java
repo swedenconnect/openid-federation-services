@@ -18,9 +18,7 @@ package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -28,19 +26,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
-import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.metadata.OIDFPolicyOperationFactory;
 import se.digg.oidfed.resolver.tree.resolution.DFSExecution;
-import se.digg.oidfed.resolver.tree.resolution.DefaultErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
-import se.digg.oidfed.service.resolver.cache.CacheRegistry;
+import se.digg.oidfed.service.cache.EntityStatementSerializer;
 import se.digg.oidfed.service.resolver.cache.RedisOperations;
-import se.digg.oidfed.service.resolver.observability.ObservableErrorContext;
-
-import java.util.List;
+import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
+import se.digg.oidfed.service.resolver.observability.ObservableErrorContextFactory;
 
 /**
  * Configuration class for Resolver.
@@ -67,7 +63,7 @@ public class ResolverConfiguration {
       final RedisOperations redisOperations,
       final MetadataProcessor processor,
       final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory,
-      final CacheRegistry registry,
+      final ResolverCacheRegistry registry,
       final SignerFactory adapter
   ) {
     return new ResolverFactory(versionTemplate, redisOperations, processor, entityStatementTreeLoaderFactory,
@@ -75,18 +71,18 @@ public class ResolverConfiguration {
   }
 
   @Bean
-  CacheRegistry cacheRegistry() {
-    return new CacheRegistry();
+  ResolverCacheRegistry cacheRegistry() {
+    return new ResolverCacheRegistry();
   }
 
   @Bean
   EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory(
-      final EntityStatementIntegration integration,
+      final FederationClient client,
       final ExecutionStrategy strategy,
       final ErrorContextFactory factory,
       final ApplicationEventPublisher publisher
   ) {
-    return new EntityStatementTreeLoaderFactory(integration, strategy, factory, publisher);
+    return new EntityStatementTreeLoaderFactory(client, strategy, factory, publisher);
   }
 
   @Bean
@@ -114,14 +110,7 @@ public class ResolverConfiguration {
 
   @Bean
   ErrorContextFactory errorContextFactory(final MeterRegistry registry) {
-    final DefaultErrorContextFactory factory = new DefaultErrorContextFactory();
-    return location -> {
-      final Counter counter = registry.counter(
-          "resovler_tree_step_failure",
-          List.of(Tag.of("location", location))
-      );
-      return new ObservableErrorContext(factory.create(location), counter);
-    };
+    return new ObservableErrorContextFactory(registry);
   }
 
   @Bean

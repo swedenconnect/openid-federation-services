@@ -21,6 +21,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
 
 import java.text.ParseException;
 import java.util.List;

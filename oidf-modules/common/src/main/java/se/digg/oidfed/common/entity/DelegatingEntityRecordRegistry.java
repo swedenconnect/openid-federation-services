@@ -17,6 +17,7 @@
 package se.digg.oidfed.common.entity;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,11 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
     return this.registry.getEntity(entityID);
   }
 
+  @Override
+  public Optional<EntityRecord> getSubordinateRecord(final EntityID subject) {
+    return this.registry.getSubordinateRecord(subject);
+  }
+
   /**
    * @param registry                     to perform serach upon
    * @param entityRecordRegistrationHook to execute when a record has been added
@@ -66,7 +72,7 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
   }
 
   @Override
-  public List<EntityRecord> find(final Predicate<EntityRecord> predicate) {
-    return this.registry.find(predicate);
+  public List<EntityRecord> findSubordinates(final String issuer) {
+    return this.registry.findSubordinates(issuer);
   }
 }

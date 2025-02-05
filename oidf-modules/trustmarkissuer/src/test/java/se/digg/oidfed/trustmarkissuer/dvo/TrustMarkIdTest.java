@@ -18,6 +18,7 @@
 package se.digg.oidfed.trustmarkissuer.dvo;
 
 import org.junit.jupiter.api.Test;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

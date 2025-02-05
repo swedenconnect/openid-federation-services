@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.resolver.tree.resolution;
 
+import java.util.function.Supplier;
+
 /**
  * Error context for keeping track of number of failures for a step.
  *
@@ -34,7 +36,20 @@ public interface ErrorContext {
   int getErrorCount();
 
   /**
-   * @return location of error
+   * @return true if nr of errors is equal to 0
    */
-  String getLocation();
+  default boolean isEmpty() {
+    return this.getErrorCount() == 0;
+  }
+
+  /**
+   * @param supplier of error context if missing
+   * @return context
+   */
+  default ErrorContext orElseGet(Supplier<ErrorContext> supplier) {
+    if (this.isEmpty()) {
+      return supplier.get();
+    }
+    return this;
+  }
 }

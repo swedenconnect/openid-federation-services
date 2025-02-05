@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.service.entity;
 
-import se.digg.oidfed.common.entity.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 
 
 /**

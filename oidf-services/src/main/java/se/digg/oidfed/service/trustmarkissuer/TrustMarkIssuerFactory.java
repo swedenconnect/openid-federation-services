@@ -16,10 +16,12 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerProperties;
 import se.digg.oidfed.trustmarkissuer.TrustMarkSigner;
-import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRepository;
+
+import java.time.Clock;
 
 /**
  * Factory class for creating trust mark issuers.
@@ -29,15 +31,21 @@ import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRepository;
 public class TrustMarkIssuerFactory {
 
   private final TrustMarkSigner signer;
-  private final TrustMarkSubjectRepository repository;
+  private final RefreshAheadRecordRegistrySource source;
+  private final Clock clock;
 
   /**
-   * @param signer     to use
-   * @param repository to use
+   * @param signer to use
+   * @param source to use
+   * @param clock  to use
    */
-  public TrustMarkIssuerFactory(final TrustMarkSigner signer, final TrustMarkSubjectRepository repository) {
+  public TrustMarkIssuerFactory(
+      final TrustMarkSigner signer,
+      final RefreshAheadRecordRegistrySource source,
+      final Clock clock) {
     this.signer = signer;
-    this.repository = repository;
+    this.source = source;
+    this.clock = clock;
   }
 
   /**
@@ -46,8 +54,7 @@ public class TrustMarkIssuerFactory {
    * @param properties to create instance from
    * @return new instance
    */
-  public TrustMarkIssuer create(
-      final TrustMarkIssuerProperties properties) {
-    return new TrustMarkIssuer(properties, this.signer, this.repository);
+  public TrustMarkIssuer create(final TrustMarkIssuerProperties properties) {
+    return new TrustMarkIssuer(properties, this.signer, this.source, this.clock);
   }
 }

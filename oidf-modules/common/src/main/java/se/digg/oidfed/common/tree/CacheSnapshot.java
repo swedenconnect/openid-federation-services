@@ -43,16 +43,16 @@ public class CacheSnapshot<T> {
    * @param key for data
    * @return data for a given key, can be null
    */
-  public T getData(final String key) {
-    return this.cache.getData(key,this.version);
+  public T getData(final NodeKey key) {
+    return this.cache.getData(key.getKey(),this.version);
   }
 
   /**
    * @param key for data
    * @param data to add to key
    */
-  public void setData(final String key, final T data) {
-    this.cache.setData(key, data,this.version);
+  public void setData(final NodeKey key, final T data) {
+    this.cache.setData(key.getKey(), data,this.version);
   }
 
   /**

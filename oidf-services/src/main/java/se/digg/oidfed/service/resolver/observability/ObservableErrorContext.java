@@ -48,9 +48,4 @@ public class ObservableErrorContext implements ErrorContext {
   public int getErrorCount() {
     return this.context.getErrorCount();
   }
-
-  @Override
-  public String getLocation() {
-    return this.context.getLocation();
-  }
 }

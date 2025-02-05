@@ -14,7 +14,6 @@
  * limitations under the License.
  *
  */
-
 package se.digg.oidfed.trustmarkissuer;
 
 import com.nimbusds.jose.JOSEException;
@@ -25,13 +24,19 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.exception.ServerErrorException;
 import se.digg.oidfed.common.jwt.SignerFactory;
-import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
 import java.text.ParseException;
 import java.time.Clock;
@@ -82,6 +87,8 @@ class TrustMarkIssuerTest {
   @Test
   void trustMarkListing() throws NotFoundException, InvalidRequestException, JOSEException {
 
+    final RefreshAheadRecordRegistrySource source = Mockito.mock(RefreshAheadRecordRegistrySource.class);
+
     final TrustMarkSubject sub1 =
         TrustMarkSubject.builder()
             .sub("http://sub1.se")
@@ -99,9 +106,14 @@ class TrustMarkIssuerTest {
     final TrustMarkSubject sub3 =
         TrustMarkSubject.builder()
             .sub("http://sub.outdated.se")
-            .expires(Instant.now().plus(1, ChronoUnit.DAYS))
+            .expires(Instant.now().minus(1, ChronoUnit.DAYS))
             .granted(Instant.now())
             .build();
+
+    Mockito.when(source.getTrustMarkSubjects(trustMarkIssuerProperties.issuerEntityId(),
+            TrustMarkId.create("http://tm1.digg.se")))
+        .thenReturn(List.of(sub1, sub2, sub3));
+
 
     this.trustMarkIssuerProperties.trustMarks()
         .add(TrustMarkIssuerProperties.TrustMarkProperties.builder()
@@ -112,13 +124,11 @@ class TrustMarkIssuerTest {
             .build());
 
     final Clock fixed = Clock.fixed(Instant.now().plus(2, ChronoUnit.DAYS), ZoneId.systemDefault());
-    final InMemoryTrustMarkSubjectRepository subjectRepository = new InMemoryTrustMarkSubjectRepository(fixed);
-    List.of(sub1, sub2, sub3).forEach(sub -> subjectRepository.register(new TrustMarkId("http://tm1.digg.se"), sub));
+
+
     final TrustMarkSigner signer = new TrustMarkSigner(new SignerFactory(new JWKSet(jwk))
         , fixed);
-    final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkIssuerProperties,
-        signer
-        , subjectRepository) {};
+    final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkIssuerProperties, signer, source, Clock.systemUTC());
     assertThrows(InvalidRequestException.class, () -> trustMarkIssuer.trustMarkListing(null));
     assertThrows(InvalidRequestException.class,
         () -> trustMarkIssuer.trustMarkListing(new TrustMarkListingRequest(null, null)));
@@ -148,13 +158,16 @@ class TrustMarkIssuerTest {
   public void testTrustMarkCreation()
       throws NotFoundException, InvalidRequestException, ServerErrorException, ParseException {
 
+    final RefreshAheadRecordRegistrySource source = Mockito.mock(RefreshAheadRecordRegistrySource.class);
+
     final TrustMarkId trustMarkId = TrustMarkId.create("http://tm1.digg.se");
-    this.trustMarkIssuerProperties.trustMarks().add(TrustMarkIssuerProperties.TrustMarkProperties.builder()
+    final TrustMarkIssuerProperties.TrustMarkProperties trustMark = TrustMarkIssuerProperties.TrustMarkProperties.builder()
         .trustMarkId(trustMarkId)
         .refUri(Optional.of("http://digg.se/tm1/doc"))
         .logoUri(Optional.of("http://digg.se/tm1/logo.png"))
         .delegation(Optional.empty())
-        .build());
+        .build();
+    this.trustMarkIssuerProperties.trustMarks().add(trustMark);
 
     final TrustMarkSubject sub1 =
         TrustMarkSubject.builder()
@@ -164,14 +177,20 @@ class TrustMarkIssuerTest {
             .build();
 
 
+    Mockito.when(
+            source.getTrustMarkSubject(
+                trustMarkIssuerProperties.issuerEntityId(),
+                trustMarkId,
+                new EntityID(sub1.sub())
+            )
+        )
+        .thenReturn(Optional.of(sub1));
 
     final Clock fixed = Clock.fixed(Instant.now().plus(2, ChronoUnit.DAYS), ZoneId.systemDefault());
-    final InMemoryTrustMarkSubjectRepository subjectRepository = new InMemoryTrustMarkSubjectRepository(fixed);
-    List.of(sub1).forEach(sub -> subjectRepository.register(trustMarkId, sub));
     final TrustMarkSigner signer = new TrustMarkSigner(new SignerFactory(new JWKSet(jwk))
         , fixed);
 
-    final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkIssuerProperties, signer, subjectRepository);
+    final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkIssuerProperties, signer, source, Clock.systemUTC());
     final String trustMarkJWT = trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkId.getTrustMarkId(),
         "http://sub1.se"));
 
@@ -201,6 +220,8 @@ class TrustMarkIssuerTest {
   public void testTrustMarkValidity()
       throws NotFoundException, InvalidRequestException {
 
+    final RefreshAheadRecordRegistrySource source = Mockito.mock(RefreshAheadRecordRegistrySource.class);
+
     final TrustMarkSubject sub1 =
         TrustMarkSubject.builder()
             .sub("http://sub1.se")
@@ -211,8 +232,8 @@ class TrustMarkIssuerTest {
     final TrustMarkSubject expired =
         TrustMarkSubject.builder()
             .sub("http://expired.se")
-            .expires(Instant.now().plus(6, ChronoUnit.MINUTES))
-            .granted(Instant.now())
+            .expires(Instant.now().minus(6, ChronoUnit.MINUTES))
+            .granted(Instant.now().minus(10, ChronoUnit.MINUTES))
             .build();
 
     this.trustMarkIssuerProperties.trustMarks().add(TrustMarkIssuerProperties.TrustMarkProperties.builder()
@@ -222,17 +243,30 @@ class TrustMarkIssuerTest {
         .refUri(Optional.empty())
         .build());
 
+    Mockito.when(source.getTrustMarkSubject(
+        this.trustMarkIssuerProperties.issuerEntityId(),
+        TrustMarkId.create("http://tm1.digg.se"),
+        new EntityID(sub1.sub())
+    )).thenReturn(Optional.of(sub1));
+
+
     final Clock fixed = Clock.fixed(Instant.now().plus(8, ChronoUnit.MINUTES), ZoneId.systemDefault());
-    final InMemoryTrustMarkSubjectRepository subjectRepository = new InMemoryTrustMarkSubjectRepository(fixed);
-    List.of(sub1, expired).forEach(sub -> subjectRepository.register(new TrustMarkId("http://tm1.digg.se"), sub));
     final TrustMarkSigner signer = new TrustMarkSigner(new SignerFactory(new JWKSet(jwk))
         , fixed);
 
-    final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(trustMarkIssuerProperties, signer, subjectRepository);
+    final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(trustMarkIssuerProperties, signer, source, Clock.systemUTC());
 
     assertTrue(
         trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest("http://tm1.digg.se",
             "http://sub1.se", null)));
+
+
+    Mockito.when(source.getTrustMarkSubject(
+        this.trustMarkIssuerProperties.issuerEntityId(),
+        TrustMarkId.create("http://tm1.digg.se"),
+        new EntityID(expired.sub())
+    )).thenReturn(Optional.of(expired));
+
     assertFalse(
         trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest("http://tm1.digg.se",
             "http://expired.se", null)));

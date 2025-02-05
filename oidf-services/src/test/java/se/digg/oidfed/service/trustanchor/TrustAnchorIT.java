@@ -23,7 +23,6 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,12 +30,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.HttpClientErrorException;
+import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
 import se.digg.oidfed.service.IntegrationTestParent;
 import se.digg.oidfed.service.entity.TestFederationEntities;
 import se.digg.oidfed.service.keys.FederationKeys;
 import se.digg.oidfed.service.testclient.FederationClients;
 import se.digg.oidfed.service.testclient.TrustAnchorClient;
-import se.digg.oidfed.trustanchor.SubordinateListingRequest;
 
 import java.util.List;
 

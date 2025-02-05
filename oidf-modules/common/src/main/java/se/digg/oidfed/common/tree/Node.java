@@ -31,14 +31,13 @@ import java.util.stream.Collectors;
  * Implements generic search and visit operations.
  *
  * @param <T> data type
- *
  * @author Felix Hellman
  */
 @Getter
 @Setter
 public class Node<T> {
 
-  private String key;
+  private NodeKey key;
 
   /**
    * Default constructor.
@@ -48,21 +47,23 @@ public class Node<T> {
 
   /**
    * Constructor.
+   *
    * @param key for this node
    */
-  public Node(final String key) {
+  public Node(final NodeKey key) {
     this.key = key;
   }
 
   /**
    * Operation to add a child to a given node (or a node below this node)
+   *
    * @param context to propagate data in the tree
    */
   public void addChild(final NodePopulationContext<T> context) {
     if (!context.visited.add(this.key)) {
       return;
     }
-    if (context.parentKey().equalsIgnoreCase(this.key)) {
+    if (context.parentKey().equals(this.key)) {
       context.cacheSnapshot().append(context.child(), this);
       return;
     }
@@ -71,18 +72,17 @@ public class Node<T> {
 
   /**
    * @param searchPredicate what to search for
-   * @param context to propagate data in the tree
+   * @param context         to propagate data in the tree
    * @return a set of {@link Tree.SearchResult} for matching nodes given the search predicate
    */
   public Set<Tree.SearchResult<T>> search(final BiPredicate<T, NodeSearchContext<T>> searchPredicate,
-      final NodeSearchContext<T> context) {
+                                          final NodeSearchContext<T> context) {
     final Set<Tree.SearchResult<T>> matches = new HashSet<>();
     if (searchPredicate.test(context.cacheSnapshot.getData(this.key), context)) {
       matches.add(new Tree.SearchResult<>(this, context));
     }
     final List<Node<T>> children =
         context.cacheSnapshot().getChildren(this);
-
 
 
     final Set<Tree.SearchResult<T>> results =
@@ -103,12 +103,12 @@ public class Node<T> {
 
   /**
    * @param searchPredicate what to search for
-   * @param visitor action to perform upon a node
-   * @param context to propagate data in the tree
+   * @param visitor         action to perform upon a node
+   * @param context         to propagate data in the tree
    */
   public void visit(final BiPredicate<Node<T>, NodeSearchContext<T>> searchPredicate,
-      final BiConsumer<Node<T>, Node<T>> visitor,
-      final NodeSearchContext<T> context) {
+                    final BiConsumer<Node<T>, Node<T>> visitor,
+                    final NodeSearchContext<T> context) {
     if (searchPredicate.test(this, context)) {
       context.cacheSnapshot.getChildren(this).forEach(child -> {
         visitor.accept(this, child);
@@ -118,14 +118,14 @@ public class Node<T> {
   }
 
   /**
-   * @param level of the tree
+   * @param level         of the tree
    * @param includeParent true if all parents of a search result should be included
    * @param cacheSnapshot snapshot of a specific version of the cache to search upon
-   * @param visisted nodes that has already been visited, in order to resolve cyclic graphs
-   * @param <T> type
+   * @param visisted      nodes that has already been visited, in order to resolve cyclic graphs
+   * @param <T>           type
    */
   public record NodeSearchContext<T>(int level, boolean includeParent, CacheSnapshot<T> cacheSnapshot,
-                                     Set<String> visisted) {
+                                     Set<NodeKey> visisted) {
     /**
      * @return node context for the next level of iteration
      */
@@ -135,15 +135,16 @@ public class Node<T> {
   }
 
   /**
-   * @param child to add
+   * @param child         to add
    * @param cacheSnapshot snapshot of a specific version of the cache to populate
-   * @param parentKey to determine parent node
-   * @param visited nodes to resolve cyclic graphs
-   * @param <T> type
+   * @param parentKey     to determine parent node
+   * @param visited       nodes to resolve cyclic graphs
+   * @param <T>           type
    */
   public record NodePopulationContext<T>(
       Node<T> child,
       CacheSnapshot<T> cacheSnapshot,
-      String parentKey,
-      Set<String> visited) {}
+      NodeKey parentKey,
+      Set<NodeKey> visited) {
+  }
 }

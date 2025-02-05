@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.service.modules;
 
-import se.digg.oidfed.trustanchor.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
 
 /**
  * Registration event for trust anchor

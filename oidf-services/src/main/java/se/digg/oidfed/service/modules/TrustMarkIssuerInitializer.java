@@ -16,71 +16,45 @@
  */
 package se.digg.oidfed.service.modules;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.service.health.ReadyStateComponent;
-import se.digg.oidfed.service.trustmarkissuer.RestClientTrustMarkSubjectRecordIntegration;
-import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
-import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRepository;
-
-import java.util.Optional;
-
 
 /**
- * Initializer for {@link se.digg.oidfed.trustmarkissuer.TrustMarkIssuer}
+ * Initializer for Trust Mark Issuer modules.
  *
  * @author Felix Hellman
  */
 @Component
 public class TrustMarkIssuerInitializer extends ReadyStateComponent {
 
-  private final OpenIdFederationConfigurationProperties properties;
-  private final TrustMarkSubjectRepository repository;
-  private final RestClientTrustMarkSubjectRecordIntegration integration;
+  private final RefreshAheadRecordRegistrySource source;
+  private final ApplicationEventPublisher publisher;
 
   /**
    * Constructor.
-   * @param properties
-   * @param repository
-   * @param integration
+   * @param source to use
+   * @param publisher to use
    */
   public TrustMarkIssuerInitializer(
-      final OpenIdFederationConfigurationProperties properties,
-      final TrustMarkSubjectRepository repository,
-      final RestClientTrustMarkSubjectRecordIntegration integration) {
-    this.properties = properties;
-    this.repository = repository;
-    this.integration = integration;
+      final RefreshAheadRecordRegistrySource source,
+      final ApplicationEventPublisher publisher) {
+    this.source = source;
+    this.publisher = publisher;
   }
 
   /**
-   * Trigger setup on module setup completed.
    * @param event to handle
-   * @return event to signal that trust mark issuers have been loaded
+   * @return new event to continue init
    */
   @EventListener
-  public TrustMarkIssuerInitializedEvent handle(final ModuleSetupCompleteEvent event) {
-    Optional.ofNullable(this.properties.getModules().getTrustMarkIssuers())
-        .ifPresent(trustmarkIssuers -> trustmarkIssuers.stream()
-            .flatMap(tmi -> tmi.trustMarks().stream())
-            .forEach(tm -> tm.subjects().forEach(sub -> {
-              this.repository.register(tm.trustMarkId(), sub.toSubject());
-            })));
-
-    final OpenIdFederationConfigurationProperties.Registry.Integration integrationProperties = this.properties
-        .getRegistry()
-        .getIntegration();
-
-    if (integrationProperties.shouldExecute(OpenIdFederationConfigurationProperties.Registry.Step.TRUST_MARK_SUBJECT)) {
-      this.properties.getModules().getTrustMarkIssuers()
-          .forEach(tmi -> tmi.trustMarks()
-              .forEach(tm -> this.integration.loadSubject(tmi.entityIdentifier(), tm.trustMarkId(), Optional.empty())
-                  .forEach(subject -> this.repository.register(tm.trustMarkId(), subject))
-              )
-          );
-    }
-    markReady();
+  public TrustMarkIssuerInitializedEvent handle(final SubModulesReadEvent event) {
+    this.source.getTrustMarkIssuerProperties().stream()
+        .map(TrustMarkIssuerRegistrationEvent::new)
+        .forEach(this.publisher::publishEvent);
+    this.markReady();
     return new TrustMarkIssuerInitializedEvent();
   }
 
