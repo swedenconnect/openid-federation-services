@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.service.modules;
 
-import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
@@ -34,12 +34,12 @@ import java.util.Optional;
  */
 @Getter
 public class TrustMarkIssuerModuleResponse {
-  private Duration trustMarkValidityDuration;
+  private Duration trustMarkTokenValidityDuration;
   private EntityID entityIdentifier;
-  private JWK jwk;
-  private List<TrustMarkResponse> trustMarks;
+
   private String alias;
   private Boolean active;
+  private List<TrustMarkResponse> trustMarks;
 
   /**
    * Converts json object {@link java.util.HashMap} to new instance
@@ -47,14 +47,35 @@ public class TrustMarkIssuerModuleResponse {
    * @return new instance
    */
   public static TrustMarkIssuerModuleResponse fromJson(final Map<String, Object> json) {
-    return new TrustMarkIssuerModuleResponse();
+    final TrustMarkIssuerModuleResponse response = new TrustMarkIssuerModuleResponse();
+
+    try {
+      response.entityIdentifier = EntityID.parse((String) json.get("entity-identifier"));
+
+      response.alias = (String) json.get("alias");
+      response.active = (Boolean) json.get("active");
+      response.trustMarkTokenValidityDuration =
+          Duration.parse((String) json.get("trust-mark-token-validity-duration"));
+      //TODO: Implement Trustmark
+
+    }
+    catch (ParseException e) {
+      throw new IllegalArgumentException("Unable to parse data from registry",e);
+    }
+    return response;
   }
 
   /**
-   * @param trustMarkId
-   * @param logoUri
-   * @param refUri
-   * @param delegation
+   * Represents a response containing information about a Trust Mark issued
+   * by an entity. This class serves as a data structure to encapsulate
+   * the details of a Trust Mark, including its identifier, optional logo URI,
+   * optional reference URI, and optional delegation details.
+   * This record is immutable and holds the following components:
+   * - {@code TrustMarkId trustMarkId}: A unique identifier for the Trust Mark.
+   * - {@code Optional<String> logoUri}: An optional URI for the logo associated with the Trust Mark.
+   * - {@code Optional<String> refUri}: An optional reference URI for more details about the Trust Mark.
+   * - {@code Optional<TrustMarkDelegation> delegation}: An optional delegation structure providing details
+   *   about how the trust is delegated.
    */
   public record TrustMarkResponse(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
                                   Optional<TrustMarkDelegation> delegation) {}

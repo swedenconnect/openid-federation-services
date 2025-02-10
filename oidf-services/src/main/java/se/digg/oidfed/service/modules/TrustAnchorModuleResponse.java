@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.service.modules;
 
+import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import se.digg.oidfed.trustanchor.TrustAnchorProperties;
@@ -34,7 +35,7 @@ public class TrustAnchorModuleResponse {
   /** Alias for the given module */
   private String alias;
   /** EntityId for the trust anchor */
-  private String entityIdentifier;
+  private EntityID entityIdentifier;
   /** Is the module qctive */
   private Boolean active;
   /** Base path for trust anchor */
@@ -58,11 +59,16 @@ public class TrustAnchorModuleResponse {
    * @return new instance
    */
   public static TrustAnchorModuleResponse fromJson(final Map<String, Object> json) {
-    final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
-    trustAnchorModuleResponse.alias = (String) json.get("alias");
-    trustAnchorModuleResponse.entityIdentifier = (String) json.get("entity-identifier");
-    trustAnchorModuleResponse.active = (Boolean) json.get("active");
-    return trustAnchorModuleResponse;
+    try {
+      final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
+      trustAnchorModuleResponse.alias = (String) json.get("alias");
+      trustAnchorModuleResponse.entityIdentifier = EntityID.parse((String) json.get("entity-identifier"));
+      trustAnchorModuleResponse.active = (Boolean) json.get("active");
+      return trustAnchorModuleResponse;
+    }
+    catch (ParseException e) {
+      throw new IllegalArgumentException("Unable to parse data from registry",e);
+    }
   }
 
   /**
@@ -70,7 +76,7 @@ public class TrustAnchorModuleResponse {
    * @return properties instance
    */
   public TrustAnchorProperties toProperties() {
-    return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier), this.basePath);
+    return new TrustAnchorProperties(this.alias, this.entityIdentifier, this.basePath);
   }
 
 }

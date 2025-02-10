@@ -20,10 +20,10 @@ import com.nimbusds.jose.jwk.JWKSet;
 import lombok.Getter;
 import se.digg.oidfed.resolver.ResolverProperties;
 
+import java.text.ParseException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,7 +33,7 @@ import java.util.Map;
  */
 @Getter
 public class ResolverModuleResponse {
-  private List<String> trustAnchors;
+  private String trustAnchor;
   private Duration resolveResponseDuration;
   private JWKSet trustedKeys;
   private String entityIdentifier;
@@ -48,11 +48,11 @@ public class ResolverModuleResponse {
    */
   public Map<String, Object> toJson() {
     final HashMap<String, Object> json = new HashMap<>();
-    json.put("trust-anchors", this.trustAnchors);
+    json.put("trust-anchor", this.trustAnchor);
     json.put("resolve-response-duration", this.resolveResponseDuration);
     json.put("trusted-keys", this.trustedKeys);
     json.put("entity-identifier", this.entityIdentifier);
-    json.put("step-retry-time", this.stepRetryTime);
+    json.put("step-retry-duration", this.stepRetryTime);
     json.put("alias", this.alias);
     json.put("active", this.active);
     return Collections.unmodifiableMap(json);
@@ -65,18 +65,24 @@ public class ResolverModuleResponse {
    * @return new instance
    */
   public static ResolverModuleResponse fromJson(final Map<String, Object> json) {
-    final ResolverModuleResponse resolver = new ResolverModuleResponse();
-    final Boolean isModuleActive = (Boolean) json.get("active");
-    resolver.active = false;
-    if (isModuleActive) {
-      resolver.trustAnchors = (List<String>) json.get("trust-anchors");
-      resolver.resolveResponseDuration = (Duration) json.get("resolve-response-duration");
-      resolver.trustedKeys = (JWKSet) json.get("trusted-keys");
-      resolver.entityIdentifier = (String) json.get("entity-identifier");
-      resolver.stepRetryTime = (Duration) json.get("step-retry-time");
-      resolver.alias = (String) json.get("alias");
+    try {
+      final ResolverModuleResponse resolver = new ResolverModuleResponse();
+      final Boolean isModuleActive = (Boolean) json.get("active");
+      resolver.active = isModuleActive;
+      if (isModuleActive) {
+        resolver.trustAnchor = (String) json.get("trust-anchor");
+        resolver.resolveResponseDuration = Duration.parse((String) json.get("resolve-response-duration"));
+        resolver.trustedKeys = JWKSet.parse((String) json.get("trusted-keys"));
+        resolver.entityIdentifier = (String) json.get("entity-identifier");
+        resolver.stepRetryTime = Duration.parse((String) json.get("step-retry-duration"));
+        resolver.alias = (String) json.get("alias");
+      }
+      return resolver;
     }
-    return resolver;
+    catch (final ParseException e) {
+      throw new IllegalArgumentException("Unable to parse data from registry",e);
+    }
+
   }
 
   /**
@@ -86,7 +92,7 @@ public class ResolverModuleResponse {
    */
   public ResolverProperties toProperty() {
     return new ResolverProperties(
-        this.trustAnchors.get(0),
+        this.trustAnchor,
         this.resolveResponseDuration,
         this.trustedKeys.getKeys(),
         this.entityIdentifier,
