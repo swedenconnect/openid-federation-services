@@ -14,20 +14,25 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity;
-
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+package se.digg.oidfed.common.exception;
 
 /**
- * Integration for fetching a signed list of {@link EntityRecord}
+ * Unchecked exception that wraps {@link FederationException} to simplify error handling using lambdas.
  *
  * @author Felix Hellman
  */
-public interface EntityRecordIntegration {
+public class UncheckedFederationException extends RuntimeException {
   /**
-   * @param issuer to get records for
-   * @return signed list of {@link EntityRecord}
+   * @param cause of the exception
    */
-  SignedJWT getAll(final EntityID issuer);
+  public UncheckedFederationException(final FederationException cause) {
+    super(cause);
+  }
+
+  /**
+   * @return checked exception
+   */
+  public FederationException getCheckedException() {
+    return (FederationException) getCause();
+  }
 }

@@ -21,7 +21,7 @@ import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
-public class RelyingPartyContainer extends GenericContainer<RelyingPartyContainer> {
+  public class RelyingPartyContainer extends GenericContainer<RelyingPartyContainer> {
 
   public RelyingPartyContainer() {
     super("ghcr.io/swedenconnect/openid-federation-relying-party:latest");

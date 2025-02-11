@@ -33,7 +33,8 @@ public class TrustMarkSource {
 
   /**
    * Constructor.
-   * @param issuer of the trust mark
+   *
+   * @param issuer      of the trust mark
    * @param trustMarkId of the trust mark
    */
   public TrustMarkSource(final EntityID issuer, final String trustMarkId) {
@@ -43,6 +44,7 @@ public class TrustMarkSource {
 
   /**
    * Creates a new instance from json object.
+   *
    * @param tmsJson to create instance from
    * @return new instance
    */
@@ -55,6 +57,7 @@ public class TrustMarkSource {
 
   /**
    * Convert current instance to json structure for nimbus.
+   *
    * @return json of this instance
    */
   public Map<String, Object> toJson() {

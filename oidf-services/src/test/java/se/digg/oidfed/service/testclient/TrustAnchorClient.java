@@ -19,9 +19,11 @@ package se.digg.oidfed.service.testclient;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.springframework.web.client.RestClient;
+import se.digg.oidfed.trustanchor.SubordinateListingRequest;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Optional;
 
 public class TrustAnchorClient {
   private final RestClient client;
@@ -32,9 +34,17 @@ public class TrustAnchorClient {
     this.trustAnchor = trustAnchor;
   }
 
-  public List<String> subordinateListing() {
-    return (List<String>) client.get()
-        .uri(trustAnchor.getValue() + "/subordinate_listing")
+
+
+  public List<String> subordinateListing(final SubordinateListingRequest request) {
+    return client.mutate().baseUrl(trustAnchor.getValue()).build().get()
+        .uri(uriBuilder -> uriBuilder.path("/subordinate_listing")
+            .queryParamIfPresent("trust_marked", Optional.ofNullable(request.trustMarked()))
+            .queryParamIfPresent("trust_mark_id", Optional.ofNullable(request.trustMarkId()))
+            .queryParamIfPresent("intermediate", Optional.ofNullable(request.intermediate()))
+            .queryParamIfPresent("entity_type", Optional.ofNullable(request.entityType()))
+            .build()
+        )
         .retrieve()
         .toEntity(List.class)
         .getBody();
@@ -42,7 +52,8 @@ public class TrustAnchorClient {
 
   public SignedJWT fetch(final EntityID subject) {
     try {
-    final StringBuilder builder = new StringBuilder("?sub=%s".formatted(subject));
+    final StringBuilder builder = new StringBuilder();
+      Optional.ofNullable(subject).ifPresent(sub -> builder.append("?sub=%s".formatted(subject)));
     final String body = client.get()
         .uri(trustAnchor.getValue() + "/fetch" + builder)
         .retrieve()

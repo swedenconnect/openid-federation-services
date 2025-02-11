@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
+import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
 import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
 import se.digg.oidfed.common.jwt.SignerFactory;
@@ -33,6 +34,7 @@ public class TrustAnchorFactory {
   private final EntityRecordRegistry registry;
   private final RecordRegistrySource source;
   private final SignerFactory signerFactory;
+  private final RestClient client;
 
   /**
    * Constructor.
@@ -40,14 +42,17 @@ public class TrustAnchorFactory {
    * @param registry to use
    * @param source   to use
    * @param signerFactory to use
+   * @param client to use
    */
   public TrustAnchorFactory(
       final EntityRecordRegistry registry,
       final RecordRegistrySource source,
-      final SignerFactory signerFactory) {
+      final SignerFactory signerFactory,
+      final RestClient client) {
     this.registry = registry;
     this.source = source;
     this.signerFactory = signerFactory;
+    this.client = client;
   }
 
   /**
@@ -56,6 +61,6 @@ public class TrustAnchorFactory {
    */
   public TrustAnchor create(final TrustAnchorProperties properties) {
     return new TrustAnchor(this.registry, properties, new SubordinateStatementFactory(this.source, this.signerFactory,
-        properties.getBasePath()));
+        properties.getBasePath()), new RestClientEntityConfigurationLoader(this.client));
   }
 }
