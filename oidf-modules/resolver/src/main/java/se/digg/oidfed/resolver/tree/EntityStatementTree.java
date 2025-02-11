@@ -23,7 +23,7 @@ import se.digg.oidfed.common.tree.CacheSnapshot;
 import se.digg.oidfed.common.tree.SearchRequest;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.DiscoveryRequest;
-import se.digg.oidfed.resolver.ResolverRequest;
+import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -51,21 +51,21 @@ public class EntityStatementTree {
   /**
    * Searches for a given entity and resolves the trustchain for that entity.
    *
-   * @param resolverRequest with search parameters
+   * @param resolveRequest with search parameters
    * @return resolved trust chain
    */
-  public Set<EntityStatement> getTrustChain(final ResolverRequest resolverRequest) {
+  public Set<EntityStatement> getTrustChain(final ResolveRequest resolveRequest) {
     // Commit to current version
     final CacheSnapshot<EntityStatement> snapshot = this.tree.getCurrentSnapshot();
     // Find the entity that matches our subject, include parents
-    final SearchRequest<EntityStatement> request = new SearchRequest<>(resolverRequest.asPredicate(), true, snapshot);
+    final SearchRequest<EntityStatement> request = new SearchRequest<>(resolveRequest.asPredicate(), true, snapshot);
 
     return this.tree.search(request).stream()
         //Sort by level in tree
         .sorted(Comparator.comparingInt(a -> a.context().level()))
         .map(Tree.SearchResult::getData)
         // Remove intermediate authorities
-        .filter(es -> !this.isIntermediate(es, resolverRequest))
+        .filter(es -> !this.isIntermediate(es, resolveRequest))
         .collect(Collectors.toCollection(LinkedHashSet::new))
         //Reverse order to be leaf --> n --> root
         .reversed();
@@ -86,13 +86,13 @@ public class EntityStatementTree {
    * Takes an {@link EntityStatementTreeLoader} and loads the tree from a root location
    *
    * @param loader to use
-   * @param rootEntity to start resolution from
+   * @param trustAnchorEntityId to start resolution from
    */
-  public void load(final EntityStatementTreeLoader loader, final String rootEntity) {
-    loader.resolveTree(rootEntity, this.tree);
+  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId) {
+    loader.resolveTree(trustAnchorEntityId, this.tree);
   }
 
-  private boolean isIntermediate(final EntityStatement statement, final ResolverRequest request) {
+  private boolean isIntermediate(final EntityStatement statement, final ResolveRequest request) {
     if (statement.getEntityID().getValue().equals(request.subject())) {
       //The target is an intermediate, but is also the intended search target
       return false;

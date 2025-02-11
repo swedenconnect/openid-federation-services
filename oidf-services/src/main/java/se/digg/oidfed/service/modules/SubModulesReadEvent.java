@@ -16,14 +16,11 @@
  */
 package se.digg.oidfed.service.modules;
 
-import jakarta.annotation.Nullable;
-
 /**
  * Event to signal submodules have been read.
- * @param modules
  *
  * @author Felix Hellman
  */
-public record SubModulesReadEvent(@Nullable ModuleResponse modules) {
+public record SubModulesReadEvent() {
 
 }

@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.service.modules;
 
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 
 /**
  * Registration event for trust mark issuer.

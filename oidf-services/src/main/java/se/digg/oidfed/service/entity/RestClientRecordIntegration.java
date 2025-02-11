@@ -16,84 +16,83 @@
  */
 package se.digg.oidfed.service.entity;
 
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriTemplate;
-import se.digg.oidfed.common.entity.EntityRecord;
-import se.digg.oidfed.common.entity.PolicyRecord;
-import se.digg.oidfed.common.entity.EntityRecordVerifier;
-import se.digg.oidfed.common.entity.integration.RecordRegistryIntegration;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
+import se.digg.oidfed.common.entity.integration.Expirable;
+import se.digg.oidfed.common.entity.integration.registry.ModuleResponse;
+import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.RecordRegistryIntegration;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.UUID;
 
 /**
- * RecordRegistry integration using {@link RestClient}
+ * {@link RestClient} implementation for {@link RecordRegistryIntegration}
  *
  * @author Felix Hellman
  */
 public class RestClientRecordIntegration implements RecordRegistryIntegration {
+
+  private final RegistryVerifier verifier;
   private final RestClient client;
-  private final EntityRecordVerifier verifier;
-
-  private final ResponseErrorHandler errorHandler = new ResponseErrorHandler() {
-    @Override
-    public boolean hasError(final ClientHttpResponse response) throws IOException {
-      return response.getStatusCode().value() == 404;
-    }
-
-    @Override
-    public void handleError(final ClientHttpResponse response) throws IOException {
-      throw new RuntimeException("Entity not found");
-    }
-  };
 
   /**
-   * Constructor.
-   *
-   * @param client   to use
-   * @param verifier to use
+   * @param verifier for verifying records
+   * @param client for fetching records
    */
-  public RestClientRecordIntegration(final RestClient client, final EntityRecordVerifier verifier) {
-    this.client = client;
+  public RestClientRecordIntegration(final RegistryVerifier verifier, final RestClient client) {
     this.verifier = verifier;
+    this.client = client;
   }
 
   @Override
-  public Optional<PolicyRecord> getPolicy(final String id) {
-    final String jwt = this.client.get()
-        .uri(builder -> {
-          return builder
-              .path("/api/v1/federationservice/policy_record")
-              .query("policy_id={policy_id}")
-              .build(Map.of("policy_id", id));
-        })        .retrieve()
-        .onStatus(this.errorHandler)
-        .body(String.class);
-    return this.verifier.verifyPolicy(jwt);
-  }
-
-  @Override
-  public List<EntityRecord> getEntityRecords(final String issuer) {
-
-    final String jwt = this.client
-        .get()
-        .uri(builder -> {
-          return builder
-              .path("/api/v1/federationservice/entity_record")
-              .query("iss={iss}")
-              .build(Map.of("iss", issuer));
-        })
+  public Expirable<PolicyRecord> getPolicy(final String id) {
+    final String body = this.client.get()
+        .uri(builder -> builder
+            .path("/policy_record")
+            .queryParam("policy_id", id)
+            .build())
         .retrieve()
         .body(String.class);
-    return this.verifier.verifyEntities(jwt);
+    return this.verifier.verifyPolicyRecord(body);
   }
 
-}
+  @Override
+  public Expirable<List<EntityRecord>> getEntityRecords(final String issuer) {
+    final String body = this.client.get()
+        .uri(builder -> builder
+            .queryParam("iss", issuer)
+            .path("/entity_record")
+            .build())
+        .retrieve()
+        .body(String.class);
+    return this.verifier.verifyEntityRecords(body);
+  }
 
+  @Override
+  public Expirable<ModuleResponse> getModules(final UUID instanceId) {
+    final String body = this.client.get()
+        .uri(builder -> builder
+            .path("/submodules")
+            .queryParam("instanceid", instanceId.toString())
+            .build())
+        .retrieve()
+        .body(String.class);
+    return this.verifier.verifyModuleResponse(body);
+  }
+
+  @Override
+  public Expirable<List<TrustMarkSubject>> getTrustMarkSubject(final String issuer, final String trustMarkId) {
+    final String body = this.client.get()
+        .uri(builder -> builder
+            .queryParam("iss", issuer)
+            .queryParam("trustmark_id", trustMarkId)
+            .path("/trustmarksubject_record")
+            .build())
+        .retrieve()
+        .body(String.class);
+    return this.verifier.verifyTrustMarkSubjects(body);
+  }
+}

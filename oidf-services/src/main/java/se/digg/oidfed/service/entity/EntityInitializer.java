@@ -16,21 +16,13 @@
  */
 package se.digg.oidfed.service.entity;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
-import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
-import se.digg.oidfed.common.keys.KeyRegistry;
-import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.service.health.ReadyStateComponent;
-import se.digg.oidfed.service.keys.FederationKeys;
-import se.digg.oidfed.service.modules.ModuleSetupCompleteEvent;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import se.digg.oidfed.service.modules.TrustMarkIssuerInitializedEvent;
 
 /**
  * Initializer class for entity registry.
@@ -42,32 +34,19 @@ import java.util.Optional;
 public class EntityInitializer extends ReadyStateComponent {
 
   private final EntityRouter router;
-  private final OpenIdFederationConfigurationProperties properties;
-  private final KeyRegistry keyRegistry;
-  private final FederationKeys keys;
   private final EntityRecordRegistry registry;
-  private final RecordRegistrySource source;
+  private final RefreshAheadRecordRegistrySource source;
 
   /**
-   * Constructor
-   * @param router
-   * @param properties
-   * @param keyRegistry
-   * @param keys
-   * @param registry
-   * @param source
+   * @param router to use
+   * @param registry to use
+   * @param source to use
    */
   public EntityInitializer(
       final EntityRouter router,
-      final OpenIdFederationConfigurationProperties properties,
-      final KeyRegistry keyRegistry,
-      final FederationKeys keys,
       final EntityRecordRegistry registry,
-      final RecordRegistrySource source) {
+      final RefreshAheadRecordRegistrySource source) {
     this.router = router;
-    this.properties = properties;
-    this.keyRegistry = keyRegistry;
-    this.keys = keys;
     this.registry = registry;
     this.source = source;
   }
@@ -77,60 +56,11 @@ public class EntityInitializer extends ReadyStateComponent {
    * @return event to notify the system that entities has been loaded
    */
   @EventListener
-  public EntitiesLoadedEvent handle(final ModuleSetupCompleteEvent event) {
-    this.properties.getEntities()
-        .stream().map(r -> r.toEntityRecord(this.keyRegistry, this.keys))
-        .toList().forEach(this.registry::addEntity);
-
-    Optional.ofNullable(this.properties.getPolicies()).ifPresent(
-        pp -> pp.stream()
-            .map(PolicyConfigurationProperties.PolicyRecordProperty::toRecord)
-            .forEach(this.source::addPolicy)
-    );
-
+  public EntitiesLoadedEvent handle(final TrustMarkIssuerInitializedEvent event) {
+    this.source.getAllEntities().forEach(this.registry::addEntity);
     this.router.reevaluteEndpoints();
-    markReady();
+    this.markReady();
     return new EntitiesLoadedEvent();
-  }
-
-  /**
-   * Event listener for reloading all entities from the register.
-   *
-   * @param event to trigger on
-   * @return event to notify the system that entities has been loaded
-   */
-  @EventListener
-  public EntitiesLoadedEvent handleReload(final EntityReloadEvent event) {
-    log.debug("Handling entity reload event");
-    this.loadFromRegistry();
-    this.router.reevaluteEndpoints();
-    return new EntitiesLoadedEvent();
-  }
-
-  private void loadFromRegistry() {
-    final List<OpenIdFederationConfigurationProperties.Registry.Step> skipInit = this.properties
-        .getRegistry()
-        .getIntegration()
-        .getSkipInit();
-
-    if (!skipInit.contains(OpenIdFederationConfigurationProperties.Registry.Step.ENTITY)) {
-      final List<EntityID> issuers = new ArrayList<>(this.properties.getModules()
-          .getIssuers()
-          .stream()
-          .map(EntityID::new)
-          .toList()
-      );
-      issuers.forEach(this::loadIssuerFromRegistry);
-    }
-  }
-
-  private void loadIssuerFromRegistry(final EntityID issuer) {
-    try {
-      this.source.getEntityRecords(issuer.getValue())
-          .forEach(this.registry::addEntity);
-    } catch (final Exception e) {
-      log.error("failed to fetch entity records from registry", e);
-    }
   }
 
   @Override

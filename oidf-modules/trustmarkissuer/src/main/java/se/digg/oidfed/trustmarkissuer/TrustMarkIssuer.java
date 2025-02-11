@@ -20,12 +20,18 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.exception.ServerErrorException;
 import se.digg.oidfed.common.module.Submodule;
-import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,21 +48,26 @@ public class TrustMarkIssuer implements Submodule {
 
   private final TrustMarkIssuerProperties trustMarkIssuerProperties;
   private final TrustMarkSigner signer;
-  private final TrustMarkSubjectRepository subjectRepository;
+  private final RefreshAheadRecordRegistrySource source;
+  private final Clock clock;
 
   /**
    * Constructor.
    * @param trustMarkIssuerProperties
    * @param signer
-   * @param subjectRepository
+   * @param source
+   * @param clock for keeping time
    */
   public TrustMarkIssuer(
       final TrustMarkIssuerProperties trustMarkIssuerProperties,
       final TrustMarkSigner signer,
-      final TrustMarkSubjectRepository subjectRepository) {
+      final RefreshAheadRecordRegistrySource source,
+      final Clock clock
+  ) {
     this.trustMarkIssuerProperties = trustMarkIssuerProperties;
     this.signer = signer;
-    this.subjectRepository = subjectRepository;
+    this.source = source;
+    this.clock = clock;
   }
 
   @Override
@@ -65,7 +76,7 @@ public class TrustMarkIssuer implements Submodule {
   }
 
   /**
-   * Listing al trustmarks that are valid for this trustmarkid filtered by subject if supplied
+   * Listing all trustmarks that are valid for this trustmarkid filtered by subject if supplied
    *
    * @param request Request containing trustmarkid and subject
    * @return listing of trust mark subjects that are valid. If there is no subject found a empty list is returned.
@@ -79,9 +90,14 @@ public class TrustMarkIssuer implements Submodule {
       throw new InvalidRequestException("Trust mark id can not be null");
     }
     final TrustMarkId id = TrustMarkId.validate(request.trustMarkId(), InvalidRequestException::new);
-    final List<String> result = this.subjectRepository
-        .getAll(id)
+    final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.issuerEntityId(), id)
         .stream()
+        .filter(tms -> {
+          if (Objects.nonNull(tms.expires())) {
+            return tms.expires().isAfter(Instant.now(this.clock));
+          }
+          return true;
+        })
         .map(TrustMarkSubject::sub)
         .toList();
     if (result.isEmpty()) {
@@ -114,8 +130,12 @@ public class TrustMarkIssuer implements Submodule {
       throw new NotFoundException("Could not find any trust mark with id %s".formatted(request.trustMarkId()));
     }
 
-    final Optional<TrustMarkSubject> subject = this.subjectRepository.getSubject(id, new EntityID(request.subject()));
-    return subject.isPresent() && !subject.get().revoked();
+    final Optional<TrustMarkSubject> subject =
+        this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.issuerEntityId(), id,
+            new EntityID(request.subject()));
+    return subject.isPresent()
+        && !subject.get().revoked()
+        && Optional.ofNullable(subject.get().expires()).map(e -> e.isAfter(Instant.now(this.clock))).orElse(true);
   }
 
   /**
@@ -124,17 +144,20 @@ public class TrustMarkIssuer implements Submodule {
    * @param request TrustMarkId and Subject is mandatory
    * @return trust mark in a JWT
    */
-  public String trustMark(final TrustMarkRequest request) throws ServerErrorException {
+  public String trustMark(final TrustMarkRequest request) throws ServerErrorException, NotFoundException {
     final TrustMarkIssuerProperties.TrustMarkProperties properties =
         this.trustMarkIssuerProperties.trustMarks().stream()
         .filter(tm -> request.trustMarkId().equals(tm.trustMarkId().getTrustMarkId()))
         .findFirst()
         .get();
 
-    final TrustMarkSubject trustMarkSubject = this.subjectRepository
-        .getSubject(new TrustMarkId(request.trustMarkId()), new EntityID(request.subject()))
-        .get();
-
+    final Optional<TrustMarkSubject> subject =
+        this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.issuerEntityId(),
+        TrustMarkId.create(request.trustMarkId()), new EntityID(request.subject()));
+    if (subject.isEmpty()) {
+      throw new NotFoundException("Could not find subject");
+    }
+    final TrustMarkSubject trustMarkSubject = subject.get();
     try {
       return this.signer.sign(this.trustMarkIssuerProperties, properties, trustMarkSubject).serialize();
     } catch (final ParseException | JOSEException e) {

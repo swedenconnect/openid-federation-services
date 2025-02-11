@@ -21,6 +21,7 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import org.junit.jupiter.api.Test;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

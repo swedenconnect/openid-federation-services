@@ -16,7 +16,11 @@
  */
 package se.digg.oidfed.resolver.tree.resolution;
 
+import se.digg.oidfed.common.tree.NodeKey;
+import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
+
 /**
+ *
  * Default implementation of {@link ErrorContextFactory}.
  * Creates in memory references to counters.
  *
@@ -24,7 +28,12 @@ package se.digg.oidfed.resolver.tree.resolution;
  */
 public class DefaultErrorContextFactory implements ErrorContextFactory {
   @Override
-  public ErrorContext create(final String location) {
-    return new AtomicIntegerErrorContext(location);
+  public ErrorContext create(final NodeKey key, final EntityStatementTreeLoader.StepName stepName) {
+    return null;
+  }
+
+  @Override
+  public ErrorContext createEmpty() {
+    return new AtomicIntegerErrorContext();
   }
 }

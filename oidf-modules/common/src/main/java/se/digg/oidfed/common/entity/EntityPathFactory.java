@@ -16,8 +16,7 @@
  */
 package se.digg.oidfed.common.entity;
 
-import com.nimbusds.oauth2.sdk.id.Identifier;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 
 import java.util.List;
 import java.util.Optional;

@@ -80,15 +80,4 @@ public class InMemorySubModuleRegistry
   public Optional<TrustMarkIssuer> getTrustMarkIssuer(final String alias) {
     return Optional.ofNullable(this.trustMarkIssuers.get(alias));
   }
-
-  /**
-   * @return entity id of all modules.
-   */
-  public List<EntityID> getAllEntityIds() {
-    final ArrayList<EntityID> entityIDS = new ArrayList<>();
-    entityIDS.addAll(this.resolvers.values().stream().flatMap(r -> r.getEntityIds().stream()).toList());
-    entityIDS.addAll(this.trustAnchors.values().stream().flatMap(r -> r.getEntityIds().stream()).toList());
-    entityIDS.addAll(this.trustMarkIssuers.values().stream().flatMap(r -> r.getEntityIds().stream()).toList());
-    return entityIDS;
-  }
 }

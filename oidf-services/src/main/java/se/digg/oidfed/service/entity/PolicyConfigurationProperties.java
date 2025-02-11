@@ -19,7 +19,7 @@ package se.digg.oidfed.service.entity;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
-import se.digg.oidfed.common.entity.PolicyRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.validation.FederationAssert;
 import se.digg.oidfed.service.JsonObjectProperty;
 

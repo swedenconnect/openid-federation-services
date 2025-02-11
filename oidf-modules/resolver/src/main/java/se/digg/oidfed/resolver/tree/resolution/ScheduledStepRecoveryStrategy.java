@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.resolver.tree.resolution;
 
-import se.digg.oidfed.resolver.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;

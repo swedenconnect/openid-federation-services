@@ -19,7 +19,7 @@ package se.digg.oidfed.service.testclient;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.springframework.web.client.RestClient;
-import se.digg.oidfed.trustanchor.SubordinateListingRequest;
+import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
 
 import java.text.ParseException;
 import java.util.List;

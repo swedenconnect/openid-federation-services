@@ -16,10 +16,10 @@
  */
 package se.digg.oidfed.service.resolver;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.context.ApplicationEventPublisher;
-import se.digg.oidfed.common.tree.VersionedCacheLayer;
-import se.digg.oidfed.resolver.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
 import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
@@ -35,21 +35,21 @@ import java.util.concurrent.Executors;
  * @author Felix Hellman
  */
 public class EntityStatementTreeLoaderFactory {
-  private final EntityStatementIntegration integration;
+  private final FederationClient client;
   private final ExecutionStrategy executionStrategy;
   private final ErrorContextFactory errorContextFactory;
   private final ApplicationEventPublisher publisher;
 
   /**
-   * @param integration for fetching entities
+   * @param client for fetching entities
    * @param executionStrategy for executing iterations
    * @param errorContextFactory for creating error context
    * @param publisher publisher of events.
    */
-  public EntityStatementTreeLoaderFactory(final EntityStatementIntegration integration,
+  public EntityStatementTreeLoaderFactory(final FederationClient client,
       final ExecutionStrategy executionStrategy,
       final ErrorContextFactory errorContextFactory, final ApplicationEventPublisher publisher) {
-    this.integration = integration;
+    this.client = client;
     this.executionStrategy = executionStrategy;
     this.errorContextFactory = errorContextFactory;
     this.publisher = publisher;
@@ -61,7 +61,7 @@ public class EntityStatementTreeLoaderFactory {
    * @return new instance of a tree loader
    */
   public EntityStatementTreeLoader create(final ResolverProperties properties) {
-    return new EntityStatementTreeLoader(this.integration, this.executionStrategy,
+    return new EntityStatementTreeLoader(this.client, this.executionStrategy,
         new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
         this.errorContextFactory)
         .withAdditionalPostHook(() -> this.publisher.publishEvent(new TreeUpdatedEvent(properties.alias())));

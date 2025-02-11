@@ -16,13 +16,13 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
-import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
-import se.digg.oidfed.common.entity.integration.RecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.federation.FederationClient;
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
-import se.digg.oidfed.trustanchor.TrustAnchorProperties;
 
 /**
  * Factory class for creating trust anchors.
@@ -32,23 +32,24 @@ import se.digg.oidfed.trustanchor.TrustAnchorProperties;
 public class TrustAnchorFactory {
 
   private final EntityRecordRegistry registry;
-  private final RecordRegistrySource source;
+  private final RefreshAheadRecordRegistrySource source;
   private final SignerFactory signerFactory;
-  private final RestClient client;
+  private final FederationClient client;
 
   /**
    * Constructor.
    *
-   * @param registry to use
-   * @param source   to use
+   * @param registry      to use
+   * @param source        to use
    * @param signerFactory to use
-   * @param client to use
+   * @param client        to use
    */
   public TrustAnchorFactory(
       final EntityRecordRegistry registry,
-      final RecordRegistrySource source,
+      final RefreshAheadRecordRegistrySource source,
       final SignerFactory signerFactory,
-      final RestClient client) {
+      final FederationClient client
+  ) {
     this.registry = registry;
     this.source = source;
     this.signerFactory = signerFactory;
@@ -60,7 +61,12 @@ public class TrustAnchorFactory {
    * @return new instance
    */
   public TrustAnchor create(final TrustAnchorProperties properties) {
-    return new TrustAnchor(this.registry, properties, new SubordinateStatementFactory(this.source, this.signerFactory,
-        properties.getBasePath()), new RestClientEntityConfigurationLoader(this.client));
+    return new TrustAnchor(this.registry, properties,
+        new SubordinateStatementFactory(
+            this.source,
+            this.signerFactory,
+            properties.getBasePath()),
+        this.client
+    );
   }
 }

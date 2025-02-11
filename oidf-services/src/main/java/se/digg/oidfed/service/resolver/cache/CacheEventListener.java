@@ -27,13 +27,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class CacheEventListener {
 
-  private final CacheRegistry registry;
+  private final ResolverCacheRegistry registry;
 
   /**
    * Constructor.
    * @param registry to perform actions upon
    */
-  public CacheEventListener(final CacheRegistry registry) {
+  public CacheEventListener(final ResolverCacheRegistry registry) {
     this.registry = registry;
   }
 

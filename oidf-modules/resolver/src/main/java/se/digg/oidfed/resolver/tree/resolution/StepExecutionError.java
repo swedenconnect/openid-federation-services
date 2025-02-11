@@ -17,6 +17,7 @@
 package se.digg.oidfed.resolver.tree.resolution;
 
 import lombok.Getter;
+import se.digg.oidfed.common.tree.NodeKey;
 
 import java.util.function.Consumer;
 

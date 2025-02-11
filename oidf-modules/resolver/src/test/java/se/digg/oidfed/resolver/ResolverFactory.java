@@ -14,13 +14,13 @@
  * limitations under the License.
  *
  */
-
 package se.digg.oidfed.resolver;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.common.tree.VersionedInMemoryCache;
@@ -41,13 +41,13 @@ import java.time.Clock;
 import java.util.List;
 
 public class ResolverFactory {
-  public static ResolverClient createTestResolver(final ResolverProperties properties, final FederationTree tree,
+  public static ResolverClient createTestResolver(final FederationClient client,
+                                                  final ResolverProperties properties,
                                                   final StepRecoveryStrategy recoveryStrategy,
                                                   final SignerFactory adapter) {
 
     final VersionedInMemoryCache<EntityStatement> dataLayer = new VersionedInMemoryCache<>();
-    final EntityStatementTree entityStatementTree = getEntityStatementTree(properties, tree,
-        dataLayer, recoveryStrategy);
+    final EntityStatementTree entityStatementTree = getEntityStatementTree(client, properties, dataLayer, recoveryStrategy);
 
     final List<ChainValidationStep> chainValidationSteps = List.of(
         new ConstraintsValidationStep(),
@@ -69,18 +69,23 @@ public class ResolverFactory {
 
     return new ResolverClient(resolver, properties.entityIdentifier(),
         adapter.getSignKey(),
-        () -> entityStatementTree.load(new EntityStatementTreeLoader(tree, new DFSExecution(), recoveryStrategy,
+        () -> entityStatementTree.load(new EntityStatementTreeLoader(client, new DFSExecution(), recoveryStrategy,
                 new DefaultErrorContextFactory()).withAdditionalPostHook(
-            dataLayer::useNextVersion),
-        properties.trustAnchor() + "/.well-known/openid-federation"));
+                dataLayer::useNextVersion),
+            properties.trustAnchor() + "/.well-known/openid-federation"));
   }
-  private static EntityStatementTree getEntityStatementTree(final ResolverProperties properties,
-                                                            final FederationTree tree, final VersionedInMemoryCache<EntityStatement> entityStatementInMemoryDataLayer, final StepRecoveryStrategy recoveryStrategy) {
+
+  private static EntityStatementTree getEntityStatementTree(
+      final FederationClient client,
+      final ResolverProperties properties,
+      final VersionedInMemoryCache<EntityStatement> entityStatementInMemoryDataLayer,
+      final StepRecoveryStrategy recoveryStrategy) {
     final Tree<EntityStatement> internalTree = new Tree<>(entityStatementInMemoryDataLayer);
     final EntityStatementTree entityStatementTree = new EntityStatementTree(internalTree);
 
     final EntityStatementTreeLoader loader =
-        new EntityStatementTreeLoader(tree, new DFSExecution(), recoveryStrategy, new DefaultErrorContextFactory()).withAdditionalPostHook(entityStatementInMemoryDataLayer::useNextVersion);
+        new EntityStatementTreeLoader(client, new DFSExecution(), recoveryStrategy,
+            new DefaultErrorContextFactory()).withAdditionalPostHook(entityStatementInMemoryDataLayer::useNextVersion);
 
     entityStatementTree.load(loader, properties.trustAnchor() + "/.well-known/openid-federation");
     return entityStatementTree;

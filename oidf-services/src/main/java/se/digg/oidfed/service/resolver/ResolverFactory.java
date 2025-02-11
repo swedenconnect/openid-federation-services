@@ -17,12 +17,11 @@
 package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.resolver.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.resolver.ResolverResponseFactory;
 import se.digg.oidfed.resolver.chain.ChainValidator;
 import se.digg.oidfed.resolver.chain.ConstraintsValidationStep;
@@ -30,8 +29,8 @@ import se.digg.oidfed.resolver.chain.CriticalClaimsValidationStep;
 import se.digg.oidfed.resolver.chain.SignatureValidationStep;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.tree.EntityStatementTree;
-import se.digg.oidfed.service.resolver.cache.CacheRegistration;
-import se.digg.oidfed.service.resolver.cache.CacheRegistry;
+import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistration;
+import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 import se.digg.oidfed.service.resolver.cache.RedisOperations;
 import se.digg.oidfed.service.resolver.cache.RedisVersionedCacheLayer;
 
@@ -49,7 +48,7 @@ public class ResolverFactory {
   private final RedisOperations redisOperations;
   private final MetadataProcessor processor;
   private final EntityStatementTreeLoaderFactory treeLoaderFactory;
-  private final CacheRegistry registry;
+  private final ResolverCacheRegistry registry;
   private final SignerFactory signerAdapter;
 
   /**
@@ -67,7 +66,7 @@ public class ResolverFactory {
       final RedisOperations redisOperations,
       final MetadataProcessor processor,
       final EntityStatementTreeLoaderFactory treeLoaderFactory,
-      final CacheRegistry registry,
+      final ResolverCacheRegistry registry,
       final SignerFactory signerAdapter) {
 
     this.versionTemplate = versionTemplate;
@@ -88,7 +87,7 @@ public class ResolverFactory {
     final RedisVersionedCacheLayer redisVersionedCacheLayer =
         new RedisVersionedCacheLayer(this.versionTemplate, this.redisOperations, properties);
     final EntityStatementTree entityStatementTree = new EntityStatementTree(new Tree<>(redisVersionedCacheLayer));
-    this.registry.registerCache(properties.alias(), new CacheRegistration(
+    this.registry.registerCache(properties.alias(), new ResolverCacheRegistration(
         entityStatementTree,
         this.treeLoaderFactory.create(properties),
         redisVersionedCacheLayer,
@@ -96,10 +95,6 @@ public class ResolverFactory {
     ));
     return new Resolver(properties, this.createChainValidator(properties), entityStatementTree, this.processor,
         this.resolverResponseFactory(properties));
-  }
-
-  private Tree<EntityStatement> createTree(final RedisVersionedCacheLayer redisVersionedCacheLayer) {
-    return new Tree<>(redisVersionedCacheLayer);
   }
 
   private ChainValidator createChainValidator(final ResolverProperties properties) {

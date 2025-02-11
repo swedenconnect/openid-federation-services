@@ -18,19 +18,14 @@ package se.digg.oidfed.service.submodule;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.common.jwt.SignerFactory;
-import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
-import se.digg.oidfed.service.keys.FederationKeyConfigurationProperties;
 import se.digg.oidfed.service.keys.FederationKeys;
-import se.digg.oidfed.service.modules.SubModuleVerifier;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;
-import se.digg.oidfed.trustmarkissuer.InMemoryTrustMarkSubjectRepository;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkSigner;
-import se.digg.oidfed.trustmarkissuer.TrustMarkSubjectRepository;
 
 import java.time.Clock;
 import java.util.List;
@@ -54,18 +49,13 @@ public class SubmoduleConfiguration {
     return inMemorySubModuleRegistry;
   }
 
-
-  @Bean
-  SubModuleVerifier subModuleVerifier(final FederationKeys keys) {
-    return new SubModuleVerifier(keys.validationKeys());
-  }
-
   @Bean
   TrustMarkIssuerFactory factory(
       final TrustMarkSigner signer,
-      final TrustMarkSubjectRepository repository
+      final RefreshAheadRecordRegistrySource source,
+      final Clock clock
   ) {
-    return new TrustMarkIssuerFactory(signer, repository);
+    return new TrustMarkIssuerFactory(signer, source, clock);
   }
 
   @Bean
@@ -76,11 +66,6 @@ public class SubmoduleConfiguration {
   @Bean
   SignerFactory entityToSignerAdapter(final FederationKeys keys) {
     return new SignerFactory(keys.signKeys());
-  }
-
-  @Bean
-  TrustMarkSubjectRepository trustMarkSubjectRepository(final Clock clock) {
-    return new InMemoryTrustMarkSubjectRepository(clock);
   }
 
   @Bean

@@ -19,8 +19,7 @@ package se.digg.oidfed.service.trustanchor;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import se.digg.oidfed.trustanchor.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
 
 import java.util.List;
 

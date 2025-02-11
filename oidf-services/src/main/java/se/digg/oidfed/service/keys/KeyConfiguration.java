@@ -36,7 +36,8 @@ public class KeyConfiguration {
   @Bean
   KeyRegistry keyRegistry(final CredentialBundles bundles) {
     final KeyRegistry keyRegistry = new KeyRegistry();
-    final JwkTransformerFunction jwkTransformerFunction = new JwkTransformerFunction();
+    final JwkTransformerFunction jwkTransformerFunction = new JwkTransformerFunction()
+        .serializable();
     bundles.getRegisteredCredentials().forEach(key -> {
       final KeyProperty property = new KeyProperty();
       final PkiCredential credential = bundles.getCredential(key);

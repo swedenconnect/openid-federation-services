@@ -21,13 +21,12 @@ import jakarta.annotation.PostConstruct;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import se.digg.oidfed.common.validation.FederationAssert;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuerProperties;
-import se.digg.oidfed.trustmarkissuer.TrustMarkSubject;
-import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkDelegation;
-import se.digg.oidfed.trustmarkissuer.dvo.TrustMarkId;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 
 import java.time.Duration;
 import java.time.Instant;

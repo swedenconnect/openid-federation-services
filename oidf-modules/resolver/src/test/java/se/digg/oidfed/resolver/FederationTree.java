@@ -30,16 +30,16 @@ import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
-
+/*
 public class FederationTree implements EntityStatementIntegration {
   private final VersionedInMemoryCache<FederationEntity>
       federationEntityInMemoryDataLayer = new VersionedInMemoryCache<>();
   private final Tree<FederationEntity> federationEntityTree = new Tree<>(federationEntityInMemoryDataLayer);
   private final Set<String> failedLocations = new ConcurrentSkipListSet<>();
 
-
+/*
   public FederationTree(final FederationEntity entity) {
-    final Node<FederationEntity> node = new Node<>(entity.getLocation());
+    final Node<FederationEntity> node = new Node<>(entity);
     federationEntityTree.addRoot(node, entity);
     federationEntityInMemoryDataLayer.useNextVersion();
   }
@@ -102,12 +102,16 @@ public class FederationTree implements EntityStatementIntegration {
       throw new RuntimeException(e);
     }
   }
+  */
+
 
   /**
    * Fails the mocked request to fail once
    * @param location
    */
+  /*
   public void setFailOnce(final String location) {
     this.failedLocations.add(location);
   }
 }
+*/

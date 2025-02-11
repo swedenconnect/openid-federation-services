@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.service.entity;
 
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
@@ -23,9 +24,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.util.Assert;
-import se.digg.oidfed.common.entity.EntityRecord;
-import se.digg.oidfed.common.entity.HostedRecord;
-import se.digg.oidfed.common.entity.TrustMarkSource;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.HostedRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSource;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.JsonObjectProperty;
 import se.digg.oidfed.service.keys.FederationKeys;
@@ -100,16 +101,15 @@ public class EntityProperty {
           "Public keys can not be null for a non-hosted entity %s %s".formatted(this.issuer, this.subject));
       Assert.isTrue(!this.publicKeys.isEmpty(),
           "Public keys can not be empty for a non-hosted entity %s %s".formatted(this.issuer, this.subject));
-      jwkSet = registry.getSet(this.publicKeys);
+      jwkSet = registry.getSet(this.publicKeys).toPublicJWKSet();
     } else {
       if (Objects.nonNull(this.publicKeys) && !this.publicKeys.isEmpty()) {
         log.warn("Hosted record with issuer:{} subject:{} was configured with one or more public-key which will be " +
                 "ignored.",
             this.issuer, this.subject);
       }
-      jwkSet = keys.validationKeys();
+      jwkSet = keys.validationKeys().toPublicJWKSet();
     }
-
 
     return new EntityRecord(
         new EntityID(this.issuer),

@@ -145,7 +145,7 @@ openid:
             json: |
               {
                 "federation_entity": {
-                  "organization_name": "Municipality",
+                  "organization_name": "Private",
                   "federation_fetch_endpoint": "https://private.local.swedenconnect.se/private-ta/fetch",
                   "federation_list_endpoint": "https://private.local.swedenconnect.se/private-ta/subordinate_listing"
                 }

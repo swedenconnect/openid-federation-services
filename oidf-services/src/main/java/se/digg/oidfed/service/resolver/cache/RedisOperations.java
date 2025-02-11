@@ -19,6 +19,7 @@ package se.digg.oidfed.service.resolver.cache;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.digg.oidfed.common.tree.Node;
+import se.digg.oidfed.common.tree.NodeKey;
 
 import java.util.List;
 import java.util.Objects;
@@ -56,7 +57,7 @@ public class RedisOperations {
     if (Objects.nonNull(members)) {
       return members
           .stream()
-          .map(key -> new Node<EntityStatement>(key))
+          .map(key -> new Node<EntityStatement>(NodeKey.parse(key)))
           .toList();
     }
     return List.of();
@@ -68,7 +69,7 @@ public class RedisOperations {
    * @param child node key
    */
   public void append(final ChildKey parent, final Node<EntityStatement> child) {
-    this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey());
+    this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey().getKey());
   }
 
   /**
@@ -95,7 +96,8 @@ public class RedisOperations {
    * @return root node
    */
   public Node<EntityStatement> getRoot(final RootKey key) {
-    return new Node<>(this.stringTemplate.opsForValue().get(key.getRedisKey()));
+    final String root = this.stringTemplate.opsForValue().get(key.getRedisKey());
+    return new Node<>(NodeKey.parse(root));
   }
 
   /**
@@ -104,7 +106,7 @@ public class RedisOperations {
    * @param root node key for root
    */
   public void setRoot(final RootKey key, final Node<EntityStatement> root) {
-    this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey());
+    this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey().getKey());
   }
 
   /**

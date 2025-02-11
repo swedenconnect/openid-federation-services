@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
+import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.service.health.ReadyStateComponent;
 
 /**
@@ -32,38 +32,21 @@ import se.digg.oidfed.service.health.ReadyStateComponent;
 @Slf4j
 public class SubModuleInitializer extends ReadyStateComponent {
 
-  private final RestClientSubModuleIntegration integration;
-  private final OpenIdFederationConfigurationProperties properties;
+  private final RefreshAheadRecordRegistrySource source;
+
 
   /**
-   * Constructor.
-   *
-   * @param integration
-   * @param properties
+   * @param source for registry
    */
-  public SubModuleInitializer(
-      final RestClientSubModuleIntegration integration,
-      final OpenIdFederationConfigurationProperties properties) {
-    this.integration = integration;
-    this.properties = properties;
+  public SubModuleInitializer(final RefreshAheadRecordRegistrySource source) {
+    this.source = source;
   }
 
   @EventListener
   SubModulesReadEvent handle(final ApplicationStartedEvent event) {
-    final OpenIdFederationConfigurationProperties.Registry.Integration integrationProperties = this.properties
-        .getRegistry()
-        .getIntegration();
-
-    if (integrationProperties.shouldExecute(OpenIdFederationConfigurationProperties.Registry.Step.SUBMODULE)) {
-      try {
-        return new SubModulesReadEvent(this.integration.fetch(integrationProperties.getInstanceId()));
-      } catch (final Exception e) {
-        log.warn("Failed to communicate with registry, continuing ...", e);
-        //throw new RuntimeException(e);
-      }
-    }
-    markReady();
-    return new SubModulesReadEvent(null);
+    this.source.refresh();
+    this.markReady();
+    return new SubModulesReadEvent();
   }
 
   @Override

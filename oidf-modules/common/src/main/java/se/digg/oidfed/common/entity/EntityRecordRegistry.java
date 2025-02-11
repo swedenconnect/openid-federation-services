@@ -17,11 +17,11 @@
 package se.digg.oidfed.common.entity;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 
 /**
  * Interface to implement for persisting entity records.
@@ -47,14 +47,20 @@ public interface EntityRecordRegistry {
   Optional<EntityRecord> getEntity(final EntityID entityID);
 
   /**
+   * @param subject of the subject
+   * @return record of the subordinate record
+   */
+  Optional<EntityRecord> getSubordinateRecord(final EntityID subject);
+  /**
    * @param record to add
    */
   void addEntity(final EntityRecord record);
 
+
   /**
-   * Takes a predicate to find entities.
-   * @param predicate to use
-   * @return list of hits
+   * Search for subordinates for a given issuer
+   * @param issuer to search for
+   * @return list of subordinates for a given issuer
    */
-  List<EntityRecord> find(final Predicate<EntityRecord> predicate);
+  List<EntityRecord> findSubordinates(final String issuer);
 }

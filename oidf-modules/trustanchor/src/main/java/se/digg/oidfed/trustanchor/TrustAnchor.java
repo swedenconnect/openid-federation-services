@@ -16,23 +16,26 @@
  */
 package se.digg.oidfed.trustanchor;
 
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import se.digg.oidfed.common.entity.integration.federation.EntityConfigurationRequest;
+import se.digg.oidfed.common.entity.integration.federation.FederationClient;
+import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.common.entity.EntityRecord;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.federation.FetchRequest;
+import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
+import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidIssuerException;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
-import se.digg.oidfed.common.exception.UncheckedFederationException;
 import se.digg.oidfed.common.module.Submodule;
 
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 /**
  * Implementation of trust anchor.
@@ -48,7 +51,8 @@ public class TrustAnchor implements Submodule {
 
   private final SubordinateStatementFactory factory;
 
-  private final EntityConfigurationLoader loader;
+  private final FederationClient federationClient;
+
 
   /**
    * Constructor.
@@ -56,18 +60,19 @@ public class TrustAnchor implements Submodule {
    * @param registry   to use
    * @param properties to use
    * @param factory    to constructor entity statements
-   * @param loader     for loading entity configurations
+   * @param federationClient to use for resolving entity configurations
    */
   public TrustAnchor(
       final EntityRecordRegistry registry,
       final TrustAnchorProperties properties,
       final SubordinateStatementFactory factory,
-      final EntityConfigurationLoader loader) {
+      final FederationClient federationClient
+  ) {
 
     this.registry = registry;
     this.properties = properties;
     this.factory = factory;
-    this.loader = loader;
+    this.federationClient = federationClient;
   }
 
   /**
@@ -77,13 +82,13 @@ public class TrustAnchor implements Submodule {
    * @throws InvalidRequestException
    * @throws NotFoundException
    */
-  public String fetchEntityStatement(final EntityStatementRequest request)
-      throws InvalidIssuerException, InvalidRequestException, NotFoundException {
+  public String fetchEntityStatement(final FetchRequest request)
+      throws InvalidIssuerException, NotFoundException {
     final EntityRecord issuer = this.registry.getEntity(this.properties.getEntityId())
         .orElseThrow(
             () -> new InvalidIssuerException("Entity not found for:'%s'".formatted(this.properties.getEntityId()))
         );
-    final EntityRecord subject = this.registry.getEntity(new EntityID(request.subject()))
+    final EntityRecord subject = this.registry.getSubordinateRecord(new EntityID(request.subject()))
         .orElseThrow(
             () -> new NotFoundException("Entity not found for subject:'%s'".formatted(request.subject()))
         );
@@ -104,48 +109,24 @@ public class TrustAnchor implements Submodule {
    * @throws FederationException when loading entity configurations fails
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
-    final List<String> list = this.registry
-        .find(ec -> ec.getIssuer().getValue().equalsIgnoreCase(this.properties.getEntityId().getValue()) &&
-            !ec.getIssuer().getValue().equalsIgnoreCase(ec.getSubject().getValue())).stream()
+    final List<String> subordinates = this.registry
+        .findSubordinates(this.properties.getEntityId().getValue()).stream()
+        .filter(er -> !er.getSubject().equals(this.properties.getEntityId()))
         .map(ec -> ec.getSubject().getValue())
         .toList();
 
     if (!request.requiresFiltering()) {
-      return list;
+      return subordinates;
     }
 
-    return this.loadEntityConfiguration(list).stream()
+    return subordinates.stream().toList()
+        .stream()
+        .map(s -> new FederationRequest<>(new EntityConfigurationRequest(new EntityID(s)), Map.of(), true))
+        .map(this.federationClient::entityConfiguration)
         .filter(request.toPredicate())
         .map(EntityStatement::getEntityID)
         .map(Identifier::getValue)
         .toList();
-  }
-
-  private List<EntityStatement> loadEntityConfiguration(final List<String> entityIds) throws FederationException {
-    // Fetch entity statement internally and resolve entity configurations.
-    try {
-      return entityIds.stream()
-          .map(EntityStatementRequest::new)
-          .map(r -> {
-            try {
-              return this.fetchEntityStatement(r);
-            } catch (final FederationException e) {
-              throw new UncheckedFederationException(e);
-            }
-          })
-          .map(es -> {
-            try {
-              return this.loader.load(EntityStatement.parse(es));
-            } catch (final ParseException e) {
-              log.warn("Skipping parse failed Entity statement %s".formatted(es), e);
-              return null;
-            }
-          })
-          .filter(Objects::nonNull)
-          .toList();
-    } catch (final UncheckedFederationException e) {
-      throw e.getCheckedException();
-    }
   }
 
   @Override

@@ -23,7 +23,7 @@ import se.digg.oidfed.common.tree.CacheSnapshot;
 import se.digg.oidfed.common.tree.Node;
 import se.digg.oidfed.common.tree.SnapshotSource;
 import se.digg.oidfed.common.tree.VersionedCacheLayer;
-import se.digg.oidfed.resolver.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 
 import java.util.List;
 import java.util.Optional;
@@ -103,7 +103,7 @@ public class RedisVersionedCacheLayer implements VersionedCacheLayer<EntityState
       final EntityStatement rootData) {
     final int version = getNextVersion();
     this.redisOperations.setRoot(new RedisOperations.RootKey(version, this.properties.alias()), root);
-    this.setData(root.getKey(), rootData, version);
+    this.setData(root.getKey().getKey(), rootData, version);
     return new CacheSnapshot<>(this, version);
   }
 }
