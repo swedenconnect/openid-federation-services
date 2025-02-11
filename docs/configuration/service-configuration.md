@@ -75,7 +75,7 @@ be loaded from the registry or configured with properties.
 
 | Property        | Description                                                                                                     | Type                 | Default value |
 |:----------------|:----------------------------------------------------------------------------------------------------------------|:---------------------|:--------------|
-| `subject`       | The entity ID of the subject                                                                                    | Duration             | PT30M         |
+| `subject`       | The entity ID of the subject                                                                                    | String               |               |
 | `issuer`        | The entity ID of the issuer                                                                                     | String               |               |
 | `hosted-record` | Provides additional information for this record when it is hosted by this service node                          | HostedRecordProperty | null          |
 | `public-keys`   | List of credential names used for public-keys in federation metadata, will be ignored if `hosted-record` is set | List\<String\>       | Empty List    |
