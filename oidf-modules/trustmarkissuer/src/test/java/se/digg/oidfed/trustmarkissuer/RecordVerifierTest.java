@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import se.digg.oidfed.common.entity.RecordVerificationException;
 import se.digg.oidfed.common.entity.integration.registry.JWSRegistryVerifier;
 import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -86,7 +86,7 @@ class RecordVerifierTest {
     final SignedJWT jwt = signJWT("trustmark_records",key,claim);
 
     final RegistryVerifier verifier = new JWSRegistryVerifier(jwkSet);
-    final List<TrustMarkSubject> checkedResult = verifier.verifyTrustMarkSubjects(jwt.serialize()).getValue();
+    final List<TrustMarkSubjectRecord> checkedResult = verifier.verifyTrustMarkSubjects(jwt.serialize()).getValue();
     assertEquals(1,checkedResult.size());
     assertEquals("http://sub.pm.se",checkedResult.get(0).sub());
     assertTrue(checkedResult.get(0).revoked());

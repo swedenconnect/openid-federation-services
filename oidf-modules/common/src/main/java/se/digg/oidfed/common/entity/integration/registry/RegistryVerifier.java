@@ -50,5 +50,5 @@ public interface RegistryVerifier {
    * @param jwt with trust mark subjects
    * @return list of trust mark subjects
    */
-  Expirable<List<TrustMarkSubject>> verifyTrustMarkSubjects(final String jwt);
+  Expirable<List<TrustMarkSubjectRecord>> verifyTrustMarkSubjects(final String jwt);
 }

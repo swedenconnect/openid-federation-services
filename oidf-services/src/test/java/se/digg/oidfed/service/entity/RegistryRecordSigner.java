@@ -26,7 +26,7 @@ import com.nimbusds.jwt.SignedJWT;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.registry.ModuleResponse;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -113,8 +113,8 @@ public class RegistryRecordSigner {
     return jwt;
   }
 
-  public SignedJWT signTrustMarkSubjects(final List<TrustMarkSubject> tms) throws JOSEException {
-    final List<Map<String, Object>> trustMarkSubjects = tms.stream().map(TrustMarkSubject::toJson).toList();
+  public SignedJWT signTrustMarkSubjects(final List<TrustMarkSubjectRecord> tms) throws JOSEException {
+    final List<Map<String, Object>> trustMarkSubjects = tms.stream().map(TrustMarkSubjectRecord::toJson).toList();
 
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
         .claim("trustmark_records", trustMarkSubjects)

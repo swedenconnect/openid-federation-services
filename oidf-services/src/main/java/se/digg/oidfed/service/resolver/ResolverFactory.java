@@ -17,11 +17,11 @@
 package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import org.springframework.data.redis.core.RedisTemplate;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.jwt.SignerFactory;
+import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.resolver.ResolverResponseFactory;
 import se.digg.oidfed.resolver.chain.ChainValidator;
 import se.digg.oidfed.resolver.chain.ConstraintsValidationStep;
@@ -29,10 +29,9 @@ import se.digg.oidfed.resolver.chain.CriticalClaimsValidationStep;
 import se.digg.oidfed.resolver.chain.SignatureValidationStep;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.tree.EntityStatementTree;
+import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistration;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
-import se.digg.oidfed.service.resolver.cache.RedisOperations;
-import se.digg.oidfed.service.resolver.cache.RedisVersionedCacheLayer;
 
 import java.time.Clock;
 import java.util.List;
@@ -44,8 +43,7 @@ import java.util.List;
  */
 public class ResolverFactory {
 
-  private final RedisTemplate<String, Integer> versionTemplate;
-  private final RedisOperations redisOperations;
+  private final ResolverCacheFactory resolverCacheFactory;
   private final MetadataProcessor processor;
   private final EntityStatementTreeLoaderFactory treeLoaderFactory;
   private final ResolverCacheRegistry registry;
@@ -54,23 +52,19 @@ public class ResolverFactory {
   /**
    * Constructor.
    *
-   * @param versionTemplate to use for cache
-   * @param redisOperations to use for cache
-   * @param processor to use for metadata
-   * @param treeLoaderFactory to use for creating tree loaders
-   * @param registry for caches
-   * @param signerAdapter to use
+   * @param resolverCacheFactory factory for creating snap resolver caches
+   * @param processor            to use for metadata
+   * @param treeLoaderFactory    to use for creating tree loaders
+   * @param registry             for caches
+   * @param signerAdapter        to use
    */
   public ResolverFactory(
-      final RedisTemplate<String, Integer> versionTemplate,
-      final RedisOperations redisOperations,
+      final ResolverCacheFactory resolverCacheFactory,
       final MetadataProcessor processor,
       final EntityStatementTreeLoaderFactory treeLoaderFactory,
       final ResolverCacheRegistry registry,
       final SignerFactory signerAdapter) {
-
-    this.versionTemplate = versionTemplate;
-    this.redisOperations = redisOperations;
+    this.resolverCacheFactory = resolverCacheFactory;
     this.processor = processor;
     this.treeLoaderFactory = treeLoaderFactory;
     this.registry = registry;
@@ -84,13 +78,12 @@ public class ResolverFactory {
    * @return new instance
    */
   public Resolver create(final ResolverProperties properties) {
-    final RedisVersionedCacheLayer redisVersionedCacheLayer =
-        new RedisVersionedCacheLayer(this.versionTemplate, this.redisOperations, properties);
-    final EntityStatementTree entityStatementTree = new EntityStatementTree(new Tree<>(redisVersionedCacheLayer));
+    final ResolverCache entityStatementSnapshotSource = this.resolverCacheFactory.create(properties);
+    final EntityStatementTree entityStatementTree = new EntityStatementTree(new Tree<>(entityStatementSnapshotSource));
     this.registry.registerCache(properties.alias(), new ResolverCacheRegistration(
         entityStatementTree,
         this.treeLoaderFactory.create(properties),
-        redisVersionedCacheLayer,
+        entityStatementSnapshotSource,
         properties
     ));
     return new Resolver(properties, this.createChainValidator(properties), entityStatementTree, this.processor,

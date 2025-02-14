@@ -22,6 +22,7 @@ import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolic
 import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
+import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.common.tree.VersionedInMemoryCache;
 import se.digg.oidfed.resolver.chain.ChainValidationStep;
@@ -46,7 +47,7 @@ public class ResolverFactory {
                                                   final StepRecoveryStrategy recoveryStrategy,
                                                   final SignerFactory adapter) {
 
-    final VersionedInMemoryCache<EntityStatement> dataLayer = new VersionedInMemoryCache<>();
+    final ResolverCache dataLayer = new VersionedInMemoryCache();
     final EntityStatementTree entityStatementTree = getEntityStatementTree(client, properties, dataLayer, recoveryStrategy);
 
     final List<ChainValidationStep> chainValidationSteps = List.of(
@@ -78,14 +79,14 @@ public class ResolverFactory {
   private static EntityStatementTree getEntityStatementTree(
       final FederationClient client,
       final ResolverProperties properties,
-      final VersionedInMemoryCache<EntityStatement> entityStatementInMemoryDataLayer,
+      final ResolverCache resolverCache,
       final StepRecoveryStrategy recoveryStrategy) {
-    final Tree<EntityStatement> internalTree = new Tree<>(entityStatementInMemoryDataLayer);
+    final Tree<EntityStatement> internalTree = new Tree<>(resolverCache);
     final EntityStatementTree entityStatementTree = new EntityStatementTree(internalTree);
 
     final EntityStatementTreeLoader loader =
         new EntityStatementTreeLoader(client, new DFSExecution(), recoveryStrategy,
-            new DefaultErrorContextFactory()).withAdditionalPostHook(entityStatementInMemoryDataLayer::useNextVersion);
+            new DefaultErrorContextFactory()).withAdditionalPostHook(resolverCache::useNextVersion);
 
     entityStatementTree.load(loader, properties.trustAnchor() + "/.well-known/openid-federation");
     return entityStatementTree;

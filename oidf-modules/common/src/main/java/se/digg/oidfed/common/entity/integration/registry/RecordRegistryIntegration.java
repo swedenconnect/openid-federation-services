@@ -56,5 +56,5 @@ public interface RecordRegistryIntegration {
    * @param trustMarkId id of the trust mark
    * @return list of subjects
    */
-  Expirable<List<TrustMarkSubject>> getTrustMarkSubject(final String issuer, final String trustMarkId);
+  Expirable<List<TrustMarkSubjectRecord>> getTrustMarkSubject(final String issuer, final String trustMarkId);
 }

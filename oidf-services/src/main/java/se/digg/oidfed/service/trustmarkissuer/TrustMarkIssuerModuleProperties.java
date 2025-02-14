@@ -24,12 +24,10 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import se.digg.oidfed.common.validation.FederationAssert;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -117,7 +115,6 @@ public class TrustMarkIssuerModuleProperties {
      * @param trustMarkId The Trust Mark ID
      * @param logoUri     Optional logo for issued Trust Marks
      * @param refUri      Optional URL to information about issued Trust Marks
-     * @param subjects    trustMarkIssuerSubject
      * @param delegation  TrustMark delegation
      */
     @Builder
@@ -125,36 +122,13 @@ public class TrustMarkIssuerModuleProperties {
         TrustMarkId trustMarkId,
         String logoUri,
         String refUri,
-        TrustMarkDelegation delegation,
-        List<TrustMarkSubjectProperties> subjects) {
-      /**
-       * TrustMarkSubject
-       *
-       * @param sub     EntityId for Subject
-       * @param granted Optional granted
-       * @param expires Optional expires
-       * @param revoked True is trust mark is revoked
-       */
-      public record TrustMarkSubjectProperties(
-          String sub,
-          Instant granted,
-          Instant expires,
-          boolean revoked) {
-        /**
-         * Converts to TrustMarkSubject
-         * @return new instace
-         */
-        public TrustMarkSubject toSubject() {
-          return new TrustMarkSubject(this.sub, this.granted, this.expires, this.revoked);
-        }
-      }
+        TrustMarkDelegation delegation) {
 
       /**
        * Validate content of the configuration
        */
       public void validate() {
-        FederationAssert.assertNotEmpty(this.subjects,
-            "trust-mark-issuers[].trust-marks[].subjects is empty. Must be configured");
+
       }
 
       /**

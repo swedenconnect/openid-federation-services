@@ -41,6 +41,7 @@ import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
 import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.jwt.SignerFactory;
+import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.common.tree.VersionedInMemoryCache;
 import se.digg.oidfed.resolver.chain.ChainValidator;
@@ -107,7 +108,7 @@ class ResolverTest {
     final EntityStatementTreeLoader entityStatementTreeLoader = new EntityStatementTreeLoader(mock, new DFSExecution(), new DeferredStepRecoveryStrategy(),
         new DefaultErrorContextFactory());
 
-    final VersionedInMemoryCache<EntityStatement> dataLayer = new VersionedInMemoryCache<>();
+    final ResolverCache dataLayer = new VersionedInMemoryCache();
     final Tree<EntityStatement> entityStatementTree =
         new Tree<>(dataLayer);
     entityStatementTreeLoader.withAdditionalPostHook(dataLayer::useNextVersion);

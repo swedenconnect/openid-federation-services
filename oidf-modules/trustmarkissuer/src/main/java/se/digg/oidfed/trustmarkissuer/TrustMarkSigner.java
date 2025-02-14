@@ -24,7 +24,7 @@ import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.Nullable;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.exception.ServerErrorException;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
@@ -67,7 +67,7 @@ public class TrustMarkSigner {
    * Signs a trust mark.
    * @param trustMarkIssuerProperties
    * @param trustMarkProperties
-   * @param trustMarkSubject
+   * @param trustMarkSubjectRecord
    * @return signed jwt
    * @throws ServerErrorException
    * @throws ParseException
@@ -76,16 +76,16 @@ public class TrustMarkSigner {
   public SignedJWT sign(
       final TrustMarkIssuerProperties trustMarkIssuerProperties,
       final TrustMarkIssuerProperties.TrustMarkProperties trustMarkProperties,
-      final TrustMarkSubject trustMarkSubject) throws ServerErrorException, ParseException, JOSEException {
+      final TrustMarkSubjectRecord trustMarkSubjectRecord) throws ServerErrorException, ParseException, JOSEException {
     // https://openid.net/specs/openid-federation-1_0.html#name-trust-mark-claims
     final JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
         .issueTime(new Date(Instant.now(this.clock).toEpochMilli()))
         .jwtID(new BigInteger(128, rng).toString(16))
-        .subject(trustMarkSubject.sub());
+        .subject(trustMarkSubjectRecord.sub());
 
 
     claimsSetBuilder.expirationTime(
-        this.calculateExp(trustMarkIssuerProperties.trustMarkValidityDuration(), trustMarkSubject.expires()));
+        this.calculateExp(trustMarkIssuerProperties.trustMarkValidityDuration(), trustMarkSubjectRecord.expires()));
 
     final Optional<EntityID> issuerEntityId = Optional.ofNullable(trustMarkIssuerProperties.issuerEntityId());
 

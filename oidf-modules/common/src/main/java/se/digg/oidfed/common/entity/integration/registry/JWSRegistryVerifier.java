@@ -107,18 +107,18 @@ public class JWSRegistryVerifier implements RegistryVerifier {
   }
 
   @Override
-  public Expirable<List<TrustMarkSubject>> verifyTrustMarkSubjects(final String jwt) {
+  public Expirable<List<TrustMarkSubjectRecord>> verifyTrustMarkSubjects(final String jwt) {
     try {
       final JWTClaimsSet claims = this.verify(jwt)
           .getJWTClaimsSet();
       final List<Object> records = claims
           .getListClaim("trustmark_records");
       FederationAssert.assertNotEmpty(records,"Missing claim for:'trustmark_records' ");
-      final List<TrustMarkSubject> trustMarkSubjects = records.stream()
+      final List<TrustMarkSubjectRecord> trustMarkSubjectRecords = records.stream()
           .map(o -> (Map<String, Object>) o)
-          .map(TrustMarkSubject::fromJson)
+          .map(TrustMarkSubjectRecord::fromJson)
           .toList();
-      return new Expirable<>(claims.getExpirationTime().toInstant(), trustMarkSubjects);
+      return new Expirable<>(claims.getExpirationTime().toInstant(), trustMarkSubjectRecords);
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify TrustMarkIssuerSubject record", e);
     }

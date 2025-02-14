@@ -16,22 +16,19 @@
  */
 package se.digg.oidfed.service.resolver.cache;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.VersionedCacheLayer;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
-import se.digg.oidfed.resolver.tree.EntityStatementTree;
-import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
 
 /**
- * Registartion of a cache.
- * @param tree of the cache
- * @param loader for the cache
- * @param cache the actual cache
- * @param properties properties for the cache
+ * Factory for creating {@link VersionedCacheLayer}
  *
  * @author Felix Hellman
  */
-public record ResolverCacheRegistration(EntityStatementTree tree, EntityStatementTreeLoader loader,
-                                        ResolverCache cache, ResolverProperties properties) {
+public interface ResolverCacheFactory {
+  /**
+   * @param properties to use for configuration
+   * @return new cache instance
+   */
+  ResolverCache create(final ResolverProperties properties);
 }

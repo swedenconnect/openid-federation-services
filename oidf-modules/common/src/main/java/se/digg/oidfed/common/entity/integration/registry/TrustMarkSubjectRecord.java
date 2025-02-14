@@ -36,12 +36,17 @@ import java.util.Optional;
  * @param granted When subject is granted can be in the future
  * @param expires When subject expires, if left empty no expiredate will be used
  * @param revoked If this trust mark is revoked, no new trustmarks for this subject will be issued
+ * @param iss  issuer of the trust mark
+ * @param tmi  trust mark id of the trust mark
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Slf4j
 @Builder(toBuilder = true)
-public record TrustMarkSubject(
+public record TrustMarkSubjectRecord(
     String sub,
+    String iss,
+    String tmi,
     @Nullable Instant granted,
     @Nullable Instant expires,
     boolean revoked) implements Serializable {
@@ -53,9 +58,11 @@ public record TrustMarkSubject(
    * @param record Reading subject,expires,granted,revoked values.
    * @return TrustMarkIssuerSubject filled with data
    */
-  public static TrustMarkSubject fromJson(final Map<String, Object> record) {
-    final TrustMarkSubject.TrustMarkSubjectBuilder tmisBuilder = TrustMarkSubject.builder()
-        .sub((String) record.get("subject"));
+  public static TrustMarkSubjectRecord fromJson(final Map<String, Object> record) {
+    final TrustMarkSubjectRecord.TrustMarkSubjectRecordBuilder tmisBuilder = TrustMarkSubjectRecord.builder()
+        .sub((String) record.get("subject"))
+        .iss((String) record.get("issuer"))
+        .tmi((String) record.get("tmi"));
 
     Optional.ofNullable((Boolean) record.get("revoked")).ifPresent(tmisBuilder::revoked);
 
@@ -69,7 +76,7 @@ public record TrustMarkSubject(
         .map(Instant::parse)
         .ifPresent(tmisBuilder::granted);
 
-    final TrustMarkSubject tms = tmisBuilder.build();
+    final TrustMarkSubjectRecord tms = tmisBuilder.build();
     tms.validate();
     return tms;
   }
@@ -99,12 +106,14 @@ public record TrustMarkSubject(
   public Map<String, Object> toJson() {
     final Map<String, Object> subject = Map.of(
         "subject", this.sub,
-        "revoked", this.revoked
+        "revoked", this.revoked,
+        "issuer", this.iss,
+        "tmi", this.tmi
     );
     final HashMap<String, Object> json = new HashMap<>(subject);
     Optional.ofNullable(this.expires).ifPresent(exp -> json.put("expires", exp));
     Optional.ofNullable(this.granted).ifPresent(granted -> json.put("granted", granted));
-    return subject;
+    return json;
   }
 }
 

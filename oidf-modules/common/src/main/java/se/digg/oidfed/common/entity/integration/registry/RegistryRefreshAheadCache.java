@@ -31,7 +31,7 @@ import java.util.UUID;
  */
 public class RegistryRefreshAheadCache {
   private final Cache<UUID, ModuleResponse> modules;
-  private final Cache<TrustMarkSubjectKey, List<TrustMarkSubject>> trustMarkSubjects;
+  private final Cache<TrustMarkSubjectKey, List<TrustMarkSubjectRecord>> trustMarkSubjects;
   private final Cache<String, List<EntityRecord>> entityRecords;
   private final Cache<String, PolicyRecord> policyRecords;
 
@@ -44,7 +44,7 @@ public class RegistryRefreshAheadCache {
   public RegistryRefreshAheadCache(
       final Cache<UUID, ModuleResponse> modules,
       final Cache<TrustMarkSubjectKey,
-          List<TrustMarkSubject>> trustMarkSubjects,
+          List<TrustMarkSubjectRecord>> trustMarkSubjects,
       final Cache<String, List<EntityRecord>> entityRecords,
       final Cache<String, PolicyRecord> policyRecords) {
     this.modules = modules;
@@ -82,7 +82,7 @@ public class RegistryRefreshAheadCache {
    * @param trustMarkSubject to add
    */
   public void registerTrustMarkSubjects(final TrustMarkSubjectKey key,
-                                        final Expirable<List<TrustMarkSubject>> trustMarkSubject) {
+                                        final Expirable<List<TrustMarkSubjectRecord>> trustMarkSubject) {
     this.trustMarkSubjects.add(key, trustMarkSubject);
   }
 
@@ -122,7 +122,7 @@ public class RegistryRefreshAheadCache {
    * @param key for trust mark subjects
    * @return list of trust mark subjects
    */
-  public List<TrustMarkSubject> getTrustMarkSubjects(final TrustMarkSubjectKey key) {
+  public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final TrustMarkSubjectKey key) {
     return this.trustMarkSubjects.get(key);
   }
 }

@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.common.tree;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,31 +27,30 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * In memory implementation of {@link VersionedCacheLayer<T>}
- * @param <T> cached datatype
+ * In memory implementation of {@link ResolverCache}
  *
  * @author Felix Hellman
  */
-public class VersionedInMemoryCache<T> implements VersionedCacheLayer<T>, SnapshotSource<T> {
+public class VersionedInMemoryCache implements ResolverCache {
 
-  private final Map<String, List<Node<T>>> childMap = new ConcurrentHashMap<>();
-  private final Map<String, T> dataMap = new ConcurrentHashMap<>();
-  private final Map<Integer, Node<T>> rootMap = new ConcurrentHashMap<>();
+  private final Map<String, List<Node<EntityStatement>>> childMap = new ConcurrentHashMap<>();
+  private final Map<String, EntityStatement> dataMap = new ConcurrentHashMap<>();
+  private final Map<Integer, Node<EntityStatement>> rootMap = new ConcurrentHashMap<>();
 
   private final AtomicInteger integer = new AtomicInteger(0);
 
   @Override
-  public void setData(final String key, final T data, final int version) {
+  public void setData(final String key, final EntityStatement data, final int version) {
     this.dataMap.put(this.getKey(key, version), data);
   }
 
   @Override
-  public Node<T> getRoot(final int version) {
+  public Node<EntityStatement> getRoot(final int version) {
     return this.rootMap.get(version);
   }
 
   @Override
-  public T getData(final String key, final int version) {
+  public EntityStatement getData(final String key, final int version) {
     return this.dataMap.get(this.getKey(key, version));
   }
 
@@ -58,14 +59,16 @@ public class VersionedInMemoryCache<T> implements VersionedCacheLayer<T>, Snapsh
   }
 
   @Override
-  public List<Node<T>> getChildren(final Node<T> node, final int version) {
+  public List<Node<EntityStatement>> getChildren(final Node<EntityStatement> node, final int version) {
     return Optional.ofNullable(this.childMap.get(this.getKey(node.getKey().getKey(), version))).orElseGet(List::of);
   }
 
   @Override
-  public synchronized void append(final Node<T> child, final Node<T> parent, final int version) {
+  public synchronized void append(
+      final Node<EntityStatement> child, final Node<EntityStatement> parent,
+      final int version) {
     //Can probably be solved without synchronized using compute if missing ...
-    List<Node<T>> nodes = this.childMap.get(this.getKey(parent.getKey().getKey(), version));
+    List<Node<EntityStatement>> nodes = this.childMap.get(this.getKey(parent.getKey().getKey(), version));
     if (Objects.isNull(nodes)) {
       nodes = new ArrayList<>();
     }
@@ -84,12 +87,14 @@ public class VersionedInMemoryCache<T> implements VersionedCacheLayer<T>, Snapsh
   }
 
   @Override
-  public CacheSnapshot<T> snapshot() {
+  public CacheSnapshot<EntityStatement> snapshot() {
     return new CacheSnapshot<>(this, this.getCurrentVersion());
   }
 
   @Override
-  public CacheSnapshot<T> createNewSnapshot(final Node<T> root, final T rootData) {
+  public CacheSnapshot<EntityStatement> createNewSnapshot(
+      final Node<EntityStatement> root,
+      final EntityStatement rootData) {
     final int version = this.getNextVersion();
     this.rootMap.put(version, root);
     this.setData(root.getKey().getKey(), rootData, version);

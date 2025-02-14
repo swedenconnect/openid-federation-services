@@ -30,7 +30,7 @@ import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.HostedRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.registry.ModuleResponse;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -89,9 +89,11 @@ public class RegistryMock {
     final PolicyRecord record = new PolicyRecord(policyId, Map.of());
     final String policyBody = registryRecordSigner.signPolicy(record).serialize();
     createPolicy(policyBody, policyId);
-    final List<TrustMarkSubject> tms = List.of(new TrustMarkSubject(TestFederationEntities.Authorization.OP_1.getValue(),
-        null,
-        null, false));
+    final List<TrustMarkSubjectRecord> tms = List.of(
+        new TrustMarkSubjectRecord(TestFederationEntities.Authorization.OP_1.getValue(),
+            TestFederationEntities.Authorization.TRUST_MARK_ISSUER.getValue(),
+            TestFederationEntities.Authorization.TRUST_MARK_ISSUER.getValue() + "/certified",
+            null, null, false));
 
     final String body = registryRecordSigner.signTrustMarkSubjects(tms).serialize();
     WireMock.stubFor(

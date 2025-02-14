@@ -34,7 +34,7 @@ public class EntityClient {
         .body(String.class);
     return EntityStatement.parse(body);
     } catch (final Exception e) {
-      throw new RuntimeException("Failed to fetch entity configiration for entity %s".formatted(entity.getValue()));
+      throw new RuntimeException("Failed to fetch entity configuration for entity %s".formatted(entity.getValue()));
     }
   }
 }

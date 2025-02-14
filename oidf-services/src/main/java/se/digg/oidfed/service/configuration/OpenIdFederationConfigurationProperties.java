@@ -25,6 +25,7 @@ import se.digg.oidfed.service.entity.PolicyConfigurationProperties;
 import se.digg.oidfed.service.resolver.ResolverConfigurationProperties;
 import se.digg.oidfed.service.trustanchor.TrustAnchorModuleProperties;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
+import se.digg.oidfed.service.trustmarkissuer.TrustMarkSubjectProperties;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,6 +70,9 @@ public class OpenIdFederationConfigurationProperties {
   @NestedConfigurationProperty
   private List<PolicyConfigurationProperties.PolicyRecordProperty> policies;
 
+  @NestedConfigurationProperty
+  private List<TrustMarkSubjectProperties> trustMarkSubjects;
+
   /**
    * Registry properties for openid federation.
    *
@@ -90,6 +94,7 @@ public class OpenIdFederationConfigurationProperties {
     @Getter
     public static final class Integration {
       private UUID instanceId;
+      private Boolean enabled;
       @NestedConfigurationProperty
       private Endpoints endpoints;
       private List<String> validationKeys;

@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.resolver;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
@@ -24,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
@@ -33,8 +30,7 @@ import se.digg.oidfed.resolver.metadata.OIDFPolicyOperationFactory;
 import se.digg.oidfed.resolver.tree.resolution.DFSExecution;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
-import se.digg.oidfed.service.cache.EntityStatementSerializer;
-import se.digg.oidfed.service.resolver.cache.RedisOperations;
+import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContextFactory;
 
@@ -59,15 +55,13 @@ public class ResolverConfiguration {
 
   @Bean
   ResolverFactory resolverFactory(
-      final RedisTemplate<String, Integer> versionTemplate,
-      final RedisOperations redisOperations,
+      final ResolverCacheFactory factory,
       final MetadataProcessor processor,
       final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory,
       final ResolverCacheRegistry registry,
       final SignerFactory adapter
   ) {
-    return new ResolverFactory(versionTemplate, redisOperations, processor, entityStatementTreeLoaderFactory,
-        registry, adapter);
+    return new ResolverFactory(factory, processor, entityStatementTreeLoaderFactory, registry, adapter);
   }
 
   @Bean
@@ -83,29 +77,6 @@ public class ResolverConfiguration {
       final ApplicationEventPublisher publisher
   ) {
     return new EntityStatementTreeLoaderFactory(client, strategy, factory, publisher);
-  }
-
-  @Bean
-  RedisOperations redisOperations(
-      final RedisTemplate<String, EntityStatement> template,
-      final RedisTemplate<String, String> childrenTemplate
-  ) {
-    return new RedisOperations(template, childrenTemplate);
-  }
-
-  @Bean
-  RedisTemplate<String, EntityStatement> redisTemplate(final RedisConnectionFactory factory) {
-    final RedisTemplate<String, EntityStatement> template = new RedisTemplate<>();
-    template.setConnectionFactory(factory);
-    template.setValueSerializer(new EntityStatementSerializer());
-    return template;
-  }
-
-  @Bean
-  RedisTemplate<String, Integer> integerRedisTemplate(final RedisConnectionFactory factory) {
-    final RedisTemplate<String, Integer> template = new RedisTemplate<>();
-    template.setConnectionFactory(factory);
-    return template;
   }
 
   @Bean

@@ -21,7 +21,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 
 import java.text.ParseException;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.Map;
  * @author Per Fredrik Plars
  */
 @Slf4j
-class TrustMarkSubjectTest {
+class TrustMarkSubjectRecordTest {
 
   @Test
   public void testFromJson() throws ParseException {
@@ -46,7 +46,7 @@ class TrustMarkSubjectTest {
 
     records.stream()
         .map(o -> (Map<String,Object>)o)
-        .map(TrustMarkSubject::fromJson)
+        .map(TrustMarkSubjectRecord::fromJson)
         .forEach(System.out::println);
   }
 
