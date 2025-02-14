@@ -18,13 +18,15 @@ package se.digg.oidfed.common.entity.integration.registry;
 
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.common.entity.integration.Expirable;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
-import se.digg.oidfed.common.entity.integration.Expirable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
@@ -34,6 +36,7 @@ import java.util.stream.Stream;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class RefreshAheadRecordRegistrySource implements RefreshAheadLoader {
 
   private final RegistryProperties properties;
@@ -42,9 +45,10 @@ public class RefreshAheadRecordRegistrySource implements RefreshAheadLoader {
 
   /**
    * Constructor.
-   * @param properties for registry
+   *
+   * @param properties  for registry
    * @param integration for registry
-   * @param cache for registry
+   * @param cache       for registry
    */
   public RefreshAheadRecordRegistrySource(
       final RegistryProperties properties,
@@ -65,7 +69,7 @@ public class RefreshAheadRecordRegistrySource implements RefreshAheadLoader {
     if (cachedPolicy.isPresent()) {
       return cachedPolicy;
     }
-    return this.properties.policyRecords().stream()
+    return Optional.ofNullable(this.properties.policyRecords()).orElse(List.of()).stream()
         .filter(p -> p.getId().equals(id))
         .findFirst();
   }
@@ -75,10 +79,17 @@ public class RefreshAheadRecordRegistrySource implements RefreshAheadLoader {
    */
   public List<TrustMarkIssuerProperties> getTrustMarkIssuerProperties() {
     return Stream.concat(
-        this.cache.getModules(this.properties.instanceId())
+        this.getModules()
             .getTrustMarkIssuers().stream().map(TrustMarkIssuerModuleResponse::toProperties),
-        this.properties.trustMarkIssuerProperties().stream()
+        Optional.ofNullable(this.properties.trustMarkIssuerProperties())
+            .orElse(List.of()).stream()
     ).toList();
+  }
+
+  private ModuleResponse getModules() {
+    return Optional.ofNullable(this.properties.instanceId())
+        .flatMap(id -> Optional.ofNullable(this.cache.getModules(id)))
+        .orElse(new ModuleResponse());
   }
 
   /**
@@ -86,9 +97,10 @@ public class RefreshAheadRecordRegistrySource implements RefreshAheadLoader {
    */
   public List<TrustAnchorProperties> getTrustAnchorProperties() {
     return Stream.concat(
-        this.cache.getModules(this.properties.instanceId())
+        this.getModules()
             .getTrustAnchors().stream().map(TrustAnchorModuleResponse::toProperties),
-        this.properties.trustAnchorProperties().stream()
+        Optional.ofNullable(this.properties.trustAnchorProperties())
+            .orElse(List.of()).stream()
     ).toList();
   }
 
@@ -97,9 +109,10 @@ public class RefreshAheadRecordRegistrySource implements RefreshAheadLoader {
    */
   public List<ResolverProperties> getResolverProperties() {
     return Stream.concat(
-        this.cache.getModules(this.properties.instanceId())
+        this.getModules()
             .getResolvers().stream().map(ResolverModuleResponse::toProperty),
-        this.properties.resolverProperties().stream()
+        Optional.ofNullable(this.properties.resolverProperties())
+            .orElse(List.of()).stream()
     ).toList();
   }
 
@@ -109,47 +122,58 @@ public class RefreshAheadRecordRegistrySource implements RefreshAheadLoader {
   public List<EntityRecord> getAllEntities() {
     final Stream<EntityRecord> cachedEntityRecords = this.getIssuers()
         .stream()
-        .flatMap(issuer -> this.cache.getEntities(issuer).stream());
+        .flatMap(issuer ->
+            Optional.ofNullable(this.cache.getEntities(issuer)).orElse(List.of()).stream()
+        );
 
     return Stream.concat(
-        this.properties.entityRecords().stream(),
+        Optional.ofNullable(this.properties.entityRecords())
+            .orElse(List.of()).stream(),
         cachedEntityRecords
     ).toList();
   }
 
   @Override
   public void refresh() {
-    if (this.cache.modulesNeedsRefresh(this.properties.instanceId())) {
-      this.refreshModules();
-      this.refreshEntities();
-      this.refreshTrustMarkSubjects();
-      this.refreshPolicies();
-    }
+
+    final Optional<UUID> instance = Optional.ofNullable(this.properties.instanceId());
+    instance.ifPresent(id -> {
+          if (this.cache.modulesNeedsRefresh(this.properties.instanceId())) {
+            this.refreshModules();
+            this.refreshEntities();
+            this.refreshTrustMarkSubjects();
+            this.refreshPolicies();
+          }
+        }
+    );
+
   }
 
   private void refreshTrustMarkSubjects() {
-    Stream.concat(
-        this.cache.getModules(this.properties.instanceId())
-            .getTrustMarkIssuers().stream()
-            .map(TrustMarkIssuerModuleResponse::toProperties),
-        this.properties.trustMarkIssuerProperties().stream()
-    ).forEach(tmi -> {
-      tmi.trustMarks().forEach(tm -> {
-        final String issuer = tmi.issuerEntityId().getValue();
-        final String trustMarkId = tm.trustMarkId().getTrustMarkId();
-        final Expirable<List<TrustMarkSubject>> subjects = this.integration.getTrustMarkSubject(
-            issuer,
-            trustMarkId
-        ).onFailure(() -> {
-        }).orElseGet(() -> null);
-        this.cache.registerTrustMarkSubjects(new TrustMarkSubjectKey(issuer, trustMarkId), subjects);
+    if (this.properties.enabled()) {
+      Stream.concat(
+          this.getModules()
+              .getTrustMarkIssuers().stream()
+              .map(TrustMarkIssuerModuleResponse::toProperties),
+          Optional.ofNullable(this.properties.trustMarkIssuerProperties()).orElse(List.of()).stream()
+      ).forEach(tmi -> {
+        tmi.trustMarks().forEach(tm -> {
+          final String issuer = tmi.issuerEntityId().getValue();
+          final String trustMarkId = tm.trustMarkId().getTrustMarkId();
+          final Expirable<List<TrustMarkSubjectRecord>> subjects = this.integration.getTrustMarkSubject(
+              issuer,
+              trustMarkId
+          ).onFailure(() -> {
+          }).orElseGet(() -> null);
+          this.cache.registerTrustMarkSubjects(new TrustMarkSubjectKey(issuer, trustMarkId), subjects);
+        });
       });
-    });
+    }
   }
 
   private void refreshPolicies() {
     this.getIssuers().stream()
-        .flatMap(issuer -> this.cache.getEntities(issuer).stream())
+        .flatMap(issuer -> Optional.ofNullable(this.cache.getEntities(issuer)).orElse(List.of()).stream())
         .map(EntityRecord::getPolicyRecordId)
         .map(this.integration::getPolicy)
         .map(f -> f.onFailure(() -> {
@@ -162,71 +186,82 @@ public class RefreshAheadRecordRegistrySource implements RefreshAheadLoader {
   }
 
   private void refreshEntities() {
-    final ArrayList<String> issuers = this.getIssuers();
-    issuers.forEach(issuer -> {
-      this.integration.getEntityRecords(issuer)
-          .onFailure(() -> {
-          })
-          .ifPresent(entityRecords -> this.cache.registerIssuerEntities(issuer, entityRecords));
-    });
+    if (this.properties.enabled()) {
+      final ArrayList<String> issuers = this.getIssuers();
+      issuers.forEach(issuer -> {
+        this.integration.getEntityRecords(issuer)
+            .onFailure(() -> {
+            })
+            .ifPresent(entityRecords -> this.cache.registerIssuerEntities(issuer, entityRecords));
+      });
+    }
   }
 
   private ArrayList<String> getIssuers() {
     final List<String> propertyIssuers = Stream.of(
-            this.properties.resolverProperties()
-                .stream().map(ResolverProperties::entityIdentifier),
-            this.properties.trustAnchorProperties()
-                .stream().map(TrustAnchorProperties::getEntityId)
+            Optional.ofNullable(this.properties.resolverProperties())
+                .orElse(List.of()).stream()
+                .map(ResolverProperties::entityIdentifier),
+            Optional.ofNullable(this.properties.trustAnchorProperties())
+                .orElse(List.of()).stream()
+                .map(TrustAnchorProperties::getEntityId)
                 .map(Identifier::getValue),
-            this.properties.trustMarkIssuerProperties()
-                .stream().map(TrustMarkIssuerProperties::issuerEntityId)
+            Optional.ofNullable(this.properties.trustMarkIssuerProperties())
+                .orElse(List.of()).stream()
+                .map(TrustMarkIssuerProperties::issuerEntityId)
                 .map(Identifier::getValue)
         ).reduce(Stream::concat)
         .orElseGet(Stream::empty)
         .toList();
 
     final ArrayList<String> issuers = new ArrayList<>(propertyIssuers);
-
-    Optional.ofNullable(this.cache.getModules(this.properties.instanceId()))
-        .map(ModuleResponse::getIssuers)
-        .ifPresent(issuers::addAll);
+    issuers.addAll(this.getModules().getIssuers());
     return issuers;
   }
 
 
   private void refreshModules() {
-    try {
-      this.integration
-          .getModules(this.properties.instanceId())
-          .onFailure(() -> {
-          })
-          .ifPresent(modules -> this.cache.registerModule(this.properties.instanceId(), modules));
-    } catch (final RegistryResponseException e) {
-      throw new RuntimeException("Failed to update cache from registry");
+    if (this.properties.enabled()) {
+      try {
+        this.integration
+            .getModules(this.properties.instanceId())
+            .onFailure(() -> {
+            })
+            .ifPresent(modules -> this.cache.registerModule(this.properties.instanceId(), modules));
+      } catch (final RegistryResponseException e) {
+        throw new RuntimeException("Failed to update cache from registry");
+      }
     }
   }
 
   /**
    * @param issuer of trust mark
-   * @param id of trust mark
+   * @param id     of trust mark
    * @return list of subject
    */
-  public List<TrustMarkSubject> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
-    return this.cache.getTrustMarkSubjects(new TrustMarkSubjectKey(issuer.getValue(), id.getTrustMarkId()));
+  public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
+    return Stream.concat(
+        Optional.ofNullable(this.properties.trustMarkSubjectRecords()).orElse(List.of())
+            .stream()
+            .filter(sub -> sub.tmi().equals(id.trustMarkId) && sub.iss().equals(issuer.getValue())),
+        Optional.ofNullable(this.cache.getTrustMarkSubjects(new TrustMarkSubjectKey(issuer.getValue(),
+            id.getTrustMarkId()))).orElse(List.of()).stream()
+    ).toList();
   }
 
   /**
-   * @param issuer of trust mark
-   * @param id of trust mark
+   * @param issuer  of trust mark
+   * @param id      of trust mark
    * @param subject of trust mark
    * @return subject if subject exists
    */
-  public Optional<TrustMarkSubject> getTrustMarkSubject(
+  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
       final EntityID issuer,
       final TrustMarkId id,
       final EntityID subject) {
 
-    return this.getTrustMarkSubjects(issuer, id)
+
+    return Optional.ofNullable(this.getTrustMarkSubjects(issuer, id)).orElse(List.of())
         .stream()
         .filter(tms -> tms.sub().
             equals(subject.getValue()))

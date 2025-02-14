@@ -38,6 +38,16 @@ public class ModuleResponse implements Serializable {
   private List<TrustAnchorModuleResponse> trustAnchors;
   private List<TrustMarkIssuerModuleResponse> trustMarkIssuers;
 
+
+  /**
+   * Default constructor.
+   */
+  public ModuleResponse() {
+    this.resolvers = List.of();
+    this.trustAnchors = List.of();
+    this.trustMarkIssuers = List.of();
+  }
+
   /**
    * Creates instance from json object {@link java.util.HashMap}
    *

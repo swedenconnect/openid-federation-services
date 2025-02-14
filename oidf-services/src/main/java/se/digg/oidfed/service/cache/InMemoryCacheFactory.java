@@ -18,6 +18,7 @@ package se.digg.oidfed.service.cache;
 
 import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.InMemoryCache;
+import se.digg.oidfed.common.entity.integration.InMemoryListCache;
 import se.digg.oidfed.common.entity.integration.ListCache;
 
 import java.io.Serializable;
@@ -53,6 +54,6 @@ public class InMemoryCacheFactory implements CacheFactory {
 
   @Override
   public <K extends Serializable, V> ListCache<K, V> createListCache(final Class<V> v) {
-    return null;
+    return new InMemoryListCache<>();
   }
 }

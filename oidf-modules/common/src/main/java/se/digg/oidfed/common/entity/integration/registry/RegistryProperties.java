@@ -26,22 +26,26 @@ import java.util.UUID;
 /**
  * Properties for registry integration.
  *
- * @param instanceId
- * @param trustMarkIssuerProperties
- * @param trustAnchorProperties
- * @param resolverProperties
- * @param entityRecords
- * @param policyRecords
+ * @param instanceId for this instance
+ * @param trustMarkIssuerProperties for locally configured trust marks
+ * @param trustAnchorProperties for locally configured trust anchors
+ * @param resolverProperties for locally configures resolvers
+ * @param entityRecords for locally configured entity records
+ * @param policyRecords for locally configured policy records
+ * @param enabled true if registry integration is enabled or not
+ * @param trustMarkSubjectRecords for locally configured trust mark subjects
  *
  * @author Felix Hellman
  */
 @Builder
 public record RegistryProperties(
     UUID instanceId,
+    Boolean enabled,
     List<TrustMarkIssuerProperties> trustMarkIssuerProperties,
     List<TrustAnchorProperties> trustAnchorProperties,
     List<ResolverProperties> resolverProperties,
     List<EntityRecord> entityRecords,
-    List<PolicyRecord> policyRecords
+    List<PolicyRecord> policyRecords,
+    List<TrustMarkSubjectRecord> trustMarkSubjectRecords
 ) {
 }

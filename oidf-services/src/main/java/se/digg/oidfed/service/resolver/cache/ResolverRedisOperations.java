@@ -30,15 +30,15 @@ import java.util.Set;
  *
  * @author Felix Hellman
  */
-public class RedisOperations {
+public class ResolverRedisOperations {
 
   /**
    * Constructor.
    * @param entityTemplate for handling entity statements
    * @param childTemplate for handling child listings
    */
-  public RedisOperations(final RedisTemplate<String, EntityStatement> entityTemplate,
-      final RedisTemplate<String, String> childTemplate) {
+  public ResolverRedisOperations(final RedisTemplate<String, EntityStatement> entityTemplate,
+                                 final RedisTemplate<String, String> childTemplate) {
     this.template = entityTemplate;
     this.stringTemplate = childTemplate;
   }

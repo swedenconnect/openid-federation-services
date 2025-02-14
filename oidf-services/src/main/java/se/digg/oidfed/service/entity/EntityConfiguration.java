@@ -32,6 +32,8 @@ import se.digg.oidfed.service.cache.CacheFactory;
 import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Configuration for entity registry.
@@ -64,7 +66,10 @@ public class EntityConfiguration {
             factory.create(EntityRecord.class),
             factory.createListCache(String.class),
             new EntityPathFactory(properties.getModules().getIssuers()),
-            properties.getRegistry().getIntegration().getInstanceId().toString()
+            Optional.ofNullable(properties.getRegistry().getIntegration())
+                .map(OpenIdFederationConfigurationProperties.Registry.Integration::getInstanceId)
+                .map(UUID::toString)
+                .orElse(UUID.randomUUID().toString())
         ),
         List.of(er -> publisher.publishEvent(new EntityRegisteredEvent(er))));
   }

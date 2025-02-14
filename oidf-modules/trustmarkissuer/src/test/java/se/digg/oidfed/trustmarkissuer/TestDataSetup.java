@@ -35,7 +35,7 @@ import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -61,8 +61,8 @@ public class TestDataSetup {
         .alias("tm")
         .build();
 
-    final TrustMarkSubject sub1 =
-        TrustMarkSubject.builder()
+    final TrustMarkSubjectRecord sub1 =
+        TrustMarkSubjectRecord.builder()
             .sub("http://tm1.digg.se/sub1")
             .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
             .granted(Instant.now())

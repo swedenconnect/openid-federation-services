@@ -18,9 +18,10 @@ be loaded from the registry or configured with properties.
 
 `openid.federation.*`
 
-| Property | Description                                                              | Type           | Default value |
-|:---------|:-------------------------------------------------------------------------|:---------------|:--------------|
-| `sign`   | List of credential names used for signing jwts that the service produces | List\<String\> | Empty List    |
+| Property  | Description                                                              | Type           | Default value |
+|:----------|:-------------------------------------------------------------------------|:---------------|:--------------|
+| `storage` | Storage module to use, either memory (in memory) or redis                | String         | memory        |
+| `sign`    | List of credential names used for signing jwts that the service produces | List\<String\> | Empty List    |
 
 ### Registry configuration
 
@@ -28,6 +29,7 @@ be loaded from the registry or configured with properties.
 
 | Property              | Description                                                                  | Type           | Default value |
 |:----------------------|:-----------------------------------------------------------------------------|:---------------|:--------------|
+| `enabled`             | Set this to true to enable registry integration                              | Boolean        | false         |
 | `instance-id`         | Instance id for node group                                                   | UUID           | null          |
 | `endpoints.base-path` | Base path for registry.                                                      | String         | null          |
 | `validation-keys`     | List of credential names used for validating jwts that the registry produces | List\<String\> | Empty List    |
@@ -53,21 +55,27 @@ be loaded from the registry or configured with properties.
 
 `openid.federation.modules.trust-mark-issuers.*`
 
-| Property                           | Description                                                                                                    | Type     | Default value |
-|:-----------------------------------|:---------------------------------------------------------------------------------------------------------------|:---------|:--------------|
-| `alias`                            | Alias for where TMI is mounted, ex tmi http://localhost/tmi/trust_mark_listing                                 | Duration | PT30M         |
-| `entity-identifier`                | The entity ID of the trust mark issuer, identifying the issuing organization.                                  | String   |               |
-| `trust-mark-validity-duration`     | Duration for which the trust mark JWT is valid, represented in ISO 8601 format (e.g., `PT30M` for 30  minutes) | Duration | PT30M         |
-| `trust-marks`                      | Array of trust marks issued by the trust mark issuer.                                                          | String   |               |
-| `trust-marks[].trust-mark-id`      | Unique identifier for each trust mark, typically a URL associated with the mark.                               | String   |               |
-| `trust-marks[].logo-uri`           | URI pointing to the logo image associated with the trust mark.                                                 | String   | optional      |
-| `trust-marks[].delegation`         | TrustMarkDelegation JWT. See openid federation 7.2.1,                                                          | String   | optional      |
-| `trust-marks[].ref-uri`            | Reference URI for documentation or details about the trust mark.                                               | String   | optional      |
-| `trust-marks[].subjects`           | List of entities (subjects) granted the trust mark, with associated metadata for each entity.                  | String   |               |
-| `trust-marks[].subjects[].sub`     | Subject (entity) identifier, typically a URL indicating the specific organization granted the trust mark.      | String   |               |
-| `trust-marks[].subjects[].granted` | Timestamp of when the trust mark was granted to the subject, in ISO 8601 format (UTC).                         | Instant  |               |
-| `trust-marks[].subjects[].expires` | Expiry date for the subject’s trust mark, in ISO 8601 format (UTC).                                            | Instant  |               |
-| `trust-marks[].subjects[].revoked` | Indicates whether the trust mark for this subject has been revoked (`true`) or remains valid (`false`).        | Boolean  | false         |
+| Property                       | Description                                                                                                    | Type     | Default value |
+|:-------------------------------|:---------------------------------------------------------------------------------------------------------------|:---------|:--------------|
+| `alias`                        | Alias for where TMI is mounted, ex tmi http://localhost/tmi/trust_mark_listing                                 | Duration | PT30M         |
+| `entity-identifier`            | The entity ID of the trust mark issuer, identifying the issuing organization.                                  | String   |               |
+| `trust-mark-validity-duration` | Duration for which the trust mark JWT is valid, represented in ISO 8601 format (e.g., `PT30M` for 30  minutes) | Duration | PT30M         |
+| `trust-marks`                  | Array of trust marks issued by the trust mark issuer.                                                          | String   |               |
+| `trust-marks[].trust-mark-id`  | Unique identifier for each trust mark, typically a URL associated with the mark.                               | String   |               |
+| `trust-marks[].logo-uri`       | URI pointing to the logo image associated with the trust mark.                                                 | String   | optional      |
+| `trust-marks[].delegation`     | TrustMarkDelegation JWT. See openid federation 7.2.1,                                                          | String   | optional      |
+| `trust-marks[].ref-uri`        | Reference URI for documentation or details about the trust mark.                                               | String   | optional      |
+
+### Trust Mark Subjects
+
+`openid.federation.trust-mark-subjects.*`
+
+| `sub`     | Subject (entity) identifier, typically a URL indicating the specific entity granted the trust mark. | String | |
+| `iss`     | Issuer (entity) identifier, typically a URL indicating the specific entity who granted the trust mark. | String | |
+| `tmi`     | Subject (entity) identifier, typically a URL indicating the specific trust mark. | String | |
+| `granted` | Timestamp of when the trust mark was granted to the subject, in ISO 8601 format (UTC). | Instant | |
+| `expires` | Expiry date for the subject’s trust mark, in ISO 8601 format (UTC). | Instant | |
+| `revoked` | Indicates whether the trust mark for this subject has been revoked (`true`) or remains valid (`false`). | Boolean | false |
 
 ### Entity configuration
 
@@ -99,7 +107,6 @@ be loaded from the registry or configured with properties.
 
 `openid.federation.policies[*].*`
 
-
 | Property | Description                   | Type               | Default value |
 |:---------|:------------------------------|:-------------------|:--------------|
 | `id`     | Id of this policy             | String             | null          |
@@ -108,7 +115,6 @@ be loaded from the registry or configured with properties.
 #### JsonObjectProperty
 
 Any JsonObjectProperty property can be configured with either inline json or a resource file.
-
 
 | Property   | Description     | Type     | Default value |
 |:-----------|:----------------|:---------|:--------------|

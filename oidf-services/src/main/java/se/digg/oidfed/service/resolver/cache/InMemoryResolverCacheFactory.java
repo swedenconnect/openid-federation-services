@@ -14,23 +14,21 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.cache;
+package se.digg.oidfed.service.resolver.cache;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-
-import java.time.Clock;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.tree.ResolverCache;
+import se.digg.oidfed.common.tree.VersionedInMemoryCache;
 
 /**
- * Configuration class for cache.
+ * Resolver cache factory for in memory caches.
  *
  * @author Felix Hellman
  */
-@Configuration
-public class CacheConfiguration {
-  @Bean
-  CacheFactory redisCacheFactory(final RedisConnectionFactory factory, final Clock clock) {
-    return new RedisCacheFactory(clock, factory);
+public class InMemoryResolverCacheFactory implements ResolverCacheFactory {
+
+  @Override
+  public ResolverCache create(final ResolverProperties properties) {
+    return new VersionedInMemoryCache();
   }
 }

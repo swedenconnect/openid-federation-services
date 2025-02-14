@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
 import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
@@ -98,7 +98,7 @@ public class TrustMarkIssuer implements Submodule {
           }
           return true;
         })
-        .map(TrustMarkSubject::sub)
+        .map(TrustMarkSubjectRecord::sub)
         .toList();
     if (result.isEmpty()) {
       throw new NotFoundException("Could not find any subjects.");
@@ -130,7 +130,7 @@ public class TrustMarkIssuer implements Submodule {
       throw new NotFoundException("Could not find any trust mark with id %s".formatted(request.trustMarkId()));
     }
 
-    final Optional<TrustMarkSubject> subject =
+    final Optional<TrustMarkSubjectRecord> subject =
         this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.issuerEntityId(), id,
             new EntityID(request.subject()));
     return subject.isPresent()
@@ -151,15 +151,15 @@ public class TrustMarkIssuer implements Submodule {
         .findFirst()
         .get();
 
-    final Optional<TrustMarkSubject> subject =
+    final Optional<TrustMarkSubjectRecord> subject =
         this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.issuerEntityId(),
         TrustMarkId.create(request.trustMarkId()), new EntityID(request.subject()));
     if (subject.isEmpty()) {
       throw new NotFoundException("Could not find subject");
     }
-    final TrustMarkSubject trustMarkSubject = subject.get();
+    final TrustMarkSubjectRecord trustMarkSubjectRecord = subject.get();
     try {
-      return this.signer.sign(this.trustMarkIssuerProperties, properties, trustMarkSubject).serialize();
+      return this.signer.sign(this.trustMarkIssuerProperties, properties, trustMarkSubjectRecord).serialize();
     } catch (final ParseException | JOSEException e) {
       throw new ServerErrorException("Failed to sign trust mark", e);
     }

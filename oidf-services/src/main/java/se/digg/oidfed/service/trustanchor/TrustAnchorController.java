@@ -103,7 +103,7 @@ public class TrustAnchorController implements ApplicationModule {
     final List<String> subordinateListing = trustAnchor.subordinateListing(
         new SubordinateListingRequest(entityType, trustMarked, trustMarkId, intermediate));
     if (subordinateListing.isEmpty()) {
-      throw new NotFoundException("No subordinates mathcing request.");
+      throw new NotFoundException("No subordinates matching request.");
     }
     return subordinateListing;
   }

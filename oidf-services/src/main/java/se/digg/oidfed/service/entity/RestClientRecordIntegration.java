@@ -22,7 +22,7 @@ import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.Expirable;
 import se.digg.oidfed.common.entity.integration.registry.ModuleResponse;
 import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubject;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.RecordRegistryIntegration;
 
 import java.util.List;
@@ -84,7 +84,7 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
   }
 
   @Override
-  public Expirable<List<TrustMarkSubject>> getTrustMarkSubject(final String issuer, final String trustMarkId) {
+  public Expirable<List<TrustMarkSubjectRecord>> getTrustMarkSubject(final String issuer, final String trustMarkId) {
     final String body = this.client.get()
         .uri(builder -> builder
             .queryParam("iss", issuer)

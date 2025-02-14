@@ -18,13 +18,16 @@ package se.digg.oidfed.service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.context.annotation.Import;
 
 /**
  * Application.
  *
  * @author Felix Hellman
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = RedisAutoConfiguration.class)
+
 public class Application {
   /**
    * Main method.

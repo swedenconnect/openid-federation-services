@@ -12,14 +12,11 @@ logging:
     se.digg: INFO
 openid:
   federation:
-    resolver:
-      active: false
+    storage: memory
+    registry:
+      integration:
+        enabled: false
 
-    trust-anchor:
-      active: false
-
-    trust-mark-issuer:
-      active: false
 management:
   server:
     port: 8081

@@ -82,8 +82,8 @@ public class FailableRecordRegistryIntegration {
    * @param trustMarkId for trust mark
    * @return list of trust mark subjects
    */
-  public Failable<Expirable<List<TrustMarkSubject>>> getTrustMarkSubject(final String issuer,
-                                                                         final String trustMarkId) {
+  public Failable<Expirable<List<TrustMarkSubjectRecord>>> getTrustMarkSubject(final String issuer,
+                                                                               final String trustMarkId) {
     try {
       return new Failable<>(this.integration.getTrustMarkSubject(issuer, trustMarkId), null);
     } catch (final RegistryResponseException e) {
