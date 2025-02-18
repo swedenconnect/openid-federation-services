@@ -19,6 +19,7 @@ package se.digg.oidfed.common.entity.integration.registry;
 import com.nimbusds.jose.jwk.JWKSet;
 import lombok.Getter;
 
+import java.text.ParseException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
@@ -68,12 +69,19 @@ public class ResolverModuleResponse {
     final Boolean isModuleActive = (Boolean) json.get("active");
     resolver.active = false;
     if (isModuleActive) {
-      resolver.trustAnchors = (List<String>) json.get("trust-anchors");
-      resolver.resolveResponseDuration = (Duration) json.get("resolve-response-duration");
-      resolver.trustedKeys = (JWKSet) json.get("trusted-keys");
+      resolver.trustAnchors = List.of( (String) json.get("trust-anchor"));
+      resolver.resolveResponseDuration = Duration.parse((String) json.get("resolve-response-duration"));
+
       resolver.entityIdentifier = (String) json.get("entity-identifier");
-      resolver.stepRetryTime = (Duration) json.get("step-retry-time");
+      resolver.stepRetryTime = Duration.parse((String) json.get("step-retry-duration")); // changed from step-retry-time
       resolver.alias = (String) json.get("alias");
+      try {
+        resolver.trustedKeys = JWKSet.parse((String) json.get("trusted-keys"));
+      }
+      catch (ParseException e) {
+        throw new RegistryResponseException("Unable to parse trusted-keys in to a JWKSet.",e);
+      }
+
     }
     return resolver;
   }
@@ -85,7 +93,7 @@ public class ResolverModuleResponse {
    */
   public ResolverProperties toProperty() {
     return new ResolverProperties(
-        this.trustAnchors.get(0),
+        this.trustAnchors.getFirst(),
         this.resolveResponseDuration,
         this.trustedKeys.getKeys(),
         this.entityIdentifier,

@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,12 +70,13 @@ public class TrustMarkIssuerModuleResponse {
    * @return new instance
    */
   public static TrustMarkIssuerModuleResponse fromJson(final Map<String, Object> json) {
-    final Duration trustMarkValidityDuration = Duration.parse((String) json.get("trust-mark-validity-duration"));
     return TrustMarkIssuerModuleResponse.builder()
-        .trustMarkValidityDuration(trustMarkValidityDuration)
+        .trustMarkValidityDuration(Duration.parse((String) json.get("trust-mark-token-validity-duration")))
         .alias((String) json.get("alias"))
         .entityIdentifier((String) json.get("entity-identifier"))
-        .trustMarks((List<TrustMarkResponse>) json.get("trust-marks"))
+        .trustMarks(Optional.ofNullable((List<Map<String, Object>>) json.get("trust-marks"))
+            .map(strings -> strings.stream().map(TrustMarkResponse::fromJson).toList()).orElse(
+                Collections.emptyList()) )
         .active((Boolean) json.get("active"))
         .build();
   }
@@ -110,6 +112,7 @@ public class TrustMarkIssuerModuleResponse {
    * @param refUri
    * @param delegation
    */
+  @Builder
   public record TrustMarkResponse(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
                                   Optional<TrustMarkDelegation> delegation) {
     /**
@@ -124,12 +127,21 @@ public class TrustMarkIssuerModuleResponse {
       );
     }
 
+    public static TrustMarkResponse fromJson(final Map<String, Object> json) {
+      return TrustMarkResponse.builder()
+          .trustMarkId(new TrustMarkId((String) json.get("trust-mark-entity-id")))
+          .logoUri(Optional.ofNullable((String) json.get("logo-uri")))
+          .refUri(Optional.ofNullable((String) json.get("ref-uri")))
+          .delegation(Optional.ofNullable((String) json.get("delegation")).map(TrustMarkDelegation::new))
+          .build();
+    }
+
     /**
      * @return this instance as json
      */
     public Map<String, Object> toJson() {
       return Map.of(
-          "trust-mark-id", this.trustMarkId,
+          "trust-mark-entity-id", this.trustMarkId,
           "logo-uri", this.logoUri,
           "ref-uri", this.refUri,
           "delegation", this.delegation
