@@ -78,7 +78,7 @@ public class ResolverModuleResponse {
       try {
         resolver.trustedKeys = JWKSet.parse((String) json.get("trusted-keys"));
       }
-      catch (ParseException e) {
+      catch (final ParseException e) {
         throw new RegistryResponseException("Unable to parse trusted-keys in to a JWKSet.",e);
       }
 

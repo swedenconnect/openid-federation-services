@@ -127,6 +127,14 @@ public class TrustMarkIssuerModuleResponse {
       );
     }
 
+    /**
+     * Converts a JSON representation in the form of a map to a {@code TrustMarkResponse} object.
+     *
+     * @param json a map containing the JSON data with keys "trust-mark-entity-id", "logo-uri",
+     *             "ref-uri", and "delegation", where values are expected to be of appropriate type
+     *             (e.g., String for most keys).
+     * @return a {@code TrustMarkResponse} instance populated with data from the provided map.
+     */
     public static TrustMarkResponse fromJson(final Map<String, Object> json) {
       return TrustMarkResponse.builder()
           .trustMarkId(new TrustMarkId((String) json.get("trust-mark-entity-id")))
