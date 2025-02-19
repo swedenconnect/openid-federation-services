@@ -89,14 +89,17 @@ public class CachedEntityRecordRegistry implements EntityRecordRegistry {
                 //TODO: Check if entity record is still active, this is not implemented in registry yet.
               },
               () -> {
-                this.entityRecordCache.add("%s:%s:er".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
+                this.entityRecordCache
+                    .add("%s:%s:er".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
                 this.entityIds.append("%s:entities".formatted(this.instanceId), subject);
                 //By path
                 final String path = this.factory.getPath(record);
-                this.entityRecordCache.add("%s:%s:path".formatted(this.instanceId, path), Expirable.nonExpiring(record));
+                this.entityRecordCache
+                    .add("%s:%s:path".formatted(this.instanceId, path), Expirable.nonExpiring(record));
                 this.entityIds.append("%s:paths".formatted(this.instanceId), path);
                 if (!record.getSubject().equals(record.getIssuer())) {
-                  this.entityRecordCache.add("%s:%s:ers".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
+                  this.entityRecordCache
+                      .add("%s:%s:ers".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
                   this.entityIds.append("%s:%s:sub".formatted(
                           this.instanceId, record.getIssuer()),
                       record.getSubject().getValue());
