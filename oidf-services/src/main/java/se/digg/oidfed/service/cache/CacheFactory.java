@@ -18,6 +18,7 @@ package se.digg.oidfed.service.cache;
 
 import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.ListCache;
+import se.digg.oidfed.common.entity.integration.MultiKeyCache;
 
 import java.io.Serializable;
 import java.util.List;
@@ -32,28 +33,33 @@ public interface CacheFactory {
    * Creates a single value cache.
    *
    * @param v   value class
-   * @param <K> key class
    * @param <V> value class
    * @return cache for given key/value
    */
-  <K extends Serializable, V> Cache<K, V> create(final Class<V> v);
+  <V> Cache<String, V> create(final Class<V> v);
 
   /**
    * Creates a single value cache. (where the value is a list)
    *
-   * @param v value class
-   * @param <K> key class
+   * @param v   value class
    * @param <V> value class
    * @return cache for list value
    */
-  <K extends Serializable, V> Cache<K, List<V>> createListValueCache(final Class<V> v);
+  <V> Cache<String, List<V>> createListValueCache(final Class<V> v);
 
   /**
    * Create list cache
-   * @param v value class
-   * @param <K> key class
+   *
+   * @param v   value class
    * @param <V> value class
    * @return list cache with list operations
    */
-  <K extends Serializable, V> ListCache<K, V> createListCache(final Class<V> v);
+  <V> ListCache<String, V> createListCache(final Class<V> v);
+
+  /**
+   * @param v class of value
+   * @param <V> value type
+   * @return new instance
+   */
+  <V> MultiKeyCache<V> createMultiKeyCache(final Class<V> v);
 }

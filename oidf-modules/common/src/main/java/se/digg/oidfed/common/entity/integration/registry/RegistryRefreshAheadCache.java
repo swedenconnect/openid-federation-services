@@ -30,8 +30,8 @@ import java.util.UUID;
  * @author Felix Hellman
  */
 public class RegistryRefreshAheadCache {
-  private final Cache<UUID, ModuleResponse> modules;
-  private final Cache<TrustMarkSubjectKey, List<TrustMarkSubjectRecord>> trustMarkSubjects;
+  private final Cache<String, ModuleResponse> modules;
+  private final Cache<String, List<TrustMarkSubjectRecord>> trustMarkSubjects;
   private final Cache<String, List<EntityRecord>> entityRecords;
   private final Cache<String, PolicyRecord> policyRecords;
 
@@ -42,8 +42,8 @@ public class RegistryRefreshAheadCache {
    * @param policyRecords
    */
   public RegistryRefreshAheadCache(
-      final Cache<UUID, ModuleResponse> modules,
-      final Cache<TrustMarkSubjectKey,
+      final Cache<String, ModuleResponse> modules,
+      final Cache<String,
           List<TrustMarkSubjectRecord>> trustMarkSubjects,
       final Cache<String, List<EntityRecord>> entityRecords,
       final Cache<String, PolicyRecord> policyRecords) {
@@ -58,7 +58,7 @@ public class RegistryRefreshAheadCache {
    * @param response for modules
    */
   public void registerModule(final UUID instanceId, final Expirable<ModuleResponse> response) {
-    this.modules.add(instanceId, response);
+    this.modules.add(instanceId.toString(), response);
   }
 
   /**
@@ -66,7 +66,7 @@ public class RegistryRefreshAheadCache {
    * @return response for modules
    */
   public ModuleResponse getModules(final UUID instanceId) {
-    return this.modules.get(instanceId);
+    return this.modules.get(instanceId.toString());
   }
 
   /**
@@ -74,7 +74,7 @@ public class RegistryRefreshAheadCache {
    * @return true if response empty or expired
    */
   public boolean modulesNeedsRefresh(final UUID instanceId) {
-    return this.modules.shouldRefresh(instanceId);
+    return this.modules.shouldRefresh(instanceId.toString());
   }
 
   /**
@@ -83,7 +83,7 @@ public class RegistryRefreshAheadCache {
    */
   public void registerTrustMarkSubjects(final TrustMarkSubjectKey key,
                                         final Expirable<List<TrustMarkSubjectRecord>> trustMarkSubject) {
-    this.trustMarkSubjects.add(key, trustMarkSubject);
+    this.trustMarkSubjects.add(key.toString(), trustMarkSubject);
   }
 
   /**
@@ -123,6 +123,6 @@ public class RegistryRefreshAheadCache {
    * @return list of trust mark subjects
    */
   public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final TrustMarkSubjectKey key) {
-    return this.trustMarkSubjects.get(key);
+    return this.trustMarkSubjects.get(key.toString());
   }
 }

@@ -19,12 +19,11 @@ package se.digg.oidfed.common.entity;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import se.digg.oidfed.common.entity.integration.InMemoryCache;
-import se.digg.oidfed.common.entity.integration.InMemoryListCache;
+import se.digg.oidfed.common.entity.integration.InMemoryMultiKeyCache;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.HostedRecord;
+import se.digg.oidfed.common.tree.NodeKey;
 
-import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,13 +35,11 @@ class DelegatingEntityRecordRegistryTest {
     final EntityID selfHostedSubject = new EntityID("http://other.test/selfsub");
     final List<EntityRecord> recordsRegistred = new ArrayList<>();
     final DelegatingEntityRecordRegistry registry = new DelegatingEntityRecordRegistry(
-        new CachedEntityRecordRegistry(
-            new InMemoryCache<>(Clock.systemDefaultZone()),
-            new InMemoryListCache<>(),
-            new EntityPathFactory(List.of(
-            "http://root.test")),
-            "instance-id"),
-        List.of(recordsRegistred::add));
+        new CachedEntityRecordRegistry(new EntityPathFactory(List.of(
+            "http://root.test")), new InMemoryMultiKeyCache<>()
+        ),
+        List.of(recordsRegistred::add)
+    );
 
     final EntityRecord rootEntity = EntityRecord.builder()
         .issuer(root)
@@ -71,9 +68,46 @@ class DelegatingEntityRecordRegistryTest {
     Assertions.assertEquals(hostedSubject, registry.getEntity("/sub").get().getSubject());
     Assertions.assertTrue(registry.getEntity("/selfsub").isEmpty());
 
-    Assertions.assertTrue(registry.getSubordinateRecord(selfHostedSubject).isPresent());
-    Assertions.assertTrue(registry.getEntity(hostedSubject).isPresent());
+    Assertions.assertTrue(registry.getEntity(new NodeKey(root.getValue(), selfHostedSubject.getValue())).isPresent());
+    Assertions.assertTrue(registry.getEntity(new NodeKey(root.getValue(), hostedSubject.getValue())).isPresent());
 
     Assertions.assertEquals(3, recordsRegistred.size());
+
+    Assertions.assertEquals(2, registry.findSubordinates(root.getValue()).size());
+    Assertions.assertTrue(registry.getPaths().containsAll(List.of("/", "/sub")));
   }
+
+  @Test
+  void testMultipleDuplicateInserts() {
+    final EntityID root = new EntityID("http://root.test");
+    final EntityID hostedSubject = new EntityID("http://root.test/sub");
+    final EntityRecord rootEntity = EntityRecord.builder()
+        .issuer(root)
+        .subject(root)
+        .hostedRecord(HostedRecord.builder().build())
+        .build();
+
+    final EntityRecord first = EntityRecord.builder()
+        .issuer(root)
+        .subject(hostedSubject)
+        .policyRecordId("my-policy")
+        .hostedRecord(HostedRecord.builder().build())
+        .build();
+
+    final DelegatingEntityRecordRegistry registry = new DelegatingEntityRecordRegistry(
+        new CachedEntityRecordRegistry(new EntityPathFactory(List.of(
+            "http://root.test")), new InMemoryMultiKeyCache<>()
+        ),List.of()
+    );
+
+    registry.addEntity(rootEntity);
+    for (int i = 0; i < 100; i++) {
+      registry.addEntity(first);
+    }
+
+    Assertions.assertEquals(1, registry.findSubordinates(root.getValue()).size());
+    Assertions.assertEquals(2, registry.getPaths().size());
+  }
+
+
 }

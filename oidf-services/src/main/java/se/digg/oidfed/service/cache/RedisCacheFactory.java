@@ -23,6 +23,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.Expirable;
 import se.digg.oidfed.common.entity.integration.ListCache;
+import se.digg.oidfed.common.entity.integration.MultiKeyCache;
 
 import java.io.Serializable;
 import java.time.Clock;
@@ -55,8 +56,8 @@ public class RedisCacheFactory implements CacheFactory {
   );
 
   @Override
-  public <K extends Serializable, V> Cache<K, V> create(final Class<V> v) {
-    final RedisTemplate<K, Expirable<V>> template = new RedisTemplate<>();
+  public <V> Cache<String, V> create(final Class<V> v) {
+    final RedisTemplate<String, Expirable<V>> template = new RedisTemplate<>();
     template.setConnectionFactory(this.factory);
     Optional.ofNullable(this.serializerMap.get(v)).ifPresent(template::setValueSerializer);
     template.afterPropertiesSet();
@@ -64,8 +65,8 @@ public class RedisCacheFactory implements CacheFactory {
   }
 
   @Override
-  public <K extends Serializable, V> Cache<K, List<V>> createListValueCache(final Class<V> v) {
-    final RedisTemplate<K, Expirable<List<V>>> template = new RedisTemplate<>();
+  public <V> Cache<String, List<V>> createListValueCache(final Class<V> v) {
+    final RedisTemplate<String, Expirable<List<V>>> template = new RedisTemplate<>();
     template.setConnectionFactory(this.factory);
     Optional.ofNullable(this.serializerMap.get(v)).ifPresent(template::setValueSerializer);
     template.afterPropertiesSet();
@@ -73,11 +74,23 @@ public class RedisCacheFactory implements CacheFactory {
   }
 
   @Override
-  public <K extends Serializable, V> ListCache<K, V> createListCache(final Class<V> v) {
-    final RedisTemplate<K, V> template = new RedisTemplate<>();
+  public <V> ListCache<String, V> createListCache(final Class<V> v) {
+    final RedisTemplate<String, V> template = new RedisTemplate<>();
     template.setConnectionFactory(this.factory);
     Optional.ofNullable(this.serializerMap.get(v)).ifPresent(template::setValueSerializer);
     template.afterPropertiesSet();
     return new RedisListCache<>(template);
+  }
+
+  @Override
+  public <V> MultiKeyCache<V> createMultiKeyCache(final Class<V> v) {
+    final RedisTemplate<String, V> template = new RedisTemplate<>();
+    template.setConnectionFactory(this.factory);
+    Optional.ofNullable(this.serializerMap.get(v)).ifPresent(template::setValueSerializer);
+    template.afterPropertiesSet();
+    final RedisTemplate<String, String> stringTemplate = new RedisTemplate<>();
+    stringTemplate.setConnectionFactory(this.factory);
+    stringTemplate.afterPropertiesSet();
+    return new RedisMultiKeyCache<>(template, stringTemplate, v);
   }
 }

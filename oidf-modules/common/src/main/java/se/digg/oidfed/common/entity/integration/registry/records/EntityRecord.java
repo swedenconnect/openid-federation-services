@@ -25,6 +25,7 @@ import lombok.Getter;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -105,5 +106,9 @@ public class EntityRecord implements Serializable {
         }).orElse(null),
         Optional.ofNullable((String) entityRecord.get("override_configuration_location")).orElse(null),
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
+  }
+
+  public boolean isHosted() {
+    return Objects.nonNull(this.getHostedRecord());
   }
 }

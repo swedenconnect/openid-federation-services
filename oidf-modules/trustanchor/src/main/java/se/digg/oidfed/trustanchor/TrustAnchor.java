@@ -18,21 +18,22 @@ package se.digg.oidfed.trustanchor;
 
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.digg.oidfed.common.entity.integration.federation.EntityConfigurationRequest;
-import se.digg.oidfed.common.entity.integration.federation.FederationClient;
-import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
-import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.federation.EntityConfigurationRequest;
+import se.digg.oidfed.common.entity.integration.federation.FederationClient;
+import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
 import se.digg.oidfed.common.entity.integration.federation.FetchRequest;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
 import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidIssuerException;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.module.Submodule;
+import se.digg.oidfed.common.tree.NodeKey;
 
 import java.util.List;
 import java.util.Map;
@@ -57,9 +58,9 @@ public class TrustAnchor implements Submodule {
   /**
    * Constructor.
    *
-   * @param registry   to use
-   * @param properties to use
-   * @param factory    to constructor entity statements
+   * @param registry         to use
+   * @param properties       to use
+   * @param factory          to constructor entity statements
    * @param federationClient to use for resolving entity configurations
    */
   public TrustAnchor(
@@ -84,11 +85,19 @@ public class TrustAnchor implements Submodule {
    */
   public String fetchEntityStatement(final FetchRequest request)
       throws InvalidIssuerException, NotFoundException {
-    final EntityRecord issuer = this.registry.getEntity(this.properties.getEntityId())
+    final EntityRecord issuer = this.registry.getEntity(
+            new NodeKey(
+                this.properties.getEntityId().getValue(),
+                this.properties.getEntityId().getValue()
+            )
+        )
         .orElseThrow(
             () -> new InvalidIssuerException("Entity not found for:'%s'".formatted(this.properties.getEntityId()))
         );
-    final EntityRecord subject = this.registry.getSubordinateRecord(new EntityID(request.subject()))
+    final EntityRecord subject = this.registry.getEntity(new NodeKey(
+        this.properties.getEntityId().getValue(),
+        request.subject()
+        ))
         .orElseThrow(
             () -> new NotFoundException("Entity not found for subject:'%s'".formatted(request.subject()))
         );
