@@ -105,14 +105,13 @@ public class CachedEntityRecordRegistry implements EntityRecordRegistry {
                       record.getSubject().getValue());
                 }
               });
+      if (Objects.isNull(record.getHostedRecord())) {
+        this.entityRecordCache.add("%s:%s:ers".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
+        this.entityIds.append("%s:%s:sub".formatted(
+                this.instanceId, record.getIssuer()),
+            record.getSubject().getValue());
+      }
     });
-    if (Objects.isNull(record.getHostedRecord())) {
-      final String subject = record.getSubject().getValue();
-      this.entityRecordCache.add("%s:%s:ers".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
-      this.entityIds.append("%s:%s:sub".formatted(
-              this.instanceId, record.getIssuer()),
-          record.getSubject().getValue());
-    }
   }
 
   @Override
