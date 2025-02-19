@@ -26,6 +26,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfiguration;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.resolver.cache.ResolverRedisOperations;
 import se.digg.oidfed.service.resolver.cache.RedisResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
@@ -44,8 +46,9 @@ import java.time.Duration;
 public class RedisCacheConfiguration {
 
   @Bean
-  CacheFactory redisCacheFactory(final RedisConnectionFactory factory, final Clock clock) {
-    return new RedisCacheFactory(clock, factory);
+  CacheFactory redisCacheFactory(final RedisConnectionFactory factory, final Clock clock,
+                                 final OpenIdFederationConfigurationProperties properties) {
+    return new RedisCacheFactory(clock, factory, properties.getRegistry().getIntegration().getInstanceId());
   }
 
   @Bean
