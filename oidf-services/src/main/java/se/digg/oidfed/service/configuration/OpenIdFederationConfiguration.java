@@ -116,18 +116,20 @@ public class OpenIdFederationConfiguration {
       final KeyRegistry registry,
       final FederationKeys keys
   ) {
+    final OpenIdFederationConfigurationProperties.Modules modules =
+        Optional.ofNullable(properties.getModules()).orElse(new OpenIdFederationConfigurationProperties.Modules());
     return new RegistryProperties(
         properties.getRegistry().getIntegration().getInstanceId(),
         properties.getRegistry().getIntegration().getEnabled(),
-        Optional.ofNullable(properties.getModules().getTrustMarkIssuers())
+        Optional.ofNullable(modules.getTrustMarkIssuers())
             .orElse(List.of()).stream()
             .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::toProperties)
             .toList(),
-        Optional.ofNullable(properties.getModules().getTrustAnchors())
+        Optional.ofNullable(modules.getTrustAnchors())
             .orElse(List.of()).stream()
             .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::toTrustAnchorProperties)
             .toList(),
-        Optional.ofNullable(properties.getModules().getResolvers())
+        Optional.ofNullable(modules.getResolvers())
             .orElse(List.of()).stream()
             .map(r -> r.toResolverProperties(registry)).toList(),
         Optional.ofNullable(properties.getEntities())
