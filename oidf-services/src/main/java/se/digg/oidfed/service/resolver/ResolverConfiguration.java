@@ -18,7 +18,6 @@ package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -82,10 +81,5 @@ public class ResolverConfiguration {
   @Bean
   ErrorContextFactory errorContextFactory(final MeterRegistry registry) {
     return new ObservableErrorContextFactory(registry);
-  }
-
-  @Bean
-  MeterRegistry registry() {
-    return new CompositeMeterRegistry(io.micrometer.core.instrument.Clock.SYSTEM);
   }
 }

@@ -149,6 +149,4 @@ public class OpenIdFederationConfiguration {
   RestClientFactory restClientFactory(final SslBundles bundles) {
     return new RestClientFactory(bundles);
   }
-
-
 }

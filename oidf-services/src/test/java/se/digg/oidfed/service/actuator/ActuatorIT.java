@@ -14,26 +14,19 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service;
+package se.digg.oidfed.service.actuator;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.Test;
+import org.springframework.web.client.RestClient;
+import se.digg.oidfed.service.IntegrationTestParent;
 
-/**
- * Application.
- *
- * @author Felix Hellman
- */
-@SpringBootApplication(exclude = RedisAutoConfiguration.class)
-public class Application {
-  /**
-   * Main method.
-   *
-   * @param args
-   */
-  public static void main(final String[] args) {
-    SpringApplication.run(Application.class, args);
+public class ActuatorIT extends IntegrationTestParent {
+  @Test
+  void testPrometheusMetrics() throws InterruptedException {
+    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(this.managementPort)).build();
+    final String body = client.get().uri("/actuator/prometheus")
+        .retrieve()
+        .body(String.class);
+    System.out.println(body);
   }
 }
