@@ -98,8 +98,11 @@ public class JWSRegistryVerifier implements RegistryVerifier {
       final JWTClaimsSet claims = signedJWT
           .getJWTClaimsSet();
       final Map<String, Object> json = claims
-          .getJSONObjectClaim("modules");
+          .getJSONObjectClaim("module_records");
+      FederationAssert.assertNotEmpty(json, "Missing claim for:'module_records' ");
       final ModuleResponse moduleResponse = ModuleResponse.fromJson(json);
+      FederationAssert.assertNotEmpty(claims.getExpirationTime(), "Missing claim 'exp' in token");
+
       return new Expirable<>(claims.getExpirationTime().toInstant(), moduleResponse);
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify module record", e);
