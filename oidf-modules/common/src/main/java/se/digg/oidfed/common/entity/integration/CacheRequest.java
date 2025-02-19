@@ -20,7 +20,16 @@ import jakarta.annotation.Nullable;
 
 import java.util.Objects;
 
+/**
+ * @param key to search for
+ * @param keyName (optional) keyname for sub key
+ *
+ * @author Felix Hellman
+ */
 public record CacheRequest(String key, @Nullable String keyName) {
+  /**
+   * @return true if keyName is null
+   */
   public boolean isPrimaryKeySearch() {
     return Objects.isNull(this.keyName);
   }

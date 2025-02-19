@@ -119,7 +119,9 @@ public class FederationLoadingCache implements FederationClient {
   public SignedJWT resolve(final FederationRequest<ResolveRequest> request) {
     if (!request.useCachedValue() || this.resolveCache.shouldRefresh(request.toString())) {
       final SignedJWT resolseResponse = this.client.resolve(request);
-      this.resolveCache.add(request.toString(), new Expirable<>(getExpirationFromJwt(resolseResponse), resolseResponse));
+      this.resolveCache.add(request.toString(),
+          new Expirable<>(getExpirationFromJwt(resolseResponse), resolseResponse)
+      );
       return resolseResponse;
     }
     return this.resolveCache.get(request.toString());

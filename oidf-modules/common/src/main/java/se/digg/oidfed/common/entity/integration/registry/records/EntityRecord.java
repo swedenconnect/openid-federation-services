@@ -108,6 +108,9 @@ public class EntityRecord implements Serializable {
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
   }
 
+  /**
+   * @return true if hosted record is not null
+   */
   public boolean isHosted() {
     return Objects.nonNull(this.getHostedRecord());
   }

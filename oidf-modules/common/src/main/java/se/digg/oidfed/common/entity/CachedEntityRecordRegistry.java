@@ -37,6 +37,11 @@ public class CachedEntityRecordRegistry implements EntityRecordRegistry {
   private final EntityPathFactory factory;
   private final MultiKeyCache<EntityRecord> entityRecords;
 
+  /**
+   * Constructor.
+   * @param factory for creating paths
+   * @param entityRecords cache for entityrecords
+   */
   public CachedEntityRecordRegistry(final EntityPathFactory factory, final MultiKeyCache<EntityRecord> entityRecords) {
     this.factory = factory;
     this.entityRecords = entityRecords;
@@ -61,7 +66,7 @@ public class CachedEntityRecordRegistry implements EntityRecordRegistry {
   public void addEntity(final EntityRecord record) {
     final NodeKey key = NodeKey.fromEntityRecord(record);
     if (record.isHosted()) {
-      final String path = factory.getPath(record);
+      final String path = this.factory.getPath(record);
       this.entityRecords.add(key.getKey(), Map.of("paths", path), record);
     }
     this.entityRecords.add(key.getKey(), record);

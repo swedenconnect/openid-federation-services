@@ -34,7 +34,7 @@ public record NodeKey(String issuer, String subject) {
    * @return true if issuer is equal to subject
    */
   public boolean isSelfStatement() {
-    return issuer.equals(subject);
+    return this.issuer.equals(this.subject);
   }
 
   /**

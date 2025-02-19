@@ -25,13 +25,28 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Redis implementation of {@link MultiKeyCache}
+ * @param <V> value type
+ *
+ * @author Felix Hellman
+ */
 public class RedisMultiKeyCache<V> implements MultiKeyCache<V> {
 
   private final RedisTemplate<String, V> template;
   private final RedisTemplate<String, String> stringTemplate;
   private final Class<V> vClass;
 
-  public RedisMultiKeyCache(final RedisTemplate<String, V> template, final RedisTemplate<String, String> stringTemplate, final Class<V> vClass) {
+  /**
+   * Constructor
+   * @param template for values
+   * @param stringTemplate for keys
+   * @param vClass of value
+   */
+  public RedisMultiKeyCache(
+      final RedisTemplate<String, V> template,
+      final RedisTemplate<String, String> stringTemplate,
+      final Class<V> vClass) {
     this.template = template;
     this.stringTemplate = stringTemplate;
     this.vClass = vClass;

@@ -16,27 +16,26 @@
  */
 package se.digg.oidfed.common.entity.integration;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Cache with support for additional search keys.
- * @param <V> value to store
  *
+ * @param <V> value to store
  * @author Felix Hellman
  */
 public interface MultiKeyCache<V> {
   /**
    * @param primaryKey for entity
-   * @param subKeys for entity
-   * @param value of the entity
+   * @param subKeys    for entity
+   * @param value      of the entity
    */
-  void add(final String primaryKey, final Map<String,String> subKeys, final V value);
+  void add(final String primaryKey, final Map<String, String> subKeys, final V value);
 
   /**
    * @param primaryKey for entity
-   * @param value of the entity
+   * @param value      of the entity
    */
   void add(final String primaryKey, final V value);
 
@@ -46,7 +45,14 @@ public interface MultiKeyCache<V> {
    */
   V get(final CacheRequest request);
 
+  /**
+   * @return all primary keys
+   */
   Set<String> getPrimaryKeys();
 
+  /**
+   * @param subKeyName to find keys for
+   * @return all sub keys by name
+   */
   Set<String> getSubKeys(final String subKeyName);
 }
