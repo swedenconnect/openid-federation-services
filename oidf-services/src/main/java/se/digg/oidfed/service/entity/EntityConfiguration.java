@@ -65,7 +65,9 @@ public class EntityConfiguration {
         new CachedEntityRecordRegistry(
             factory.create(EntityRecord.class),
             factory.createListCache(String.class),
-            new EntityPathFactory(properties.getModules().getIssuers()),
+            new EntityPathFactory(Optional.ofNullable(properties.getModules())
+                .map(OpenIdFederationConfigurationProperties.Modules::getIssuers)
+                .orElse(List.of())),
             Optional.ofNullable(properties.getRegistry().getIntegration())
                 .map(OpenIdFederationConfigurationProperties.Registry.Integration::getInstanceId)
                 .map(UUID::toString)
