@@ -18,6 +18,7 @@ package se.digg.oidfed.common.entity;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.tree.NodeKey;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,13 +46,8 @@ public class DelegatingEntityRecordRegistry implements EntityRecordRegistry {
   }
 
   @Override
-  public Optional<EntityRecord> getEntity(final EntityID entityID) {
-    return this.registry.getEntity(entityID);
-  }
-
-  @Override
-  public Optional<EntityRecord> getSubordinateRecord(final EntityID subject) {
-    return this.registry.getSubordinateRecord(subject);
+  public Optional<EntityRecord> getEntity(final NodeKey key) {
+    return this.registry.getEntity(key);
   }
 
   /**

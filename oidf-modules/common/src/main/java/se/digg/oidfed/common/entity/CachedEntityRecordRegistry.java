@@ -16,15 +16,15 @@
  */
 package se.digg.oidfed.common.entity;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.digg.oidfed.common.entity.integration.Cache;
-import se.digg.oidfed.common.entity.integration.Expirable;
+import se.digg.oidfed.common.entity.integration.CacheRequest;
 import se.digg.oidfed.common.entity.integration.ListCache;
+import se.digg.oidfed.common.entity.integration.MultiKeyCache;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.tree.NodeKey;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,97 +34,51 @@ import java.util.Set;
  * @author Felix Hellman
  */
 public class CachedEntityRecordRegistry implements EntityRecordRegistry {
-  private final Cache<String, EntityRecord> entityRecordCache;
-  private final ListCache<String, String> entityIds;
   private final EntityPathFactory factory;
-  private final String instanceId;
+  private final MultiKeyCache<EntityRecord> entityRecords;
 
   /**
    * Constructor.
-   *
-   * @param entityRecordCache cache
-   * @param entityIds         listcache
-   * @param factory           for creating entity paths
-   * @param instanceId        of this instance (group)
+   * @param factory for creating paths
+   * @param entityRecords cache for entityrecords
    */
-  public CachedEntityRecordRegistry(
-      final Cache<String, EntityRecord> entityRecordCache,
-      final ListCache<String, String> entityIds,
-      final EntityPathFactory factory,
-      final String instanceId) {
-
-    this.entityRecordCache = entityRecordCache;
-    this.entityIds = entityIds;
+  public CachedEntityRecordRegistry(final EntityPathFactory factory, final MultiKeyCache<EntityRecord> entityRecords) {
     this.factory = factory;
-    this.instanceId = instanceId;
+    this.entityRecords = entityRecords;
   }
 
   @Override
   public Optional<EntityRecord> getEntity(final String path) {
-    return Optional.ofNullable(this.entityRecordCache.get("%s:%s:path".formatted(this.instanceId, path)));
+    return Optional.ofNullable(this.entityRecords.get(new CacheRequest(path, "paths")));
   }
 
   @Override
   public Set<String> getPaths() {
-    return new HashSet<>(this.entityIds.getAll("%s:paths".formatted(this.instanceId)));
+    return this.entityRecords.getSubKeys("paths");
   }
 
   @Override
-  public Optional<EntityRecord> getEntity(final EntityID subject) {
-    return Optional.ofNullable(this.entityRecordCache.get("%s:%s:er".formatted(this.instanceId, subject)));
-  }
-
-  @Override
-  public Optional<EntityRecord> getSubordinateRecord(final EntityID subject) {
-    return Optional.ofNullable(this.entityRecordCache.get("%s:%s:ers".formatted(this.instanceId, subject)));
+  public Optional<EntityRecord> getEntity(final NodeKey key) {
+    return Optional.ofNullable(this.entityRecords.get(new CacheRequest(key.getKey(), null)));
   }
 
   @Override
   public void addEntity(final EntityRecord record) {
-    Optional.ofNullable(record.getHostedRecord()).ifPresent(hostedRecord -> {
-      //By subject
-      final String subject = record.getSubject().getValue();
-      Optional.ofNullable(this.entityRecordCache.get("%s:%s:er".formatted(this.instanceId, subject)))
-          .ifPresentOrElse((sub) -> {
-                //TODO: Check if entity record is still active, this is not implemented in registry yet.
-              },
-              () -> {
-                this.entityRecordCache
-                    .add("%s:%s:er".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
-                this.entityIds.append("%s:entities".formatted(this.instanceId), subject);
-                //By path
-                final String path = this.factory.getPath(record);
-                this.entityRecordCache
-                    .add("%s:%s:path".formatted(this.instanceId, path), Expirable.nonExpiring(record));
-                this.entityIds.append("%s:paths".formatted(this.instanceId), path);
-                if (!record.getSubject().equals(record.getIssuer())) {
-                  this.entityRecordCache
-                      .add("%s:%s:ers".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
-                  this.entityIds.append("%s:%s:sub".formatted(
-                          this.instanceId, record.getIssuer()),
-                      record.getSubject().getValue());
-                }
-              });
-    });
-    if (Objects.isNull(record.getHostedRecord())) {
-      final String subject = record.getSubject().getValue();
-      this.entityRecordCache.add("%s:%s:ers".formatted(this.instanceId, subject), Expirable.nonExpiring(record));
-      this.entityIds.append("%s:%s:sub".formatted(
-              this.instanceId, record.getIssuer()),
-          record.getSubject().getValue());
+    final NodeKey key = NodeKey.fromEntityRecord(record);
+    if (record.isHosted()) {
+      final String path = this.factory.getPath(record);
+      this.entityRecords.add(key.getKey(), Map.of("paths", path), record);
     }
+    this.entityRecords.add(key.getKey(), record);
   }
 
   @Override
-  public List<EntityRecord> findSubordinates(
-      final String issuer) {
-    final String key = "%s:%s:sub".formatted(this.instanceId, issuer);
-    return this.entityIds.getAll(key).stream()
-        .map(subject -> this.getSubordinateRecord(new EntityID(subject)))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        // Remove self from listing
-        .filter(er -> !er.getSubject().getValue().equals(issuer))
+  public List<EntityRecord> findSubordinates(final String issuer) {
+    return this.entityRecords.getPrimaryKeys().stream()
+        .map(NodeKey::parse)
+        .filter(key -> key.issuer().equals(issuer))
+        .filter(key -> !key.isSelfStatement())
+        .map(key -> this.entityRecords.get(new CacheRequest(key.getKey(), null)))
         .toList();
   }
 }

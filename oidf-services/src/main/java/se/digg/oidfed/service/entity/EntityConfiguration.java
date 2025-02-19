@@ -25,6 +25,7 @@ import se.digg.oidfed.common.entity.DelegatingEntityRecordRegistry;
 import se.digg.oidfed.common.entity.EntityConfigurationFactory;
 import se.digg.oidfed.common.entity.EntityPathFactory;
 import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.InMemoryMultiKeyCache;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.jwt.SignerFactory;
@@ -33,7 +34,6 @@ import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationPropert
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Configuration for entity registry.
@@ -63,15 +63,10 @@ public class EntityConfiguration {
 
     return new DelegatingEntityRecordRegistry(
         new CachedEntityRecordRegistry(
-            factory.create(EntityRecord.class),
-            factory.createListCache(String.class),
             new EntityPathFactory(Optional.ofNullable(properties.getModules())
                 .map(OpenIdFederationConfigurationProperties.Modules::getIssuers)
                 .orElse(List.of())),
-            Optional.ofNullable(properties.getRegistry().getIntegration())
-                .map(OpenIdFederationConfigurationProperties.Registry.Integration::getInstanceId)
-                .map(UUID::toString)
-                .orElse(UUID.randomUUID().toString())
+            factory.createMultiKeyCache(EntityRecord.class)
         ),
         List.of(er -> publisher.publishEvent(new EntityRegisteredEvent(er))));
   }

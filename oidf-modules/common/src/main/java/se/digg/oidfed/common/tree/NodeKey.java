@@ -17,17 +17,29 @@
 package se.digg.oidfed.common.tree;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+
+import java.io.Serializable;
 
 /**
  * Class for representing a single node (key) in the resolver tree.
- * @param issuer part
- * @param subject part
  *
+ * @param issuer  part
+ * @param subject part
  * @author Felix Hellman
  */
 public record NodeKey(String issuer, String subject) {
+
+  /**
+   * @return true if issuer is equal to subject
+   */
+  public boolean isSelfStatement() {
+    return this.issuer.equals(this.subject);
+  }
+
   /**
    * Parses a string into a {@link NodeKey}
+   *
    * @param key to parse
    * @return new instance
    */
@@ -45,6 +57,7 @@ public record NodeKey(String issuer, String subject) {
 
   /**
    * Creates a key from an entity statement.
+   *
    * @param es to create key from
    * @return new instance
    */
@@ -52,6 +65,19 @@ public record NodeKey(String issuer, String subject) {
     return new NodeKey(
         es.getClaimsSet().getIssuer().getValue(),
         es.getClaimsSet().getSubject().getValue()
+    );
+  }
+
+  /**
+   * Creates a key from an entity record.
+   *
+   * @param record to create key from
+   * @return new instance
+   */
+  public static NodeKey fromEntityRecord(final EntityRecord record) {
+    return new NodeKey(
+        record.getIssuer().getValue(),
+        record.getSubject().getValue()
     );
   }
 }

@@ -18,6 +18,7 @@ package se.digg.oidfed.common.entity;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.tree.NodeKey;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,16 +42,10 @@ public interface EntityRecordRegistry {
   Set<String> getPaths();
 
   /**
-   * @param entityID of the entity. e.g. http://myentity.test
+   * @param key of the entity. e.g. "http://myentity.test:http://myentity.test"
    * @return property of entity
    */
-  Optional<EntityRecord> getEntity(final EntityID entityID);
-
-  /**
-   * @param subject of the subject
-   * @return record of the subordinate record
-   */
-  Optional<EntityRecord> getSubordinateRecord(final EntityID subject);
+  Optional<EntityRecord> getEntity(final NodeKey key);
   /**
    * @param record to add
    */

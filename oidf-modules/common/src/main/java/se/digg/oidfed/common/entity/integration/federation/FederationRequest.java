@@ -27,9 +27,7 @@ import java.util.Objects;
  *
  * @author Felix Hellman
  */
-public final class FederationRequest<T> implements Serializable {
-  @Serial
-  private static final long serialVersionUID = 0L;
+public final class FederationRequest<T>  {
   private final T parameters;
   private final Map<String, String> federationEntityMetadata;
   private final Boolean useCachedValue;
@@ -88,7 +86,7 @@ public final class FederationRequest<T> implements Serializable {
   @Override
   public String toString() {
     return "FederationRequest[" +
-        "parameters=" + this.parameters + ", " +
+        "parameters=" + this.parameters.toString() + ", " +
         "federationEntityMetadata=" + this.federationEntityMetadata + ", " +
         "useCachedValue=" + this.useCachedValue + ']';
   }
