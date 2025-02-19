@@ -54,13 +54,13 @@ public class RegistryRecordSigner {
 
   public SignedJWT signModules(final ModuleResponse response) throws JOSEException {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim("modules", response.toJson())
+        .claim("module_records", response.toJson())
         .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
         .build();
 
     final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType("entity-records+jwt"))
+        .type(new JOSEObjectType("module-records+jwt"))
         .build();
 
     final SignedJWT jwt = new SignedJWT(header, claims);

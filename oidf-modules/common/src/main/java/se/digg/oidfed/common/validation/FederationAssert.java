@@ -18,6 +18,7 @@ package se.digg.oidfed.common.validation;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -40,6 +41,7 @@ public final class FederationAssert {
       case String s when s.isBlank() -> throw new IllegalArgumentException(message);
       case List list when list.isEmpty() -> throw new IllegalArgumentException(message);
       case Collection<?> objects when objects.isEmpty() -> throw new IllegalArgumentException(message);
+      case Map<?,?> objects when objects.isEmpty() -> throw new IllegalArgumentException(message);
       default -> value;
     };
   }
