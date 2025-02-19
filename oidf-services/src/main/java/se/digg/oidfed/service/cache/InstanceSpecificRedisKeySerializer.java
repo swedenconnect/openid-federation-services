@@ -19,13 +19,22 @@ package se.digg.oidfed.service.cache;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import java.nio.charset.Charset;
 import java.util.UUID;
 
+/**
+ * Key serializer that appends/removes service name at deserialization/serialization
+ *
+ * @author Felix Hellman
+ */
 public class InstanceSpecificRedisKeySerializer implements RedisSerializer<String> {
   private final StringRedisSerializer serializer;
   private final UUID instanceId;
 
+  /**
+   * Constructor.
+   * @param serializer underlying serializer to use
+   * @param instanceId of this instance
+   */
   public InstanceSpecificRedisKeySerializer(final StringRedisSerializer serializer, final UUID instanceId) {
     this.serializer = serializer;
     this.instanceId = instanceId;
@@ -33,7 +42,7 @@ public class InstanceSpecificRedisKeySerializer implements RedisSerializer<Strin
 
   @Override
   public byte[] serialize(final String value) {
-    return serializer.serialize("oidf:%s:%s".formatted(
+    return this.serializer.serialize("oidf:%s:%s".formatted(
         this.instanceId.toString(),
         value
     ));
@@ -41,17 +50,17 @@ public class InstanceSpecificRedisKeySerializer implements RedisSerializer<Strin
 
   @Override
   public String deserialize(final byte[] bytes) {
-    final String deserialize = serializer.deserialize(bytes);
+    final String deserialize = this.serializer.deserialize(bytes);
     return deserialize.split("oidf:%s".formatted(this.instanceId))[1];
   }
 
   @Override
   public Class<?> getTargetType() {
-    return serializer.getTargetType();
+    return this.serializer.getTargetType();
   }
 
   @Override
   public boolean canSerialize(final Class<?> type) {
-    return serializer.canSerialize(type);
+    return this.serializer.canSerialize(type);
   }
 }
