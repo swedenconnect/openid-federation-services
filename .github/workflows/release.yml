@@ -28,6 +28,8 @@ jobs:
       - run: sudo echo "127.0.0.1 municipality.local.swedenconnect.se" | sudo tee -a /etc/hosts
       - run: sudo echo "127.0.0.1 private.local.swedenconnect.se" | sudo tee -a /etc/hosts
       - run: mvn clean install --no-transfer-progress
+        env:
+          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
       - run: cd oidf-services; DOCKER_REPO=ghcr.io mvn clean package jib:build -Djib.to.tags=$tag --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
