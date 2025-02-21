@@ -18,6 +18,7 @@ package se.digg.oidfed.service.configuration;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.ssl.SslBundles;
@@ -146,7 +147,7 @@ public class OpenIdFederationConfiguration {
   }
 
   @Bean
-  RestClientFactory restClientFactory(final SslBundles bundles) {
-    return new RestClientFactory(bundles);
+  RestClientFactory restClientFactory(final SslBundles bundles, final ObservationRegistry registry) {
+    return new RestClientFactory(bundles, registry);
   }
 }

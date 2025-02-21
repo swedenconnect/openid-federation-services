@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.service.testclient;
 
+import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
@@ -39,7 +40,7 @@ public class TestFederationClientParameterResolver implements ParameterResolver 
     final RestClientProperties.RestClientProperty property = new RestClientProperties.RestClientProperty();
     property.setTrustStoreBundleName("oidf-internal");
     property.setName("test");
-    final RestClient client = new RestClientFactory(bundles).create(property);
+    final RestClient client = new RestClientFactory(bundles, ObservationRegistry.NOOP).create(property);
     return new FederationClients(client);
   }
 }
