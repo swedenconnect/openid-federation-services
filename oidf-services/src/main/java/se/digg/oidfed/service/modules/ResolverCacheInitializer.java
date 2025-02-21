@@ -38,6 +38,7 @@ public class ResolverCacheInitializer extends ReadyStateComponent {
 
   /**
    * @param registry of caches
+   * @param observationRegistry for observations
    */
   public ResolverCacheInitializer(
       final ResolverCacheRegistry registry,
@@ -55,7 +56,11 @@ public class ResolverCacheInitializer extends ReadyStateComponent {
   void handle(final ResolverInitEvent event) {
     this.registry.getAliases()
         .forEach(alias -> {
-          final Observation resolveFederationObservation = Observation.start("Resolve federation %s".formatted(alias), this.observationRegistry);
+          final Observation resolveFederationObservation =
+              Observation.start(
+                  "Resolve federation %s".formatted(alias),
+                  this.observationRegistry
+              );
           this.registry.loadTree(alias);
           resolveFederationObservation.stop();
         });
