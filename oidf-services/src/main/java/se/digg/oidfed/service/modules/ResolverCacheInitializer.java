@@ -16,6 +16,8 @@
  */
 package se.digg.oidfed.service.modules;
 
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import se.digg.oidfed.service.entity.EntitiesLoadedEvent;
@@ -32,12 +34,16 @@ import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 public class ResolverCacheInitializer extends ReadyStateComponent {
 
   private final ResolverCacheRegistry registry;
+  private final ObservationRegistry observationRegistry;
 
   /**
    * @param registry of caches
    */
-  public ResolverCacheInitializer(final ResolverCacheRegistry registry) {
+  public ResolverCacheInitializer(
+      final ResolverCacheRegistry registry,
+      final ObservationRegistry observationRegistry) {
     this.registry = registry;
+    this.observationRegistry = observationRegistry;
   }
 
   @Override
@@ -48,7 +54,11 @@ public class ResolverCacheInitializer extends ReadyStateComponent {
   @EventListener
   void handle(final ResolverInitEvent event) {
     this.registry.getAliases()
-        .forEach(this.registry::loadTree);
+        .forEach(alias -> {
+          final Observation resolveFederationObservation = Observation.start("Resolve federation %s".formatted(alias), this.observationRegistry);
+          this.registry.loadTree(alias);
+          resolveFederationObservation.stop();
+        });
     this.markReady();
   }
 }
