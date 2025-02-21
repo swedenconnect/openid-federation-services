@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.service.rest;
 
+import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
@@ -35,11 +36,15 @@ public class RestClientFactory {
 
   private final SslBundles bundles;
 
+  private final ObservationRegistry registry;
+
   /**
    * @param bundles to use
+   * @param registry for observations
    */
-  public RestClientFactory(final SslBundles bundles) {
+  public RestClientFactory(final SslBundles bundles, final ObservationRegistry registry) {
     this.bundles = bundles;
+    this.registry = registry;
   }
 
   /**
@@ -64,6 +69,7 @@ public class RestClientFactory {
         .ifPresent(restClientBuilder::baseUrl);
 
     return restClientBuilder
+        .observationRegistry(this.registry)
         .build();
   }
 }
