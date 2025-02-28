@@ -232,7 +232,7 @@
                 <filtering>true</filtering>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>application.properties</include>
+                    <include>application.yml</include>
                 </includes>
             </resource>
         </resources>
