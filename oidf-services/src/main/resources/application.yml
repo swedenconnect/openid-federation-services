@@ -3,7 +3,8 @@ spring:
     virtual:
       enabled: true
   application:
-    name: OidcFed.Services
+    name: oidf-node
+    version: '@project.version@'
 server:
   port: 8000
   compression:
@@ -21,6 +22,10 @@ openid:
         enabled: false
 
 management:
+  metrics:
+    tags:
+      application_version: ${spring.application.version}
+      application_name: ${spring.application.name}
   prometheus:
     metrics:
       export:
