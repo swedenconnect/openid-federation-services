@@ -28,8 +28,8 @@ import java.util.Optional;
  */
 public interface ResolverModuleRepository {
   /**
-   * @param alias of the resolver to get
+   * @param entityId of the resolver
    * @return a resolver instance from registry or empty
    */
-  Optional<Resolver> getResolver(final String alias);
+  Optional<Resolver> getResolver(final String entityId);
 }

@@ -17,11 +17,12 @@
 package se.digg.oidfed.service.configuration;
 
 import se.digg.oidfed.common.entity.integration.Expirable;
-import se.digg.oidfed.common.entity.integration.registry.ModuleResponse;
+import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.RecordRegistryIntegration;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkRecord;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,22 +34,17 @@ import java.util.UUID;
  */
 public class ThrowingRecordRegistryIntegration implements RecordRegistryIntegration {
   @Override
-  public Expirable<PolicyRecord> getPolicy(final String id) {
+  public Expirable<List<EntityRecord>> getEntityRecords(final UUID instanceID) {
     throw new IllegalStateException("Client is configured to not contact registry, this method should not be called");
   }
 
   @Override
-  public Expirable<List<EntityRecord>> getEntityRecords(final String issuer) {
+  public Expirable<ModuleRecord> getModules(final UUID instanceId) {
     throw new IllegalStateException("Client is configured to not contact registry, this method should not be called");
   }
 
   @Override
-  public Expirable<ModuleResponse> getModules(final UUID instanceId) {
-    throw new IllegalStateException("Client is configured to not contact registry, this method should not be called");
-  }
-
-  @Override
-  public Expirable<List<TrustMarkSubjectRecord>> getTrustMarkSubject(final String issuer, final String trustMarkId) {
+  public Expirable<List<TrustMarkRecord>> getTrustMarks(final UUID instanceId) {
     throw new IllegalStateException("Client is configured to not contact registry, this method should not be called");
   }
 }

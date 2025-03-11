@@ -63,7 +63,7 @@ public class TestDataSetup {
 
     final TrustMarkSubjectRecord sub1 =
         TrustMarkSubjectRecord.builder()
-            .sub("http://tm1.digg.se/sub1")
+            .trustMarkSubject("http://tm1.digg.se/sub1")
             .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
             .granted(Instant.now())
             .build();

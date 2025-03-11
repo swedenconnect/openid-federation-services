@@ -19,7 +19,6 @@ package se.digg.oidfed.service;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.redis.testcontainers.RedisContainer;
-import io.netty.util.internal.SocketUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +31,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.util.TestSocketUtils;
 import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -40,9 +38,7 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.entity.ApplicationReadyEndpoint;
-import se.digg.oidfed.service.entity.EntityInitializer;
 import se.digg.oidfed.service.entity.RegistryMock;
-import se.digg.oidfed.service.modules.ModuleSetupCompleteEvent;
 import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
 import se.digg.oidfed.test.testcontainer.RelyingPartyContainer;
 
@@ -75,9 +71,6 @@ public class IntegrationTestParent {
 
   @Autowired
   protected ApplicationEventPublisher publisher;
-
-  @Autowired
-  EntityInitializer entityInitializer;
 
   @Autowired
   KeyRegistry registry;
@@ -123,7 +116,7 @@ public class IntegrationTestParent {
 
   static {
     try {
-      new RegistryMock().init ("4860ae57-9716-492b-951c-2a8c334f790a");
+      new RegistryMock().init("4860ae57-9716-492b-951c-2a8c334f790a");
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -135,7 +128,5 @@ public class IntegrationTestParent {
       log.info("Application not ready yet.. waiting for setup");
       Thread.sleep(500L);
     }
-
-    publisher.publishEvent(new ModuleSetupCompleteEvent());
   }
 }

@@ -25,7 +25,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
-import se.digg.oidfed.common.entity.integration.registry.ModuleResponse;
+import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 
 import java.time.Instant;
@@ -52,7 +52,7 @@ public class RegistryRecordSigner {
     this.signer = signer;
   }
 
-  public SignedJWT signModules(final ModuleResponse response) throws JOSEException {
+  public SignedJWT signModules(final ModuleRecord response) throws JOSEException {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
         .claim("module_records", response.toJson())
         .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))

@@ -29,7 +29,7 @@ import org.springframework.core.io.ClassPathResource;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.HostedRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
-import se.digg.oidfed.common.entity.integration.registry.ModuleResponse;
+import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 
 import java.io.IOException;
@@ -71,14 +71,14 @@ public class RegistryMock {
         EntityRecord.builder()
             .issuer(TestFederationEntities.Municipality.TRUST_ANCHOR)
             .subject(RP_FROM_REGISTRY_ENTITY)
-            .policyRecordId(policyId)
+            .policyRecord(new PolicyRecord(policyId, Map.of()))
             .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",
                 "Municipality"))).build())
             .build()
     );
 
 
-    mockModuleFor(new ModuleResponse(), instanceId);
+    mockModuleFor(new ModuleRecord(), instanceId);
 
     mockRecordsFor(municipalityEntities, TestFederationEntities.Municipality.TRUST_ANCHOR);
     mockRecordsFor(List.of(), TestFederationEntities.Authorization.TRUST_ANCHOR);
@@ -98,7 +98,7 @@ public class RegistryMock {
     final String body = registryRecordSigner.signTrustMarkSubjects(tms).serialize();
     WireMock.stubFor(
         WireMock
-            .get("/api/v1/federationservice/trustmarksubject_record?iss=%s&trustmark_id=%s"
+            .get("/api/v1/federationservice/trustmarksubject_record?trustMarkIssuer=%s&trustmark_id=%s"
                 .formatted(TestFederationEntities.Authorization.TRUST_MARK_ISSUER.getValue(),
                     TestFederationEntities.Authorization.TRUST_MARK_ISSUER.getValue() + "/certified"
                 ))
@@ -106,8 +106,8 @@ public class RegistryMock {
     );
   }
 
-  private void mockModuleFor(final ModuleResponse moduleResponse, final String instanceId) throws JOSEException {
-    final String body = registryRecordSigner.signModules(moduleResponse).serialize();
+  private void mockModuleFor(final ModuleRecord moduleRecord, final String instanceId) throws JOSEException {
+    final String body = registryRecordSigner.signModules(moduleRecord).serialize();
     WireMock.stubFor(
         WireMock
             .get("/api/v1/federationservice/submodules?instanceid=%s".formatted(URLEncoder.encode(instanceId,
@@ -128,7 +128,7 @@ public class RegistryMock {
 
     WireMock.stubFor(
         WireMock
-            .get("/api/v1/federationservice/entity_record?iss=%s".formatted(issuer.getValue()))
+            .get("/api/v1/federationservice/entity_record?trustMarkIssuer=%s".formatted(issuer.getValue()))
             .willReturn(new ResponseDefinitionBuilder().withStatus(200).withResponseBody(new Body(body)))
     );
   }

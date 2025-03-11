@@ -17,6 +17,7 @@
 package se.digg.oidfed.common.entity.integration.registry;
 
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.Expirable;
 
@@ -44,7 +45,7 @@ public interface RegistryVerifier {
    * @param jwt with modules
    * @return modules
    */
-  Expirable<ModuleResponse> verifyModuleResponse(final String jwt);
+  Expirable<ModuleRecord> verifyModuleResponse(final String jwt);
 
   /**
    * @param jwt with trust mark subjects

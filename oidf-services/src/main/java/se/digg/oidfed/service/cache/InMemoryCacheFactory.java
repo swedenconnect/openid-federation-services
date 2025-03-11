@@ -18,12 +18,7 @@ package se.digg.oidfed.service.cache;
 
 import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.InMemoryCache;
-import se.digg.oidfed.common.entity.integration.InMemoryListCache;
-import se.digg.oidfed.common.entity.integration.InMemoryMultiKeyCache;
-import se.digg.oidfed.common.entity.integration.ListCache;
-import se.digg.oidfed.common.entity.integration.MultiKeyCache;
 
-import java.io.Serializable;
 import java.time.Clock;
 import java.util.List;
 
@@ -38,6 +33,7 @@ public class InMemoryCacheFactory implements CacheFactory {
 
   /**
    * Constructor.
+   *
    * @param clock for time keeping.
    */
   public InMemoryCacheFactory(final Clock clock) {
@@ -52,15 +48,5 @@ public class InMemoryCacheFactory implements CacheFactory {
   @Override
   public <V> Cache<String, List<V>> createListValueCache(final Class<V> v) {
     return new InMemoryCache<>(this.clock);
-  }
-
-  @Override
-  public < V> ListCache<String, V> createListCache(final Class<V> v) {
-    return new InMemoryListCache<>();
-  }
-
-  @Override
-  public <V> MultiKeyCache<V> createMultiKeyCache(final Class<V> v) {
-    return new InMemoryMultiKeyCache<>();
   }
 }

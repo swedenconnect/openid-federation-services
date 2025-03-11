@@ -26,6 +26,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.RecordVerificationException;
 import se.digg.oidfed.common.entity.integration.Expirable;
@@ -92,7 +93,7 @@ public class JWSRegistryVerifier implements RegistryVerifier {
   }
 
   @Override
-  public Expirable<ModuleResponse> verifyModuleResponse(final String jwt) {
+  public Expirable<ModuleRecord> verifyModuleResponse(final String jwt) {
     try {
       final SignedJWT signedJWT = this.verify(jwt);
       final JWTClaimsSet claims = signedJWT
@@ -100,10 +101,10 @@ public class JWSRegistryVerifier implements RegistryVerifier {
       final Map<String, Object> json = claims
           .getJSONObjectClaim("module_records");
       FederationAssert.assertNotEmpty(json, "Missing claim for:'module_records' ");
-      final ModuleResponse moduleResponse = ModuleResponse.fromJson(json);
+      final ModuleRecord moduleRecord = ModuleRecord.fromJson(json);
       FederationAssert.assertNotEmpty(claims.getExpirationTime(), "Missing claim 'exp' in token");
 
-      return new Expirable<>(claims.getExpirationTime().toInstant(), moduleResponse);
+      return new Expirable<>(claims.getExpirationTime().toInstant(), moduleRecord);
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify module record", e);
     }

@@ -21,7 +21,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.springframework.web.client.RestClient;
-import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerController;
+import se.digg.oidfed.service.router.responses.TrustMarkStatusReply;
 
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +71,7 @@ public class TrustMarkClient {
     }
   }
 
-  public TrustMarkIssuerController.TrustMarkStatusReply trustMarkStatus(
+  public TrustMarkStatusReply trustMarkStatus(
       final EntityID trustMarkIssuer,
       final EntityID trustMarkId,
       final EntityID subject,
@@ -81,10 +81,11 @@ public class TrustMarkClient {
       builder.append("trust_mark_id=%s".formatted(trustMarkId.getValue()));
       Optional.ofNullable(subject).ifPresent(sub -> builder.append("&sub=%s".formatted(sub.getValue())));
       Optional.ofNullable(issueTime).ifPresent(iat -> builder.append("&iat=%d".formatted(iat)));
-      return client.post()
+      return client.get()
           .uri(trustMarkIssuer.getValue() + builder)
+          .header("content-type", "application/json")
           .retrieve()
-          .body(TrustMarkIssuerController.TrustMarkStatusReply.class);
+          .body(TrustMarkStatusReply.class);
     } catch (final Exception e) {
       throw new RuntimeException("Failed to get trust mark status for trust mark issuer %s"
           .formatted(trustMarkIssuer.getValue()), e);

@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;
 import se.digg.oidfed.service.IntegrationTestParent;
 import se.digg.oidfed.service.entity.TestFederationEntities;
+import se.digg.oidfed.service.router.responses.TrustMarkStatusReply;
 import se.digg.oidfed.service.testclient.FederationClients;
 
 import java.text.ParseException;
@@ -75,26 +76,26 @@ class TrustMarkIT extends IntegrationTestParent {
 
   @Test
   public void testTrustMarkStatusActive(final FederationClients clients) {
-    final TrustMarkIssuerController.TrustMarkStatusReply status = clients.authorization().trustMark()
+    final TrustMarkStatusReply status = clients.authorization().trustMark()
         .trustMarkStatus(
             TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
             TRUST_MARK_ID,
             TestFederationEntities.Authorization.OP_1,
             null
         );
-    Assertions.assertTrue(status.active());
+    Assertions.assertTrue(status.getActive());
   }
 
   @Test
   public void testTrustMarkStatusNotActive(final FederationClients clients) throws InterruptedException {
     Thread.sleep(3000L);
-    final TrustMarkIssuerController.TrustMarkStatusReply status = clients.authorization().trustMark().trustMarkStatus(
+    final TrustMarkStatusReply status = clients.authorization().trustMark().trustMarkStatus(
         TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
         TRUST_MARK_ID,
         TestFederationEntities.Authorization.OP_2,
         null
     );
-    Assertions.assertFalse(status.active());
+    Assertions.assertFalse(status.getActive());
   }
 
 

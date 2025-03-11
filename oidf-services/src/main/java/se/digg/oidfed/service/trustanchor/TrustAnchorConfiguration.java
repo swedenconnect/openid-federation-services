@@ -18,9 +18,8 @@ package se.digg.oidfed.service.trustanchor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
 /**
@@ -32,10 +31,9 @@ import se.digg.oidfed.common.jwt.SignerFactory;
 public class TrustAnchorConfiguration {
   @Bean
   TrustAnchorFactory trustAnchorFactory(
-      final RefreshAheadRecordRegistrySource source,
-      final EntityRecordRegistry registry,
+      final CompositeRecordSource source,
       final SignerFactory signerFactory,
       final FederationClient client) {
-    return new TrustAnchorFactory(registry, source, signerFactory, client);
+    return new TrustAnchorFactory(source, signerFactory, client);
   }
 }

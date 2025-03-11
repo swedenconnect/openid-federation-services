@@ -81,7 +81,7 @@ public class TrustMarkSigner {
     final JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
         .issueTime(new Date(Instant.now(this.clock).toEpochMilli()))
         .jwtID(new BigInteger(128, rng).toString(16))
-        .subject(trustMarkSubjectRecord.sub());
+        .subject(trustMarkSubjectRecord.trustMarkSubject());
 
 
     claimsSetBuilder.expirationTime(

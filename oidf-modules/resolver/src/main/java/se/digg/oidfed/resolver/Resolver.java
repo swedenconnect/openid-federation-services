@@ -27,7 +27,6 @@ import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidTrustAnchorException;
 import se.digg.oidfed.common.exception.NotFoundException;
-import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.resolver.chain.ChainValidationResult;
 import se.digg.oidfed.resolver.chain.ChainValidator;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
@@ -42,7 +41,7 @@ import java.util.Set;
  *
  * @author Felix Hellman
  */
-public class Resolver implements Submodule {
+public class Resolver {
 
   private final ResolverProperties resolverProperties;
 
@@ -56,15 +55,16 @@ public class Resolver implements Submodule {
 
   /**
    * Constructor.
+   *
    * @param resolverProperties from configuration
-   * @param validator for validating trust chains
-   * @param tree data structure to search upon
-   * @param processor for processing metadata
-   * @param factory to create signed responses
+   * @param validator          for validating trust chains
+   * @param tree               data structure to search upon
+   * @param processor          for processing metadata
+   * @param factory            to create signed responses
    */
   public Resolver(final ResolverProperties resolverProperties, final ChainValidator validator,
-      final EntityStatementTree tree,
-      final MetadataProcessor processor, final ResolverResponseFactory factory) {
+                  final EntityStatementTree tree,
+                  final MetadataProcessor processor, final ResolverResponseFactory factory) {
     this.resolverProperties = resolverProperties;
     this.validator = validator;
     this.tree = tree;
@@ -129,13 +129,7 @@ public class Resolver implements Submodule {
     return new DiscoveryResponse(this.tree.discovery(request));
   }
 
-  @Override
-  public String getAlias() {
-    return this.resolverProperties.alias();
-  }
-
-  @Override
-  public List<EntityID> getEntityIds() {
-    return List.of();
+  public EntityID getEntityId() {
+    return new EntityID(this.resolverProperties.entityIdentifier());
   }
 }

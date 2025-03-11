@@ -17,6 +17,7 @@
 package se.digg.oidfed.common.entity.integration.registry;
 
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.Expirable;
@@ -30,7 +31,7 @@ import java.util.UUID;
  * @author Felix Hellman
  */
 public class RegistryRefreshAheadCache {
-  private final Cache<String, ModuleResponse> modules;
+  private final Cache<String, ModuleRecord> modules;
   private final Cache<String, List<TrustMarkSubjectRecord>> trustMarkSubjects;
   private final Cache<String, List<EntityRecord>> entityRecords;
   private final Cache<String, PolicyRecord> policyRecords;
@@ -42,7 +43,7 @@ public class RegistryRefreshAheadCache {
    * @param policyRecords
    */
   public RegistryRefreshAheadCache(
-      final Cache<String, ModuleResponse> modules,
+      final Cache<String, ModuleRecord> modules,
       final Cache<String,
           List<TrustMarkSubjectRecord>> trustMarkSubjects,
       final Cache<String, List<EntityRecord>> entityRecords,
@@ -57,7 +58,7 @@ public class RegistryRefreshAheadCache {
    * @param instanceId of this instance
    * @param response for modules
    */
-  public void registerModule(final UUID instanceId, final Expirable<ModuleResponse> response) {
+  public void registerModule(final UUID instanceId, final Expirable<ModuleRecord> response) {
     this.modules.add(instanceId.toString(), response);
   }
 
@@ -65,7 +66,7 @@ public class RegistryRefreshAheadCache {
    * @param instanceId of this instance
    * @return response for modules
    */
-  public ModuleResponse getModules(final UUID instanceId) {
+  public ModuleRecord getModules(final UUID instanceId) {
     return this.modules.get(instanceId.toString());
   }
 

@@ -20,17 +20,13 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 
-@ActiveProfiles({"integration-test" })
+@ActiveProfiles({"integration-test"})
 class GeneralErrorHandlingIT extends IntegrationTestParent {
 
 
@@ -66,11 +62,11 @@ class GeneralErrorHandlingIT extends IntegrationTestParent {
     given()
         .when().log().all()
         .contentType(ContentType.JSON)
-        .delete("/tm/trust_mark")
+        .delete("/authorization-tmi/trust_mark")
         .then().log().all()
-        .statusCode(HttpStatus.METHOD_NOT_ALLOWED.value())
-        .body("error", Matchers.equalTo("method_not_allowed"))
-        .body("error_description", Matchers.equalTo("Method 'DELETE' is not supported."))
+        .statusCode(HttpStatus.NOT_FOUND.value())
+        .body("error", Matchers.equalTo("not_found"))
+        .body("error_description", Matchers.equalTo("No static resource authorization-tmi/trust_mark."))
         .contentType(ContentType.JSON);
   }
 
@@ -79,16 +75,13 @@ class GeneralErrorHandlingIT extends IntegrationTestParent {
     given()
         .when().log().all()
         .contentType("VerySpecialContentType")
-        .get("/tm/trust_mark_listing")
+        .get("/authorization-tmi/trust_mark_listing")
         .then().log().all()
         .statusCode(HttpStatus.BAD_REQUEST.value())
-        .body("error", Matchers.equalTo("bad_request"))
-        .body("error_description", Matchers.equalTo("Required parameter 'trust_mark_id' is not present."))
+        .body("error", Matchers.equalTo("invalid_request"))
+        .body("error_description", Matchers.equalTo("Required request parameter [trust_mark_id] was missing."))
         .contentType(ContentType.JSON);
   }
-
-
-
 
 
 }

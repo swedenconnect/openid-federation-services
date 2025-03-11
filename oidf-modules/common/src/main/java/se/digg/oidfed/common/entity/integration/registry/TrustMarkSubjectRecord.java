@@ -36,17 +36,17 @@ import java.util.Optional;
  * @param granted When subject is granted can be in the future
  * @param expires When subject expires, if left empty no expiredate will be used
  * @param revoked If this trust mark is revoked, no new trustmarks for this subject will be issued
- * @param iss  issuer of the trust mark
- * @param tmi  trust mark id of the trust mark
+ * @param trustMarkIssuer  issuer of the trust mark
+ * @param trustMarkId  trust mark id of the trust mark
  * @author Per Fredrik Plars
  * @author Felix Hellman
  */
 @Slf4j
 @Builder(toBuilder = true)
 public record TrustMarkSubjectRecord(
-    String sub,
-    String iss,
-    String tmi,
+    String trustMarkSubject,
+    String trustMarkIssuer,
+    String trustMarkId,
     @Nullable Instant granted,
     @Nullable Instant expires,
     boolean revoked) implements Serializable {
@@ -60,9 +60,9 @@ public record TrustMarkSubjectRecord(
    */
   public static TrustMarkSubjectRecord fromJson(final Map<String, Object> record) {
     final TrustMarkSubjectRecord.TrustMarkSubjectRecordBuilder tmisBuilder = TrustMarkSubjectRecord.builder()
-        .sub((String) record.get("subject"))
-        .iss((String) record.get("issuer"))
-        .tmi((String) record.get("tmi"));
+        .trustMarkSubject((String) record.get("trust_mark_subject"))
+        .trustMarkIssuer((String) record.get("trust_mark_issuer"))
+        .trustMarkId((String) record.get("trust_mark_id"));
 
     Optional.ofNullable((Boolean) record.get("revoked")).ifPresent(tmisBuilder::revoked);
 
@@ -89,13 +89,13 @@ public record TrustMarkSubjectRecord(
   @PostConstruct
   public void validate() {
 
-    FederationAssert.assertNotEmpty(this.sub, "Subject is expected");
+    FederationAssert.assertNotEmpty(this.trustMarkSubject, "Subject is expected");
     if (Objects.nonNull(this.granted) && Objects.nonNull(this.expires)) {
       FederationAssert.assertTrue(this.granted.isBefore(this.expires), "Expires expected to be after " +
           "granted");
       if (this.expires.isBefore(Instant.now())) {
         log.warn("TrustMark subject:'{}' has already expired. Consider to remove it. Expires:'{}'",
-            this.sub, this.expires);
+            this.trustMarkSubject, this.expires);
       }
     }
   }
@@ -105,10 +105,10 @@ public record TrustMarkSubjectRecord(
    */
   public Map<String, Object> toJson() {
     final Map<String, Object> subject = Map.of(
-        "subject", this.sub,
+        "subject", this.trustMarkSubject,
         "revoked", this.revoked,
-        "issuer", this.iss,
-        "tmi", this.tmi
+        "issuer", this.trustMarkIssuer,
+        "trustMarkId", this.trustMarkId
     );
     final HashMap<String, Object> json = new HashMap<>(subject);
     Optional.ofNullable(this.expires).ifPresent(exp -> json.put("expires", exp));

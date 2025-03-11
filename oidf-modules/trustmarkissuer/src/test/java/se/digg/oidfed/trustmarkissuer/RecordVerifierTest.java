@@ -88,7 +88,7 @@ class RecordVerifierTest {
     final RegistryVerifier verifier = new JWSRegistryVerifier(jwkSet);
     final List<TrustMarkSubjectRecord> checkedResult = verifier.verifyTrustMarkSubjects(jwt.serialize()).getValue();
     assertEquals(1,checkedResult.size());
-    assertEquals("http://sub.pm.se",checkedResult.get(0).sub());
+    assertEquals("http://sub.pm.se",checkedResult.get(0).trustMarkSubject());
     assertTrue(checkedResult.get(0).revoked());
 
     final SignedJWT jwt2 = signJWT("trustmark_records",key2,claim);

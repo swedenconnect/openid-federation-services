@@ -23,6 +23,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.digg.oidfed.service.entity.EntityProperty;
 import se.digg.oidfed.service.entity.PolicyConfigurationProperties;
 import se.digg.oidfed.service.resolver.ResolverConfigurationProperties;
+import se.digg.oidfed.service.router.RouterProperties;
 import se.digg.oidfed.service.trustanchor.TrustAnchorModuleProperties;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkSubjectProperties;
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 
 /**
  * Properties for openid federation.
@@ -74,6 +74,12 @@ public class OpenIdFederationConfigurationProperties {
   private List<TrustMarkSubjectProperties> trustMarkSubjects;
 
   /**
+   * Properties for internal routing.
+   */
+  @NestedConfigurationProperty
+  private RouterProperties routerProperties;
+
+  /**
    * Registry properties for openid federation.
    *
    * @author Felix Hellman
@@ -83,7 +89,6 @@ public class OpenIdFederationConfigurationProperties {
   public static final class Registry {
     @NestedConfigurationProperty
     private Integration integration;
-
 
     /**
      * IntegrationProperties for openid federation registry.
@@ -98,17 +103,6 @@ public class OpenIdFederationConfigurationProperties {
       @NestedConfigurationProperty
       private Endpoints endpoints;
       private List<String> validationKeys;
-      private List<Step> skipInit;
-
-      /**
-       * Checks if a step should be executed or not.
-       *
-       * @param step to check
-       * @return true if step should be executed, false if not
-       */
-      public boolean shouldExecute(final Step step) {
-        return !this.skipInit.contains(step) && !this.skipInit.contains(Step.ALL);
-      }
 
       /**
        * Endpoint properties for registry.
@@ -120,32 +114,6 @@ public class OpenIdFederationConfigurationProperties {
       public static final class Endpoints {
         private String basePath;
       }
-    }
-
-    /**
-     * Steps to be loaded from entity registry.
-     */
-    public enum Step {
-      /**
-       * Submodule step
-       */
-      SUBMODULE,
-      /**
-       * Entity step
-       */
-      ENTITY,
-      /**
-       * Trust mark subject step
-       */
-      TRUST_MARK_SUBJECT,
-      /**
-       * Policy step
-       */
-      POLICY,
-      /**
-       * Skip all steps.
-       */
-      ALL
     }
   }
 

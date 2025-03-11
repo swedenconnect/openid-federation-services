@@ -16,9 +16,10 @@
  */
 package se.digg.oidfed.common.entity.integration.registry;
 
-import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
-import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.Expirable;
+import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkRecord;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,31 +31,24 @@ import java.util.UUID;
  */
 public interface RecordRegistryIntegration {
   /**
-   * @param id of the policy
-   * @return policy if present in registry
-   * @throws RegistryResponseException
-   */
-  Expirable<PolicyRecord> getPolicy(final String id);
-
-  /**
-   * @param issuer for the records
+   * @param instanceID that the record belongs to
    * @return list of records
-   * @throws RegistryResponseException
    */
-  Expirable<List<EntityRecord>> getEntityRecords(final String issuer);
+  Expirable<List<EntityRecord>> getEntityRecords(final UUID instanceID);
 
   /**
    * Fetches which modules should be configured for this instance.
+   *
    * @param instanceId of this instance
    * @return modules
    */
-  Expirable<ModuleResponse> getModules(final UUID instanceId);
+  Expirable<ModuleRecord> getModules(final UUID instanceId);
 
   /**
-   * Fetches what subjects should be configured for a given trust-mark
-   * @param issuer of the trust mark
-   * @param trustMarkId id of the trust mark
+   * Fetches what trust marks that should be configured
+   *
+   * @param instanceId of this instance
    * @return list of subjects
    */
-  Expirable<List<TrustMarkSubjectRecord>> getTrustMarkSubject(final String issuer, final String trustMarkId);
+  Expirable<List<TrustMarkRecord>> getTrustMarks(final UUID instanceId);
 }
