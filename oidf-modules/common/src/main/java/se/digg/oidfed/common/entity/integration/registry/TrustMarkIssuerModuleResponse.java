@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.common.entity.integration.registry;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Builder;
 import lombok.Getter;
@@ -38,28 +37,25 @@ public class TrustMarkIssuerModuleResponse {
   private Duration trustMarkValidityDuration;
   private String entityIdentifier;
   private List<TrustMarkResponse> trustMarks;
-  private String alias;
   private Boolean active;
 
   /**
    * Constructor.
+   *
    * @param trustMarkValidityDuration duration for a given trust mark
-   * @param entityIdentifier of the trust mark issuer
-   * @param trustMarks list of trust marks
-   * @param alias of the trust mark issuer
-   * @param active true if module is active
+   * @param entityIdentifier          of the trust mark issuer
+   * @param trustMarks                list of trust marks
+   * @param active                    true if module is active
    */
   public TrustMarkIssuerModuleResponse(
       final Duration trustMarkValidityDuration,
       final String entityIdentifier,
       final List<TrustMarkResponse> trustMarks,
-      final String alias,
       final Boolean active) {
 
     this.trustMarkValidityDuration = trustMarkValidityDuration;
     this.entityIdentifier = entityIdentifier;
     this.trustMarks = trustMarks;
-    this.alias = alias;
     this.active = active;
   }
 
@@ -72,11 +68,10 @@ public class TrustMarkIssuerModuleResponse {
   public static TrustMarkIssuerModuleResponse fromJson(final Map<String, Object> json) {
     return TrustMarkIssuerModuleResponse.builder()
         .trustMarkValidityDuration(Duration.parse((String) json.get("trust-mark-token-validity-duration")))
-        .alias((String) json.get("alias"))
         .entityIdentifier((String) json.get("entity-identifier"))
         .trustMarks(Optional.ofNullable((List<Map<String, Object>>) json.get("trust-marks"))
             .map(strings -> strings.stream().map(TrustMarkResponse::fromJson).toList()).orElse(
-                Collections.emptyList()) )
+                Collections.emptyList()))
         .active((Boolean) json.get("active"))
         .build();
   }
@@ -88,8 +83,7 @@ public class TrustMarkIssuerModuleResponse {
     return new TrustMarkIssuerProperties(
         this.trustMarkValidityDuration,
         new EntityID(this.entityIdentifier),
-        this.trustMarks.stream().map(TrustMarkResponse::toProperty).toList(),
-        this.alias
+        this.trustMarks.stream().map(TrustMarkResponse::toProperty).toList()
     );
   }
 
@@ -100,9 +94,7 @@ public class TrustMarkIssuerModuleResponse {
     return Map.of(
         "trust-mark-validity-duration", this.trustMarkValidityDuration,
         "entity-identifier", this.entityIdentifier,
-        "trust-marks", this.trustMarks.stream().map(TrustMarkResponse::toJson).toList(),
-        "alias", this.alias,
-        "active", this.active
+        "trust-marks", this.trustMarks.stream().map(TrustMarkResponse::toJson).toList()
     );
   }
 
@@ -114,7 +106,8 @@ public class TrustMarkIssuerModuleResponse {
    */
   @Builder
   public record TrustMarkResponse(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
-                                  Optional<TrustMarkDelegation> delegation) {
+                                  Optional<TrustMarkDelegation> delegation,
+                                  List<TrustMarkSubjectRecord> trustMarkSubjectRecords) {
     /**
      * @return convert this instance to properties
      */
@@ -123,7 +116,8 @@ public class TrustMarkIssuerModuleResponse {
           this.trustMarkId,
           this.logoUri,
           this.refUri,
-          this.delegation
+          this.delegation,
+          this.trustMarkSubjectRecords
       );
     }
 
@@ -136,11 +130,15 @@ public class TrustMarkIssuerModuleResponse {
      * @return a {@code TrustMarkResponse} instance populated with data from the provided map.
      */
     public static TrustMarkResponse fromJson(final Map<String, Object> json) {
+      final List<TrustMarkSubjectRecord> trustMarkSubjects =
+          Optional.ofNullable((List<Map<String, Object>>) json.get("trust-mark-subjects"))
+              .map(claim -> claim.stream().map(TrustMarkSubjectRecord::fromJson).toList()).orElse(List.of());
       return TrustMarkResponse.builder()
           .trustMarkId(new TrustMarkId((String) json.get("trust-mark-entity-id")))
           .logoUri(Optional.ofNullable((String) json.get("logo-uri")))
           .refUri(Optional.ofNullable((String) json.get("ref-uri")))
           .delegation(Optional.ofNullable((String) json.get("delegation")).map(TrustMarkDelegation::new))
+          .trustMarkSubjectRecords(trustMarkSubjects)
           .build();
     }
 
@@ -152,7 +150,10 @@ public class TrustMarkIssuerModuleResponse {
           "trust-mark-entity-id", this.trustMarkId,
           "logo-uri", this.logoUri,
           "ref-uri", this.refUri,
-          "delegation", this.delegation
+          "delegation", this.delegation,
+          "trust-mark-subjects", this.trustMarkSubjectRecords.stream()
+              .map(TrustMarkSubjectRecord::toJson)
+              .toList()
       );
     }
   }

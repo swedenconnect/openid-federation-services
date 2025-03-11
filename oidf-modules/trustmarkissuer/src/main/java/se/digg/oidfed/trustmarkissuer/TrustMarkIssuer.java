@@ -93,7 +93,7 @@ public class TrustMarkIssuer {
           }
           return true;
         })
-        .map(TrustMarkSubjectRecord::trustMarkSubject)
+        .map(TrustMarkSubjectRecord::sub)
         .toList();
     if (result.isEmpty()) {
       throw new NotFoundException("Could not find any subjects.");

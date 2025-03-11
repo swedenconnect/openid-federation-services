@@ -28,6 +28,7 @@ import java.util.UUID;
 public class CacheRecordPopulator {
   private final CachedRecordSource source;
   private final RecordRegistryIntegration integration;
+  private Boolean notified;
   private final UUID instanceId;
 
   public CacheRecordPopulator(
@@ -41,6 +42,8 @@ public class CacheRecordPopulator {
   }
 
   public CompositeRecord reload() {
+    //Clear notification
+    this.notified = false;
     final Expirable<List<EntityRecord>> entityRecords = this.integration.getEntityRecords(this.instanceId);
     final Expirable<ModuleRecord> modules = this.integration.getModules(this.instanceId);
     final Expirable<List<TrustMarkRecord>> trustMarks = this.integration.getTrustMarks(this.instanceId);
@@ -50,6 +53,10 @@ public class CacheRecordPopulator {
   }
 
   public boolean shouldRefresh() {
-    return this.source.shouldRefresh();
+    return this.source.shouldRefresh() || this.notified;
+  }
+
+  public void notifyPopulator() {
+    this.notified = true;
   }
 }

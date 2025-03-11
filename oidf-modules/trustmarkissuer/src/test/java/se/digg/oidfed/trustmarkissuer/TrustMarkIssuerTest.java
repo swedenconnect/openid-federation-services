@@ -91,21 +91,21 @@ class TrustMarkIssuerTest {
 
     final TrustMarkSubjectRecord sub1 =
         TrustMarkSubjectRecord.builder()
-            .trustMarkSubject("http://sub1.se")
+            .sub("http://sub1.se")
             .expires(Instant.now().plus(10, ChronoUnit.DAYS))
             .granted(Instant.now())
             .build();
 
     final TrustMarkSubjectRecord sub2 =
         TrustMarkSubjectRecord.builder()
-            .trustMarkSubject("http://sub2.se")
+            .sub("http://sub2.se")
             .expires(Instant.now().plus(10, ChronoUnit.DAYS))
             .granted(Instant.now())
             .build();
 
     final TrustMarkSubjectRecord sub3 =
         TrustMarkSubjectRecord.builder()
-            .trustMarkSubject("http://sub.outdated.se")
+            .sub("http://sub.outdated.se")
             .expires(Instant.now().minus(1, ChronoUnit.DAYS))
             .granted(Instant.now())
             .build();
@@ -171,7 +171,7 @@ class TrustMarkIssuerTest {
 
     final TrustMarkSubjectRecord sub1 =
         TrustMarkSubjectRecord.builder()
-            .trustMarkSubject("http://sub1.se")
+            .sub("http://sub1.se")
             .granted(Instant.now())
             .expires(Instant.now().plus(10, ChronoUnit.DAYS))
             .build();
@@ -181,7 +181,7 @@ class TrustMarkIssuerTest {
             source.getTrustMarkSubject(
                 trustMarkIssuerProperties.issuerEntityId(),
                 trustMarkId,
-                new EntityID(sub1.trustMarkSubject())
+                new EntityID(sub1.sub())
             )
         )
         .thenReturn(Optional.of(sub1));
@@ -224,14 +224,14 @@ class TrustMarkIssuerTest {
 
     final TrustMarkSubjectRecord sub1 =
         TrustMarkSubjectRecord.builder()
-            .trustMarkSubject("http://sub1.se")
+            .sub("http://sub1.se")
             .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
             .granted(Instant.now())
             .build();
 
     final TrustMarkSubjectRecord expired =
         TrustMarkSubjectRecord.builder()
-            .trustMarkSubject("http://expired.se")
+            .sub("http://expired.se")
             .expires(Instant.now().minus(6, ChronoUnit.MINUTES))
             .granted(Instant.now().minus(10, ChronoUnit.MINUTES))
             .build();
@@ -246,7 +246,7 @@ class TrustMarkIssuerTest {
     Mockito.when(source.getTrustMarkSubject(
         this.trustMarkIssuerProperties.issuerEntityId(),
         TrustMarkId.create("http://tm1.digg.se"),
-        new EntityID(sub1.trustMarkSubject())
+        new EntityID(sub1.sub())
     )).thenReturn(Optional.of(sub1));
 
 
@@ -264,7 +264,7 @@ class TrustMarkIssuerTest {
     Mockito.when(source.getTrustMarkSubject(
         this.trustMarkIssuerProperties.issuerEntityId(),
         TrustMarkId.create("http://tm1.digg.se"),
-        new EntityID(expired.trustMarkSubject())
+        new EntityID(expired.sub())
     )).thenReturn(Optional.of(expired));
 
     assertFalse(

@@ -54,7 +54,7 @@ public class EntityProperty {
   private HostedRecordProperty hostedRecord;
 
   /**
-   * Properties for hosted records
+   * Properties for hosted trustMarkSubjects
    *
    * @author Felix Hellman
    */

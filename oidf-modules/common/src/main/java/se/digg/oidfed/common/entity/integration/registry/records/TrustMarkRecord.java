@@ -18,24 +18,26 @@ package se.digg.oidfed.common.entity.integration.registry.records;
 
 import lombok.Builder;
 import lombok.Getter;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Builder
 @Getter
-public class TrustMarkRecord {
+public class TrustMarkRecord implements Serializable {
   private final String trustMarkIssuerId;
   private final String trustMarkId;
-  private final List<String> subjects;
+  private final List<TrustMarkSubjectRecord> subjects;
   private final String logoUri;
   private final String ref;
   private final String delegation;
 
   public TrustMarkRecord(final String trustMarkIssuerId,
                          final String trustMarkId,
-                         final List<String> subjects,
+                         final List<TrustMarkSubjectRecord> subjects,
                          final String logoUri,
                          final String ref,
                          final String delegation) {
@@ -54,7 +56,7 @@ public class TrustMarkRecord {
     json.put("delegation", this.delegation);
     json.put("ref", this.ref);
     json.put("logo_uri", this.logoUri);
-    json.put("subjects", this.subjects);
+    json.put("subjects", this.subjects.stream().map(TrustMarkSubjectRecord::toJson).toList());
     return json;
   }
 
@@ -67,7 +69,11 @@ public class TrustMarkRecord {
         .delegation(jsonObject.getStringValue("delegation"))
         .ref(jsonObject.getStringValue("ref"))
         .logoUri(jsonObject.getStringValue("logo_uri"))
-        .subjects(jsonObject.getStringListClaim("subjects"))
+        .subjects(jsonObject.getObjectMapClaim("subjects")
+            .stream()
+            .map(m -> (Map<String, Object>) m)
+            .map(TrustMarkSubjectRecord::fromJson)
+            .toList())
         .build();
   }
 }

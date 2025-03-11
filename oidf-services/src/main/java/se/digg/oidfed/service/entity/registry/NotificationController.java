@@ -16,25 +16,33 @@
  */
 package se.digg.oidfed.service.entity.registry;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+import se.digg.oidfed.common.entity.RecordVerificationException;
+import se.digg.oidfed.common.entity.integration.CacheRecordPopulator;
 import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
+import se.digg.oidfed.common.exception.InvalidRequestException;
 
 @RestController
 public class NotificationController {
 
-  private final ApplicationEventPublisher publisher;
+  private final CacheRecordPopulator populator;
   private final RegistryVerifier registryVerifier;
 
-  public NotificationController(final ApplicationEventPublisher publisher, final RegistryVerifier registryVerifier) {
-    this.publisher = publisher;
+  public NotificationController(
+      final CacheRecordPopulator populator,
+      final RegistryVerifier registryVerifier) {
+    this.populator = populator;
     this.registryVerifier = registryVerifier;
   }
 
   @PostMapping("/registry/notify")
-  public void notify(final String body) {
-    //TODO verify
-    this.publisher.publishEvent(new RegistryNotificationEvent());
+  public void notify(final String body) throws InvalidRequestException {
+    try {
+      this.registryVerifier.verifyNotification(body);
+      this.populator.notifyPopulator();
+    } catch (final RecordVerificationException e) {
+      throw new InvalidRequestException("Could not verify notification");
+    }
   }
 }

@@ -14,20 +14,7 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity.integration.registry;
+package se.digg.oidfed.common.entity.integration.registry.records;
 
-import com.nimbusds.jwt.SignedJWT;
-import se.digg.oidfed.common.entity.integration.federation.TrustMarkRequest;
-
-/**
- * Integration for fetching trust marks from Trust Mark Issuer.
- *
- * @author Felix Hellman
- */
-public interface TrustMarkIntegration {
-  /**
-   * @param request for a trust mark
-   * @return trust mark
-   */
-  SignedJWT getTrustMark(final TrustMarkRequest request);
+public record NotificationRecord() {
 }

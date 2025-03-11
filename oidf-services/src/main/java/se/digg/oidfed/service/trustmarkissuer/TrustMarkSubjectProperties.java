@@ -45,6 +45,6 @@ public record TrustMarkSubjectProperties(
    * @return new instance
    */
   public TrustMarkSubjectRecord toSubject() {
-    return new TrustMarkSubjectRecord(this.sub, this.iss, this.tmi, this.granted, this.expires, this.revoked);
+    return new TrustMarkSubjectRecord(this.sub, this.granted, this.expires, this.revoked);
   }
 }

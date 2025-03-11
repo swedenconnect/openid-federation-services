@@ -24,7 +24,6 @@ import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
-import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.tree.NodeKey;
 
 import java.util.List;
@@ -85,16 +84,18 @@ public class PropertyRecordSource implements RecordSource {
 
   @Override
   public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
-    return this.properties.trustMarkSubjectRecords().stream()
-        .filter(tms -> tms.trustMarkIssuer().equals(issuer.getValue()))
-        .filter(tms -> tms.trustMarkId().equals(id.getTrustMarkId()))
+    return this.properties
+        .trustMarkIssuerProperties().stream().filter(tmi -> tmi.issuerEntityId().equals(issuer))
+        .flatMap(tmi -> tmi.trustMarks().stream())
+        .filter(tm -> tm.trustMarkId().equals(id))
+        .flatMap(tm -> tm.trustMarkSubjectRecords().stream())
         .toList();
   }
 
   @Override
   public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(final EntityID issuer, final TrustMarkId id, final EntityID subject) {
     return this.getTrustMarkSubjects(issuer, id).stream()
-        .filter(tms -> tms.trustMarkSubject().equals(subject.getValue()))
+        .filter(tms -> tms.sub().equals(subject.getValue()))
         .findFirst();
   }
 

@@ -35,13 +35,12 @@ import static se.digg.oidfed.common.validation.FederationAssert.assertTrue;
  * @param trustMarkValidityDuration The validity duration of issued Trust Marks
  * @param issuerEntityId            IssuerEntityId
  * @param trustMarks                TrustMark Issuer
- * @param alias                     for this trustmark instance
  * @author Per Fredrik Plars
  */
 @Builder
 @Slf4j
 public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, EntityID issuerEntityId,
-                                        List<TrustMarkProperties> trustMarks, String alias) {
+                                        List<TrustMarkProperties> trustMarks) {
 
   /**
    * Validate content of configuration.
@@ -53,7 +52,6 @@ public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, Enti
     assertNotEmpty(this.trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
     assertNotEmpty(this.issuerEntityId, "IssuerEntityId is expected");
     assertNotEmpty(this.trustMarks, "TrustMarks is expected");
-    assertNotEmpty(this.alias, "Alias is expected");
     assertTrue(this.trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
         "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'%s'"
             .formatted(this.trustMarkValidityDuration));
@@ -69,7 +67,7 @@ public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, Enti
    */
   @Builder
   public record TrustMarkProperties(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
-                                    Optional<TrustMarkDelegation> delegation) {
+                                    Optional<TrustMarkDelegation> delegation, List<TrustMarkSubjectRecord> trustMarkSubjectRecords) {
 
     /**
      * Validate content of configuration.
@@ -83,7 +81,5 @@ public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, Enti
       FederationAssert.assertNotEmpty(this.logoUri, "LogoUri can not be null");
       FederationAssert.assertNotEmpty(this.refUri, "RefUri can not be null");
     }
-
   }
-
 }

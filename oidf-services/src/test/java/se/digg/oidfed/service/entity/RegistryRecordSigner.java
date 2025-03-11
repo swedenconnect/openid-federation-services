@@ -24,9 +24,8 @@ import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
-import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkRecord;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -60,7 +59,7 @@ public class RegistryRecordSigner {
 
     final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType("module-records+jwt"))
+        .type(new JOSEObjectType("module-trustMarkSubjects+jwt"))
         .build();
 
     final SignedJWT jwt = new SignedJWT(header, claims);
@@ -84,7 +83,7 @@ public class RegistryRecordSigner {
 
     final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType("entity-records+jwt"))
+        .type(new JOSEObjectType("entity-trustMarkSubjects+jwt"))
         .build();
 
     final SignedJWT jwt = new SignedJWT(header, claims);
@@ -92,38 +91,17 @@ public class RegistryRecordSigner {
     return jwt;
   }
 
-  /**
-   * @param record to sign
-   * @return signed policy record
-   * @throws JOSEException if signature fails
-   */
-  public SignedJWT signPolicy(final PolicyRecord record) throws JOSEException {
+  public SignedJWT signTrustMarks(final List<TrustMarkRecord> tms) throws JOSEException {
+    final List<Map<String, Object>> trustMarks = tms.stream().map(TrustMarkRecord::toJson).toList();
+
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim("policy_record", record.toJson())
+        .claim("trustmark_records", trustMarks)
         .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
         .build();
 
     final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType("policy-record+jwt"))
-        .build();
-
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(this.signer);
-    return jwt;
-  }
-
-  public SignedJWT signTrustMarkSubjects(final List<TrustMarkSubjectRecord> tms) throws JOSEException {
-    final List<Map<String, Object>> trustMarkSubjects = tms.stream().map(TrustMarkSubjectRecord::toJson).toList();
-
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim("trustmark_records", trustMarkSubjects)
-        .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
-        .build();
-
-    final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
-    final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType("policy-record+jwt"))
+        .type(new JOSEObjectType("trust-mark-record+jwt"))
         .build();
 
     final SignedJWT jwt = new SignedJWT(header, claims);

@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import se.digg.oidfed.common.entity.integration.Expirable;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.Optional;
  */
 @Getter
 @Setter
-public class CompositeRecord {
+public class CompositeRecord implements Serializable {
   private final Expirable<List<EntityRecord>> entityRecords;
   private final Expirable<ModuleRecord> moduleRecord;
   private final Expirable<List<TrustMarkRecord>> trustMarkRecords;

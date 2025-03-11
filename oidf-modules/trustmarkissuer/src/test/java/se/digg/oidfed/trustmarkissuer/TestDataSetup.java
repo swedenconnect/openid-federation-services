@@ -58,12 +58,11 @@ public class TestDataSetup {
         .trustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES))
         .issuerEntityId(new EntityID("https://tmissuer.digg.se"))
         .trustMarks(new ArrayList<>())
-        .alias("tm")
         .build();
 
     final TrustMarkSubjectRecord sub1 =
         TrustMarkSubjectRecord.builder()
-            .trustMarkSubject("http://tm1.digg.se/sub1")
+            .sub("http://tm1.digg.se/sub1")
             .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
             .granted(Instant.now())
             .build();

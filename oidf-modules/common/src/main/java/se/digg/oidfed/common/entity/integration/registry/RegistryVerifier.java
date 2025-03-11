@@ -18,8 +18,10 @@ package se.digg.oidfed.common.entity.integration.registry;
 
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.NotificationRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.Expirable;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkRecord;
 
 import java.util.List;
 
@@ -51,5 +53,11 @@ public interface RegistryVerifier {
    * @param jwt with trust mark subjects
    * @return list of trust mark subjects
    */
-  Expirable<List<TrustMarkSubjectRecord>> verifyTrustMarkSubjects(final String jwt);
+  Expirable<List<TrustMarkRecord>> verifyTrustMark(final String jwt);
+
+  /**
+   * @param jwt with notification
+   * @return notification
+   */
+  NotificationRecord verifyNotification(final String jwt);
 }

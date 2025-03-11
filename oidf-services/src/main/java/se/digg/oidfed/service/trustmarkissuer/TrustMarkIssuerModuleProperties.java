@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.bind.DefaultValue;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.validation.FederationAssert;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
@@ -52,7 +53,7 @@ public class TrustMarkIssuerModuleProperties {
   private String client;
 
   /**
-   * Alias of all keys that can verify trustmarksubject records
+   * Alias of all keys that can verify trustmarksubject trustMarkSubjects
    */
   private List<String> jwkAlias;
 
@@ -105,8 +106,7 @@ public class TrustMarkIssuerModuleProperties {
      */
     public TrustMarkIssuerProperties toProperties() {
       return new TrustMarkIssuerProperties(this.trustMarkValidityDuration, new EntityID(this.entityIdentifier),
-          this.trustMarks.stream().map(TrustMarkProperties::toProperties).toList(),
-          this.alias);
+          this.trustMarks.stream().map(TrustMarkProperties::toProperties).toList());
     }
 
     /**
@@ -122,7 +122,8 @@ public class TrustMarkIssuerModuleProperties {
         TrustMarkId trustMarkId,
         String logoUri,
         String refUri,
-        TrustMarkDelegation delegation) {
+        TrustMarkDelegation delegation,
+        List<TrustMarkSubjectRecord> trustMarkSubjects) {
 
       /**
        * Validate content of the configuration
@@ -138,7 +139,9 @@ public class TrustMarkIssuerModuleProperties {
       public TrustMarkIssuerProperties.TrustMarkProperties toProperties() {
         return new TrustMarkIssuerProperties.TrustMarkProperties(this.trustMarkId, Optional.ofNullable(this.logoUri),
             Optional.ofNullable(this.refUri),
-            Optional.ofNullable(this.delegation));
+            Optional.ofNullable(this.delegation),
+            Optional.ofNullable(this.trustMarkSubjects)
+                .orElse(List.of()));
       }
     }
   }

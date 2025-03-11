@@ -126,14 +126,7 @@ public class CachedRecordSource implements RecordSource {
             r.getTrustMarkRecords().getValue().stream()
                 .filter(record -> record.getTrustMarkId().equals(id.getTrustMarkId()))
                 .filter(record -> record.getTrustMarkIssuerId().equals(issuer.getValue()))
-                .flatMap(record -> record.getSubjects().stream().map(sub -> new TrustMarkSubjectRecord(
-                    sub,
-                    issuer.getValue(),
-                    null,
-                    null,
-                    null,
-                    false)
-                ))
+                .flatMap(record -> record.getSubjects().stream())
                 .toList()
         ).orElse(List.of());
 
@@ -142,7 +135,7 @@ public class CachedRecordSource implements RecordSource {
   @Override
   public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(final EntityID issuer, final TrustMarkId id, final EntityID subject) {
     return this.getTrustMarkSubjects(issuer, id).stream()
-        .filter(record -> record.trustMarkSubject().equals(subject.getValue()))
+        .filter(record -> record.sub().equals(subject.getValue()))
         .findFirst();
   }
 

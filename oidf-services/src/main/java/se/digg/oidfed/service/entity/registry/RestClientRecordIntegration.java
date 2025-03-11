@@ -38,8 +38,8 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
   private final RestClient client;
 
   /**
-   * @param verifier for verifying records
-   * @param client for fetching records
+   * @param verifier for verifying trustMarkSubjects
+   * @param client for fetching trustMarkSubjects
    */
   public RestClientRecordIntegration(final RegistryVerifier verifier, final RestClient client) {
     this.verifier = verifier;
@@ -75,11 +75,10 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
     final String body = this.client.get()
         .uri(builder -> builder
             .queryParam("instanceid", instanceId.toString())
-            .path("/trustmarksubject_record")
+            .path("/trustmarks_record")
             .build())
         .retrieve()
         .body(String.class);
-    //TODO verify trust mark
-    return null; // this.verifier.verifyTrustMarkSubjects(body);
+    return this.verifier.verifyTrustMark(body);
   }
 }

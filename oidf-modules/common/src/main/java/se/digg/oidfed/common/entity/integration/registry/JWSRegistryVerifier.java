@@ -27,9 +27,11 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.NotificationRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.RecordVerificationException;
 import se.digg.oidfed.common.entity.integration.Expirable;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkRecord;
 import se.digg.oidfed.common.validation.FederationAssert;
 
 import java.security.Key;
@@ -111,18 +113,27 @@ public class JWSRegistryVerifier implements RegistryVerifier {
   }
 
   @Override
-  public Expirable<List<TrustMarkSubjectRecord>> verifyTrustMarkSubjects(final String jwt) {
+  public Expirable<List<TrustMarkRecord>> verifyTrustMark(final String jwt) {
     try {
       final JWTClaimsSet claims = this.verify(jwt)
           .getJWTClaimsSet();
       final List<Object> records = claims
           .getListClaim("trustmark_records");
-      FederationAssert.assertNotEmpty(records,"Missing claim for:'trustmark_records' ");
-      final List<TrustMarkSubjectRecord> trustMarkSubjectRecords = records.stream()
+      final List<TrustMarkRecord> trustMarkSubjectRecords = records.stream()
           .map(o -> (Map<String, Object>) o)
-          .map(TrustMarkSubjectRecord::fromJson)
+          .map(TrustMarkRecord::fromJson)
           .toList();
       return new Expirable<>(claims.getExpirationTime().toInstant(), trustMarkSubjectRecords);
+    } catch (final ParseException | JOSEException e) {
+      throw new RecordVerificationException("Failed to verify TrustMarkIssuerSubject record", e);
+    }
+  }
+
+  @Override
+  public NotificationRecord verifyNotification(final String jwt) {
+    try {
+      this.verify(jwt);
+      return new NotificationRecord();
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify TrustMarkIssuerSubject record", e);
     }

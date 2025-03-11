@@ -95,19 +95,15 @@ openid:
           trust-mark-validity-duration: PT29M
           trust-marks:
             - trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/certified
-    trust-mark-subjects:
-      - sub: https://authorization.local.swedenconnect.se/op-1
-        tmi: https://authorization.local.swedenconnect.se/authorization-tmi/certified
-        iss: https://authorization.local.swedenconnect.se/authorization-tmi
-        granted: "2024-01-01T10:00:00Z"
-        expires: "2030-01-01T10:00:00Z"
-        revoked: false
-      - sub: https://authorization.local.swedenconnect.se/op-2
-        tmi: https://authorization.local.swedenconnect.se/authorization-tmi/certified
-        iss: https://authorization.local.swedenconnect.se/authorization-tmi
-        granted: "2024-01-01T10:00:00Z"
-        expires: "2030-01-01T10:00:00Z"
-        revoked: true
+              trust-mark-subjects:
+                - sub: https://authorization.local.swedenconnect.se/op-1
+                  granted: "2024-01-01T10:00:00Z"
+                  expires: "2030-01-01T10:00:00Z"
+                  revoked: false
+                - sub: https://authorization.local.swedenconnect.se/op-2
+                  granted: "2024-01-01T10:00:00Z"
+                  expires: "2030-01-01T10:00:00Z"
+                  revoked: true
     entities:
       - subject: https://authorization.local.swedenconnect.se/authorization-tmi
         issuer: https://authorization.local.swedenconnect.se/authorization-tmi
