@@ -20,22 +20,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Json Object helper class for managing serialization.
+ *
+ * @author Felix Hellman
+ */
 public class JsonObject {
   private final Map<String, Object> json;
 
+  /**
+   * Constructor.
+   * @param json to handle
+   */
   public JsonObject(final Map<String, Object> json) {
     this.json = json;
   }
 
+  /**
+   * Get value as string
+   * @param key
+   * @return string value
+   */
   public String getStringValue(final String key) {
     return (String) this.json.get(key);
   }
 
-  public List<String> getStringListClaim(final String key) {
-    return Optional.ofNullable((List<String>) this.json.get(key))
-        .orElse(List.of());
-  }
-
+  /**
+   * @param key
+   * @return object map claim
+   */
   public List<Object> getObjectMapClaim(final String key) {
     return Optional.ofNullable((List<Object>) this.json.get(key))
         .orElse(List.of());

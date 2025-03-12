@@ -16,5 +16,10 @@
  */
 package se.digg.oidfed.common.entity.integration.registry.records;
 
+/**
+ * Notificaiton Record Class.
+ *
+ * @author Felix Hellman
+ */
 public record NotificationRecord() {
 }

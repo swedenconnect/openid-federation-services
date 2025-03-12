@@ -162,6 +162,9 @@ public class TrustMarkIssuer {
   }
 
 
+  /**
+   * @return entity id of this trust mark issuer.
+   */
   public EntityID getEntityId() {
     return this.trustMarkIssuerProperties.issuerEntityId();
   }

@@ -33,7 +33,7 @@ import java.util.Optional;
  */
 @Getter
 @Builder
-public class TrustMarkIssuerModuleResponse {
+public class TrustMarkIssuerModuleRecord {
   private Duration trustMarkValidityDuration;
   private String entityIdentifier;
   private List<TrustMarkResponse> trustMarks;
@@ -47,7 +47,7 @@ public class TrustMarkIssuerModuleResponse {
    * @param trustMarks                list of trust marks
    * @param active                    true if module is active
    */
-  public TrustMarkIssuerModuleResponse(
+  public TrustMarkIssuerModuleRecord(
       final Duration trustMarkValidityDuration,
       final String entityIdentifier,
       final List<TrustMarkResponse> trustMarks,
@@ -65,8 +65,8 @@ public class TrustMarkIssuerModuleResponse {
    * @param json to read
    * @return new instance
    */
-  public static TrustMarkIssuerModuleResponse fromJson(final Map<String, Object> json) {
-    return TrustMarkIssuerModuleResponse.builder()
+  public static TrustMarkIssuerModuleRecord fromJson(final Map<String, Object> json) {
+    return TrustMarkIssuerModuleRecord.builder()
         .trustMarkValidityDuration(Duration.parse((String) json.get("trust-mark-token-validity-duration")))
         .entityIdentifier((String) json.get("entity-identifier"))
         .trustMarks(Optional.ofNullable((List<Map<String, Object>>) json.get("trust-marks"))
@@ -103,6 +103,7 @@ public class TrustMarkIssuerModuleResponse {
    * @param logoUri
    * @param refUri
    * @param delegation
+   * @param trustMarkSubjectRecords
    */
   @Builder
   public record TrustMarkResponse(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,

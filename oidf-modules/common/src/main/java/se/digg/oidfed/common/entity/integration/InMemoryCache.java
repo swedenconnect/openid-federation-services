@@ -19,6 +19,7 @@ package se.digg.oidfed.common.entity.integration;
 import java.io.Serializable;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,6 +58,6 @@ public class InMemoryCache<K extends Serializable, V> implements Cache<K, V> {
   @Override
   public boolean shouldRefresh(final K key) {
     final Expirable<V> v = this.cache.get(key);
-    return Objects.isNull(v) || v.getExpiration().isAfter(Instant.now(this.clock));
+    return Objects.isNull(v) || v.getIssuedAt().isAfter(Instant.now(this.clock).plus(1, ChronoUnit.HOURS));
   }
 }

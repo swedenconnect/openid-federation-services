@@ -18,9 +18,9 @@ package se.digg.oidfed.common.entity.integration.registry.records;
 
 import lombok.Getter;
 import lombok.Setter;
-import se.digg.oidfed.common.entity.integration.registry.ResolverModuleResponse;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorModuleResponse;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerModuleResponse;
+import se.digg.oidfed.common.entity.integration.registry.ResolverModuleRecord;
+import se.digg.oidfed.common.entity.integration.registry.TrustAnchorModuleRecord;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerModuleRecord;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -37,9 +37,9 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 public class ModuleRecord implements Serializable {
-  private List<ResolverModuleResponse> resolvers;
-  private List<TrustAnchorModuleResponse> trustAnchors;
-  private List<TrustMarkIssuerModuleResponse> trustMarkIssuers;
+  private List<ResolverModuleRecord> resolvers;
+  private List<TrustAnchorModuleRecord> trustAnchors;
+  private List<TrustMarkIssuerModuleRecord> trustMarkIssuers;
 
 
   /**
@@ -62,21 +62,21 @@ public class ModuleRecord implements Serializable {
     response.resolvers = Optional.ofNullable(json.get("resolvers")).map(resolvers -> {
           return ((List<Map<String, Object>>) resolvers)
               .stream()
-              .map(ResolverModuleResponse::fromJson)
+              .map(ResolverModuleRecord::fromJson)
               .toList();
         })
         .orElse(List.of());
     response.trustAnchors = Optional.ofNullable(json.get("trust-anchors")).map(ta -> {
       return ((List<Map<String, Object>>) ta)
           .stream()
-          .map(TrustAnchorModuleResponse::fromJson)
+          .map(TrustAnchorModuleRecord::fromJson)
           .toList();
     }).orElse(List.of());
 
     response.trustMarkIssuers = Optional.ofNullable(json.get("trust-mark-issuers")).map(tmi -> {
       return ((List<Map<String, Object>>) tmi)
           .stream()
-          .map(TrustMarkIssuerModuleResponse::fromJson)
+          .map(TrustMarkIssuerModuleRecord::fromJson)
           .toList();
     }).orElse(List.of());
     return response;
@@ -88,11 +88,11 @@ public class ModuleRecord implements Serializable {
   public Map<String, Object> toJson() {
     final HashMap<String, Object> json = new HashMap<>();
     Optional.ofNullable(this.resolvers).map(r -> json.put("resolvers",
-        this.resolvers.stream().map(ResolverModuleResponse::toJson).toList()));
+        this.resolvers.stream().map(ResolverModuleRecord::toJson).toList()));
     Optional.ofNullable(this.trustAnchors).map(t -> json.put("trust-anchors",
-        this.trustAnchors.stream().map(TrustAnchorModuleResponse::toJson).toList()));
+        this.trustAnchors.stream().map(TrustAnchorModuleRecord::toJson).toList()));
     Optional.ofNullable(this.trustMarkIssuers).map(t -> json.put("trust-mark-issuers",
-        this.trustMarkIssuers.stream().map(TrustMarkIssuerModuleResponse::toJson).toList()));
+        this.trustMarkIssuers.stream().map(TrustMarkIssuerModuleRecord::toJson).toList()));
     return json;
   }
 
@@ -101,9 +101,9 @@ public class ModuleRecord implements Serializable {
    */
   public List<String> getIssuers() {
     return Stream.of(
-            this.resolvers.stream().map(ResolverModuleResponse::getEntityIdentifier),
-            this.trustAnchors.stream().map(TrustAnchorModuleResponse::getEntityIdentifier),
-            this.trustMarkIssuers.stream().map(TrustMarkIssuerModuleResponse::getEntityIdentifier)
+            this.resolvers.stream().map(ResolverModuleRecord::getEntityIdentifier),
+            this.trustAnchors.stream().map(TrustAnchorModuleRecord::getEntityIdentifier),
+            this.trustMarkIssuers.stream().map(TrustMarkIssuerModuleRecord::getEntityIdentifier)
         )
         .reduce(Stream::concat)
         .orElseGet(Stream::empty)

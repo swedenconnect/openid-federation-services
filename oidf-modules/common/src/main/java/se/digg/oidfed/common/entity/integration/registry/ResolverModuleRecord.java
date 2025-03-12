@@ -32,7 +32,7 @@ import java.util.Map;
  * @author Felix Hellman
  */
 @Getter
-public class ResolverModuleResponse {
+public class ResolverModuleRecord {
   private List<String> trustAnchors;
   private Duration resolveResponseDuration;
   private JWKSet trustedKeys;
@@ -62,8 +62,8 @@ public class ResolverModuleResponse {
    * @param json to read
    * @return new instance
    */
-  public static ResolverModuleResponse fromJson(final Map<String, Object> json) {
-    final ResolverModuleResponse resolver = new ResolverModuleResponse();
+  public static ResolverModuleRecord fromJson(final Map<String, Object> json) {
+    final ResolverModuleRecord resolver = new ResolverModuleRecord();
     final Boolean isModuleActive = (Boolean) json.get("active");
     resolver.active = false;
     if (isModuleActive) {

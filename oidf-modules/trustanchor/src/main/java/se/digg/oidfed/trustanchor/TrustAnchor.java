@@ -141,6 +141,9 @@ public class TrustAnchor {
     return list;
   }
 
+  /**
+   * @return entity id of this trust anchor
+   */
   public EntityID getEntityId() {
     return this.properties.getEntityId();
   }

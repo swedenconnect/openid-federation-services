@@ -25,12 +25,23 @@ import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkRecord
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Responsible for populating cache from registry.
+ *
+ * @author Felix Hellman
+ */
 public class CacheRecordPopulator {
   private final CachedRecordSource source;
   private final RecordRegistryIntegration integration;
   private Boolean notified;
   private final UUID instanceId;
 
+  /**
+   * Constructor.
+   * @param source to populate
+   * @param integration to get information from
+   * @param instanceId key for fetching information
+   */
   public CacheRecordPopulator(
       final CachedRecordSource source,
       final RecordRegistryIntegration integration,
@@ -41,21 +52,30 @@ public class CacheRecordPopulator {
     this.instanceId = instanceId;
   }
 
+  /**
+   * @return state
+   */
   public CompositeRecord reload() {
-    //Clear notification
-    this.notified = false;
     final Expirable<List<EntityRecord>> entityRecords = this.integration.getEntityRecords(this.instanceId);
     final Expirable<ModuleRecord> modules = this.integration.getModules(this.instanceId);
     final Expirable<List<TrustMarkRecord>> trustMarks = this.integration.getTrustMarks(this.instanceId);
     final CompositeRecord compositeRecord = new CompositeRecord(entityRecords, modules, trustMarks);
     this.source.addRecord(compositeRecord);
+    //Clear notification
+    this.notified = false;
     return compositeRecord;
   }
 
+  /**
+   * @return To check if
+   */
   public boolean shouldRefresh() {
     return this.source.shouldRefresh() || this.notified;
   }
 
+  /**
+   * Sets notification to true.
+   */
   public void notifyPopulator() {
     this.notified = true;
   }

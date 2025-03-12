@@ -29,7 +29,7 @@ import java.util.Map;
  * @author Felix Hellman
  */
 @Getter
-public class TrustAnchorModuleResponse {
+public class TrustAnchorModuleRecord {
   /** EntityId for the trust anchor */
   private String entityIdentifier;
   /** Is the module qctive */
@@ -51,11 +51,11 @@ public class TrustAnchorModuleResponse {
    * @param json to read
    * @return new instance
    */
-  public static TrustAnchorModuleResponse fromJson(final Map<String, Object> json) {
-    final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
-    trustAnchorModuleResponse.entityIdentifier = (String) json.get("entity-identifier");
-    trustAnchorModuleResponse.active = (Boolean) json.get("active");
-    return trustAnchorModuleResponse;
+  public static TrustAnchorModuleRecord fromJson(final Map<String, Object> json) {
+    final TrustAnchorModuleRecord trustAnchorModuleRecord = new TrustAnchorModuleRecord();
+    trustAnchorModuleRecord.entityIdentifier = (String) json.get("entity-identifier");
+    trustAnchorModuleRecord.active = (Boolean) json.get("active");
+    return trustAnchorModuleRecord;
   }
 
   /**

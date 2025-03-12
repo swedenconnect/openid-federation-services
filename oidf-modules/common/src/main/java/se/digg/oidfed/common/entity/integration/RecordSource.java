@@ -28,24 +28,64 @@ import se.digg.oidfed.common.tree.NodeKey;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * A source of records.
+ *
+ * @author Felix Hellman
+ */
 public interface RecordSource {
+  /**
+   * @return tmi properties
+   */
   List<TrustMarkIssuerProperties> getTrustMarkIssuerProperties();
 
+  /**
+   * @return trust anchor properties
+   */
   List<TrustAnchorProperties> getTrustAnchorProperties();
 
+  /**
+   * @return resolver properties
+   */
   List<ResolverProperties> getResolverProperties();
 
+  /**
+   * @param key for this entity
+   * @return entity record if present
+   */
   Optional<EntityRecord> getEntity(final NodeKey key);
 
+  /**
+   * @return all entities
+   */
   List<EntityRecord> getAllEntities();
 
+  /**
+   * @param issuer who has subordinates
+   * @return list of subordinates
+   */
   List<EntityRecord> findSubordinates(final String issuer);
 
-  //TODO fix trust mark subjects
+  /**
+   * @param issuer of the trust mark
+   * @param id of the trust mark
+   * @return subjects
+   */
   List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id);
 
-  //TODO fix trust mark subjects
-  Optional<TrustMarkSubjectRecord> getTrustMarkSubject(final EntityID issuer, final TrustMarkId id, final EntityID subject);
+  /**
+   * @param issuer of the trust mark
+   * @param id of the trust mark
+   * @param subject of the trust mark
+   * @return a single subject if present
+   */
+  Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
+      final EntityID issuer,
+      final TrustMarkId id,
+      final EntityID subject);
 
+  /**
+   * @return priotiy of this source, lower takes precedence
+   */
   int priority();
 }

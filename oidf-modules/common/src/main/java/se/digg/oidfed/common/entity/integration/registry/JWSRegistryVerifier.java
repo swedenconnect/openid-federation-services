@@ -25,12 +25,12 @@ import com.nimbusds.jose.jwk.JWKSelector;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import se.digg.oidfed.common.entity.RecordVerificationException;
+import se.digg.oidfed.common.entity.integration.Expirable;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.NotificationRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
-import se.digg.oidfed.common.entity.RecordVerificationException;
-import se.digg.oidfed.common.entity.integration.Expirable;
 import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkRecord;
 import se.digg.oidfed.common.validation.FederationAssert;
 
@@ -73,7 +73,7 @@ public class JWSRegistryVerifier implements RegistryVerifier {
           throw new RuntimeException(e);
         }
       }).toList();
-      return new Expirable<>(claims.getExpirationTime().toInstant(), entities);
+      return new Expirable<>(claims.getExpirationTime().toInstant(), claims.getIssueTime().toInstant(), entities);
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify entity record", e);
     }
@@ -88,7 +88,7 @@ public class JWSRegistryVerifier implements RegistryVerifier {
           .getClaim("policy_record");
 
       final PolicyRecord policyRecord = PolicyRecord.fromJson(policy);
-      return new Expirable<>(claims.getExpirationTime().toInstant(), policyRecord);
+      return new Expirable<>(claims.getExpirationTime().toInstant(), claims.getIssueTime().toInstant(), policyRecord);
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify policy record", e);
     }
@@ -106,7 +106,7 @@ public class JWSRegistryVerifier implements RegistryVerifier {
       final ModuleRecord moduleRecord = ModuleRecord.fromJson(json);
       FederationAssert.assertNotEmpty(claims.getExpirationTime(), "Missing claim 'exp' in token");
 
-      return new Expirable<>(claims.getExpirationTime().toInstant(), moduleRecord);
+      return new Expirable<>(claims.getExpirationTime().toInstant(), claims.getIssueTime().toInstant(), moduleRecord);
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify module record", e);
     }
@@ -123,7 +123,10 @@ public class JWSRegistryVerifier implements RegistryVerifier {
           .map(o -> (Map<String, Object>) o)
           .map(TrustMarkRecord::fromJson)
           .toList();
-      return new Expirable<>(claims.getExpirationTime().toInstant(), trustMarkSubjectRecords);
+      return new Expirable<>(
+          claims.getExpirationTime().toInstant(),
+          claims.getIssueTime().toInstant(), trustMarkSubjectRecords
+      );
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify TrustMarkIssuerSubject record", e);
     }

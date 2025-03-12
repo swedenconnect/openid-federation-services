@@ -65,11 +65,9 @@ be loaded from the registry or configured with properties.
 
 ### Trust Mark Subjects
 
-`openid.federation.trust-mark-subjects.*`
+`openid.federation.modules.trust-mark-issuers[*].trust-marks[*].trust-mark-subjects[*]`
 
 | `sub`     | Subject (entity) identifier, typically a URL indicating the specific entity granted the trust mark. | String | |
-| `iss`     | Issuer (entity) identifier, typically a URL indicating the specific entity who granted the trust mark. | String | |
-| `tmi`     | Subject (entity) identifier, typically a URL indicating the specific trust mark. | String | |
 | `granted` | Timestamp of when the trust mark was granted to the subject, in ISO 8601 format (UTC). | Instant | |
 | `expires` | Expiry date for the subject’s trust mark, in ISO 8601 format (UTC). | Instant | |
 | `revoked` | Indicates whether the trust mark for this subject has been revoked (`true`) or remains valid (`false`). | Boolean | false |

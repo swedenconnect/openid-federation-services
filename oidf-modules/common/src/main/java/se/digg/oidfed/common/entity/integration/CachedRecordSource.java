@@ -17,12 +17,12 @@
 package se.digg.oidfed.common.entity.integration;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.digg.oidfed.common.entity.integration.registry.ResolverModuleResponse;
+import se.digg.oidfed.common.entity.integration.registry.ResolverModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorModuleResponse;
+import se.digg.oidfed.common.entity.integration.registry.TrustAnchorModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerModuleResponse;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord;
@@ -43,14 +43,17 @@ public class CachedRecordSource implements RecordSource {
   /**
    * Constructor.
    *
-   * @param cache for saving composite record
+   * @param cache for saving a single composite record
    */
   public CachedRecordSource(final Cache<String, CompositeRecord> cache) {
     this.cache = cache;
   }
 
+  /**
+   * @param record to add
+   */
   public void addRecord(final CompositeRecord record) {
-    this.cache.add("record", new Expirable<>(record.getExpiration(), record));
+    this.cache.add("record", new Expirable<>(record.getExpiration(), record.getIssuedAt(), record));
   }
 
   private Optional<CompositeRecord> getRecord() {
@@ -65,7 +68,7 @@ public class CachedRecordSource implements RecordSource {
             .getValue()
             .getTrustMarkIssuers()
             .stream()
-            .map(TrustMarkIssuerModuleResponse::toProperties)
+            .map(TrustMarkIssuerModuleRecord::toProperties)
             .toList()
         ).orElse(List.of());
   }
@@ -78,7 +81,7 @@ public class CachedRecordSource implements RecordSource {
             .getValue()
             .getTrustAnchors()
             .stream()
-            .map(TrustAnchorModuleResponse::toProperties)
+            .map(TrustAnchorModuleRecord::toProperties)
             .toList()
         ).orElse(List.of());
   }
@@ -91,7 +94,7 @@ public class CachedRecordSource implements RecordSource {
             .getValue()
             .getResolvers()
             .stream()
-            .map(ResolverModuleResponse::toProperty)
+            .map(ResolverModuleRecord::toProperty)
             .toList()
         ).orElse(List.of());
   }
@@ -133,7 +136,10 @@ public class CachedRecordSource implements RecordSource {
   }
 
   @Override
-  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(final EntityID issuer, final TrustMarkId id, final EntityID subject) {
+  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
+      final EntityID issuer,
+      final TrustMarkId id,
+      final EntityID subject) {
     return this.getTrustMarkSubjects(issuer, id).stream()
         .filter(record -> record.sub().equals(subject.getValue()))
         .findFirst();
@@ -144,6 +150,9 @@ public class CachedRecordSource implements RecordSource {
     return 0;
   }
 
+  /**
+   * @return true if the cache should be reloaded
+   */
   public boolean shouldRefresh() {
     return this.cache.shouldRefresh("record");
   }

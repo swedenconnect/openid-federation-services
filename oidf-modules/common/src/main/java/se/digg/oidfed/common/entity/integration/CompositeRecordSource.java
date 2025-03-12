@@ -30,9 +30,18 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Combines multiple record sources and sorts them by priority.
+ *
+ * @author Felix Hellman
+ */
 public class CompositeRecordSource implements RecordSource {
   private final List<RecordSource> recordSources;
 
+  /**
+   * Construcot.r
+   * @param recordSources to handle.
+   */
   public CompositeRecordSource(final List<RecordSource> recordSources) {
     final ArrayList<RecordSource> tmp = new ArrayList<>(recordSources);
     tmp.sort(Comparator.comparingInt(RecordSource::priority));

@@ -93,7 +93,10 @@ public class PropertyRecordSource implements RecordSource {
   }
 
   @Override
-  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(final EntityID issuer, final TrustMarkId id, final EntityID subject) {
+  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
+      final EntityID issuer,
+      final TrustMarkId id,
+      final EntityID subject) {
     return this.getTrustMarkSubjects(issuer, id).stream()
         .filter(tms -> tms.sub().equals(subject.getValue()))
         .findFirst();

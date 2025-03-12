@@ -129,6 +129,9 @@ public class Resolver {
     return new DiscoveryResponse(this.tree.discovery(request));
   }
 
+  /**
+   * @return entity id of this resolver
+   */
   public EntityID getEntityId() {
     return new EntityID(this.resolverProperties.entityIdentifier());
   }

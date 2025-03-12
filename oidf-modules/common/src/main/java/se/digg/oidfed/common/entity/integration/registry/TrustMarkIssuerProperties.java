@@ -64,11 +64,14 @@ public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, Enti
    * @param logoUri     Optional logo for issued Trust Marks
    * @param refUri      Optional URL to information about issued Trust Marks
    * @param delegation  TrustMark delegation
+   * @param trustMarkSubjectRecords subjects
    */
   @Builder
-  public record TrustMarkProperties(TrustMarkId trustMarkId, Optional<String> logoUri, Optional<String> refUri,
-                                    Optional<TrustMarkDelegation> delegation, List<TrustMarkSubjectRecord> trustMarkSubjectRecords) {
-
+  public record TrustMarkProperties(TrustMarkId trustMarkId,
+                                    Optional<String> logoUri,
+                                    Optional<String> refUri,
+                                    Optional<TrustMarkDelegation> delegation,
+                                    List<TrustMarkSubjectRecord> trustMarkSubjectRecords) {
     /**
      * Validate content of configuration.
      *

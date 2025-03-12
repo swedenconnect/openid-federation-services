@@ -20,7 +20,6 @@ import lombok.Getter;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 
 /**
  * @param <V> type
@@ -30,27 +29,19 @@ import java.time.temporal.ChronoUnit;
 public class Expirable<V> implements Serializable {
 
   private final Instant expiration;
+  private final Instant issuedAt;
   private final V value;
 
   /**
    * Constructor.
    *
    * @param expiration when this value is no longer value
+   * @param issuedAt   when this value was issued
    * @param value      contained in the container
    */
-  public Expirable(final Instant expiration, final V value) {
+  public Expirable(final Instant expiration, final Instant issuedAt, final V value) {
     this.expiration = expiration;
+    this.issuedAt = issuedAt;
     this.value = value;
-  }
-
-  /**
-   * "non expiring" value with a lifetime of 10 years.
-   *
-   * @param v   value
-   * @param <V> type
-   * @return expirable that expires after ten years.
-   */
-  public static <V> Expirable<V> nonExpiring(final V v) {
-    return new Expirable<>(Instant.now().plus(365 * 10, ChronoUnit.DAYS), v);
   }
 }

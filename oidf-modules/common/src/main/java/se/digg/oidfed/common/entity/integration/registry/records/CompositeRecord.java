@@ -63,4 +63,15 @@ public class CompositeRecord implements Serializable {
     expirations.add(this.trustMarkRecords.getExpiration());
     return Optional.ofNullable(expirations.getFirst()).orElse(Instant.now());
   }
+
+  /**
+   * @return time when this record was issued at
+   */
+  public Instant getIssuedAt() {
+    final ArrayList<Instant> issuedAt = new ArrayList<>();
+    issuedAt.add(this.moduleRecord.getIssuedAt());
+    issuedAt.add(this.entityRecords.getIssuedAt());
+    issuedAt.add(this.trustMarkRecords.getIssuedAt());
+    return Optional.ofNullable(issuedAt.getFirst()).orElse(Instant.now());
+  }
 }

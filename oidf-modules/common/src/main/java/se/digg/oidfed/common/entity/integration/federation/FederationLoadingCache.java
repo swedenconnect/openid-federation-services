@@ -36,22 +36,23 @@ public class FederationLoadingCache implements FederationClient {
 
   private final FederationClient client;
 
-  private final Cache<String,EntityStatement> entityConfigurationCache;
-  private final Cache<String,EntityStatement> fetchCache;
-  private final Cache<String,List<String>> subordinateListingCache;
-  private final Cache<String,SignedJWT> trustMarkCache;
-  private final Cache<String,SignedJWT> resolveCache;
-  private final Cache<String,List<String>> trustMarkListingCache;
+  private final Cache<String, EntityStatement> entityConfigurationCache;
+  private final Cache<String, EntityStatement> fetchCache;
+  private final Cache<String, List<String>> subordinateListingCache;
+  private final Cache<String, SignedJWT> trustMarkCache;
+  private final Cache<String, SignedJWT> resolveCache;
+  private final Cache<String, List<String>> trustMarkListingCache;
 
   /**
    * Constructor.
-   * @param client for making requests
+   *
+   * @param client                   for making requests
    * @param entityConfigurationCache for storing entity configuration
-   * @param fetchCache for storing entity statements
-   * @param subordinateListingCache for storing subordinate listings
-   * @param trustMarkCache for storing trust marks
-   * @param resolveCache for storing resolver responses
-   * @param trustMarkListingCache for storing trust mark listings
+   * @param fetchCache               for storing entity statements
+   * @param subordinateListingCache  for storing subordinate listings
+   * @param trustMarkCache           for storing trust marks
+   * @param resolveCache             for storing resolver responses
+   * @param trustMarkListingCache    for storing trust mark listings
    */
   public FederationLoadingCache(
       final FederationClient client,
@@ -76,7 +77,8 @@ public class FederationLoadingCache implements FederationClient {
     if (!request.useCachedValue() || this.entityConfigurationCache.shouldRefresh(request.toString())) {
       final EntityStatement entityStatement = this.client.entityConfiguration(request);
       final Instant expiration = entityStatement.getClaimsSet().getExpirationTime().toInstant();
-      this.entityConfigurationCache.add(request.toString(), new Expirable<>(expiration, entityStatement));
+      final Instant iat = entityStatement.getClaimsSet().getIssueTime().toInstant();
+      this.entityConfigurationCache.add(request.toString(), new Expirable<>(expiration, iat, entityStatement));
       return entityStatement;
     }
     return this.entityConfigurationCache.get(request.toString());
@@ -87,7 +89,8 @@ public class FederationLoadingCache implements FederationClient {
     if (!request.useCachedValue() || this.fetchCache.shouldRefresh(request.toString())) {
       final EntityStatement entityStatement = this.client.fetch(request);
       final Instant expiration = entityStatement.getClaimsSet().getExpirationTime().toInstant();
-      this.fetchCache.add(request.toString(), new Expirable<>(expiration, entityStatement));
+      final Instant iat = entityStatement.getClaimsSet().getIssueTime().toInstant();
+      this.fetchCache.add(request.toString(), new Expirable<>(expiration, iat, entityStatement));
       return entityStatement;
     }
     return this.fetchCache.get(request.toString());
@@ -98,7 +101,7 @@ public class FederationLoadingCache implements FederationClient {
     if (!request.useCachedValue() || this.subordinateListingCache.shouldRefresh(request.toString())) {
       final List<String> subordinateListing = this.client.subordinateListing(request);
       final Expirable<List<String>> expirable =
-          new Expirable<>(Instant.now().plus(Duration.ofHours(1)), subordinateListing);
+          new Expirable<>(Instant.now().plus(Duration.ofHours(1)), Instant.now(), subordinateListing);
       this.subordinateListingCache.add(request.toString(), expirable);
       return subordinateListing;
     }
@@ -109,7 +112,8 @@ public class FederationLoadingCache implements FederationClient {
   public SignedJWT trustMark(final FederationRequest<TrustMarkRequest> request) {
     if (!request.useCachedValue() || this.trustMarkCache.shouldRefresh(request.toString())) {
       final SignedJWT trustMark = this.client.trustMark(request);
-      this.trustMarkCache.add(request.toString(), new Expirable<>(getExpirationFromJwt(trustMark), trustMark));
+      this.trustMarkCache.add(request.toString(), new Expirable<>(getExpirationFromJwt(trustMark), Instant.now(),
+          trustMark));
       return trustMark;
     }
     return this.trustMarkCache.get(request.toString());
@@ -120,7 +124,7 @@ public class FederationLoadingCache implements FederationClient {
     if (!request.useCachedValue() || this.resolveCache.shouldRefresh(request.toString())) {
       final SignedJWT resolseResponse = this.client.resolve(request);
       this.resolveCache.add(request.toString(),
-          new Expirable<>(getExpirationFromJwt(resolseResponse), resolseResponse)
+          new Expirable<>(getExpirationFromJwt(resolseResponse), Instant.now(), resolseResponse)
       );
       return resolseResponse;
     }
@@ -132,7 +136,7 @@ public class FederationLoadingCache implements FederationClient {
     if (!request.useCachedValue() || this.trustMarkListingCache.shouldRefresh(request.toString())) {
       final List<String> trustMarkedListing = this.client.trustMarkedListing(request);
       final Expirable<List<String>> expirable =
-          new Expirable<>(Instant.now().plus(Duration.ofDays(1)), trustMarkedListing);
+          new Expirable<>(Instant.now().plus(Duration.ofDays(1)), Instant.now(), trustMarkedListing);
       this.trustMarkListingCache.add(request.toString(), expirable);
       return trustMarkedListing;
     }

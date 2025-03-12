@@ -25,6 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Record class for trust mark.
+ *
+ * @author Felix Hellman
+ */
 @Builder
 @Getter
 public class TrustMarkRecord implements Serializable {
@@ -35,6 +40,15 @@ public class TrustMarkRecord implements Serializable {
   private final String ref;
   private final String delegation;
 
+  /**
+   * Constructor.
+   * @param trustMarkIssuerId
+   * @param trustMarkId
+   * @param subjects
+   * @param logoUri
+   * @param ref
+   * @param delegation
+   */
   public TrustMarkRecord(final String trustMarkIssuerId,
                          final String trustMarkId,
                          final List<TrustMarkSubjectRecord> subjects,
@@ -49,6 +63,9 @@ public class TrustMarkRecord implements Serializable {
     this.delegation = delegation;
   }
 
+  /**
+   * @return this record as json
+   */
   public Map<String, Object> toJson() {
     final Map<String, Object> json = new HashMap<>();
     json.put("trust_mark_issuer_id", this.trustMarkIssuerId);
@@ -60,6 +77,10 @@ public class TrustMarkRecord implements Serializable {
     return json;
   }
 
+  /**
+   * @param json to convert from
+   * @return converted record
+   */
   public static TrustMarkRecord fromJson(final Map<String, Object> json) {
     final JsonObject jsonObject = new JsonObject(json);
 
