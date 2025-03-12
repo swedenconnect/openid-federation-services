@@ -20,10 +20,6 @@ public interface FederationServiceState {
   Boolean isStateMissing();
   void updateRegistryState(final String stateHash);
   String getRegistryState();
-  Boolean isRouterStateCurrent(final String stateHash);
-  Boolean isRouterStatesEqual();
-  String getRouterState();
-  void updateRouterState(final String stateHash);
-  Boolean resolverNeedsReevaulation();
+  Boolean resolverNeedsReevaulation(final String stateHash);
   void updateResolverState(final String stateHash);
 }

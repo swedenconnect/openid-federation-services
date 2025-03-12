@@ -20,11 +20,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerFactory;
+import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkRequest;
 import se.digg.oidfed.trustmarkissuer.TrustMarkStatusRequest;
 
@@ -46,54 +49,75 @@ public class TrustMarkIssuerRouter implements Router {
 
   @Override
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
-    source.getTrustMarkIssuerProperties()
-        .stream()
-        .map(this.factory::create)
-        .forEach(tmi -> {
-          final RequestPredicate trustMarkRoute = this.routeFactory.createRoute(tmi.getEntityId(), "/trust_mark");
-          route.GET(trustMarkRoute, request -> {
-            try {
-              final MultiValueMap<String, String> params = request.params();
-              return ServerResponse.ok().body(tmi.trustMark(new TrustMarkRequest(
-                  params.getFirst("trust_mark_id"),
-                  params.getFirst("sub")
-              )));
-            } catch (final FederationException e) {
-              return this.errorHandler.handle(e);
-            }
-          });
-          final RequestPredicate trustMarkStatusRoute = this.routeFactory.createRoute(tmi.getEntityId(),
-              "/trust_mark_status");
-          route.GET(trustMarkStatusRoute, request -> {
-            try {
-              final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
-                  List.of("trust_mark_id", "sub"));
-              return ServerResponse.ok().body(tmi.trustMarkStatus(new TrustMarkStatusRequest(
-                  params.getFirst("trust_mark_id"),
-                  params.getFirst("sub"),
-                  Optional.ofNullable(params.getFirst("iat"))
-                      .map(Long::parseLong)
-                      .orElse(null)
-              )));
-            } catch (final FederationException e) {
-              return this.errorHandler.handle(e);
-            }
-          });
-          final RequestPredicate trustMarkListingRoute = this.routeFactory.createRoute(tmi.getEntityId(), "/trust_mark_listing");
-          route.GET(trustMarkListingRoute, request -> {
-            try {
-              final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
-                  List.of("trust_mark_id"));
-              return ServerResponse.ok().body(
-                  tmi.trustMarkListing(new TrustMarkListingRequest(
-                      params.getFirst("trust_mark_id"),
-                      params.getFirst("sub")
-                  ))
-              );
-            } catch (final FederationException e) {
-              return this.errorHandler.handle(e);
-            }
-          });
-        });
+    route.GET(this.getRequestPredicate(source, "/trust_mark"), request -> this.handleTrustMarkRequest(source, request))
+        .GET(this.getRequestPredicate(source, "/trust_mark_status"), request -> this.handleTrustMarkStatus(source, request))
+        .GET(this.getRequestPredicate(source, "/trust_mark_listing"), request -> this.handleTrustMarkListing(source,
+            request));
+  }
+
+  private ServerResponse handleTrustMarkStatus(final CompositeRecordSource source, final ServerRequest request) {
+    final TrustMarkIssuerProperties propertyByRequest = this.getPropertyByRequest(source, request, "/trust_mark_status");
+    final TrustMarkIssuer trustMarkIssuer = this.factory.create(propertyByRequest);
+    try {
+      final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
+          List.of("trust_mark_id", "sub"));
+      return ServerResponse.ok().body(trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest(
+          params.getFirst("trust_mark_id"),
+          params.getFirst("sub"),
+          Optional.ofNullable(params.getFirst("iat"))
+              .map(Long::parseLong)
+              .orElse(null)
+      )));
+    } catch (final FederationException e) {
+      return this.errorHandler.handle(e);
+    }
+  }
+
+  private ServerResponse handleTrustMarkListing(final CompositeRecordSource source, final ServerRequest request) {
+    final TrustMarkIssuerProperties property = this.getPropertyByRequest(source, request, "/trust_mark_listing");
+    final TrustMarkIssuer trustMarkIssuer = this.factory.create(property);
+    try {
+      final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
+          List.of("trust_mark_id"));
+      return ServerResponse.ok().body(
+          trustMarkIssuer.trustMarkListing(new TrustMarkListingRequest(
+              params.getFirst("trust_mark_id"),
+              params.getFirst("sub")
+          ))
+      );
+    } catch (final FederationException e) {
+      return this.errorHandler.handle(e);
+    }
+  }
+
+  private ServerResponse handleTrustMarkRequest(final CompositeRecordSource source, final ServerRequest request) {
+    final TrustMarkIssuerProperties property = this.getPropertyByRequest(source, request, "/trust_mark");
+    final TrustMarkIssuer trustMarkIssuer = this.factory.create(property);
+    try {
+      final MultiValueMap<String, String> params = request.params();
+      return ServerResponse.ok().body(trustMarkIssuer.trustMark(new TrustMarkRequest(
+          params.getFirst("trust_mark_id"),
+          params.getFirst("sub")
+      )));
+    } catch (final FederationException e) {
+      return this.errorHandler.handle(e);
+    }
+  }
+
+  private RequestPredicate getRequestPredicate(final CompositeRecordSource source, final String endpoint) {
+    return request -> {
+      return source.getTrustMarkIssuerProperties().stream()
+          .map(prop -> this.routeFactory.createRoute(prop.issuerEntityId(), endpoint))
+          .reduce(p -> false, RequestPredicate::or)
+          .test(request);
+    };
+  }
+
+  private TrustMarkIssuerProperties getPropertyByRequest(final CompositeRecordSource source, final ServerRequest request,
+                                                         final String endpoint) {
+    return source.getTrustMarkIssuerProperties().stream()
+        .filter(prop -> this.routeFactory.createRoute(prop.issuerEntityId(), endpoint).test(request))
+        .findFirst()
+        .get();
   }
 }

@@ -21,6 +21,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import se.digg.oidfed.common.tree.Node;
 import se.digg.oidfed.common.tree.NodeKey;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -70,6 +71,7 @@ public class ResolverRedisOperations {
    */
   public void append(final ChildKey parent, final Node<EntityStatement> child) {
     this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey().getKey());
+    this.stringTemplate.expire(parent.getRedisKey(), Duration.ofHours(2));
   }
 
   /**
@@ -79,6 +81,7 @@ public class ResolverRedisOperations {
    */
   public void setData(final EntityKey key, final EntityStatement data) {
     this.template.opsForValue().set(key.getRedisKey(), data);
+    this.template.expire(key.getRedisKey(), Duration.ofHours(2));
   }
 
   /**
@@ -107,6 +110,7 @@ public class ResolverRedisOperations {
    */
   public void setRoot(final RootKey key, final Node<EntityStatement> root) {
     this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey().getKey());
+    this.stringTemplate.expire(key.getRedisKey(), Duration.ofHours(2));
   }
 
   /**

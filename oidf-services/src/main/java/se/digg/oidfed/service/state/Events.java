@@ -18,6 +18,4 @@ package se.digg.oidfed.service.state;
 
 public class Events {
   public record RegistryLoadedEvent() {}
-
-  public record RouterLoadedEvent() {}
 }

@@ -18,6 +18,7 @@ package se.digg.oidfed.service.router;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.digg.oidfed.common.entity.EntityConfigurationFactory;
@@ -37,13 +38,17 @@ public class EntityRouter implements Router {
   }
 
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
-    source.getAllEntities().stream()
-        .filter(EntityRecord::isHosted)
-        .forEach(entity -> {
-          route.GET(
-              this.routeFactory.createRoute(entity.getSubject(),
-                  "/.well-known/openid-federation") ,
-              request -> ServerResponse.ok().body(this.factory.createEntityConfiguration(entity).getSignedStatement().serialize()));
-        });
+    route.GET(request -> {
+      return source.getAllEntities().stream()
+          .map(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation"))
+          .reduce(p -> false, RequestPredicate::or)
+          .test(request);
+    }, request -> {
+      final EntityRecord entityRecord = source.getAllEntities().stream()
+          .filter(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation").test(request))
+          .findFirst()
+          .get();
+      return ServerResponse.ok().body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement().serialize());
+    });
   }
 }

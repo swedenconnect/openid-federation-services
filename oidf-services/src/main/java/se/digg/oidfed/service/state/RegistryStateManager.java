@@ -76,6 +76,7 @@ public class RegistryStateManager extends ReadyStateComponent {
           final CompositeRecord record = this.populator.reload();
           try {
             final String registrySha256 = StateHashFactory.hashState(record);
+            log.debug("Registry updated with new hash {}", registrySha256);
             this.state.updateRegistryState(registrySha256);
           } catch (final Exception e) {
             log.error("Failed to serialize state");

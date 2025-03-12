@@ -20,12 +20,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FetchRequest;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
+import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.service.trustanchor.TrustAnchorFactory;
+import se.digg.oidfed.trustanchor.TrustAnchor;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +40,11 @@ public class TrustAnchorRouter implements Router {
   private final RouteFactory routeFactory;
   private final ServerResponseErrorHandler errorHandler;
 
-  public TrustAnchorRouter(final TrustAnchorFactory trustAnchorFactory, final RouteFactory routeFactory, final ServerResponseErrorHandler errorHandler) {
+  public TrustAnchorRouter(
+      final TrustAnchorFactory trustAnchorFactory,
+      final RouteFactory routeFactory,
+      final ServerResponseErrorHandler errorHandler) {
+
     this.trustAnchorFactory = trustAnchorFactory;
     this.routeFactory = routeFactory;
     this.errorHandler = errorHandler;
@@ -45,41 +52,60 @@ public class TrustAnchorRouter implements Router {
 
   @Override
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
-    source.getTrustAnchorProperties()
-        .stream().map(this.trustAnchorFactory::create)
-        .forEach(ta -> {
-          final RequestPredicate fetchRoute = this.routeFactory.createRoute(ta.getEntityId(), "/fetch");
-          route.GET(fetchRoute, request -> {
-            try {
-              final MultiValueMap<String, String> params = RequireParameters.validate(
-                  request.params(), List.of("sub"));
-              return ServerResponse.ok().body(ta.fetchEntityStatement(
-                  new FetchRequest(
-                      params.getFirst("sub")
-                  )));
-            } catch (final FederationException e) {
-              return this.errorHandler.handle(e);
-            }
-          });
-          final RequestPredicate subordinateListing = this.routeFactory.createRoute(ta.getEntityId(),
-              "/subordinate_listing");
-          route.GET(subordinateListing, request -> {
-            try {
-              final MultiValueMap<String, String> params = request.params();
-              return ServerResponse.ok().body(ta.subordinateListing(new SubordinateListingRequest(
-                  params.getFirst("entity_type"),
-                  Optional.ofNullable(params.getFirst("trust_marked"))
-                      .map(Boolean::parseBoolean)
-                      .orElse(null),
-                  params.getFirst("trust_mark_id"),
-                  Optional.ofNullable(params.getFirst("intermediate"))
-                      .map(Boolean::parseBoolean)
-                      .orElse(null)
-              )));
-            } catch (final FederationException e) {
-              return this.errorHandler.handle(e);
-            }
-          });
-        });
+    route.GET(this.getRequestPredicate(source, "/fetch"),
+            request -> this.handleFetchEntityStatement(source, request))
+        .GET(this.getRequestPredicate(source, "/subordinate_listing"),
+            request -> this.handleSubordinateListing(source, request));
+  }
+
+  private ServerResponse handleFetchEntityStatement(final CompositeRecordSource source, final ServerRequest request) {
+    final TrustAnchorProperties trustAnchorProperties = this.getPropertyByRequest(source, request, "/fetch");
+    final TrustAnchor trustAnchor = this.trustAnchorFactory.create(trustAnchorProperties);
+    try {
+      final MultiValueMap<String, String> params = RequireParameters.validate(
+          request.params(), List.of("sub"));
+      return ServerResponse.ok().body(trustAnchor.fetchEntityStatement(
+          new FetchRequest(
+              params.getFirst("sub")
+          )));
+    } catch (final FederationException e) {
+      return this.errorHandler.handle(e);
+    }
+  }
+
+  private ServerResponse handleSubordinateListing(final CompositeRecordSource source, final ServerRequest request) {
+    final TrustAnchorProperties properties = this.getPropertyByRequest(source, request, "/subordinate_listing");
+    final TrustAnchor trustAnchor = this.trustAnchorFactory.create(properties);
+    try {
+      final MultiValueMap<String, String> params = request.params();
+      return ServerResponse.ok().body(trustAnchor.subordinateListing(new SubordinateListingRequest(
+          params.getFirst("entity_type"),
+          Optional.ofNullable(params.getFirst("trust_marked"))
+              .map(Boolean::parseBoolean)
+              .orElse(null),
+          params.getFirst("trust_mark_id"),
+          Optional.ofNullable(params.getFirst("intermediate"))
+              .map(Boolean::parseBoolean)
+              .orElse(null)
+      )));
+    } catch (final FederationException e) {
+      return this.errorHandler.handle(e);
+    }
+  }
+
+  private RequestPredicate getRequestPredicate(final CompositeRecordSource source, final String endpoint) {
+    return request -> {
+      return source.getTrustAnchorProperties().stream()
+          .map(prop -> this.routeFactory.createRoute(prop.getEntityId(), endpoint))
+          .reduce(p -> false, RequestPredicate::or)
+          .test(request);
+    };
+  }
+
+  private TrustAnchorProperties getPropertyByRequest(final CompositeRecordSource source, final ServerRequest request, final String endpoint) {
+    return source.getTrustAnchorProperties().stream()
+        .filter(prop -> this.routeFactory.createRoute(prop.getEntityId(), endpoint).test(request))
+        .findFirst()
+        .get();
   }
 }

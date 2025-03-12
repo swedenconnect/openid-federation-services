@@ -17,6 +17,7 @@
 package se.digg.oidfed.service.state;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.bouncycastle.util.encoders.Hex;
 import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord;
 
@@ -25,6 +26,10 @@ import java.security.MessageDigest;
 
 public class StateHashFactory {
   private static final ObjectMapper MAPPER = new ObjectMapper();
+
+  static {
+    MAPPER.registerModule(new JavaTimeModule());
+  }
 
   public static String hashState(final CompositeRecord record) throws Exception {
     final String json = StateHashFactory.MAPPER.writerFor(CompositeRecord.class).writeValueAsString(record);

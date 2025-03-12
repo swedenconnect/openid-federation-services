@@ -20,7 +20,6 @@ import java.util.Objects;
 
 public class InMemoryFederationServiceState implements FederationServiceState {
   private String registryState = "";
-  private String routerState = "";
   private String resolverState = "";
 
   @Override
@@ -28,19 +27,10 @@ public class InMemoryFederationServiceState implements FederationServiceState {
     this.registryState = stateHash;
   }
 
-  @Override
-  public Boolean isRouterStatesEqual() {
-    return true;
-  }
 
   @Override
-  public void updateRouterState(final String stateHash) {
-    this.routerState = stateHash;
-  }
-
-  @Override
-  public Boolean resolverNeedsReevaulation() {
-    return !this.resolverState.equals(this.routerState);
+  public Boolean resolverNeedsReevaulation(final String statehash) {
+    return !this.resolverState.equals(statehash);
   }
 
   @Override
@@ -56,15 +46,5 @@ public class InMemoryFederationServiceState implements FederationServiceState {
   @Override
   public String getRegistryState() {
     return this.registryState;
-  }
-
-  @Override
-  public Boolean isRouterStateCurrent(final String stateHash) {
-    return this.routerState.equals(stateHash);
-  }
-
-  @Override
-  public String getRouterState() {
-    return this.routerState;
   }
 }

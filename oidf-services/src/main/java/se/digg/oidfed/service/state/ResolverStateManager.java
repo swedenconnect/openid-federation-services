@@ -16,13 +16,12 @@
  */
 package se.digg.oidfed.service.state;
 
-import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import se.digg.oidfed.service.health.ReadyStateComponent;
-import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
+import se.digg.oidfed.service.resolver.cache.CompositeTreeLoader;
 
 /**
  * Readystate component for loading resolvers
@@ -32,16 +31,16 @@ import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 @Component
 public class ResolverStateManager extends ReadyStateComponent {
 
-  private final ResolverCacheRegistry registry;
+  private final CompositeTreeLoader treeLoader;
   private final ObservationRegistry observationRegistry;
   private final FederationServiceState state;
   private final ServiceLock redisServiceLock;
 
-  public ResolverStateManager(final ResolverCacheRegistry registry,
+  public ResolverStateManager(final CompositeTreeLoader treeLoader,
                               final ObservationRegistry observationRegistry,
                               final FederationServiceState state,
                               final ServiceLock redisServiceLock) {
-    this.registry = registry;
+    this.treeLoader = treeLoader;
     this.observationRegistry = observationRegistry;
     this.state = state;
     this.redisServiceLock = redisServiceLock;
@@ -64,27 +63,18 @@ public class ResolverStateManager extends ReadyStateComponent {
   }
 
   @EventListener
-  void handle(final Events.RouterLoadedEvent event) {
+  void handle(final Events.RegistryLoadedEvent event) {
     this.reloadResolvers();
     this.markReady();
   }
 
   private void reloadResolvers() {
-    final String routerState = this.state.getRouterState();
-    if (this.state.resolverNeedsReevaulation()) {
-      if (this.redisServiceLock.acquireLock(this.name())) {
+    if (this.redisServiceLock.acquireLock(this.name())) {
+      final String registryState = this.state.getRegistryState();
+      if (this.state.resolverNeedsReevaulation(registryState)) {
         // --- Critical Section Start ---
-        this.registry.getEntityIds()
-            .forEach(alias -> {
-              final Observation resolveFederationObservation =
-                  Observation.start(
-                      "Resolve federation %s".formatted(alias),
-                      this.observationRegistry
-                  );
-              this.registry.loadTree(alias);
-              resolveFederationObservation.stop();
-            });
-        this.state.updateResolverState(routerState);
+        this.treeLoader.loadTree();
+        this.state.updateResolverState(registryState);
         this.redisServiceLock.close(this.name());
         // --- Critical Section End
       }

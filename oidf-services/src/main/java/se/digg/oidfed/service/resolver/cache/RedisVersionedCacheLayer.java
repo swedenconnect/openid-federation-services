@@ -95,7 +95,7 @@ public class RedisVersionedCacheLayer implements ResolverCache {
 
   @Override
   public void useNextVersion() {
-    this.versionTemplate.boundValueOps("%s:tree:version".formatted(this.properties.entityIdentifier())).set(getNextVersion());
+    this.versionTemplate.boundValueOps("%s:tree:version".formatted(this.properties.entityIdentifier())).set(this.getNextVersion());
   }
 
   @Override

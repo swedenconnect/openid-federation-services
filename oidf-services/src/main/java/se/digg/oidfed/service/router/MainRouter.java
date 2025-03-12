@@ -17,6 +17,8 @@
 package se.digg.oidfed.service.router;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -33,29 +35,23 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
  *
  * @author Felix Hellman
  */
-@Component
+@Configuration
 @Slf4j
 public class MainRouter {
 
-
   private final CompositeRecordSource source;
-  private final RouterFunctionMapping mapping;
   private final List<Router> routers;
 
-  public MainRouter(final CompositeRecordSource source, final RouterFunctionMapping mapping, final List<Router> routers) {
+  public MainRouter(final CompositeRecordSource source, final List<Router> routers) {
     this.source = source;
-    this.mapping = mapping;
     this.routers = routers;
   }
 
-  /**
-   * Calculates and updates endpoints for entity-configurations.
-   */
-  public void reEvaluateEndpoints() {
+
+  @Bean
+  public RouterFunction<ServerResponse> reEvaluateEndpoints() {
     final RouterFunctions.Builder route = route();
     this.routers.forEach(router -> router.evaluateEndpoints(this.source, route));
-    final RouterFunction<ServerResponse> functions = route.build();
-    this.mapping.setRouterFunction(functions);
-    RouterFunctions.changeParser(functions, this.mapping.getPatternParser());
+    return route.build();
   }
 }

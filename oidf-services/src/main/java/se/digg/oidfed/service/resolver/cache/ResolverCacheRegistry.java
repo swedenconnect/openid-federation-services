@@ -17,6 +17,8 @@
 package se.digg.oidfed.service.resolver.cache;
 
 import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
+import se.digg.oidfed.service.resolver.ResolverFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -56,19 +58,7 @@ public class ResolverCacheRegistry {
     this.getRegistration(entityId).ifPresent(c -> c.cache().useNextVersion());
   }
 
-  /**
-   * Load/Reloads a tree.
-   *
-   * @param entityId to load
-   */
-  public void loadTree(final String entityId) {
-    this.getRegistration(entityId).ifPresent(r -> {
-      r.tree()
-          .load(r.loader(), r.properties().trustAnchor());
-    });
-  }
-
-  private Optional<ResolverCacheRegistration> getRegistration(final String entityId) {
+  public Optional<ResolverCacheRegistration> getRegistration(final String entityId) {
     final Optional<ResolverCacheRegistration> cacheRegistration = Optional.ofNullable(this.registrations.get(entityId));
     if (cacheRegistration.isEmpty()) {
       log.warn("Tried to access cache by entityId {} but no such cache exists", entityId);
