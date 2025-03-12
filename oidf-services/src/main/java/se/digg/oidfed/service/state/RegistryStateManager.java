@@ -60,7 +60,7 @@ public class RegistryStateManager extends ReadyStateComponent {
   /**
    * Trigger reload of this component if needed.
    */
-  @Scheduled(cron = "0 * * * *")
+  @Scheduled(cron = "0 * * * * *")
   public void reload() {
     if (this.ready()) {
       //No need to execute cron job during startup

@@ -14,19 +14,10 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.actuator;
+package se.digg.oidfed.suites;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestClient;
-import se.digg.oidfed.service.IntegrationTestParent;
+import org.springframework.context.ApplicationContext;
 
-public class ActuatorIT extends IntegrationTestParent {
-  @Test
-  void testPrometheusMetrics() throws InterruptedException {
-    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(this.managementPort)).build();
-    final String body = client.get().uri("/actuator/prometheus")
-        .retrieve()
-        .body(String.class);
-    System.out.println(body);
-  }
+public class Context {
+  public static ThreadLocal<ApplicationContext> applicationContext;
 }

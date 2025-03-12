@@ -19,9 +19,9 @@ package se.digg.oidfed.service.state;
 import java.util.Objects;
 
 public class InMemoryFederationServiceState implements FederationServiceState {
-  private String registryState;
-  private String routerState;
-  private String resolverState;
+  private String registryState = "";
+  private String routerState = "";
+  private String resolverState = "";
 
   @Override
   public void updateRegistryState(final String stateHash) {
@@ -40,7 +40,7 @@ public class InMemoryFederationServiceState implements FederationServiceState {
 
   @Override
   public Boolean resolverNeedsReevaulation() {
-    return this.resolverState.equals(this.routerState);
+    return !this.resolverState.equals(this.routerState);
   }
 
   @Override
@@ -50,7 +50,7 @@ public class InMemoryFederationServiceState implements FederationServiceState {
 
   @Override
   public Boolean isStateMissing() {
-    return Objects.isNull(this.registryState);
+    return Objects.isNull(this.registryState) || this.registryState.isBlank();
   }
 
   @Override

@@ -23,27 +23,29 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.HttpClientErrorException;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
-import se.digg.oidfed.service.IntegrationTestParent;
 import se.digg.oidfed.service.entity.TestFederationEntities;
 import se.digg.oidfed.service.keys.FederationKeys;
 import se.digg.oidfed.service.testclient.FederationClients;
+import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
 import se.digg.oidfed.service.testclient.TrustAnchorClient;
+import se.digg.oidfed.suites.Context;
 
 import java.util.List;
 
-class TrustAnchorIT extends IntegrationTestParent {
+@Slf4j
+@ExtendWith(TestFederationClientParameterResolver.class)
+public class TrustAnchorTestCases {
 
   public static final String TRUST_MARK_ID = "https://authorization.local.swedenconnect.se/authorization-tmi/certified";
-  @Autowired
-  private FederationKeys federationKeys;
 
   @Test
   @DisplayName("Subordinate listing : 200")
@@ -60,7 +62,8 @@ class TrustAnchorIT extends IntegrationTestParent {
     final TrustAnchorClient client = clients.authorization().trustAnchor();
     final SignedJWT signedJWT = client.fetch(TestFederationEntities.Authorization.OP_1);
     Assertions.assertNotNull(signedJWT);
-    final JWK first = federationKeys.signKeys().toPublicJWKSet().toPublicJWKSet().getKeys().getFirst();
+    final FederationKeys keys = Context.applicationContext.get().getBean(FederationKeys.class);
+    final JWK first = keys.signKeys().toPublicJWKSet().toPublicJWKSet().getKeys().getFirst();
     final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory().createJWSVerifier(signedJWT.getHeader(), first.toRSAKey().toKeyPair().getPublic());
     signedJWT.verify(jwsVerifier);
   }

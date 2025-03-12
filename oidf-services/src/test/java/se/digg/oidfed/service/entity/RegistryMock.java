@@ -24,6 +24,8 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
@@ -43,29 +45,37 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
 
-import static se.digg.oidfed.service.IntegrationTestParent.RP_FROM_REGISTRY_ENTITY;
-
 @Slf4j
 public class RegistryMock {
 
   private final RegistryRecordSigner registryRecordSigner;
+  public static final EntityID RP_FROM_REGISTRY_ENTITY = new EntityID("https://municipality.local.swedenconnect.se/rp-from-registry");
+  @Getter
+  private final int port;
+  private WireMockServer wireMockServer;
 
-  public RegistryMock() throws JOSEException, KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
+  public RegistryMock(final int port) throws JOSEException, KeyStoreException, IOException, CertificateException,
+      NoSuchAlgorithmException {
     final KeyStore keystore = KeyStore.getInstance(new ClassPathResource("signkey.p12").getFile(), "changeit".toCharArray());
     final JWKSet set = new JWKSet(JWK.load(
         keystore,
         "1",
         "changeit".toCharArray()
     ));
+    this.port = port;
+    this.wireMockServer = new WireMockServer(port);
 
     this.registryRecordSigner = new RegistryRecordSigner(new RSASSASigner(set.getKeys().getFirst().toRSAKey()));
+  }
+  
+  public void stop() {
+    this.wireMockServer.stop();
   }
 
 
   public void init(final String instanceId) throws Exception {
-    final WireMockServer wireMockServer = new WireMockServer(9090);
-    wireMockServer.start();
-    WireMock.configureFor(9090);
+    this.wireMockServer.start();
+    WireMock.configureFor(this.port);
 
 
     final String policyId = "my-super-policy";

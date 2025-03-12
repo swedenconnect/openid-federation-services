@@ -14,17 +14,21 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
+package se.digg.oidfed.service.actuator;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.web.client.RestClient;
 
-class ResolverControllerTest {
+public class ActuatorTestCases {
 
-  /**
-   * Placeholder test that verifies that surefire runs this test.
-   */
+  public static int managementPort;
+
   @Test
-  void test() {
-
+  void testPrometheusMetrics() throws InterruptedException {
+    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(managementPort)).build();
+    final String body = client.get().uri("/actuator/prometheus")
+        .retrieve()
+        .body(String.class);
+    System.out.println(body);
   }
 }

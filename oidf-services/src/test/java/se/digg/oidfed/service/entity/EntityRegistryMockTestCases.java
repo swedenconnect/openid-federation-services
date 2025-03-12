@@ -20,22 +20,15 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ActiveProfiles;
-import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
-import se.digg.oidfed.common.keys.KeyRegistry;
-import se.digg.oidfed.service.IntegrationTestParent;
+import org.junit.jupiter.api.extension.ExtendWith;
 import se.digg.oidfed.service.testclient.FederationClients;
+import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
 
-@ActiveProfiles("integration-test")
+import static se.digg.oidfed.service.entity.RegistryMock.RP_FROM_REGISTRY_ENTITY;
+
 @Slf4j
-public class EntityRegistryMockIT extends IntegrationTestParent {
-
-  @Autowired
-  KeyRegistry registry;
-
-  @Autowired
-  CompositeRecordSource source;
+@ExtendWith(TestFederationClientParameterResolver.class)
+public class EntityRegistryMockTestCases {
 
   @Test
   void test(final FederationClients clients) {
@@ -58,7 +51,7 @@ public class EntityRegistryMockIT extends IntegrationTestParent {
   @Test
   void dynamicRegistration(final FederationClients clients) {
     final EntityStatement dynamicallyRegistered =
-        clients.entity().getEntityConfiguration(IntegrationTestParent.RP_FROM_REGISTRY_ENTITY);
+        clients.entity().getEntityConfiguration(RP_FROM_REGISTRY_ENTITY);
     Assertions.assertEquals(RP_FROM_REGISTRY_ENTITY, dynamicallyRegistered.getEntityID());
     Assertions.assertNotNull(dynamicallyRegistered);
   }

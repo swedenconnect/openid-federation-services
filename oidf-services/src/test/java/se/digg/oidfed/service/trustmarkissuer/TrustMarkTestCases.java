@@ -23,19 +23,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.ActiveProfiles;
-import se.digg.oidfed.service.IntegrationTestParent;
+import org.junit.jupiter.api.extension.ExtendWith;
 import se.digg.oidfed.service.entity.TestFederationEntities;
 import se.digg.oidfed.service.router.responses.TrustMarkStatusReply;
 import se.digg.oidfed.service.testclient.FederationClients;
+import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
 
 import java.text.ParseException;
 import java.util.List;
 
-@ActiveProfiles({"integration-test"})
 @Slf4j
-class TrustMarkIT extends IntegrationTestParent {
+@ExtendWith(TestFederationClientParameterResolver.class)
+public class TrustMarkTestCases {
 
+  public static int serverPort;
 
   public static final EntityID TRUST_MARK_ID = new EntityID("https://authorization.local.swedenconnect.se/authorization-tmi/certified");
 
@@ -43,10 +44,6 @@ class TrustMarkIT extends IntegrationTestParent {
   public void setup() throws InterruptedException {
     RestAssured.port = this.serverPort;
     RestAssured.basePath = "/tm";
-    while (!applicationReadyEndpoint.applicationReady()) {
-      log.info("Application not ready yet.. waiting for setup");
-      Thread.sleep(500L);
-    }
   }
 
   @Test

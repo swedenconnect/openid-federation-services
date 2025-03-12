@@ -21,20 +21,23 @@ import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.client.HttpClientErrorException;
-import se.digg.oidfed.service.IntegrationTestParent;
 import se.digg.oidfed.service.entity.TestFederationEntities;
 import se.digg.oidfed.service.testclient.FederationClients;
+import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
 
 import java.text.ParseException;
 import java.util.List;
 
-class ResolverIT extends IntegrationTestParent {
+@Slf4j
+@ExtendWith(TestFederationClientParameterResolver.class)
+public class ResolverTestCases {
 
   @Test
   @DisplayName("Resolve Entity: 200")
@@ -197,7 +200,7 @@ class ResolverIT extends IntegrationTestParent {
         "Failed to validate trust chain:[se.digg.oidfed.resolver.chain.SignatureValidationStep]" +
             " messages:[Failed to validate trustchain signatures]"
         , problem.getProperties().get(
-        "error_description"));
+            "error_description"));
   }
 
   private static void verifyTrustChain(final List<EntityStatement> trustChain) {

@@ -27,8 +27,9 @@ import org.springframework.test.context.ActiveProfiles;
 import static io.restassured.RestAssured.given;
 
 @ActiveProfiles({"integration-test"})
-class GeneralErrorHandlingIT extends IntegrationTestParent {
+public class GeneralErrorHandlingTestCases {
 
+  public static int serverPort = 0;
 
   @BeforeEach
   public void setup() {
