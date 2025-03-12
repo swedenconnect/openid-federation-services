@@ -21,8 +21,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
 import java.time.Instant;
@@ -37,26 +37,14 @@ import java.util.Optional;
  */
 public class SubordinateStatementFactory {
 
-  private final RefreshAheadRecordRegistrySource source;
-
   private final SignerFactory factory;
-
-  private final String baseUri;
-
   /**
    * Constructor.
    *
-   * @param source  of policies
    * @param factory for signing hosted records
-   * @param baseUri for hosted records
    */
-  public SubordinateStatementFactory(
-      final RefreshAheadRecordRegistrySource source,
-      final SignerFactory factory,
-      final String baseUri) {
-    this.source = source;
+  public SubordinateStatementFactory(final SignerFactory factory) {
     this.factory = factory;
-    this.baseUri = baseUri;
   }
 
   /**
@@ -70,24 +58,14 @@ public class SubordinateStatementFactory {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-      Optional.ofNullable(subject.getPolicyRecordId()).flatMap(this.source::getPolicy)
-          .ifPresent(policy -> builder.claim("metadata_policy", policy.getPolicy()));
-
-      Optional.ofNullable(subject.getOverrideConfigurationLocation())
-          .map(location -> {
-            if (location.startsWith("/")) {
-              return "%s%s/.well-known/openid-federation".formatted(this.baseUri, location);
-            }
-            return location;
-          })
-          .ifPresent(location -> builder.claim("subject_entity_configuration_location", location));
+      Optional.ofNullable(subject.getPolicyRecord()).ifPresent(policyRecord -> builder.claim("metadata_policy",
+          policyRecord.getPolicy()));
 
       Optional.ofNullable(subject.getJwks()).map(JWKSet::toJSONObject)
           .ifPresentOrElse(jwks -> builder.claim("jwks", jwks)
               , () -> {
                 builder.claim("jwks", issuer.getJwks().toJSONObject());
               });
-
 
       final JWTClaimsSet jwtClaimsSet = builder
           .issueTime(Date.from(Instant.now()))

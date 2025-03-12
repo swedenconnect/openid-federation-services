@@ -20,7 +20,7 @@ import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.EntityConfigurationRequest;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
@@ -32,7 +32,6 @@ import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidIssuerException;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
-import se.digg.oidfed.common.module.Submodule;
 import se.digg.oidfed.common.tree.NodeKey;
 
 import java.util.List;
@@ -44,9 +43,9 @@ import java.util.Map;
  * @author Felix Hellman
  */
 @Slf4j
-public class TrustAnchor implements Submodule {
+public class TrustAnchor {
 
-  private final EntityRecordRegistry registry;
+  private final CompositeRecordSource source;
 
   private final TrustAnchorProperties properties;
 
@@ -58,19 +57,19 @@ public class TrustAnchor implements Submodule {
   /**
    * Constructor.
    *
-   * @param registry         to use
+   * @param source           to use
    * @param properties       to use
    * @param factory          to constructor entity statements
    * @param federationClient to use for resolving entity configurations
    */
   public TrustAnchor(
-      final EntityRecordRegistry registry,
+      final CompositeRecordSource source,
       final TrustAnchorProperties properties,
       final SubordinateStatementFactory factory,
       final FederationClient federationClient
   ) {
 
-    this.registry = registry;
+    this.source = source;
     this.properties = properties;
     this.factory = factory;
     this.federationClient = federationClient;
@@ -85,7 +84,7 @@ public class TrustAnchor implements Submodule {
    */
   public String fetchEntityStatement(final FetchRequest request)
       throws InvalidIssuerException, NotFoundException {
-    final EntityRecord issuer = this.registry.getEntity(
+    final EntityRecord issuer = this.source.getEntity(
             new NodeKey(
                 this.properties.getEntityId().getValue(),
                 this.properties.getEntityId().getValue()
@@ -94,16 +93,16 @@ public class TrustAnchor implements Submodule {
         .orElseThrow(
             () -> new InvalidIssuerException("Entity not found for:'%s'".formatted(this.properties.getEntityId()))
         );
-    final EntityRecord subject = this.registry.getEntity(new NodeKey(
-        this.properties.getEntityId().getValue(),
-        request.subject()
+    final EntityRecord subject = this.source.getEntity(new NodeKey(
+            this.properties.getEntityId().getValue(),
+            request.subject()
         ))
         .orElseThrow(
             () -> new NotFoundException("Entity not found for subject:'%s'".formatted(request.subject()))
         );
 
     if (!subject.getIssuer().equals(issuer.getSubject())) {
-      throw new IllegalArgumentException("Subject is not listed under this issuer iss:%s sub:%s"
+      throw new IllegalArgumentException("Subject is not listed under this issuer trustMarkIssuer:%s sub:%s"
           .formatted(subject.getIssuer(), issuer.getSubject()));
     }
 
@@ -118,7 +117,7 @@ public class TrustAnchor implements Submodule {
    * @throws FederationException when loading entity configurations fails
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
-    final List<String> subordinates = this.registry
+    final List<String> subordinates = this.source
         .findSubordinates(this.properties.getEntityId().getValue()).stream()
         .filter(er -> !er.getSubject().equals(this.properties.getEntityId()))
         .map(ec -> ec.getSubject().getValue())
@@ -128,7 +127,7 @@ public class TrustAnchor implements Submodule {
       return subordinates;
     }
 
-    return subordinates.stream().toList()
+    final List<String> list = subordinates.stream().toList()
         .stream()
         .map(s -> new FederationRequest<>(new EntityConfigurationRequest(new EntityID(s)), Map.of(), true))
         .map(this.federationClient::entityConfiguration)
@@ -136,15 +135,16 @@ public class TrustAnchor implements Submodule {
         .map(EntityStatement::getEntityID)
         .map(Identifier::getValue)
         .toList();
+    if (list.isEmpty()) {
+      throw new NotFoundException("No subordinates found");
+    }
+    return list;
   }
 
-  @Override
-  public String getAlias() {
-    return this.properties.getAlias();
-  }
-
-  @Override
-  public List<EntityID> getEntityIds() {
-    return List.of(this.properties.getEntityId());
+  /**
+   * @return entity id of this trust anchor
+   */
+  public EntityID getEntityId() {
+    return this.properties.getEntityId();
   }
 }

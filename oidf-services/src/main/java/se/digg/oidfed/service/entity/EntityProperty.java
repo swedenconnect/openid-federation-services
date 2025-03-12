@@ -26,6 +26,7 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.util.Assert;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.HostedRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSource;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.JsonObjectProperty;
@@ -46,14 +47,14 @@ import java.util.Optional;
 public class EntityProperty {
   private String issuer;
   private String subject;
-  private String policyName;
+  private PolicyRecord policyRecord;
   private String overrideConfigurationLocation;
   private List<String> publicKeys;
   @NestedConfigurationProperty
   private HostedRecordProperty hostedRecord;
 
   /**
-   * Properties for hosted records
+   * Properties for hosted trustMarkSubjects
    *
    * @author Felix Hellman
    */
@@ -114,7 +115,7 @@ public class EntityProperty {
     return new EntityRecord(
         new EntityID(this.issuer),
         new EntityID(this.subject),
-        this.policyName,
+        this.policyRecord,
         jwkSet,
         this.overrideConfigurationLocation,
         this.hostedRecord(this.hostedRecord).orElse(null)

@@ -17,6 +17,8 @@
 package se.digg.oidfed.service.resolver.cache;
 
 import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
+import se.digg.oidfed.service.resolver.ResolverFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -33,45 +35,37 @@ public class ResolverCacheRegistry {
   private final Map<String, ResolverCacheRegistration> registrations = new ConcurrentHashMap<>();
 
   /**
-   * @param alias        of the cache to register
+   * @param entityId        of the cache to register
    * @param registration for the cache
    */
-  public void registerCache(final String alias, final ResolverCacheRegistration registration) {
-    this.registrations.put(alias, registration);
+  public void registerCache(final String entityId, final ResolverCacheRegistration registration) {
+    this.registrations.put(entityId, registration);
   }
 
   /**
    * @return a set of all aliases
    */
-  public Set<String> getAliases() {
+  public Set<String> getEntityIds() {
     return this.registrations.keySet();
   }
 
   /**
-   * Updates the version for a given alias.
+   * Updates the version for a given entityId.
    *
-   * @param alias to update
+   * @param entityId to update
    */
-  public void updateVersion(final String alias) {
-    this.getRegistration(alias).ifPresent(c -> c.cache().useNextVersion());
+  public void updateVersion(final String entityId) {
+    this.getRegistration(entityId).ifPresent(c -> c.cache().useNextVersion());
   }
 
   /**
-   * Load/Reloads a tree.
-   *
-   * @param alias to load
+   * @param entityId of registration
+   * @return registration if present
    */
-  public void loadTree(final String alias) {
-    this.getRegistration(alias).ifPresent(r -> {
-      r.tree()
-          .load(r.loader(), r.properties().trustAnchor());
-    });
-  }
-
-  private Optional<ResolverCacheRegistration> getRegistration(final String alias) {
-    final Optional<ResolverCacheRegistration> cacheRegistration = Optional.ofNullable(this.registrations.get(alias));
+  public Optional<ResolverCacheRegistration> getRegistration(final String entityId) {
+    final Optional<ResolverCacheRegistration> cacheRegistration = Optional.ofNullable(this.registrations.get(entityId));
     if (cacheRegistration.isEmpty()) {
-      log.warn("Tried to access cache by alias {} but no such cache exists", alias);
+      log.warn("Tried to access cache by entityId {} but no such cache exists", entityId);
     }
     return cacheRegistration;
   }

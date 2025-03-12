@@ -25,18 +25,21 @@ import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
+import se.digg.oidfed.common.entity.integration.CacheRecordPopulator;
+import se.digg.oidfed.common.entity.integration.CachedRecordSource;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
+import se.digg.oidfed.common.entity.integration.PropertyRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.entity.integration.federation.FederationLoadingCache;
-import se.digg.oidfed.common.entity.integration.registry.FailableRecordRegistryIntegration;
 import se.digg.oidfed.common.entity.integration.registry.JWSRegistryVerifier;
-import se.digg.oidfed.common.entity.integration.registry.ModuleResponse;
 import se.digg.oidfed.common.entity.integration.registry.RecordRegistryIntegration;
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.registry.RegistryProperties;
 import se.digg.oidfed.common.entity.integration.registry.RegistryRefreshAheadCache;
 import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.cache.CacheFactory;
@@ -90,21 +93,9 @@ public class OpenIdFederationConfiguration {
   }
 
   @Bean
-  RefreshAheadRecordRegistrySource refreshAheadRecordRegistrySource(final RegistryProperties properties,
-                                                                    final FailableRecordRegistryIntegration integration,
-                                                                    final RegistryRefreshAheadCache cache) {
-    return new RefreshAheadRecordRegistrySource(properties, integration, cache);
-  }
-
-  @Bean
-  FailableRecordRegistryIntegration failableRecordRegistryIntegration(final RecordRegistryIntegration integration) {
-    return new FailableRecordRegistryIntegration(integration);
-  }
-
-  @Bean
   RegistryRefreshAheadCache refreshAheadCache(final CacheFactory factory) {
     return new RegistryRefreshAheadCache(
-        factory.create(ModuleResponse.class),
+        factory.create(ModuleRecord.class),
         factory.createListValueCache(TrustMarkSubjectRecord.class),
         factory.createListValueCache(EntityRecord.class),
         factory.create(PolicyRecord.class)
@@ -149,5 +140,40 @@ public class OpenIdFederationConfiguration {
   @Bean
   RestClientFactory restClientFactory(final SslBundles bundles, final ObservationRegistry registry) {
     return new RestClientFactory(bundles, registry);
+  }
+
+  @Bean
+  CompositeRecordSource compositeRecordSource(
+      final PropertyRecordSource propertyRecordSource,
+      final CachedRecordSource cachedRecordSource) {
+    return new CompositeRecordSource(
+        List.of(
+            propertyRecordSource,
+            cachedRecordSource
+        )
+    );
+  }
+
+  @Bean
+  CachedRecordSource cachedRecordSource(final CacheFactory factory) {
+    return new CachedRecordSource(factory.create(CompositeRecord.class));
+  }
+
+  @Bean
+  CacheRecordPopulator cacheRecordPopulator(
+      final CachedRecordSource cachedRecordSource,
+      final RecordRegistryIntegration recordRegistryIntegration,
+      final OpenIdFederationConfigurationProperties properties
+  ) {
+    return new CacheRecordPopulator(
+        cachedRecordSource,
+        recordRegistryIntegration,
+        properties.getRegistry().getIntegration().getInstanceId()
+    );
+  }
+
+  @Bean
+  PropertyRecordSource propertyRecordSource(final RegistryProperties properties) {
+    return new PropertyRecordSource(properties);
   }
 }

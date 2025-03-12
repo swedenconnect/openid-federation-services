@@ -76,12 +76,10 @@ openid:
           entity-identifier: https://municipality.local.swedenconnect.se/resolver
           trust-anchor: https://municipality.local.swedenconnect.se/ta
           sign-key-alias: sign-key-1
-          alias: municipality-resolver
     trust-anchor:
       active: true
       anchors:
-        - alias: ta
-          entity-identifier: https://municipality.local.swedenconnect.se/ta
+        - entity-identifier: https://municipality.local.swedenconnect.se/ta
 
 management:
   endpoints:

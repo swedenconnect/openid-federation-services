@@ -18,17 +18,13 @@ package se.digg.oidfed.service.submodule;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.jwt.SignerFactory;
-import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.service.keys.FederationKeys;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerFactory;
-import se.digg.oidfed.trustanchor.TrustAnchor;
-import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkSigner;
 
 import java.time.Clock;
-import java.util.List;
 
 /**
  * Configuration for submodules.
@@ -38,21 +34,9 @@ import java.util.List;
 @Configuration
 public class SubmoduleConfiguration {
   @Bean
-  InMemorySubModuleRegistry inMemorySubModuleRegistry(
-      final List<Resolver> resolvers,
-      final List<TrustAnchor> trustAnchors,
-      final List<TrustMarkIssuer> trustMarkIssuers) {
-    final InMemorySubModuleRegistry inMemorySubModuleRegistry = new InMemorySubModuleRegistry();
-    inMemorySubModuleRegistry.registerResolvers(resolvers);
-    inMemorySubModuleRegistry.registerTrustAnchor(trustAnchors);
-    inMemorySubModuleRegistry.registerTrustMarkIssuer(trustMarkIssuers);
-    return inMemorySubModuleRegistry;
-  }
-
-  @Bean
   TrustMarkIssuerFactory factory(
       final TrustMarkSigner signer,
-      final RefreshAheadRecordRegistrySource source,
+      final CompositeRecordSource source,
       final Clock clock
   ) {
     return new TrustMarkIssuerFactory(signer, source, clock);

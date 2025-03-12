@@ -17,9 +17,9 @@
 package se.digg.oidfed.service.resolver.cache;
 
 /**
- * @param alias that has been updated
+ * @param entityId that has been updated
  *
  * @author Felix Hellman
  */
-public record TreeUpdatedEvent(String alias) {
+public record TreeUpdatedEvent(String entityId) {
 }

@@ -17,10 +17,8 @@
 package se.digg.oidfed.service.resolver;
 
 import org.springframework.context.ApplicationEventPublisher;
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
-import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
+import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
@@ -41,14 +39,15 @@ public class EntityStatementTreeLoaderFactory {
   private final ApplicationEventPublisher publisher;
 
   /**
-   * @param client for fetching entities
-   * @param executionStrategy for executing iterations
+   * @param client              for fetching entities
+   * @param executionStrategy   for executing iterations
    * @param errorContextFactory for creating error context
-   * @param publisher publisher of events.
+   * @param publisher           publisher of events.
    */
   public EntityStatementTreeLoaderFactory(final FederationClient client,
-      final ExecutionStrategy executionStrategy,
-      final ErrorContextFactory errorContextFactory, final ApplicationEventPublisher publisher) {
+                                          final ExecutionStrategy executionStrategy,
+                                          final ErrorContextFactory errorContextFactory,
+                                          final ApplicationEventPublisher publisher) {
     this.client = client;
     this.executionStrategy = executionStrategy;
     this.errorContextFactory = errorContextFactory;
@@ -57,6 +56,7 @@ public class EntityStatementTreeLoaderFactory {
 
   /**
    * Creates a new EntityStatementTreeLoader
+   *
    * @param properties for the loader
    * @return new instance of a tree loader
    */
@@ -64,7 +64,7 @@ public class EntityStatementTreeLoaderFactory {
     return new EntityStatementTreeLoader(this.client, this.executionStrategy,
         new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
         this.errorContextFactory)
-        .withAdditionalPostHook(() -> this.publisher.publishEvent(new TreeUpdatedEvent(properties.alias())));
+        .withAdditionalPostHook(() -> this.publisher.publishEvent(new TreeUpdatedEvent(properties.entityIdentifier())));
   }
 
 }

@@ -23,8 +23,6 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.Expirable;
-import se.digg.oidfed.common.entity.integration.ListCache;
-import se.digg.oidfed.common.entity.integration.MultiKeyCache;
 
 import java.time.Clock;
 import java.util.List;
@@ -81,30 +79,6 @@ public class RedisCacheFactory implements CacheFactory {
     template.setKeySerializer(this.createKeySerializer());
     template.afterPropertiesSet();
     return new RedisCache<>(template, this.clock);
-  }
-
-  @Override
-  public <V> ListCache<String, V> createListCache(final Class<V> v) {
-    final RedisTemplate<String, V> template = new RedisTemplate<>();
-    template.setConnectionFactory(this.factory);
-    Optional.ofNullable(this.serializerMap.get(v)).ifPresent(template::setValueSerializer);
-    template.setKeySerializer(this.createKeySerializer());
-    template.afterPropertiesSet();
-    return new RedisListCache<>(template);
-  }
-
-  @Override
-  public <V> MultiKeyCache<V> createMultiKeyCache(final Class<V> v) {
-    final RedisTemplate<String, V> template = new RedisTemplate<>();
-    template.setConnectionFactory(this.factory);
-    template.setKeySerializer(this.createKeySerializer());
-    Optional.ofNullable(this.serializerMap.get(v)).ifPresent(template::setValueSerializer);
-    template.afterPropertiesSet();
-    final RedisTemplate<String, String> stringTemplate = new RedisTemplate<>();
-    stringTemplate.setConnectionFactory(this.factory);
-    stringTemplate.afterPropertiesSet();
-    stringTemplate.setKeySerializer(this.createKeySerializer());
-    return new RedisMultiKeyCache<>(template, stringTemplate, v);
   }
 
   private InstanceSpecificRedisKeySerializer createKeySerializer() {

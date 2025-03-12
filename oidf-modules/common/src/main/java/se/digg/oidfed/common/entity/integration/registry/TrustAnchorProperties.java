@@ -28,20 +28,14 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TrustAnchorProperties {
-  private final String alias;
   private final EntityID entityId;
-  private final String basePath;
 
   /**
    * Constructor.
-   * @param alias of the trust anchor
    * @param entityId of the trust anchor
-   * @param basePath
    */
-  public TrustAnchorProperties(final String alias, final EntityID entityId, final String basePath) {
-    this.alias = alias;
+  public TrustAnchorProperties(final EntityID entityId) {
     this.entityId = entityId;
-    this.basePath = basePath;
   }
 
   /**

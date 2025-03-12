@@ -22,7 +22,9 @@ import se.digg.oidfed.common.entity.integration.Expirable;
 
 import java.io.Serializable;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 /**
@@ -49,7 +51,7 @@ public class RedisCache<K extends Serializable, V> implements Cache<K, V> {
 
   @Override
   public void add(final K key, final Expirable<V> value) {
-    this.valueTemplate.opsForValue().set(key, value);
+    this.valueTemplate.opsForValue().set(key, value, Duration.between(Instant.now(this.clock), value.getExpiration()));
   }
 
   @Override
@@ -61,8 +63,8 @@ public class RedisCache<K extends Serializable, V> implements Cache<K, V> {
 
   @Override
   public boolean shouldRefresh(final K key) {
-    return Optional.ofNullable(this.valueTemplate.opsForValue().get(key)).map(Expirable::getExpiration)
-        .map(exp -> exp.isAfter(Instant.now(this.clock)))
+    return Optional.ofNullable(this.valueTemplate.opsForValue().get(key)).map(Expirable::getIssuedAt)
+        .map(iat -> iat.isAfter(Instant.now(this.clock).plus(1, ChronoUnit.HOURS)))
         .orElse(true);
   }
 }

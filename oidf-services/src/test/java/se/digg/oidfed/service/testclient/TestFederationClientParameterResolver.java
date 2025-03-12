@@ -26,6 +26,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestClient;
 import se.digg.oidfed.service.rest.RestClientFactory;
 import se.digg.oidfed.service.rest.RestClientProperties;
+import se.digg.oidfed.suites.Context;
 
 public class TestFederationClientParameterResolver implements ParameterResolver {
 
@@ -36,7 +37,7 @@ public class TestFederationClientParameterResolver implements ParameterResolver 
 
   @Override
   public Object resolveParameter(final ParameterContext parameterContext, final ExtensionContext extensionContext) throws ParameterResolutionException {
-    final SslBundles bundles = SpringExtension.getApplicationContext(extensionContext).getBean(SslBundles.class);
+    final SslBundles bundles = Context.applicationContext.get().getBean(SslBundles.class);
     final RestClientProperties.RestClientProperty property = new RestClientProperties.RestClientProperty();
     property.setTrustStoreBundleName("oidf-internal");
     property.setName("test");

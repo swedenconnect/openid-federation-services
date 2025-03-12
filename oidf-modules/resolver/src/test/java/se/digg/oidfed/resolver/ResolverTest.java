@@ -115,7 +115,7 @@ class ResolverTest {
     entityStatementTreeLoader.resolveTree("https://start.test", entityStatementTree);
 
     final ResolverProperties properties = new ResolverProperties("https://start.test", Duration.ofDays(7), List.of(KEY), "https://resolver" +
-        ".test", Duration.ofSeconds(10), "resolve");
+        ".test", Duration.ofSeconds(10));
     final String response = createResolver(properties, entityStatementTree).resolve(new ResolveRequest("https://second.test", "https://start" +
         ".test", null));
 

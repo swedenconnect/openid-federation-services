@@ -78,16 +78,27 @@ public class ResolverFactory {
    * @return new instance
    */
   public Resolver create(final ResolverProperties properties) {
-    final ResolverCache entityStatementSnapshotSource = this.resolverCacheFactory.create(properties);
-    final EntityStatementTree entityStatementTree = new EntityStatementTree(new Tree<>(entityStatementSnapshotSource));
-    this.registry.registerCache(properties.alias(), new ResolverCacheRegistration(
+    if (this.registry.getRegistration(properties.entityIdentifier()).isEmpty()) {
+      final ResolverCache entityStatementSnapshotSource = this.resolverCacheFactory.create(properties);
+      final EntityStatementTree entityStatementTree =
+          new EntityStatementTree(new Tree<>(entityStatementSnapshotSource));
+      this.registerCache(properties, entityStatementTree, entityStatementSnapshotSource);
+    }
+    final ResolverCacheRegistration registration = this.registry.getRegistration(properties.entityIdentifier()).get();
+    return new Resolver(properties, this.createChainValidator(properties), registration.tree(), this.processor,
+        this.resolverResponseFactory(properties));
+  }
+
+  private void registerCache(
+      final ResolverProperties properties,
+      final EntityStatementTree entityStatementTree,
+      final ResolverCache entityStatementSnapshotSource) {
+    this.registry.registerCache(properties.entityIdentifier(), new ResolverCacheRegistration(
         entityStatementTree,
         this.treeLoaderFactory.create(properties),
         entityStatementSnapshotSource,
         properties
     ));
-    return new Resolver(properties, this.createChainValidator(properties), entityStatementTree, this.processor,
-        this.resolverResponseFactory(properties));
   }
 
   private ChainValidator createChainValidator(final ResolverProperties properties) {

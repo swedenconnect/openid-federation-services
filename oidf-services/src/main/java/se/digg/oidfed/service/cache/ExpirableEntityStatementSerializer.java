@@ -53,6 +53,7 @@ public class ExpirableEntityStatementSerializer implements RedisSerializer<Expir
       final EntityStatement entityStatement = EntityStatement.parse(new String(bytes, Charset.defaultCharset()));
       return new Expirable<>(
           entityStatement.getClaimsSet().getExpirationTime().toInstant(),
+          entityStatement.getClaimsSet().getIssueTime().toInstant(),
           entityStatement
       );
     }

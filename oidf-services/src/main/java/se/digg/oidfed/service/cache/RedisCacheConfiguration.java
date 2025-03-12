@@ -22,18 +22,19 @@ import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import se.digg.oidfed.service.configuration.OpenIdFederationConfiguration;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
-import se.digg.oidfed.service.resolver.cache.ResolverRedisOperations;
 import se.digg.oidfed.service.resolver.cache.RedisResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
+import se.digg.oidfed.service.resolver.cache.ResolverRedisOperations;
+import se.digg.oidfed.service.state.FederationServiceState;
+import se.digg.oidfed.service.state.RedisFederationServiceState;
+import se.digg.oidfed.service.state.RedisServiceLock;
+import se.digg.oidfed.service.state.ServiceLock;
 
 import java.time.Clock;
-import java.time.Duration;
 
 /**
  * Configuration class for redis.
@@ -80,5 +81,37 @@ public class RedisCacheConfiguration {
       final ResolverRedisOperations resolverRedisOperations
   ) {
     return new RedisResolverCacheFactory(versionTemplate, resolverRedisOperations);
+  }
+
+  @Bean
+  FederationServiceState redisFederationServiceState(
+      final RedisConnectionFactory factory,
+      final OpenIdFederationConfigurationProperties properties) {
+
+    final InstanceSpecificRedisKeySerializer keySerializer =
+        new InstanceSpecificRedisKeySerializer(new StringRedisSerializer(),
+        properties.getRegistry().getIntegration().getInstanceId());
+
+    final RedisTemplate<String, String> template = new RedisTemplate<>();
+    template.setConnectionFactory(factory);
+    template.setKeySerializer(keySerializer);
+    template.afterPropertiesSet();
+    return new RedisFederationServiceState(template);
+  }
+
+  @Bean
+  ServiceLock redisServiceLock(
+      final RedisConnectionFactory factory,
+      final OpenIdFederationConfigurationProperties properties) {
+    final InstanceSpecificRedisKeySerializer keySerializer = new InstanceSpecificRedisKeySerializer(
+        new StringRedisSerializer(),
+        properties.getRegistry().getIntegration().getInstanceId()
+    );
+
+    final RedisTemplate<String, String> template = new RedisTemplate<>();
+    template.setConnectionFactory(factory);
+    template.setKeySerializer(keySerializer);
+    template.afterPropertiesSet();
+    return new RedisServiceLock(template);
   }
 }

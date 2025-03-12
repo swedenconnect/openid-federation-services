@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
@@ -29,6 +30,7 @@ import se.digg.oidfed.resolver.metadata.OIDFPolicyOperationFactory;
 import se.digg.oidfed.resolver.tree.resolution.DFSExecution;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
+import se.digg.oidfed.service.resolver.cache.CompositeTreeLoader;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContextFactory;
@@ -66,6 +68,12 @@ public class ResolverConfiguration {
   @Bean
   ResolverCacheRegistry cacheRegistry() {
     return new ResolverCacheRegistry();
+  }
+
+  @Bean
+  CompositeTreeLoader compositeTreeLoader(final ResolverCacheRegistry registry, final ResolverFactory factory,
+                                          final CompositeRecordSource source) {
+    return new CompositeTreeLoader(registry, factory, source);
   }
 
   @Bean

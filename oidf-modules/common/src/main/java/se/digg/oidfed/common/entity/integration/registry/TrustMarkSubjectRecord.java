@@ -36,8 +36,6 @@ import java.util.Optional;
  * @param granted When subject is granted can be in the future
  * @param expires When subject expires, if left empty no expiredate will be used
  * @param revoked If this trust mark is revoked, no new trustmarks for this subject will be issued
- * @param iss  issuer of the trust mark
- * @param tmi  trust mark id of the trust mark
  * @author Per Fredrik Plars
  * @author Felix Hellman
  */
@@ -45,8 +43,6 @@ import java.util.Optional;
 @Builder(toBuilder = true)
 public record TrustMarkSubjectRecord(
     String sub,
-    String iss,
-    String tmi,
     @Nullable Instant granted,
     @Nullable Instant expires,
     boolean revoked) implements Serializable {
@@ -60,9 +56,7 @@ public record TrustMarkSubjectRecord(
    */
   public static TrustMarkSubjectRecord fromJson(final Map<String, Object> record) {
     final TrustMarkSubjectRecord.TrustMarkSubjectRecordBuilder tmisBuilder = TrustMarkSubjectRecord.builder()
-        .sub((String) record.get("subject"))
-        .iss((String) record.get("issuer"))
-        .tmi((String) record.get("tmi"));
+        .sub((String) record.get("sub"));
 
     Optional.ofNullable((Boolean) record.get("revoked")).ifPresent(tmisBuilder::revoked);
 
@@ -88,7 +82,6 @@ public record TrustMarkSubjectRecord(
    */
   @PostConstruct
   public void validate() {
-
     FederationAssert.assertNotEmpty(this.sub, "Subject is expected");
     if (Objects.nonNull(this.granted) && Objects.nonNull(this.expires)) {
       FederationAssert.assertTrue(this.granted.isBefore(this.expires), "Expires expected to be after " +
@@ -105,10 +98,8 @@ public record TrustMarkSubjectRecord(
    */
   public Map<String, Object> toJson() {
     final Map<String, Object> subject = Map.of(
-        "subject", this.sub,
-        "revoked", this.revoked,
-        "issuer", this.iss,
-        "tmi", this.tmi
+        "sub", this.sub,
+        "revoked", this.revoked
     );
     final HashMap<String, Object> json = new HashMap<>(subject);
     Optional.ofNullable(this.expires).ifPresent(exp -> json.put("expires", exp));

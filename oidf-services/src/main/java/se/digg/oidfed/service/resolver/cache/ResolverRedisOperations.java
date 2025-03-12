@@ -21,6 +21,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import se.digg.oidfed.common.tree.Node;
 import se.digg.oidfed.common.tree.NodeKey;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -70,6 +71,7 @@ public class ResolverRedisOperations {
    */
   public void append(final ChildKey parent, final Node<EntityStatement> child) {
     this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey().getKey());
+    this.stringTemplate.expire(parent.getRedisKey(), Duration.ofHours(2));
   }
 
   /**
@@ -79,6 +81,7 @@ public class ResolverRedisOperations {
    */
   public void setData(final EntityKey key, final EntityStatement data) {
     this.template.opsForValue().set(key.getRedisKey(), data);
+    this.template.expire(key.getRedisKey(), Duration.ofHours(2));
   }
 
   /**
@@ -107,17 +110,18 @@ public class ResolverRedisOperations {
    */
   public void setRoot(final RootKey key, final Node<EntityStatement> root) {
     this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey().getKey());
+    this.stringTemplate.expire(key.getRedisKey(), Duration.ofHours(2));
   }
 
   /**
    * Key for handling entities.
    * @param location internal node key
    * @param version to which the entity belongs to
-   * @param alias to which module the data belongs to
+   * @param entityId to which module the data belongs to
    */
-  public record EntityKey(String location, int version, String alias) {
+  public record EntityKey(String location, int version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:entity:%s".formatted(this.alias, this.version, this.location);
+      return "%s:%d:entity:%s".formatted(this.entityId, this.version, this.location);
     }
   }
 
@@ -125,22 +129,22 @@ public class ResolverRedisOperations {
    * Key for handling child listings.
    * @param parent to which the child belongs to
    * @param version to which the child and parent belongs to
-   * @param alias to which module the data belongs to
+   * @param entityId to which module the data belongs to
    */
-  public record ChildKey(Node<EntityStatement> parent, int version, String alias) {
+  public record ChildKey(Node<EntityStatement> parent, int version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:children:%s".formatted(this.alias, this.version, this.parent.getKey());
+      return "%s:%d:children:%s".formatted(this.entityId, this.version, this.parent.getKey());
     }
   }
 
   /**
    * Key for handling root nodes.
    * @param version to which the root belongs to
-   * @param alias to which module the data belongs to
+   * @param entityId to which module the data belongs to
    */
-  public record RootKey(int version, String alias) {
+  public record RootKey(int version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:root".formatted(this.alias, this.version);
+      return "%s:%d:root".formatted(this.entityId, this.version);
     }
   }
 }

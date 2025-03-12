@@ -21,6 +21,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.service.resolver.cache.InMemoryResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
+import se.digg.oidfed.service.state.FederationServiceState;
+import se.digg.oidfed.service.state.InMemoryFederationServiceState;
+import se.digg.oidfed.service.state.NoOperationServiceLock;
+import se.digg.oidfed.service.state.ServiceLock;
 
 import java.time.Clock;
 
@@ -41,5 +45,15 @@ public class InMemoryCacheConfiguration {
   @Bean
   ResolverCacheFactory inMemoryResolverCacheFactory() {
     return new InMemoryResolverCacheFactory();
+  }
+
+  @Bean
+  FederationServiceState inMemoryFederationServiceState() {
+    return new InMemoryFederationServiceState();
+  }
+
+  @Bean
+  ServiceLock noOperationServiceLock() {
+    return new NoOperationServiceLock();
   }
 }

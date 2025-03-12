@@ -20,15 +20,14 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.exception.ServerErrorException;
-import se.digg.oidfed.common.module.Submodule;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -43,36 +42,32 @@ import java.util.Optional;
  * @author Per Fredrik Plars
  */
 @Slf4j
-public class TrustMarkIssuer implements Submodule {
+public class TrustMarkIssuer {
 
 
   private final TrustMarkIssuerProperties trustMarkIssuerProperties;
   private final TrustMarkSigner signer;
-  private final RefreshAheadRecordRegistrySource source;
+  private final CompositeRecordSource source;
   private final Clock clock;
 
   /**
    * Constructor.
+   *
    * @param trustMarkIssuerProperties
    * @param signer
    * @param source
-   * @param clock for keeping time
+   * @param clock                     for keeping time
    */
   public TrustMarkIssuer(
       final TrustMarkIssuerProperties trustMarkIssuerProperties,
       final TrustMarkSigner signer,
-      final RefreshAheadRecordRegistrySource source,
+      final CompositeRecordSource source,
       final Clock clock
   ) {
     this.trustMarkIssuerProperties = trustMarkIssuerProperties;
     this.signer = signer;
     this.source = source;
     this.clock = clock;
-  }
-
-  @Override
-  public String getAlias() {
-    return this.trustMarkIssuerProperties.alias();
   }
 
   /**
@@ -145,6 +140,7 @@ public class TrustMarkIssuer implements Submodule {
    * @return trust mark in a JWT
    */
   public String trustMark(final TrustMarkRequest request) throws ServerErrorException, NotFoundException {
+
     final TrustMarkIssuerProperties.TrustMarkProperties properties =
         this.trustMarkIssuerProperties.trustMarks().stream()
         .filter(tm -> request.trustMarkId().equals(tm.trustMarkId().getTrustMarkId()))
@@ -165,8 +161,11 @@ public class TrustMarkIssuer implements Submodule {
     }
   }
 
-  @Override
-  public List<EntityID> getEntityIds() {
-    return List.of(this.trustMarkIssuerProperties.issuerEntityId());
+
+  /**
+   * @return entity id of this trust mark issuer.
+   */
+  public EntityID getEntityId() {
+    return this.trustMarkIssuerProperties.issuerEntityId();
   }
 }

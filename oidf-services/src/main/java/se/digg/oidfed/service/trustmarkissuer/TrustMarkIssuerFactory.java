@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkSigner;
@@ -31,7 +31,7 @@ import java.time.Clock;
 public class TrustMarkIssuerFactory {
 
   private final TrustMarkSigner signer;
-  private final RefreshAheadRecordRegistrySource source;
+  private final CompositeRecordSource source;
   private final Clock clock;
 
   /**
@@ -41,7 +41,7 @@ public class TrustMarkIssuerFactory {
    */
   public TrustMarkIssuerFactory(
       final TrustMarkSigner signer,
-      final RefreshAheadRecordRegistrySource source,
+      final CompositeRecordSource source,
       final Clock clock) {
     this.signer = signer;
     this.source = source;

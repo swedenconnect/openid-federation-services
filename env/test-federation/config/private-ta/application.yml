@@ -69,12 +69,10 @@ openid:
           entity-identifier: https://private.local.swedenconnect.se/resolver
           trust-anchor: https://private.local.swedenconnect.se/ta
           sign-key-alias: sign-key-1
-          alias: private-resolver
     trust-anchor:
       active: true
       anchors:
-        - alias: ta
-          entity-identifier: https://private.local.swedenconnect.se/ta
+        - entity-identifier: https://private.local.swedenconnect.se/ta
 
 management:
   endpoints:

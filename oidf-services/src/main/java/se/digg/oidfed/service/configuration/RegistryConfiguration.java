@@ -24,8 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.entity.integration.registry.RecordRegistryIntegration;
 import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
-import se.digg.oidfed.resolver.integration.EntityStatementIntegration;
-import se.digg.oidfed.service.entity.RestClientRecordIntegration;
+import se.digg.oidfed.service.entity.registry.RestClientRecordIntegration;
 import se.digg.oidfed.service.rest.RestClientFactory;
 import se.digg.oidfed.service.rest.RestClientProperties;
 

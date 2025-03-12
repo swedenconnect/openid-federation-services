@@ -19,11 +19,11 @@ package se.digg.oidfed.resolver.tree;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import net.minidev.json.JSONObject;
+import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 import se.digg.oidfed.common.tree.CacheSnapshot;
 import se.digg.oidfed.common.tree.SearchRequest;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.DiscoveryRequest;
-import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -85,7 +85,7 @@ public class EntityStatementTree {
   /**
    * Takes an {@link EntityStatementTreeLoader} and loads the tree from a root location
    *
-   * @param loader to use
+   * @param loader              to use
    * @param trustAnchorEntityId to start resolution from
    */
   public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId) {

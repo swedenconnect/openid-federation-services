@@ -25,7 +25,7 @@ import se.digg.oidfed.service.entity.TestFederationEntities;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static se.digg.oidfed.service.trustanchor.TrustAnchorIT.TRUST_MARK_ID;
+import static se.digg.oidfed.service.trustanchor.TrustAnchorTestCases.TRUST_MARK_ID;
 
 public class TestParameters {
   static Stream<Arguments> okSubordinateListingParameters() {

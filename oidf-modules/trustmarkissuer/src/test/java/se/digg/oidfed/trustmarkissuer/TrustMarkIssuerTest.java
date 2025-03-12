@@ -28,8 +28,8 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
@@ -87,7 +87,7 @@ class TrustMarkIssuerTest {
   @Test
   void trustMarkListing() throws NotFoundException, InvalidRequestException, JOSEException {
 
-    final RefreshAheadRecordRegistrySource source = Mockito.mock(RefreshAheadRecordRegistrySource.class);
+    final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
 
     final TrustMarkSubjectRecord sub1 =
         TrustMarkSubjectRecord.builder()
@@ -158,7 +158,7 @@ class TrustMarkIssuerTest {
   public void testTrustMarkCreation()
       throws NotFoundException, InvalidRequestException, ServerErrorException, ParseException {
 
-    final RefreshAheadRecordRegistrySource source = Mockito.mock(RefreshAheadRecordRegistrySource.class);
+    final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
 
     final TrustMarkId trustMarkId = TrustMarkId.create("http://tm1.digg.se");
     final TrustMarkIssuerProperties.TrustMarkProperties trustMark = TrustMarkIssuerProperties.TrustMarkProperties.builder()
@@ -220,7 +220,7 @@ class TrustMarkIssuerTest {
   public void testTrustMarkValidity()
       throws NotFoundException, InvalidRequestException {
 
-    final RefreshAheadRecordRegistrySource source = Mockito.mock(RefreshAheadRecordRegistrySource.class);
+    final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
 
     final TrustMarkSubjectRecord sub1 =
         TrustMarkSubjectRecord.builder()

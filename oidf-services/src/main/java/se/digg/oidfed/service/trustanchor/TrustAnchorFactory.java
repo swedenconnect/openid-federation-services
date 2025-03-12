@@ -16,9 +16,8 @@
  */
 package se.digg.oidfed.service.trustanchor;
 
-import se.digg.oidfed.common.entity.EntityRecordRegistry;
+import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
-import se.digg.oidfed.common.entity.integration.registry.RefreshAheadRecordRegistrySource;
 import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
@@ -31,26 +30,22 @@ import se.digg.oidfed.trustanchor.TrustAnchor;
  */
 public class TrustAnchorFactory {
 
-  private final EntityRecordRegistry registry;
-  private final RefreshAheadRecordRegistrySource source;
+  private final CompositeRecordSource source;
   private final SignerFactory signerFactory;
   private final FederationClient client;
 
   /**
    * Constructor.
    *
-   * @param registry      to use
    * @param source        to use
    * @param signerFactory to use
    * @param client        to use
    */
   public TrustAnchorFactory(
-      final EntityRecordRegistry registry,
-      final RefreshAheadRecordRegistrySource source,
+      final CompositeRecordSource source,
       final SignerFactory signerFactory,
       final FederationClient client
   ) {
-    this.registry = registry;
     this.source = source;
     this.signerFactory = signerFactory;
     this.client = client;
@@ -61,11 +56,8 @@ public class TrustAnchorFactory {
    * @return new instance
    */
   public TrustAnchor create(final TrustAnchorProperties properties) {
-    return new TrustAnchor(this.registry, properties,
-        new SubordinateStatementFactory(
-            this.source,
-            this.signerFactory,
-            properties.getBasePath()),
+    return new TrustAnchor(this.source, properties,
+        new SubordinateStatementFactory(this.signerFactory),
         this.client
     );
   }

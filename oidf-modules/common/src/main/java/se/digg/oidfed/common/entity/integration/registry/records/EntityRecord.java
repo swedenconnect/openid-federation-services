@@ -38,7 +38,7 @@ import java.util.Optional;
 public class EntityRecord implements Serializable {
   private final EntityID issuer;
   private final EntityID subject;
-  private final String policyRecordId;
+  private final PolicyRecord policyRecord;
   private JWKSet jwks;
   private String overrideConfigurationLocation;
   private final HostedRecord hostedRecord;
@@ -48,7 +48,7 @@ public class EntityRecord implements Serializable {
    *
    * @param issuer                        of the entity
    * @param subject                       of the entity
-   * @param policyRecordId                of the entity
+   * @param policyRecord                  of the entity
    * @param jwks                          of the entity
    * @param overrideConfigurationLocation of the entity
    * @param hostedRecord                  optional parameter if the record is hosted
@@ -56,13 +56,13 @@ public class EntityRecord implements Serializable {
   public EntityRecord(
       final EntityID issuer,
       final EntityID subject,
-      final String policyRecordId,
+      final PolicyRecord policyRecord,
       final JWKSet jwks,
       final String overrideConfigurationLocation,
       final HostedRecord hostedRecord) {
     this.issuer = issuer;
     this.subject = subject;
-    this.policyRecordId = policyRecordId;
+    this.policyRecord = policyRecord;
     this.jwks = jwks;
     this.overrideConfigurationLocation = overrideConfigurationLocation;
     this.hostedRecord = hostedRecord;
@@ -76,7 +76,7 @@ public class EntityRecord implements Serializable {
 
     builder.claim("issuer", this.issuer.getValue());
     builder.claim("subject", this.subject.getValue());
-    builder.claim("policy_record_id", this.policyRecordId);
+    builder.claim("policy_record", this.policyRecord);
 
     Optional.ofNullable(this.hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
     Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
@@ -96,7 +96,7 @@ public class EntityRecord implements Serializable {
     return new EntityRecord(
         new EntityID((String) entityRecord.get("issuer")),
         new EntityID((String) entityRecord.get("subject")),
-        (String) entityRecord.get("policy_record_id"),
+        PolicyRecord.fromJson((Map<String, Object>) entityRecord.get("policy_record")),
         Optional.ofNullable(entityRecord.get("jwks")).map(jwks -> {
           try {
             return JWKSet.parse((Map<String, Object>) jwks);
