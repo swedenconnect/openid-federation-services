@@ -51,11 +51,13 @@ public class EntityRouter implements Router {
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
     route.GET(request -> {
       return source.getAllEntities().stream()
+          .filter(EntityRecord::isHosted)
           .map(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation"))
           .reduce(p -> false, RequestPredicate::or)
           .test(request);
     }, request -> {
       final EntityRecord entityRecord = source.getAllEntities().stream()
+          .filter(EntityRecord::isHosted)
           .filter(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation")
               .test(request))
           .findFirst()
