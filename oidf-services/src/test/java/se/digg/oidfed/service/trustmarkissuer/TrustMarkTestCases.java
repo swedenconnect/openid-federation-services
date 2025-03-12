@@ -38,7 +38,6 @@ import java.util.List;
 @ExtendWith(TestFederationClientParameterResolver.class)
 public class TrustMarkTestCases {
 
-  public static int serverPort;
 
   public static final EntityID TRUST_MARK_ID = new EntityID("https://authorization.local.swedenconnect.se/authorization-tmi/certified");
 
@@ -48,7 +47,7 @@ public class TrustMarkTestCases {
     final boolean context = applicationContext != null;
     org.junit.Assume.assumeTrue(context);
     // rest of setup.
-    RestAssured.port = this.serverPort;
+    RestAssured.port = Context.getServicePort();
     RestAssured.basePath = "/tm";
   }
 

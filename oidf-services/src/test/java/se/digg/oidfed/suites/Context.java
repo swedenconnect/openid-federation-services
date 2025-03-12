@@ -20,4 +20,14 @@ import org.springframework.context.ApplicationContext;
 
 public class Context {
   public static ThreadLocal<ApplicationContext> applicationContext;
+
+  public static int getServicePort() {
+    final String property = applicationContext.get().getEnvironment().getProperty("server.port");
+    return Integer.parseInt(property);
+  }
+
+  public static int getManagementPort() {
+    final String property = applicationContext.get().getEnvironment().getProperty("management.server.port");
+    return Integer.parseInt(property);
+  }
 }

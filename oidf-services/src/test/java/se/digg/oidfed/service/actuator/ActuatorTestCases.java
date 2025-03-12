@@ -31,11 +31,9 @@ public class ActuatorTestCases {
     org.junit.Assume.assumeTrue(context);
   }
 
-  public static int managementPort;
-
   @Test
   void testPrometheusMetrics() throws InterruptedException {
-    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(managementPort)).build();
+    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(Context.getManagementPort())).build();
     final String body = client.get().uri("/actuator/prometheus")
         .retrieve()
         .body(String.class);

@@ -37,11 +37,9 @@ public class GeneralErrorHandlingTestCases {
     final boolean context = applicationContext != null;
     org.junit.Assume.assumeTrue(context);
     // rest of setup.
-    RestAssured.port = this.serverPort;
+    RestAssured.port = Context.getServicePort();
     RestAssured.basePath = "/";
   }
-
-  public static int serverPort = 0;
 
   @Test
   public void testBrowserRequestExpectNotFound() {

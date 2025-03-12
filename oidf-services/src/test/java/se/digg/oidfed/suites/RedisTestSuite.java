@@ -96,9 +96,6 @@ public class RedisTestSuite {
     ThreadLocal<ApplicationContext> threadLocalValue = new ThreadLocal<>();
     threadLocalValue.set(configurableApplicationContext);
     Context.applicationContext = threadLocalValue;
-    GeneralErrorHandlingTestCases.serverPort = 6000;
-    TrustMarkTestCases.serverPort = 6000;
-    ActuatorTestCases.managementPort = 6001;
     ApplicationReadyEndpoint applicationReadyEndpoint =
         configurableApplicationContext.getBean(ApplicationReadyEndpoint.class);
     while (!applicationReadyEndpoint.applicationReady()) {
