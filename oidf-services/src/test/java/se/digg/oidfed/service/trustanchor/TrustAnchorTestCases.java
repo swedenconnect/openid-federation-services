@@ -23,13 +23,16 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import io.restassured.RestAssured;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.client.HttpClientErrorException;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
 import se.digg.oidfed.service.entity.TestFederationEntities;
@@ -46,6 +49,13 @@ import java.util.List;
 public class TrustAnchorTestCases {
 
   public static final String TRUST_MARK_ID = "https://authorization.local.swedenconnect.se/authorization-tmi/certified";
+
+  @BeforeEach
+  public void beforeMethod() {
+    final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
+    final boolean context = applicationContext != null;
+    org.junit.Assume.assumeTrue(context);
+  }
 
   @Test
   @DisplayName("Subordinate listing : 200")

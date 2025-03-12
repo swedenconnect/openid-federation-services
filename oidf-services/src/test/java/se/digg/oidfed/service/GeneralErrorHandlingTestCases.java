@@ -21,21 +21,27 @@ import io.restassured.http.ContentType;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import se.digg.oidfed.suites.Context;
 
 import static io.restassured.RestAssured.given;
 
 @ActiveProfiles({"integration-test"})
 public class GeneralErrorHandlingTestCases {
 
-  public static int serverPort = 0;
-
   @BeforeEach
-  public void setup() {
+  public void beforeMethod() {
+    final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
+    final boolean context = applicationContext != null;
+    org.junit.Assume.assumeTrue(context);
+    // rest of setup.
     RestAssured.port = this.serverPort;
     RestAssured.basePath = "/";
   }
+
+  public static int serverPort = 0;
 
   @Test
   public void testBrowserRequestExpectNotFound() {

@@ -23,14 +23,17 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.client.HttpClientErrorException;
 import se.digg.oidfed.service.entity.TestFederationEntities;
 import se.digg.oidfed.service.testclient.FederationClients;
 import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
+import se.digg.oidfed.suites.Context;
 
 import java.text.ParseException;
 import java.util.List;
@@ -38,6 +41,13 @@ import java.util.List;
 @Slf4j
 @ExtendWith(TestFederationClientParameterResolver.class)
 public class ResolverTestCases {
+
+  @BeforeEach
+  public void beforeMethod() {
+    final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
+    final boolean context = applicationContext != null;
+    org.junit.Assume.assumeTrue(context);
+  }
 
   @Test
   @DisplayName("Resolve Entity: 200")

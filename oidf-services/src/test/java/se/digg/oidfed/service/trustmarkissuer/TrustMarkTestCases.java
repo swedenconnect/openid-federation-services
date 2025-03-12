@@ -24,10 +24,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.context.ApplicationContext;
 import se.digg.oidfed.service.entity.TestFederationEntities;
 import se.digg.oidfed.service.router.responses.TrustMarkStatusReply;
 import se.digg.oidfed.service.testclient.FederationClients;
 import se.digg.oidfed.service.testclient.TestFederationClientParameterResolver;
+import se.digg.oidfed.suites.Context;
 
 import java.text.ParseException;
 import java.util.List;
@@ -41,7 +43,11 @@ public class TrustMarkTestCases {
   public static final EntityID TRUST_MARK_ID = new EntityID("https://authorization.local.swedenconnect.se/authorization-tmi/certified");
 
   @BeforeEach
-  public void setup() throws InterruptedException {
+  public void beforeMethod() {
+    final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
+    final boolean context = applicationContext != null;
+    org.junit.Assume.assumeTrue(context);
+    // rest of setup.
     RestAssured.port = this.serverPort;
     RestAssured.basePath = "/tm";
   }

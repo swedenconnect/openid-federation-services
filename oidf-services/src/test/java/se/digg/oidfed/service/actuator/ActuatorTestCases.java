@@ -16,10 +16,20 @@
  */
 package se.digg.oidfed.service.actuator;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationContext;
 import org.springframework.web.client.RestClient;
+import se.digg.oidfed.suites.Context;
 
 public class ActuatorTestCases {
+
+  @BeforeEach
+  public void beforeMethod() {
+    final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
+    final boolean context = applicationContext != null;
+    org.junit.Assume.assumeTrue(context);
+  }
 
   public static int managementPort;
 
