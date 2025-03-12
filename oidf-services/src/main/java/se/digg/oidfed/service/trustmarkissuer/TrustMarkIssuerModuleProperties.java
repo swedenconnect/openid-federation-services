@@ -41,6 +41,9 @@ import java.util.Optional;
 @Getter
 @Setter
 public class TrustMarkIssuerModuleProperties {
+  /**
+   * For this proeprty.
+   */
   public static final String PROPERTY_PATH = "openid.federation.trust-mark-issuer";
 
   /**
@@ -113,6 +116,7 @@ public class TrustMarkIssuerModuleProperties {
      * @param trustMarkId The Trust Mark ID
      * @param logoUri     Optional logo for issued Trust Marks
      * @param refUri      Optional URL to information about issued Trust Marks
+     * @param trustMarkSubjects for this trust mark
      * @param delegation  TrustMark delegation
      */
     @Builder

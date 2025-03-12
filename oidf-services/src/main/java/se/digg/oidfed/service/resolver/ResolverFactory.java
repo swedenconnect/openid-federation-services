@@ -80,7 +80,8 @@ public class ResolverFactory {
   public Resolver create(final ResolverProperties properties) {
     if (this.registry.getRegistration(properties.entityIdentifier()).isEmpty()) {
       final ResolverCache entityStatementSnapshotSource = this.resolverCacheFactory.create(properties);
-      final EntityStatementTree entityStatementTree = new EntityStatementTree(new Tree<>(entityStatementSnapshotSource));
+      final EntityStatementTree entityStatementTree =
+          new EntityStatementTree(new Tree<>(entityStatementSnapshotSource));
       this.registerCache(properties, entityStatementTree, entityStatementSnapshotSource);
     }
     final ResolverCacheRegistration registration = this.registry.getRegistration(properties.entityIdentifier()).get();
@@ -88,7 +89,10 @@ public class ResolverFactory {
         this.resolverResponseFactory(properties));
   }
 
-  private void registerCache(final ResolverProperties properties, final EntityStatementTree entityStatementTree, final ResolverCache entityStatementSnapshotSource) {
+  private void registerCache(
+      final ResolverProperties properties,
+      final EntityStatementTree entityStatementTree,
+      final ResolverCache entityStatementSnapshotSource) {
     this.registry.registerCache(properties.entityIdentifier(), new ResolverCacheRegistration(
         entityStatementTree,
         this.treeLoaderFactory.create(properties),

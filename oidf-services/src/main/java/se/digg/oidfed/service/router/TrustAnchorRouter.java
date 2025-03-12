@@ -33,6 +33,11 @@ import se.digg.oidfed.trustanchor.TrustAnchor;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Responsible for matching trust anchor requests for any configured module.
+ *
+ * @author Felix Hellman
+ */
 @Component
 public class TrustAnchorRouter implements Router {
 
@@ -40,6 +45,12 @@ public class TrustAnchorRouter implements Router {
   private final RouteFactory routeFactory;
   private final ServerResponseErrorHandler errorHandler;
 
+  /**
+   * Constructor.
+   * @param trustAnchorFactory
+   * @param routeFactory
+   * @param errorHandler
+   */
   public TrustAnchorRouter(
       final TrustAnchorFactory trustAnchorFactory,
       final RouteFactory routeFactory,
@@ -102,7 +113,10 @@ public class TrustAnchorRouter implements Router {
     };
   }
 
-  private TrustAnchorProperties getPropertyByRequest(final CompositeRecordSource source, final ServerRequest request, final String endpoint) {
+  private TrustAnchorProperties getPropertyByRequest(
+      final CompositeRecordSource source,
+      final ServerRequest request,
+      final String endpoint) {
     return source.getTrustAnchorProperties().stream()
         .filter(prop -> this.routeFactory.createRoute(prop.getEntityId(), endpoint).test(request))
         .findFirst()

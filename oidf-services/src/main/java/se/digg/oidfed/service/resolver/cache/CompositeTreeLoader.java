@@ -19,12 +19,26 @@ package se.digg.oidfed.service.resolver.cache;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.service.resolver.ResolverFactory;
 
+/**
+ * Manages loading of multiple resolver trees.
+ *
+ * @author Felix Hellman
+ */
 public class CompositeTreeLoader {
   private final ResolverCacheRegistry registry;
   private final ResolverFactory factory;
   private final CompositeRecordSource source;
 
-  public CompositeTreeLoader(final ResolverCacheRegistry registry, final ResolverFactory factory, final CompositeRecordSource source) {
+  /**
+   * Constructor.
+   * @param registry
+   * @param factory
+   * @param source
+   */
+  public CompositeTreeLoader(
+      final ResolverCacheRegistry registry,
+      final ResolverFactory factory,
+      final CompositeRecordSource source) {
     this.registry = registry;
     this.factory = factory;
     this.source = source;

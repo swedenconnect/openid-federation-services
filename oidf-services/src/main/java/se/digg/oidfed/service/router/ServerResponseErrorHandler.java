@@ -24,14 +24,27 @@ import se.digg.oidfed.service.error.ErrorHandler;
 
 import java.util.Map;
 
+/**
+ * Adapter class for converting {@link ErrorHandler} errors to {@link ServerResponse}
+ *
+ * @author Felix Hellman
+ */
 @Component
 public class ServerResponseErrorHandler {
   private final ErrorHandler errorHandler;
 
+  /**
+   * Constructor
+   * @param errorHandler to wrap
+   */
   public ServerResponseErrorHandler(final ErrorHandler errorHandler) {
     this.errorHandler = errorHandler;
   }
 
+  /**
+   * @param e to handle
+   * @return response
+   */
   public ServerResponse handle(final FederationException e) {
     final ResponseEntity<Map<String, String>> error = this.errorHandler.handleFederationException(e);
     final Map<String, String> body = error.getBody();

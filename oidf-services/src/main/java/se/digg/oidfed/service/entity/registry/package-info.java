@@ -14,8 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.state;
-
-public class Events {
-  public record RegistryLoadedEvent() {}
-}
+/**
+ * Registry package for entities.
+ *
+ * @author Felix Hellman
+ */
+package se.digg.oidfed.service.entity.registry;

@@ -83,7 +83,8 @@ public class RedisVersionedCacheLayer implements ResolverCache {
 
   @Override
   public Node<EntityStatement> getRoot(final int version) {
-    return this.resolverRedisOperations.getRoot(new ResolverRedisOperations.RootKey(version, this.properties.entityIdentifier()));
+    return this.resolverRedisOperations
+        .getRoot(new ResolverRedisOperations.RootKey(version, this.properties.entityIdentifier()));
   }
 
   @Override
@@ -95,7 +96,9 @@ public class RedisVersionedCacheLayer implements ResolverCache {
 
   @Override
   public void useNextVersion() {
-    this.versionTemplate.boundValueOps("%s:tree:version".formatted(this.properties.entityIdentifier())).set(this.getNextVersion());
+    this.versionTemplate
+        .boundValueOps("%s:tree:version".formatted(this.properties.entityIdentifier()))
+        .set(this.getNextVersion());
   }
 
   @Override
@@ -107,7 +110,10 @@ public class RedisVersionedCacheLayer implements ResolverCache {
   public CacheSnapshot<EntityStatement> createNewSnapshot(final Node<EntityStatement> root,
       final EntityStatement rootData) {
     final int version = getNextVersion();
-    this.resolverRedisOperations.setRoot(new ResolverRedisOperations.RootKey(version, this.properties.entityIdentifier()), root);
+    this.resolverRedisOperations
+        .setRoot(
+            new ResolverRedisOperations.RootKey(version, this.properties.entityIdentifier()), root
+        );
     this.setData(root.getKey().getKey(), rootData, version);
     return new CacheSnapshot<>(this, version);
   }

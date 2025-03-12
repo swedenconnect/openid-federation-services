@@ -16,10 +16,35 @@
  */
 package se.digg.oidfed.service.state;
 
+/**
+ * Handles service state between multiple components and instances.
+ *
+ * @author Felix Hellman
+ */
 public interface FederationServiceState {
+  /**
+   * @return true if no state has been initialized.
+   */
   Boolean isStateMissing();
+
+  /**
+   * @param stateHash to set
+   */
   void updateRegistryState(final String stateHash);
+
+  /**
+   * @return current state
+   */
   String getRegistryState();
+
+  /**
+   * @param stateHash to check for
+   * @return true if resolver is outdated
+   */
   Boolean resolverNeedsReevaulation(final String stateHash);
+
+  /**
+   * @param stateHash to update with
+   */
   void updateResolverState(final String stateHash);
 }

@@ -14,12 +14,11 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.entity.registry;
+package se.digg.oidfed.service.state;
 
 /**
- * Event to trigger reload of entity record registry.
+ * Event to notify that registry has reloaded.
  *
  * @author Felix Hellman
  */
-public record RegistryReloadEvent() {
-}
+public record RegistryLoadedEvent() {}

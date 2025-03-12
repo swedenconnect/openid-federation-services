@@ -16,7 +16,20 @@
  */
 package se.digg.oidfed.service.state;
 
+/**
+ * Distributed locking to sync jobs between multiple nodes in the same instance.
+ *
+ * @author Felix Hellman
+ */
 public interface ServiceLock {
+  /**
+   * @param name of the lock
+   * @return true if the lock was aquired.
+   */
   boolean acquireLock(final String name);
+
+  /**
+   * @param name of the lock to close
+   */
   void close(final String name);
 }

@@ -24,6 +24,11 @@ import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
+/**
+ * Class responsible for hashing internal state.
+ *
+ * @author Felix Hellman
+ */
 public class StateHashFactory {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -31,10 +36,15 @@ public class StateHashFactory {
     MAPPER.registerModule(new JavaTimeModule());
   }
 
+  /**
+   * @param record to hash
+   * @return hash of record
+   * @throws Exception
+   */
   public static String hashState(final CompositeRecord record) throws Exception {
     final String json = StateHashFactory.MAPPER.writerFor(CompositeRecord.class).writeValueAsString(record);
-    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-    byte[] hash = digest.digest(json.getBytes(StandardCharsets.UTF_8));
+    final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+    final byte[] hash = digest.digest(json.getBytes(StandardCharsets.UTF_8));
     return new String(Hex.encode(hash));
   }
 }

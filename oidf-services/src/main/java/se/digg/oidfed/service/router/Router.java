@@ -19,6 +19,15 @@ package se.digg.oidfed.service.router;
 import org.springframework.web.servlet.function.RouterFunctions;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 
+/**
+ * Router interface for adding routes.
+ *
+ * @author Felix Hellman
+ */
 public interface Router {
+  /**
+   * @param source to read from
+   * @param route to add routes to
+   */
   void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route);
 }

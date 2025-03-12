@@ -28,6 +28,11 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Factory class for constructing routes.
+ *
+ * @author Felix Hellman
+ */
 @Slf4j
 @Component
 public class RouteFactory {
@@ -35,6 +40,11 @@ public class RouteFactory {
   private final ServletContext context;
   private final RouterProperties properties;
 
+  /**
+   * Constructor.
+   * @param context
+   * @param properties
+   */
   public RouteFactory(
       final ServletContext context,
       final OpenIdFederationConfigurationProperties properties) {
@@ -46,6 +56,12 @@ public class RouteFactory {
         .orElse(defaultProperties);
   }
 
+  /**
+   * Creates a route for an entity.
+   * @param entityID for this route
+   * @param endpoint for this route
+   * @return route predicate
+   */
   public RequestPredicate createRoute(
       final EntityID entityID,
       final String endpoint) {

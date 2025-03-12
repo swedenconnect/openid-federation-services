@@ -23,12 +23,22 @@ import se.digg.oidfed.common.entity.integration.CacheRecordPopulator;
 import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 
+/**
+ * Controller responsible for taking action on notifications.
+ *
+ * @author Felix Hellman
+ */
 @RestController
 public class NotificationController {
 
   private final CacheRecordPopulator populator;
   private final RegistryVerifier registryVerifier;
 
+  /**
+   * Constructor.
+   * @param populator to notify
+   * @param registryVerifier to verify notifications with
+   */
   public NotificationController(
       final CacheRecordPopulator populator,
       final RegistryVerifier registryVerifier) {
@@ -36,6 +46,11 @@ public class NotificationController {
     this.registryVerifier = registryVerifier;
   }
 
+  /**
+   * Handles notificaitons.
+   * @param body notification
+   * @throws InvalidRequestException if notification can not be verified.
+   */
   @PostMapping("/registry/notify")
   public void notify(final String body) throws InvalidRequestException {
     try {

@@ -25,6 +25,11 @@ import se.digg.oidfed.common.entity.EntityConfigurationFactory;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 
+/**
+ * Router respoinsble for matching any entity configuration endpoints.
+ *
+ * @author Felix Hellman
+ */
 @Slf4j
 @Component
 public class EntityRouter implements Router {
@@ -32,11 +37,17 @@ public class EntityRouter implements Router {
   private final EntityConfigurationFactory factory;
   private final RouteFactory routeFactory;
 
+  /**
+   * Constructor.
+   * @param factory for creating entity configurations
+   * @param routeFactory for creating routes.
+   */
   public EntityRouter(final EntityConfigurationFactory factory, final RouteFactory routeFactory) {
     this.factory = factory;
     this.routeFactory = routeFactory;
   }
 
+  @Override
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
     route.GET(request -> {
       return source.getAllEntities().stream()
@@ -45,10 +56,13 @@ public class EntityRouter implements Router {
           .test(request);
     }, request -> {
       final EntityRecord entityRecord = source.getAllEntities().stream()
-          .filter(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation").test(request))
+          .filter(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation")
+              .test(request))
           .findFirst()
           .get();
-      return ServerResponse.ok().body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement().serialize());
+      return ServerResponse.ok()
+          .body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement()
+              .serialize());
     });
   }
 }

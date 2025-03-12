@@ -34,6 +34,11 @@ import se.digg.oidfed.trustmarkissuer.TrustMarkStatusRequest;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Router responsible for matching trust mark issuer requests to a trust mark issuer module.
+ *
+ * @author Felix Hellman
+ */
 @Component
 public class TrustMarkIssuerRouter implements Router {
 
@@ -41,7 +46,16 @@ public class TrustMarkIssuerRouter implements Router {
   private final TrustMarkIssuerFactory factory;
   private final ServerResponseErrorHandler errorHandler;
 
-  public TrustMarkIssuerRouter(final RouteFactory routeFactory, final TrustMarkIssuerFactory factory, final ServerResponseErrorHandler errorHandler) {
+  /**
+   * Constructor.
+   * @param routeFactory
+   * @param factory
+   * @param errorHandler
+   */
+  public TrustMarkIssuerRouter(
+      final RouteFactory routeFactory,
+      final TrustMarkIssuerFactory factory,
+      final ServerResponseErrorHandler errorHandler) {
     this.routeFactory = routeFactory;
     this.factory = factory;
     this.errorHandler = errorHandler;
@@ -49,14 +63,17 @@ public class TrustMarkIssuerRouter implements Router {
 
   @Override
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
-    route.GET(this.getRequestPredicate(source, "/trust_mark"), request -> this.handleTrustMarkRequest(source, request))
-        .GET(this.getRequestPredicate(source, "/trust_mark_status"), request -> this.handleTrustMarkStatus(source, request))
+    route.GET(this.getRequestPredicate(source, "/trust_mark"),
+            request -> this.handleTrustMarkRequest(source, request))
+        .GET(this.getRequestPredicate(source, "/trust_mark_status"),
+            request -> this.handleTrustMarkStatus(source, request))
         .GET(this.getRequestPredicate(source, "/trust_mark_listing"), request -> this.handleTrustMarkListing(source,
             request));
   }
 
   private ServerResponse handleTrustMarkStatus(final CompositeRecordSource source, final ServerRequest request) {
-    final TrustMarkIssuerProperties propertyByRequest = this.getPropertyByRequest(source, request, "/trust_mark_status");
+    final TrustMarkIssuerProperties propertyByRequest
+        = this.getPropertyByRequest(source, request, "/trust_mark_status");
     final TrustMarkIssuer trustMarkIssuer = this.factory.create(propertyByRequest);
     try {
       final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
@@ -113,7 +130,8 @@ public class TrustMarkIssuerRouter implements Router {
     };
   }
 
-  private TrustMarkIssuerProperties getPropertyByRequest(final CompositeRecordSource source, final ServerRequest request,
+  private TrustMarkIssuerProperties getPropertyByRequest(final CompositeRecordSource source,
+                                                         final ServerRequest request,
                                                          final String endpoint) {
     return source.getTrustMarkIssuerProperties().stream()
         .filter(prop -> this.routeFactory.createRoute(prop.issuerEntityId(), endpoint).test(request))

@@ -21,9 +21,17 @@ import org.springframework.data.redis.core.RedisTemplate;
 import java.time.Duration;
 import java.util.Optional;
 
+/**
+ * Redis implementation of {@link ServiceLock}
+ *
+ * @author Felix Hellman
+ */
 public class RedisServiceLock implements ServiceLock {
   private final RedisTemplate<String, String> locks;
 
+  /**
+   * @param locks template
+   */
   public RedisServiceLock(final RedisTemplate<String, String> locks) {
     this.locks = locks;
   }

@@ -16,6 +16,12 @@
  */
 package se.digg.oidfed.service.state;
 
+/**
+ * Service lock implementation that takes no action.
+ * Useful for single node instances when no locks needs to be managed.
+ *
+ * @author Felix Hellman
+ */
 public class NoOperationServiceLock implements ServiceLock {
   @Override
   public boolean acquireLock(final String name) {

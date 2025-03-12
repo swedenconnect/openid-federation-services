@@ -18,6 +18,7 @@ package se.digg.oidfed.service.state;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,36 +26,46 @@ import se.digg.oidfed.common.entity.integration.CacheRecordPopulator;
 import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord;
 import se.digg.oidfed.service.health.ReadyStateComponent;
 
+/**
+ * Responsible for registry state.
+ *
+ * @author Felix Hellman
+ */
 @Slf4j
 @Component
 public class RegistryStateManager extends ReadyStateComponent {
   private final CacheRecordPopulator populator;
   private final FederationServiceState state;
   private final ServiceLock serviceLock;
+  private final ApplicationEventPublisher publisher;
 
+  /**
+   * Constructor.
+   * @param populator
+   * @param state
+   * @param serviceLock
+   * @param publisher
+   */
   public RegistryStateManager(
       final CacheRecordPopulator populator,
       final FederationServiceState state,
-      final ServiceLock serviceLock) {
+      final ServiceLock serviceLock, final
+      ApplicationEventPublisher publisher) {
 
     this.populator = populator;
     this.state = state;
     this.serviceLock = serviceLock;
+    this.publisher = publisher;
   }
 
   /**
    * @param event to trigger from
-   * @return event to trigger next step
    */
   @EventListener
-  public Events.RegistryLoadedEvent init(final ApplicationStartedEvent event) {
-    if (this.state.isStateMissing()) {
-      //If no state is present we still need something for steps further down to compare towards.
-      this.state.updateRegistryState("properties");
-    }
+  public void init(final ApplicationStartedEvent event) {
     this.reloadFromRegistry();
     this.markReady();
-    return new Events.RegistryLoadedEvent();
+    return;
   }
 
   /**
@@ -71,7 +82,12 @@ public class RegistryStateManager extends ReadyStateComponent {
   private void reloadFromRegistry() {
     if (this.populator.shouldRefresh()) {
       if (this.serviceLock.acquireLock(this.name())) {
+        final String previousSha256 = this.state.getRegistryState();
         // --- Critical Section Start ---
+        if (this.state.isStateMissing()) {
+          //If no state is present we still need something for steps further down to compare towards.
+          this.state.updateRegistryState("properties");
+        }
         try {
           final CompositeRecord record = this.populator.reload();
           try {
@@ -83,6 +99,9 @@ public class RegistryStateManager extends ReadyStateComponent {
           }
         } catch (final Exception e) {
           log.error("Failed to load from registry", e);
+        }
+        if (!this.state.getRegistryState().equals(previousSha256)) {
+          this.publisher.publishEvent(new RegistryLoadedEvent());
         }
         this.serviceLock.close(this.name());
         // --- Critical Section End ---

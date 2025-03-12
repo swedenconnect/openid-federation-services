@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.state;
 
-import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -32,16 +31,20 @@ import se.digg.oidfed.service.resolver.cache.CompositeTreeLoader;
 public class ResolverStateManager extends ReadyStateComponent {
 
   private final CompositeTreeLoader treeLoader;
-  private final ObservationRegistry observationRegistry;
   private final FederationServiceState state;
   private final ServiceLock redisServiceLock;
 
+  /**
+   * Constructor.
+   *
+   * @param treeLoader
+   * @param state
+   * @param redisServiceLock
+   */
   public ResolverStateManager(final CompositeTreeLoader treeLoader,
-                              final ObservationRegistry observationRegistry,
                               final FederationServiceState state,
                               final ServiceLock redisServiceLock) {
     this.treeLoader = treeLoader;
-    this.observationRegistry = observationRegistry;
     this.state = state;
     this.redisServiceLock = redisServiceLock;
   }
@@ -63,7 +66,7 @@ public class ResolverStateManager extends ReadyStateComponent {
   }
 
   @EventListener
-  void handle(final Events.RegistryLoadedEvent event) {
+  void handle(final RegistryLoadedEvent event) {
     this.reloadResolvers();
     this.markReady();
   }

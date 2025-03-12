@@ -55,6 +55,7 @@ public class RegistryRecordSigner {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
         .claim("module_records", response.toJson())
         .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
+        .issueTime(Date.from(Instant.now()))
         .build();
 
     final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
@@ -79,6 +80,7 @@ public class RegistryRecordSigner {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
         .claim("entity_records", entityRecords)
         .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
+        .issueTime(Date.from(Instant.now()))
         .build();
 
     final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
@@ -97,6 +99,7 @@ public class RegistryRecordSigner {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
         .claim("trustmark_records", trustMarks)
         .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
+        .issueTime(Date.from(Instant.now()))
         .build();
 
     final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();

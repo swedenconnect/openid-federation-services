@@ -22,7 +22,18 @@ import se.digg.oidfed.common.exception.InvalidRequestException;
 
 import java.util.List;
 
+/**
+ * Parameter validation class for router routes.
+ *
+ * @author Felix Hellman
+ */
 public class RequireParameters {
+  /**
+   * @param params to check
+   * @param requiredParameters to require
+   * @return params if they are valid
+   * @throws FederationException if invalid
+   */
   public static MultiValueMap<String, String> validate(
       final MultiValueMap<String, String> params,
       final List<String> requiredParameters) throws FederationException {
@@ -32,6 +43,5 @@ public class RequireParameters {
       }
     }
     return params;
-
   }
 }

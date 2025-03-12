@@ -21,17 +21,24 @@ import org.springframework.data.redis.core.RedisTemplate;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Manages service state distributed via redis.
+ *
+ * @author Felix Hellman
+ */
 public class RedisFederationServiceState implements FederationServiceState {
 
   private final RedisTemplate<String, String> template;
 
+  /**
+   * @param template for state
+   */
   public RedisFederationServiceState(final RedisTemplate<String, String> template) {
     this.template = template;
   }
 
   @Override
   public void updateRegistryState(final String stateHash) {
-    //Registry state is shared.
     this.template.opsForValue().set("registry-sha256", stateHash);
   }
 

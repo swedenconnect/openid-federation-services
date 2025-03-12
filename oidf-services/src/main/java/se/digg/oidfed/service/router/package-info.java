@@ -14,8 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity.integration;
-
-public class RecordRegistrySnapshot {
-
-}
+/**
+ * Router package for oidf service.
+ *
+ * @author Felix Hellman
+ */
+package se.digg.oidfed.service.router;

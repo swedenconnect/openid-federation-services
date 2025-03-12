@@ -88,7 +88,8 @@ public class RedisCacheConfiguration {
       final RedisConnectionFactory factory,
       final OpenIdFederationConfigurationProperties properties) {
 
-    final InstanceSpecificRedisKeySerializer keySerializer = new InstanceSpecificRedisKeySerializer(new StringRedisSerializer(),
+    final InstanceSpecificRedisKeySerializer keySerializer =
+        new InstanceSpecificRedisKeySerializer(new StringRedisSerializer(),
         properties.getRegistry().getIntegration().getInstanceId());
 
     final RedisTemplate<String, String> template = new RedisTemplate<>();

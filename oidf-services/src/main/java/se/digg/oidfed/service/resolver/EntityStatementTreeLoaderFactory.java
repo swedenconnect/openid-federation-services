@@ -46,7 +46,8 @@ public class EntityStatementTreeLoaderFactory {
    */
   public EntityStatementTreeLoaderFactory(final FederationClient client,
                                           final ExecutionStrategy executionStrategy,
-                                          final ErrorContextFactory errorContextFactory, final ApplicationEventPublisher publisher) {
+                                          final ErrorContextFactory errorContextFactory,
+                                          final ApplicationEventPublisher publisher) {
     this.client = client;
     this.executionStrategy = executionStrategy;
     this.errorContextFactory = errorContextFactory;

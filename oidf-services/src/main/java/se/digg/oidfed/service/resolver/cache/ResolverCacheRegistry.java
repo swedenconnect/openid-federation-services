@@ -58,6 +58,10 @@ public class ResolverCacheRegistry {
     this.getRegistration(entityId).ifPresent(c -> c.cache().useNextVersion());
   }
 
+  /**
+   * @param entityId of registration
+   * @return registration if present
+   */
   public Optional<ResolverCacheRegistration> getRegistration(final String entityId) {
     final Optional<ResolverCacheRegistration> cacheRegistration = Optional.ofNullable(this.registrations.get(entityId));
     if (cacheRegistration.isEmpty()) {

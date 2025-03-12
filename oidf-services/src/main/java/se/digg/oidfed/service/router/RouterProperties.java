@@ -22,9 +22,17 @@ import lombok.Setter;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * Property class for router.
+ *
+ * @author Felix Hellman
+ */
 @Getter
 @Setter
 public class RouterProperties {
+  /**
+   * Mode to use when evaluating routes.
+   */
   public enum DomainEvaluationMode {
     /**
      * Enforces host portion of route when routing traffic.

@@ -18,6 +18,11 @@ package se.digg.oidfed.service.state;
 
 import java.util.Objects;
 
+/**
+ * In Memory implementation of {@link FederationServiceState}.
+ *
+ * @author Felix Hellman
+ */
 public class InMemoryFederationServiceState implements FederationServiceState {
   private String registryState = "";
   private String resolverState = "";

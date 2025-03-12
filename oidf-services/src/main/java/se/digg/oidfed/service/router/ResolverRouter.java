@@ -33,6 +33,11 @@ import se.digg.oidfed.service.resolver.ResolverFactory;
 
 import java.util.List;
 
+/**
+ * Responsible for matching requests for any resolver module.
+ *
+ * @author Felix Hellman
+ */
 @Slf4j
 @Component
 public class ResolverRouter implements Router {
@@ -40,6 +45,12 @@ public class ResolverRouter implements Router {
   private final RouteFactory routeFactory;
   private final ServerResponseErrorHandler errorHandler;
 
+  /**
+   * Constructor.
+   * @param resolverFactory
+   * @param routeFactory
+   * @param errorHandler
+   */
   public ResolverRouter(final ResolverFactory resolverFactory,
                         final RouteFactory routeFactory,
                         final ServerResponseErrorHandler errorHandler) {
@@ -58,7 +69,8 @@ public class ResolverRouter implements Router {
               .test(request);
         }, request -> {
           final ResolverProperties resolverProperties = source.getResolverProperties().stream()
-              .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.entityIdentifier()), "/resolve").test(request))
+              .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.entityIdentifier()), "/resolve")
+                  .test(request))
               .findFirst()
               .get();
           final Resolver resolver = this.resolverFactory.create(resolverProperties);
@@ -84,7 +96,8 @@ public class ResolverRouter implements Router {
               .test(request);
         }, request -> {
           final ResolverProperties resolverProperties = source.getResolverProperties().stream()
-              .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.entityIdentifier()), "/discovery").test(request))
+              .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.entityIdentifier()), "/discovery")
+                  .test(request))
               .findFirst()
               .get();
           final Resolver resolver = this.resolverFactory.create(resolverProperties);
