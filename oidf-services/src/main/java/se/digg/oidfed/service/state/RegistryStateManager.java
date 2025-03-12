@@ -24,6 +24,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import se.digg.oidfed.common.entity.integration.CacheRecordPopulator;
 import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.health.ReadyStateComponent;
 
 /**
@@ -38,6 +39,7 @@ public class RegistryStateManager extends ReadyStateComponent {
   private final FederationServiceState state;
   private final ServiceLock serviceLock;
   private final ApplicationEventPublisher publisher;
+  private final OpenIdFederationConfigurationProperties properties;
 
   /**
    * Constructor.
@@ -45,17 +47,19 @@ public class RegistryStateManager extends ReadyStateComponent {
    * @param state
    * @param serviceLock
    * @param publisher
+   * @param properties
    */
   public RegistryStateManager(
       final CacheRecordPopulator populator,
       final FederationServiceState state,
-      final ServiceLock serviceLock, final
-      ApplicationEventPublisher publisher) {
-
+      final ServiceLock serviceLock,
+      final ApplicationEventPublisher publisher,
+      final OpenIdFederationConfigurationProperties properties) {
     this.populator = populator;
     this.state = state;
     this.serviceLock = serviceLock;
     this.publisher = publisher;
+    this.properties = properties;
   }
 
   /**
@@ -65,7 +69,6 @@ public class RegistryStateManager extends ReadyStateComponent {
   public void init(final ApplicationStartedEvent event) {
     this.reloadFromRegistry();
     this.markReady();
-    return;
   }
 
   /**
@@ -80,31 +83,33 @@ public class RegistryStateManager extends ReadyStateComponent {
   }
 
   private void reloadFromRegistry() {
-    if (this.populator.shouldRefresh()) {
-      if (this.serviceLock.acquireLock(this.name())) {
-        final String previousSha256 = this.state.getRegistryState();
-        // --- Critical Section Start ---
-        if (this.state.isStateMissing()) {
-          //If no state is present we still need something for steps further down to compare towards.
-          this.state.updateRegistryState("properties");
-        }
-        try {
-          final CompositeRecord record = this.populator.reload();
-          try {
-            final String registrySha256 = StateHashFactory.hashState(record);
-            log.debug("Registry updated with new hash {}", registrySha256);
-            this.state.updateRegistryState(registrySha256);
-          } catch (final Exception e) {
-            log.error("Failed to serialize state");
+    if (this.properties.getRegistry().getIntegration().getEnabled()) {
+      if (this.populator.shouldRefresh()) {
+        if (this.serviceLock.acquireLock(this.name())) {
+          final String previousSha256 = this.state.getRegistryState();
+          // --- Critical Section Start ---
+          if (this.state.isStateMissing()) {
+            //If no state is present we still need something for steps further down to compare towards.
+            this.state.updateRegistryState("properties");
           }
-        } catch (final Exception e) {
-          log.error("Failed to load from registry", e);
+          try {
+            final CompositeRecord record = this.populator.reload();
+            try {
+              final String registrySha256 = StateHashFactory.hashState(record);
+              log.debug("Registry updated with new hash {}", registrySha256);
+              this.state.updateRegistryState(registrySha256);
+            } catch (final Exception e) {
+              log.error("Failed to serialize state");
+            }
+          } catch (final Exception e) {
+            log.error("Failed to load from registry", e);
+          }
+          if (!this.state.getRegistryState().equals(previousSha256)) {
+            this.publisher.publishEvent(new RegistryLoadedEvent());
+          }
+          this.serviceLock.close(this.name());
+          // --- Critical Section End ---
         }
-        if (!this.state.getRegistryState().equals(previousSha256)) {
-          this.publisher.publishEvent(new RegistryLoadedEvent());
-        }
-        this.serviceLock.close(this.name());
-        // --- Critical Section End ---
       }
     }
   }
