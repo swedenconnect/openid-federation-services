@@ -44,20 +44,17 @@ be loaded from the registry or configured with properties.
 | `validation-keys`   | List of credential names used for validating entity configurations that the resolver consumes                 | List\<String\> | Empty List    |
 | `entity-identifier` | Entity Identifier for this resolver, this entity needs to be referenced locally, see [Entity Configuration]() | String         | Empty List    |
 | `trust-anchor`      | Entity Identifier for trust-anchor for this resolver to resolve from                                          | List\<String\> | Empty List    |
-| `alias`             | Alias for this submodule                                                                                      | String         | Empty List    |
 
 `openid.federation.modules.trust-anchors.*`
 
 | Property            | Description                                                                                                       | Type   | Default value |
 |:--------------------|:------------------------------------------------------------------------------------------------------------------|:-------|:--------------|
 | `entity-identifier` | Entity Identifier for this trust-anchor, this entity needs to be referenced locally, see [Entity Configuration]() | String | Empty List    |
-| `alias`             | Alias for this submodule                                                                                          | String | Empty List    |
 
 `openid.federation.modules.trust-mark-issuers.*`
 
 | Property                       | Description                                                                                                    | Type     | Default value |
 |:-------------------------------|:---------------------------------------------------------------------------------------------------------------|:---------|:--------------|
-| `alias`                        | Alias for where TMI is mounted, ex tmi http://localhost/tmi/trust_mark_listing                                 | Duration | PT30M         |
 | `entity-identifier`            | The entity ID of the trust mark issuer, identifying the issuing organization.                                  | String   |               |
 | `trust-mark-validity-duration` | Duration for which the trust mark JWT is valid, represented in ISO 8601 format (e.g., `PT30M` for 30  minutes) | Duration | PT30M         |
 | `trust-marks`                  | Array of trust marks issued by the trust mark issuer.                                                          | String   |               |

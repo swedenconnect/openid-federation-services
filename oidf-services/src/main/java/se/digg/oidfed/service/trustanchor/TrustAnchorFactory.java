@@ -57,10 +57,7 @@ public class TrustAnchorFactory {
    */
   public TrustAnchor create(final TrustAnchorProperties properties) {
     return new TrustAnchor(this.source, properties,
-        new SubordinateStatementFactory(
-            this.source,
-            this.signerFactory,
-            properties.getBasePath()),
+        new SubordinateStatementFactory(this.signerFactory),
         this.client
     );
   }

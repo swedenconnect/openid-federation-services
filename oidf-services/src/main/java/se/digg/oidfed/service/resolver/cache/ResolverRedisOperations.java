@@ -113,11 +113,11 @@ public class ResolverRedisOperations {
    * Key for handling entities.
    * @param location internal node key
    * @param version to which the entity belongs to
-   * @param alias to which module the data belongs to
+   * @param entityId to which module the data belongs to
    */
-  public record EntityKey(String location, int version, String alias) {
+  public record EntityKey(String location, int version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:entity:%s".formatted(this.alias, this.version, this.location);
+      return "%s:%d:entity:%s".formatted(this.entityId, this.version, this.location);
     }
   }
 
@@ -125,22 +125,22 @@ public class ResolverRedisOperations {
    * Key for handling child listings.
    * @param parent to which the child belongs to
    * @param version to which the child and parent belongs to
-   * @param alias to which module the data belongs to
+   * @param entityId to which module the data belongs to
    */
-  public record ChildKey(Node<EntityStatement> parent, int version, String alias) {
+  public record ChildKey(Node<EntityStatement> parent, int version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:children:%s".formatted(this.alias, this.version, this.parent.getKey());
+      return "%s:%d:children:%s".formatted(this.entityId, this.version, this.parent.getKey());
     }
   }
 
   /**
    * Key for handling root nodes.
    * @param version to which the root belongs to
-   * @param alias to which module the data belongs to
+   * @param entityId to which module the data belongs to
    */
-  public record RootKey(int version, String alias) {
+  public record RootKey(int version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:root".formatted(this.alias, this.version);
+      return "%s:%d:root".formatted(this.entityId, this.version);
     }
   }
 }

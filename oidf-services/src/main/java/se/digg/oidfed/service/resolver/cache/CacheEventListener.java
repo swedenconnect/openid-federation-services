@@ -39,6 +39,6 @@ public class CacheEventListener {
 
   @EventListener
   void handle(final TreeUpdatedEvent event) {
-    this.registry.updateVersion(event.alias());
+    this.registry.updateVersion(event.entityId());
   }
 }

@@ -11,18 +11,6 @@ interface.
 
 When this service is running in managed mode it loads its instance configuration from a given registry.
 
-See below for a simplified startup diagram of the service.
-
-```mermaid
-graph LR
-;
-    app_started("Application Started") --> 
-    Modules("Load Modules From Registry") -->
-Entities("Load Entities From Registry") -->
-InitModules("Initialize Modules in Service") -->
-Ready("All modules are loaded - Application Ready")
-```
-
 Loading of managed configuration happens _after_ startup, which means application will not be ready for traffic
 immediately. The application offers a ready state endpoint to help orchestration tools to know when the service is
 ready for traffic.
@@ -39,18 +27,18 @@ E.g. Pseudo Configuration of 4 nodes that is divided into two instance groups
 graph LR
     subgraph Instance-987
         subgraph node-3
-            123-tmi-1("/tmi {alias:tmi}");
+            123-tmi-1("/tmi");
         end
         subgraph node-4
-            123-tmi-2("/tmi {alias:tmi}");
+            123-tmi-2("/tmi");
         end
     end
     subgraph Instance-123
         subgraph node-1
-            123-ta-1("/ta {alias:ta}");
+            123-ta-1("/ta");
         end
         subgraph node-2
-            123-ta-2("/ta {alias:ta}");
+            123-ta-2("/ta");
         end
     end
     loadbalancer("Loadbalancer /ta | /tmi") --> 123-ta-1 & 123-ta-2;
@@ -62,11 +50,6 @@ graph LR
 The service is split into multiple modules which is a group of OpenID Federation endpoints.
 Each module _has_ to belong to a given entity that is present in properties or registry.
 
-Each module has an alias, this is to inform the service of what (sub) module to direct the traffic to. E.g.
-A Trust Anchor module with the alias `ta` will respond to subordinate listings
-for `https://my.federation.test/ta/subordinate_listing`
-Given that your base domain is `https://my.federation.test`
-
 ### TrustAnchor / Intermediate
 
 #### Subordinate Listing
@@ -74,7 +57,7 @@ Given that your base domain is `https://my.federation.test`
 Last Updated
 for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1_0.html#name-subordinate-listing-request)**
 
-`GET /{alias}/subordinate_listing`
+`GET /subordinate_listing`
 
 *Query Parameters*
 
@@ -90,7 +73,7 @@ for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1
 Last Updated
 for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1_0.html#name-fetch-subordinate-statement)**
 
-`GET /{alias}/fetch`
+`GET /fetch`
 
 *Query Parameters*
 
@@ -105,7 +88,7 @@ for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1
 Last Updated
 for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1_0.html#name-trust-mark-endpoint)**
 
-`GET /{alias}/trust_mark`
+`GET /trust_mark`
 
 *Query Parameters*
 
@@ -119,7 +102,7 @@ for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1
 Last Updated
 for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1_0.html#name-trust-mark-status)**
 
-`GET /{alias}/trust_mark_status`
+`GET /trust_mark_status`
 
 *Query Parameters*
 
@@ -134,7 +117,7 @@ for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1
 Last Updated
 for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1_0.html#name-trust-marked-entities-listi)**
 
-`GET /{alias}/trust_mark_listing`
+`GET /trust_mark_listing`
 
 *Query Parameters*
 
@@ -150,7 +133,7 @@ for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1
 Last Updated
 for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1_0.html#name-trust-marked-entities-listi)**
 
-`GET /{alias}/resolve`
+`GET /resolve`
 
 *Query Parameters*
 
@@ -165,7 +148,7 @@ for: **[OpenId Federation Draft 41](https://openid.net/specs/openid-federation-1
 Last Updated
 for: **[Version: 1.0 - draft 05 - 2024-06-14](https://github.com/oidc-sweden/specifications/blob/main/swedish-oidc-fed-profile.md#62-discovery-request)**
 
-`GET /{alias}/discovery`
+`GET /discovery`
 
 *Query Parameters*
 

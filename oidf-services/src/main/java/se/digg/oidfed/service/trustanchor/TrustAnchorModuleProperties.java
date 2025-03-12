@@ -48,19 +48,15 @@ public class TrustAnchorModuleProperties {
   @Getter
   @Setter
   public static class TrustAnchorSubModuleProperties {
-    /** Alias for the given module */
-    private String alias;
     /** EntityId for the trust anchor */
     private String entityIdentifier;
-    /** Base path for trust anchor */
-    private String basePath;
 
     /**
      * Converts this to {@link TrustAnchorProperties}
      * @return property
      */
     public TrustAnchorProperties toTrustAnchorProperties() {
-      return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier), this.basePath);
+      return new TrustAnchorProperties(new EntityID(this.entityIdentifier));
     }
   }
 }

@@ -37,26 +37,14 @@ import java.util.Optional;
  */
 public class SubordinateStatementFactory {
 
-  private final CompositeRecordSource source;
-
   private final SignerFactory factory;
-
-  private final String baseUri;
-
   /**
    * Constructor.
    *
-   * @param source  of policies
    * @param factory for signing hosted records
-   * @param baseUri for hosted records
    */
-  public SubordinateStatementFactory(
-      final CompositeRecordSource source,
-      final SignerFactory factory,
-      final String baseUri) {
-    this.source = source;
+  public SubordinateStatementFactory(final SignerFactory factory) {
     this.factory = factory;
-    this.baseUri = baseUri;
   }
 
   /**

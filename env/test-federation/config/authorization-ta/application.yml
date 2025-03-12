@@ -121,17 +121,14 @@ openid:
           entity-identifier: https://authorization.local.swedenconnect.se/resolver
           trust-anchor: https://authorization.local.swedenconnect.se/ta
           sign-key-alias: sign-key-1
-          alias: authorization-resolver
     trust-anchor:
       active: true
       anchors:
-        - alias: ta
-          entity-identifier: https://authorization.local.swedenconnect.se/ta
+          - entity-identifier: https://authorization.local.swedenconnect.se/ta
     trust-mark-issuer:
       active: true
       trust-mark-issuers:
-        - alias: tmi
-          entity-identifier: https://authorization.local.swedenconnect.se/tmi
+        - entity-identifier: https://authorization.local.swedenconnect.se/tmi
           trust-mark-validity-duration: PT29M
 
           trust-marks:

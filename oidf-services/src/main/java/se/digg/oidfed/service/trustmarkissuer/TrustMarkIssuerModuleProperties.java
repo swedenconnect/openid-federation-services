@@ -81,10 +81,8 @@ public class TrustMarkIssuerModuleProperties {
    * @param trustMarkValidityDuration               ValidityDuration of the TrustMark JWT token. Default value is PT30M
    * @param entityIdentifier                        EntityId of this trustmark issuer
    * @param trustMarks                              List of defined trustmarks
-   * @param alias                                   Alias name for this trust mark issuer
    */
   public record TrustMarkIssuerSubModuleProperty(
-      String alias,
       String entityIdentifier,
 
       String remoteSubjectRepositoryJwtTrustKeyAlias,

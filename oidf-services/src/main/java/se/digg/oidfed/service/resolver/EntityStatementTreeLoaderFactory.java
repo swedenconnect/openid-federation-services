@@ -63,7 +63,7 @@ public class EntityStatementTreeLoaderFactory {
     return new EntityStatementTreeLoader(this.client, this.executionStrategy,
         new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
         this.errorContextFactory)
-        .withAdditionalPostHook(() -> this.publisher.publishEvent(new TreeUpdatedEvent(properties.alias())));
+        .withAdditionalPostHook(() -> this.publisher.publishEvent(new TreeUpdatedEvent(properties.entityIdentifier())));
   }
 
 }

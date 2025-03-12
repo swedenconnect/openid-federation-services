@@ -38,7 +38,6 @@ public class ResolverModuleResponse {
   private JWKSet trustedKeys;
   private String entityIdentifier;
   private Duration stepRetryTime;
-  private String alias;
   private Boolean active;
 
   /**
@@ -53,7 +52,6 @@ public class ResolverModuleResponse {
     json.put("trusted-keys", this.trustedKeys);
     json.put("entity-identifier", this.entityIdentifier);
     json.put("step-retry-time", this.stepRetryTime);
-    json.put("alias", this.alias);
     json.put("active", this.active);
     return Collections.unmodifiableMap(json);
   }
@@ -74,7 +72,6 @@ public class ResolverModuleResponse {
 
       resolver.entityIdentifier = (String) json.get("entity-identifier");
       resolver.stepRetryTime = Duration.parse((String) json.get("step-retry-duration")); // changed from step-retry-time
-      resolver.alias = (String) json.get("alias");
       try {
         resolver.trustedKeys = JWKSet.parse((String) json.get("trusted-keys"));
       }
@@ -97,7 +94,6 @@ public class ResolverModuleResponse {
         this.resolveResponseDuration,
         this.trustedKeys.getKeys(),
         this.entityIdentifier,
-        this.stepRetryTime,
-        this.alias);
+        this.stepRetryTime);
   }
 }

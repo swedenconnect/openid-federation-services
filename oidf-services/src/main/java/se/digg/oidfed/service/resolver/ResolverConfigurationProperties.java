@@ -113,8 +113,7 @@ public class ResolverConfigurationProperties {
           this.duration,
           list,
           this.entityIdentifier,
-          Duration.ofSeconds(10),
-          this.alias
+          Duration.ofSeconds(10)
       );
     }
 

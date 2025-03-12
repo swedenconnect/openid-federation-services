@@ -81,17 +81,12 @@ openid:
             - sign-key-1
           entity-identifier: https://municipality.local.swedenconnect.se/municipality-resolver
           trust-anchor: https://municipality.local.swedenconnect.se/municipality-ta
-          alias: municipality-resolver
       trust-anchors:
-        - alias: municipality-ta
-          entity-identifier: https://municipality.local.swedenconnect.se/municipality-ta
-        - alias: authorization-ta
-          entity-identifier: https://authorization.local.swedenconnect.se/authorization-ta
-        - alias: private-ta
-          entity-identifier: https://private.local.swedenconnect.se/private-ta
+        - entity-identifier: https://municipality.local.swedenconnect.se/municipality-ta
+        - entity-identifier: https://authorization.local.swedenconnect.se/authorization-ta
+        - entity-identifier: https://private.local.swedenconnect.se/private-ta
       trust-mark-issuers:
-        - alias: authorization-tmi
-          entity-identifier: https://authorization.local.swedenconnect.se/authorization-tmi
+        - entity-identifier: https://authorization.local.swedenconnect.se/authorization-tmi
           trust-mark-validity-duration: PT29M
           trust-marks:
             - trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/certified

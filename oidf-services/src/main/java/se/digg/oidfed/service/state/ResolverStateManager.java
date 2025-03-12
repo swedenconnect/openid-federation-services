@@ -74,7 +74,7 @@ public class ResolverStateManager extends ReadyStateComponent {
     if (this.state.resolverNeedsReevaulation()) {
       if (this.redisServiceLock.acquireLock(this.name())) {
         // --- Critical Section Start ---
-        this.registry.getAliases()
+        this.registry.getEntityIds()
             .forEach(alias -> {
               final Observation resolveFederationObservation =
                   Observation.start(

@@ -80,7 +80,7 @@ public class ResolverFactory {
   public Resolver create(final ResolverProperties properties) {
     final ResolverCache entityStatementSnapshotSource = this.resolverCacheFactory.create(properties);
     final EntityStatementTree entityStatementTree = new EntityStatementTree(new Tree<>(entityStatementSnapshotSource));
-    this.registry.registerCache(properties.alias(), new ResolverCacheRegistration(
+    this.registry.registerCache(properties.entityIdentifier(), new ResolverCacheRegistration(
         entityStatementTree,
         this.treeLoaderFactory.create(properties),
         entityStatementSnapshotSource,

@@ -131,31 +131,5 @@ public class OpenIdFederationConfigurationProperties {
     private List<TrustAnchorModuleProperties.TrustAnchorSubModuleProperties> trustAnchors;
     @NestedConfigurationProperty
     private List<TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty> trustMarkIssuers;
-
-    private String basePath;
-
-    /**
-     * @return list of all issuers
-     */
-    public List<String> getIssuers() {
-      final List<String> issuers = new ArrayList<>();
-
-      Optional.ofNullable(this.resolvers)
-          .ifPresent(resolvers -> resolvers.stream()
-              .map(ResolverConfigurationProperties.ResolverModuleProperties::getEntityIdentifier)
-              .forEach(issuers::add));
-
-      Optional.ofNullable(this.trustAnchors)
-          .ifPresent(trustAnchors -> trustAnchors.stream()
-              .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::getEntityIdentifier)
-              .forEach(issuers::add));
-
-      Optional.ofNullable(this.trustMarkIssuers)
-          .ifPresent(tmi -> tmi.stream()
-                  .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::entityIdentifier)
-                  .forEach(issuers::add));
-
-      return issuers;
-    }
   }
 }

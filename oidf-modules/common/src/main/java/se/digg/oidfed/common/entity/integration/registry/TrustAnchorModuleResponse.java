@@ -30,14 +30,10 @@ import java.util.Map;
  */
 @Getter
 public class TrustAnchorModuleResponse {
-  /** Alias for the given module */
-  private String alias;
   /** EntityId for the trust anchor */
   private String entityIdentifier;
   /** Is the module qctive */
   private Boolean active;
-  /** Base path for trust anchor */
-  private String basePath;
 
   /**
    * Converts this instance to json object {@link HashMap}
@@ -45,7 +41,6 @@ public class TrustAnchorModuleResponse {
    */
   public Map<String, Object> toJson() {
     final HashMap<String, Object> json = new HashMap<>();
-    json.put("alias", this.alias);
     json.put("entity-identifier", this.entityIdentifier);
     json.put("active", this.active);
     return Collections.unmodifiableMap(json);
@@ -58,7 +53,6 @@ public class TrustAnchorModuleResponse {
    */
   public static TrustAnchorModuleResponse fromJson(final Map<String, Object> json) {
     final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
-    trustAnchorModuleResponse.alias = (String) json.get("alias");
     trustAnchorModuleResponse.entityIdentifier = (String) json.get("entity-identifier");
     trustAnchorModuleResponse.active = (Boolean) json.get("active");
     return trustAnchorModuleResponse;
@@ -69,7 +63,7 @@ public class TrustAnchorModuleResponse {
    * @return properties instance
    */
   public TrustAnchorProperties toProperties() {
-    return new TrustAnchorProperties(this.alias, new EntityID(this.entityIdentifier), this.basePath);
+    return new TrustAnchorProperties(new EntityID(this.entityIdentifier));
   }
 
 }
