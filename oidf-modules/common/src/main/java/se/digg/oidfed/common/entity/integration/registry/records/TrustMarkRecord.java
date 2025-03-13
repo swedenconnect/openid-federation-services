@@ -40,7 +40,7 @@ public class TrustMarkRecord implements Serializable {
   /**
    * Json field key for trust mark entity id.
    */
-  public static final String TRUST_MARK_ENTITY_ID_FIELd = "trust-mark-entity-id";
+  public static final String TRUST_MARK_ENTITY_ID_FIELD = "trust-mark-entity-id";
   /**
    * Json field key for delegation field.
    */
@@ -93,7 +93,7 @@ public class TrustMarkRecord implements Serializable {
   public Map<String, Object> toJson() {
     final Map<String, Object> json = new HashMap<>();
     json.put(ISSUER_ENTITY_IDENTIFIER_FIELD, this.issuerEntityId);
-    json.put(TRUST_MARK_ENTITY_ID_FIELd, this.trustMarkEntityId);
+    json.put(TRUST_MARK_ENTITY_ID_FIELD, this.trustMarkEntityId);
     json.put(DELEGATION_FIELD, this.delegation);
     json.put(REF_URI_FIELD, this.ref);
     json.put(LOGO_URI_FIELD, this.logoUri);
@@ -110,7 +110,7 @@ public class TrustMarkRecord implements Serializable {
 
     return TrustMarkRecord.builder()
         .issuerEntityId(jsonObject.getStringValue(ISSUER_ENTITY_IDENTIFIER_FIELD))
-        .trustMarkEntityId(jsonObject.getStringValue(TRUST_MARK_ENTITY_ID_FIELd))
+        .trustMarkEntityId(jsonObject.getStringValue(TRUST_MARK_ENTITY_ID_FIELD))
         .delegation(jsonObject.getStringValue(DELEGATION_FIELD))
         .ref(jsonObject.getStringValue(REF_URI_FIELD))
         .logoUri(jsonObject.getStringValue(LOGO_URI_FIELD))
