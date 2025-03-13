@@ -54,6 +54,7 @@ public class TrustMarkSigner {
 
   /**
    * Constructor.
+   *
    * @param signerFactory
    * @param clock
    */
@@ -65,6 +66,7 @@ public class TrustMarkSigner {
 
   /**
    * Signs a trust mark.
+   *
    * @param trustMarkIssuerProperties
    * @param trustMarkProperties
    * @param trustMarkSubjectRecord

@@ -36,7 +36,7 @@ import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.exception.ServerErrorException;
-import se.digg.oidfed.common.jwt.SignerFactory;
+import se.digg.oidfed.common.jwt.JWKSetSignerFactory;
 
 import java.text.ParseException;
 import java.time.Clock;
@@ -126,7 +126,7 @@ class TrustMarkIssuerTest {
     final Clock fixed = Clock.fixed(Instant.now().plus(2, ChronoUnit.DAYS), ZoneId.systemDefault());
 
 
-    final TrustMarkSigner signer = new TrustMarkSigner(new SignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
         , fixed);
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkIssuerProperties, signer, source, Clock.systemUTC());
     assertThrows(InvalidRequestException.class, () -> trustMarkIssuer.trustMarkListing(null));
@@ -187,7 +187,7 @@ class TrustMarkIssuerTest {
         .thenReturn(Optional.of(sub1));
 
     final Clock fixed = Clock.fixed(Instant.now().plus(2, ChronoUnit.DAYS), ZoneId.systemDefault());
-    final TrustMarkSigner signer = new TrustMarkSigner(new SignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
         , fixed);
 
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkIssuerProperties, signer, source, Clock.systemUTC());
@@ -251,7 +251,7 @@ class TrustMarkIssuerTest {
 
 
     final Clock fixed = Clock.fixed(Instant.now().plus(8, ChronoUnit.MINUTES), ZoneId.systemDefault());
-    final TrustMarkSigner signer = new TrustMarkSigner(new SignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
         , fixed);
 
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(trustMarkIssuerProperties, signer, source, Clock.systemUTC());
@@ -275,7 +275,7 @@ class TrustMarkIssuerTest {
   @Test
   void testExpCalculationExpectTTLForSubject() throws InvalidRequestException {
     final Clock fixed = Clock.fixed(Instant.now(), ZoneId.systemDefault());
-    final TrustMarkSigner signer = new TrustMarkSigner(new SignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
         , fixed);
     final Instant ttlForSubject = Instant.now().plus(2, ChronoUnit.MINUTES);
     final Date exp = signer.calculateExp(Duration.ofMinutes(5), ttlForSubject);
@@ -288,7 +288,7 @@ class TrustMarkIssuerTest {
   void testExpCalculationExpectDuration() {
     final Instant now = Instant.now();
     final Clock fixed = Clock.fixed(now, ZoneId.systemDefault());
-    final TrustMarkSigner signer = new TrustMarkSigner(new SignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
         , fixed);
     final Instant ttlForSubject = now.plus(10, ChronoUnit.MINUTES);
     final Duration durationTTL = Duration.ofMinutes(5);

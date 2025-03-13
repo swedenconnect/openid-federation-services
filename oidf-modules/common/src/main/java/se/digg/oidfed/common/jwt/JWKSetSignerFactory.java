@@ -17,6 +17,8 @@
 package se.digg.oidfed.common.jwt;
 
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKMatcher;
+import com.nimbusds.jose.jwk.JWKSelector;
 import com.nimbusds.jose.jwk.JWKSet;
 
 /**
@@ -24,19 +26,38 @@ import com.nimbusds.jose.jwk.JWKSet;
  *
  * @author Felix Hellman
  */
-public interface SignerFactory {
+public class JWKSetSignerFactory implements SignerFactory {
+  private final JWKSet jwkSet;
+
   /**
    * @return new signer
    */
-  FederationSigner createSigner();
+  public FederationSigner createSigner() {
+    return new JWKFederationSigner(this.getSignKey());
+  }
 
   /**
    * @return current sign key
    */
-  JWK getSignKey();
+  public JWK getSignKey() {
+    return new JWKSelector(new JWKMatcher.Builder().build()).select(this.jwkSet).getFirst();
+  }
 
   /**
    * @return all current keys
    */
-  JWKSet getSignKeys();
+  public JWKSet getSignKeys() {
+    return this.jwkSet;
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param jwkSet to use
+   */
+  public JWKSetSignerFactory(final JWKSet jwkSet) {
+    this.jwkSet = jwkSet;
+  }
+
+
 }

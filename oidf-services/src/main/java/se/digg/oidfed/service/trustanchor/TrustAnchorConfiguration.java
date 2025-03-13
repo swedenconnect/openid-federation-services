@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
+import se.digg.oidfed.common.jwt.JWKSetSignerFactory;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
 /**

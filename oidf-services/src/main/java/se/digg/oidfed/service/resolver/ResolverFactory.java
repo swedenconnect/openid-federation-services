@@ -47,7 +47,7 @@ public class ResolverFactory {
   private final MetadataProcessor processor;
   private final EntityStatementTreeLoaderFactory treeLoaderFactory;
   private final ResolverCacheRegistry registry;
-  private final SignerFactory signerAdapter;
+  private final SignerFactory signerFactory;
 
   /**
    * Constructor.
@@ -56,19 +56,19 @@ public class ResolverFactory {
    * @param processor            to use for metadata
    * @param treeLoaderFactory    to use for creating tree loaders
    * @param registry             for caches
-   * @param signerAdapter        to use
+   * @param signerFactory        to use
    */
   public ResolverFactory(
       final ResolverCacheFactory resolverCacheFactory,
       final MetadataProcessor processor,
       final EntityStatementTreeLoaderFactory treeLoaderFactory,
       final ResolverCacheRegistry registry,
-      final SignerFactory signerAdapter) {
+      final SignerFactory signerFactory) {
     this.resolverCacheFactory = resolverCacheFactory;
     this.processor = processor;
     this.treeLoaderFactory = treeLoaderFactory;
     this.registry = registry;
-    this.signerAdapter = signerAdapter;
+    this.signerFactory = signerFactory;
   }
 
   /**
@@ -110,6 +110,6 @@ public class ResolverFactory {
   }
 
   private ResolverResponseFactory resolverResponseFactory(final ResolverProperties properties) {
-    return new ResolverResponseFactory(Clock.systemUTC(), properties, this.signerAdapter);
+    return new ResolverResponseFactory(Clock.systemUTC(), properties, this.signerFactory);
   }
 }

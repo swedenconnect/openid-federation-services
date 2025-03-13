@@ -38,7 +38,7 @@ import java.util.Map;
 public class ResolverResponseFactory {
   private final Clock clock;
   private final ResolverProperties properties;
-  private final SignerFactory adapter;
+  private final SignerFactory signerFactory;
 
   private final Map<KeyType, JWSAlgorithm> keyTypeJWSAlgorithmMap = Map.of(
       KeyType.EC, JWSAlgorithm.ES256,
@@ -48,18 +48,22 @@ public class ResolverResponseFactory {
   /**
    * Constructor.
    *
-   * @param clock for determining current time
-   * @param properties for response parameters
-   * @param adapter for finding a signer
+   * @param clock         for determining current time
+   * @param properties    for response parameters
+   * @param signerFactory for finding a signer
    */
-  public ResolverResponseFactory(final Clock clock, final ResolverProperties properties, final SignerFactory adapter) {
+  public ResolverResponseFactory(
+      final Clock clock,
+      final ResolverProperties properties,
+      final SignerFactory signerFactory) {
     this.clock = clock;
     this.properties = properties;
-    this.adapter = adapter;
+    this.signerFactory = signerFactory;
   }
 
   /**
    * Constructs and signs response for the resolver.
+   *
    * @param resolverResponse to create a response for
    * @return signed jwt as string
    * @throws ParseException
@@ -80,7 +84,7 @@ public class ResolverResponseFactory {
                 resolverResponse.trustChain().stream().map(statement -> statement.getSignedStatement().serialize())
                     .toList())
             .build();
-    return this.adapter.createSigner()
+    return this.signerFactory.createSigner()
         .sign(new JOSEObjectType("resolve-response+jwt"), claims)
         .serialize();
   }

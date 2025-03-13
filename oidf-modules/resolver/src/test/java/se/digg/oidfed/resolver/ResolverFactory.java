@@ -21,7 +21,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
-import se.digg.oidfed.common.jwt.SignerFactory;
+import se.digg.oidfed.common.jwt.JWKSetSignerFactory;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.common.tree.VersionedInMemoryCache;
@@ -45,7 +45,7 @@ public class ResolverFactory {
   public static ResolverClient createTestResolver(final FederationClient client,
                                                   final ResolverProperties properties,
                                                   final StepRecoveryStrategy recoveryStrategy,
-                                                  final SignerFactory adapter) {
+                                                  final JWKSetSignerFactory adapter) {
 
     final ResolverCache dataLayer = new VersionedInMemoryCache();
     final EntityStatementTree entityStatementTree = getEntityStatementTree(client, properties, dataLayer, recoveryStrategy);
