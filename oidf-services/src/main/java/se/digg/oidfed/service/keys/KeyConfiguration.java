@@ -37,11 +37,14 @@ public class KeyConfiguration {
   KeyRegistry keyRegistry(final CredentialBundles bundles) {
     final KeyRegistry keyRegistry = new KeyRegistry();
     final JwkTransformerFunction jwkTransformerFunction = new JwkTransformerFunction()
+        .withRsaCustomizer(rsa -> rsa.x509CertChain(null))
+        .withEcKeyCustomizer(ec -> ec.x509CertChain(null))
         .serializable();
     bundles.getRegisteredCredentials().forEach(key -> {
       final KeyProperty property = new KeyProperty();
       final PkiCredential credential = bundles.getCredential(key);
       property.setKey(jwkTransformerFunction.apply(credential));
+
       property.setAlias(key);
       keyRegistry.register(property);
     });
