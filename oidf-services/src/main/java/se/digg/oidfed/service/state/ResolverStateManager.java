@@ -19,12 +19,13 @@ package se.digg.oidfed.service.state;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.health.ReadyStateComponent;
 import se.digg.oidfed.service.resolver.cache.CompositeTreeLoader;
 
+import java.util.concurrent.TimeUnit;
+
 /**
- * Readystate component for loading resolvers
+ * Readystate component for loading resolvers.
  *
  * @author Felix Hellman
  */
@@ -32,26 +33,19 @@ import se.digg.oidfed.service.resolver.cache.CompositeTreeLoader;
 public class ResolverStateManager extends ReadyStateComponent {
 
   private final CompositeTreeLoader treeLoader;
-  private final FederationServiceState state;
   private final ServiceLock redisServiceLock;
-  private final OpenIdFederationConfigurationProperties properties;
 
   /**
    * Constructor.
+   *
    * @param treeLoader
-   * @param state
    * @param redisServiceLock
-   * @param properties
    */
   public ResolverStateManager(
       final CompositeTreeLoader treeLoader,
-      final FederationServiceState state,
-      final ServiceLock redisServiceLock,
-      final OpenIdFederationConfigurationProperties properties) {
+      final ServiceLock redisServiceLock) {
     this.treeLoader = treeLoader;
-    this.state = state;
     this.redisServiceLock = redisServiceLock;
-    this.properties = properties;
   }
 
   @Override
@@ -62,7 +56,7 @@ public class ResolverStateManager extends ReadyStateComponent {
   /**
    * Trigger reload of this component if needed.
    */
-  @Scheduled(cron = "0 * * * * *")
+  @Scheduled(fixedRate = 60, timeUnit = TimeUnit.MINUTES)
   public void reload() {
     if (this.ready()) {
       //No need to execute cron job during startup
@@ -78,17 +72,11 @@ public class ResolverStateManager extends ReadyStateComponent {
 
   private void reloadResolvers() {
     if (this.redisServiceLock.acquireLock(this.name())) {
-      final String registryState = this.state.getRegistryState();
-      //If registry integration is disabled, refresh resolver anyway
-      final boolean reEvaluateCondition = this.state.resolverNeedsReevaulation(registryState)
-          || !this.properties.getRegistry().getIntegration().getEnabled();
-      if (reEvaluateCondition) {
-        // --- Critical Section Start ---
-        this.treeLoader.loadTree();
-        this.state.updateResolverState(registryState);
-        this.redisServiceLock.close(this.name());
-        // --- Critical Section End
-      }
+      // --- Critical Section Start ---
+      this.treeLoader.loadTree();
+      this.redisServiceLock.close(this.name());
+      // --- Critical Section End
     }
   }
 }
+

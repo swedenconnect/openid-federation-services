@@ -47,17 +47,6 @@ public class RedisFederationServiceState implements FederationServiceState {
   }
 
   @Override
-  public Boolean resolverNeedsReevaulation(final String stateHash) {
-    final String resolverSha = this.template.opsForValue().get("resolver-sha256");
-    return !Optional.ofNullable(resolverSha).orElse("").equals(stateHash);
-  }
-
-  @Override
-  public void updateResolverState(final String stateHash) {
-    this.template.opsForValue().set("resolver-sha256", stateHash);
-  }
-
-  @Override
   public Boolean isStateMissing() {
     final String registrySha256 = this.getRegistrySha256();
     return Objects.isNull(registrySha256) || registrySha256.isBlank();

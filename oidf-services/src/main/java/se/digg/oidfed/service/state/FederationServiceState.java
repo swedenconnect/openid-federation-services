@@ -36,15 +36,4 @@ public interface FederationServiceState {
    * @return current state
    */
   String getRegistryState();
-
-  /**
-   * @param stateHash to check for
-   * @return true if resolver is outdated
-   */
-  Boolean resolverNeedsReevaulation(final String stateHash);
-
-  /**
-   * @param stateHash to update with
-   */
-  void updateResolverState(final String stateHash);
 }

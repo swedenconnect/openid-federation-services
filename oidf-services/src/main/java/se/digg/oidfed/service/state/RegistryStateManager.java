@@ -27,6 +27,8 @@ import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord
 import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.health.ReadyStateComponent;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Responsible for registry state.
  *
@@ -74,7 +76,7 @@ public class RegistryStateManager extends ReadyStateComponent {
   /**
    * Trigger reload of this component if needed.
    */
-  @Scheduled(cron = "0 * * * * *")
+  @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
   public void reload() {
     if (this.ready()) {
       //No need to execute cron job during startup
@@ -105,6 +107,7 @@ public class RegistryStateManager extends ReadyStateComponent {
             log.error("Failed to load from registry", e);
           }
           if (!this.state.getRegistryState().equals(previousSha256)) {
+            // Notify resolver to refresh
             this.publisher.publishEvent(new RegistryLoadedEvent());
           }
           this.serviceLock.close(this.name());

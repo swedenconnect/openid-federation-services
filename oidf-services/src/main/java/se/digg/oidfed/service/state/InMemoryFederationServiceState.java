@@ -25,22 +25,10 @@ import java.util.Objects;
  */
 public class InMemoryFederationServiceState implements FederationServiceState {
   private String registryState = "";
-  private String resolverState = "";
 
   @Override
   public void updateRegistryState(final String stateHash) {
     this.registryState = stateHash;
-  }
-
-
-  @Override
-  public Boolean resolverNeedsReevaulation(final String statehash) {
-    return !this.resolverState.equals(statehash);
-  }
-
-  @Override
-  public void updateResolverState(final String stateHash) {
-    this.resolverState = stateHash;
   }
 
   @Override
