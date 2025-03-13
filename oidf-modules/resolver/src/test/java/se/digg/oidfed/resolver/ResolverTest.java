@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import se.digg.oidfed.common.entity.integration.InMemoryCache;
 import se.digg.oidfed.common.entity.integration.federation.EntityConfigurationRequest;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
@@ -133,7 +134,8 @@ class ResolverTest {
         ),
         new EntityStatementTree(entityStatementTree),
         new MetadataProcessor(new OIDFPolicyOperationFactory(), new DefaultPolicyOperationCombinationValidator()),
-        new ResolverResponseFactory(Clock.systemUTC(), properties, new JWKSetSignerFactory(new JWKSet(List.of(KEY)))));
+        new ResolverResponseFactory(Clock.systemUTC(), properties, new JWKSetSignerFactory(new JWKSet(List.of(KEY))))
+        , new InMemoryCache<>(Clock.systemDefaultZone()), Clock.systemUTC());
   }
 
   private static void mockSubordinateListing(final FederationClient mock, final String listEndpoint, final List<String> subordinates) {

@@ -30,10 +30,13 @@ import se.digg.oidfed.resolver.metadata.OIDFPolicyOperationFactory;
 import se.digg.oidfed.resolver.tree.resolution.DFSExecution;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;
+import se.digg.oidfed.service.cache.CacheFactory;
 import se.digg.oidfed.service.resolver.cache.CompositeTreeLoader;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContextFactory;
+
+import java.time.Clock;
 
 /**
  * Configuration class for Resolver.
@@ -60,9 +63,13 @@ public class ResolverConfiguration {
       final MetadataProcessor processor,
       final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory,
       final ResolverCacheRegistry registry,
-      final SignerFactory adapter
-  ) {
-    return new ResolverFactory(factory, processor, entityStatementTreeLoaderFactory, registry, adapter);
+      final SignerFactory adapter,
+      final CacheFactory cacheFactory,
+      final Clock clock
+      ) {
+    return new ResolverFactory(
+        factory, processor, entityStatementTreeLoaderFactory,
+        registry, adapter, cacheFactory, clock);
   }
 
   @Bean

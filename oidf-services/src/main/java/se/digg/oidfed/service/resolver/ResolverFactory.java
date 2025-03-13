@@ -17,6 +17,7 @@
 package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.tree.ResolverCache;
@@ -29,6 +30,7 @@ import se.digg.oidfed.resolver.chain.CriticalClaimsValidationStep;
 import se.digg.oidfed.resolver.chain.SignatureValidationStep;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.tree.EntityStatementTree;
+import se.digg.oidfed.service.cache.CacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistration;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
@@ -48,6 +50,8 @@ public class ResolverFactory {
   private final EntityStatementTreeLoaderFactory treeLoaderFactory;
   private final ResolverCacheRegistry registry;
   private final SignerFactory signerFactory;
+  private final CacheFactory factory;
+  private final Clock clock;
 
   /**
    * Constructor.
@@ -57,18 +61,25 @@ public class ResolverFactory {
    * @param treeLoaderFactory    to use for creating tree loaders
    * @param registry             for caches
    * @param signerFactory        to use
+   * @param factory              for creating caches
+   * @param clock                for time keeping
    */
   public ResolverFactory(
       final ResolverCacheFactory resolverCacheFactory,
       final MetadataProcessor processor,
       final EntityStatementTreeLoaderFactory treeLoaderFactory,
       final ResolverCacheRegistry registry,
-      final SignerFactory signerFactory) {
+      final SignerFactory signerFactory,
+      final CacheFactory factory,
+      final Clock clock) {
+
     this.resolverCacheFactory = resolverCacheFactory;
     this.processor = processor;
     this.treeLoaderFactory = treeLoaderFactory;
     this.registry = registry;
     this.signerFactory = signerFactory;
+    this.factory = factory;
+    this.clock = clock;
   }
 
   /**
@@ -86,7 +97,7 @@ public class ResolverFactory {
     }
     final ResolverCacheRegistration registration = this.registry.getRegistration(properties.entityIdentifier()).get();
     return new Resolver(properties, this.createChainValidator(properties), registration.tree(), this.processor,
-        this.resolverResponseFactory(properties));
+        this.resolverResponseFactory(properties), this.factory.create(String.class), this.clock);
   }
 
   private void registerCache(

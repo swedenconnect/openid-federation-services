@@ -22,6 +22,8 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONObject;
+import se.digg.oidfed.common.entity.integration.Cache;
+import se.digg.oidfed.common.entity.integration.Expirable;
 import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
 import se.digg.oidfed.common.exception.FederationException;
@@ -33,7 +35,11 @@ import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.tree.EntityStatementTree;
 import se.digg.oidfed.resolver.trustmark.TrustMarkCollector;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -53,6 +59,10 @@ public class Resolver {
 
   private final ResolverResponseFactory factory;
 
+  private final Cache<String, String> cache;
+
+  private final Clock clock;
+
   /**
    * Constructor.
    *
@@ -61,15 +71,24 @@ public class Resolver {
    * @param tree               data structure to search upon
    * @param processor          for processing metadata
    * @param factory            to create signed responses
+   * @param cache              for handling repeat requests
+   * @param clock              for time keeping
    */
-  public Resolver(final ResolverProperties resolverProperties, final ChainValidator validator,
+  public Resolver(final ResolverProperties resolverProperties,
+                  final ChainValidator validator,
                   final EntityStatementTree tree,
-                  final MetadataProcessor processor, final ResolverResponseFactory factory) {
+                  final MetadataProcessor processor,
+                  final ResolverResponseFactory factory,
+                  final Cache<String, String> cache,
+                  final Clock clock) {
+
     this.resolverProperties = resolverProperties;
     this.validator = validator;
     this.tree = tree;
     this.processor = processor;
     this.factory = factory;
+    this.cache = cache;
+    this.clock = clock;
   }
 
   /**
@@ -90,6 +109,11 @@ public class Resolver {
      * 5) Filter metadata according to type
      * 6) Build response
      */
+
+    final String cachedValue = this.cache.get(request.toKey());
+    if (Objects.nonNull(cachedValue) && !cachedValue.isBlank()) {
+      return cachedValue;
+    }
 
     if (!request.trustAnchor().equalsIgnoreCase(this.resolverProperties.trustAnchor())) {
       throw new InvalidTrustAnchorException("The Trust Anchor cannot be found or used.");
@@ -115,7 +139,13 @@ public class Resolver {
         .build();
 
     try {
-      return this.factory.sign(response);
+      final String sign = this.factory.sign(response);
+      this.cache.add(request.toKey(),
+          new Expirable<>(
+              Instant.now().plus(1, ChronoUnit.MINUTES),
+              Instant.now(this.clock), sign)
+      );
+      return sign;
     } catch (final JOSEException | ParseException e) {
       throw new ResolverException("Failed to sign resolver response", e);
     }

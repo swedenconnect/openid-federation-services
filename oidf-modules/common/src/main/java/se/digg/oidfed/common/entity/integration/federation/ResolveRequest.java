@@ -50,5 +50,9 @@ public record ResolveRequest(String subject, String trustAnchor, String type) im
 
     return predicates.stream().reduce((a,b) -> true, BiPredicate::and);
   }
+
+  public String toKey() {
+    return "%s:%s:%s".formatted(this.subject, this.trustAnchor, this.type);
+  }
 }
 
