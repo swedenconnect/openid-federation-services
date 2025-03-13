@@ -19,6 +19,7 @@ package se.digg.oidfed.service.state;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
 import se.digg.oidfed.service.health.ReadyStateComponent;
 import se.digg.oidfed.service.resolver.cache.CompositeTreeLoader;
 
@@ -33,6 +34,7 @@ public class ResolverStateManager extends ReadyStateComponent {
   private final CompositeTreeLoader treeLoader;
   private final FederationServiceState state;
   private final ServiceLock redisServiceLock;
+  private final OpenIdFederationConfigurationProperties properties;
 
   /**
    * Constructor.
@@ -74,7 +76,10 @@ public class ResolverStateManager extends ReadyStateComponent {
   private void reloadResolvers() {
     if (this.redisServiceLock.acquireLock(this.name())) {
       final String registryState = this.state.getRegistryState();
-      if (this.state.resolverNeedsReevaulation(registryState)) {
+      //If registry integration is disabled, refresh resolver anyway
+      final boolean reEvaluateCondition = this.state.resolverNeedsReevaulation(registryState)
+          || !this.properties.getRegistry().getIntegration().getEnabled();
+      if (reEvaluateCondition) {
         // --- Critical Section Start ---
         this.treeLoader.loadTree();
         this.state.updateResolverState(registryState);
