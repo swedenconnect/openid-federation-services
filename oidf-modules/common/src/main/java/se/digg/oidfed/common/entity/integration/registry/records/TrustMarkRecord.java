@@ -33,8 +33,32 @@ import java.util.Map;
 @Builder
 @Getter
 public class TrustMarkRecord implements Serializable {
-  private final String trustMarkIssuerId;
-  private final String trustMarkId;
+  /**
+   * Json field key for issuer entity id.
+   */
+  public static final String ISSUER_ENTITY_IDENTIFIER_FIELD = "issuer-entity-identifier";
+  /**
+   * Json field key for trust mark entity id.
+   */
+  public static final String TRUST_MARK_ENTITY_ID_FIELd = "trust-mark-entity-id";
+  /**
+   * Json field key for delegation field.
+   */
+  public static final String DELEGATION_FIELD = "delegation";
+  /**
+   * Json field key for reference uri field.
+   */
+  public static final String REF_URI_FIELD = "ref-uri";
+  /**
+   * Json field key for logotype uri field.
+   */
+  public static final String LOGO_URI_FIELD = "logo-uri";
+  /**
+   * Json field key for subjects field.
+   */
+  public static final String SUBJECTS_FIELD = "subjects";
+  private final String issuerEntityId;
+  private final String trustMarkEntityId;
   private final List<TrustMarkSubjectRecord> subjects;
   private final String logoUri;
   private final String ref;
@@ -42,21 +66,21 @@ public class TrustMarkRecord implements Serializable {
 
   /**
    * Constructor.
-   * @param trustMarkIssuerId
-   * @param trustMarkId
+   * @param issuerEntityId
+   * @param trustMarkEntityId
    * @param subjects
    * @param logoUri
    * @param ref
    * @param delegation
    */
-  public TrustMarkRecord(final String trustMarkIssuerId,
-                         final String trustMarkId,
+  public TrustMarkRecord(final String issuerEntityId,
+                         final String trustMarkEntityId,
                          final List<TrustMarkSubjectRecord> subjects,
                          final String logoUri,
                          final String ref,
                          final String delegation) {
-    this.trustMarkIssuerId = trustMarkIssuerId;
-    this.trustMarkId = trustMarkId;
+    this.issuerEntityId = issuerEntityId;
+    this.trustMarkEntityId = trustMarkEntityId;
     this.subjects = subjects;
     this.logoUri = logoUri;
     this.ref = ref;
@@ -68,12 +92,12 @@ public class TrustMarkRecord implements Serializable {
    */
   public Map<String, Object> toJson() {
     final Map<String, Object> json = new HashMap<>();
-    json.put("trust_mark_issuer_id", this.trustMarkIssuerId);
-    json.put("trust_mark_id", this.trustMarkId);
-    json.put("delegation", this.delegation);
-    json.put("ref", this.ref);
-    json.put("logo_uri", this.logoUri);
-    json.put("subjects", this.subjects.stream().map(TrustMarkSubjectRecord::toJson).toList());
+    json.put(ISSUER_ENTITY_IDENTIFIER_FIELD, this.issuerEntityId);
+    json.put(TRUST_MARK_ENTITY_ID_FIELd, this.trustMarkEntityId);
+    json.put(DELEGATION_FIELD, this.delegation);
+    json.put(REF_URI_FIELD, this.ref);
+    json.put(LOGO_URI_FIELD, this.logoUri);
+    json.put(SUBJECTS_FIELD, this.subjects.stream().map(TrustMarkSubjectRecord::toJson).toList());
     return json;
   }
 
@@ -85,12 +109,12 @@ public class TrustMarkRecord implements Serializable {
     final JsonObject jsonObject = new JsonObject(json);
 
     return TrustMarkRecord.builder()
-        .trustMarkIssuerId(jsonObject.getStringValue("trust_mark_issuer_id"))
-        .trustMarkId(jsonObject.getStringValue("trust_mark_id"))
-        .delegation(jsonObject.getStringValue("delegation"))
-        .ref(jsonObject.getStringValue("ref"))
-        .logoUri(jsonObject.getStringValue("logo_uri"))
-        .subjects(jsonObject.getObjectMapClaim("subjects")
+        .issuerEntityId(jsonObject.getStringValue(ISSUER_ENTITY_IDENTIFIER_FIELD))
+        .trustMarkEntityId(jsonObject.getStringValue(TRUST_MARK_ENTITY_ID_FIELd))
+        .delegation(jsonObject.getStringValue(DELEGATION_FIELD))
+        .ref(jsonObject.getStringValue(REF_URI_FIELD))
+        .logoUri(jsonObject.getStringValue(LOGO_URI_FIELD))
+        .subjects(jsonObject.getObjectMapClaim(SUBJECTS_FIELD)
             .stream()
             .map(m -> (Map<String, Object>) m)
             .map(TrustMarkSubjectRecord::fromJson)
