@@ -45,6 +45,7 @@ public class RegistryStateManager extends ReadyStateComponent {
 
   /**
    * Constructor.
+   *
    * @param populator
    * @param state
    * @param serviceLock
@@ -85,15 +86,15 @@ public class RegistryStateManager extends ReadyStateComponent {
   }
 
   private void reloadFromRegistry() {
-    if (this.properties.getRegistry().getIntegration().getEnabled()) {
-      if (this.populator.shouldRefresh()) {
-        if (this.serviceLock.acquireLock(this.name())) {
-          final String previousSha256 = this.state.getRegistryState();
-          // --- Critical Section Start ---
-          if (this.state.isStateMissing()) {
-            //If no state is present we still need something for steps further down to compare towards.
-            this.state.updateRegistryState("properties");
-          }
+    if (this.populator.shouldRefresh()) {
+      if (this.serviceLock.acquireLock(this.name())) {
+        final String previousSha256 = this.state.getRegistryState();
+        // --- Critical Section Start ---
+        if (this.state.isStateMissing()) {
+          //If no state is present we still need something for steps further down to compare towards.
+          this.state.updateRegistryState("properties");
+        }
+        if (this.properties.getRegistry().getIntegration().getEnabled()) {
           try {
             final CompositeRecord record = this.populator.reload();
             try {
@@ -106,13 +107,13 @@ public class RegistryStateManager extends ReadyStateComponent {
           } catch (final Exception e) {
             log.error("Failed to load from registry", e);
           }
-          if (!this.state.getRegistryState().equals(previousSha256)) {
-            // Notify resolver to refresh
-            this.publisher.publishEvent(new RegistryLoadedEvent());
-          }
-          this.serviceLock.close(this.name());
-          // --- Critical Section End ---
         }
+        if (!this.state.getRegistryState().equals(previousSha256)) {
+          // Notify resolver to refresh
+          this.publisher.publishEvent(new RegistryLoadedEvent());
+        }
+        this.serviceLock.close(this.name());
+        // --- Critical Section End ---
       }
     }
   }
