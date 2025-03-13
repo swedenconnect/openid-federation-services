@@ -40,7 +40,7 @@ import se.digg.oidfed.common.entity.integration.federation.FetchRequest;
 import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
 import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
-import se.digg.oidfed.common.jwt.SignerFactory;
+import se.digg.oidfed.common.jwt.JWKSetSignerFactory;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.common.tree.VersionedInMemoryCache;
@@ -133,7 +133,7 @@ class ResolverTest {
         ),
         new EntityStatementTree(entityStatementTree),
         new MetadataProcessor(new OIDFPolicyOperationFactory(), new DefaultPolicyOperationCombinationValidator()),
-        new ResolverResponseFactory(Clock.systemUTC(), properties, new SignerFactory(new JWKSet(List.of(KEY)))));
+        new ResolverResponseFactory(Clock.systemUTC(), properties, new JWKSetSignerFactory(new JWKSet(List.of(KEY)))));
   }
 
   private static void mockSubordinateListing(final FederationClient mock, final String listEndpoint, final List<String> subordinates) {

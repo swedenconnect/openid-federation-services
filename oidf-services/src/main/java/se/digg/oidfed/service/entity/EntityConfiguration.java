@@ -20,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.EntityConfigurationFactory;
-import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
-import se.digg.oidfed.common.entity.integration.PropertyRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
 

@@ -16,27 +16,26 @@
  */
 package se.digg.oidfed.common.jwt;
 
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.ParseException;
 
 /**
- * Factory class for creating signer.
+ * Signer used for various federation components.
  *
  * @author Felix Hellman
  */
-public interface SignerFactory {
+public interface FederationSigner {
   /**
-   * @return new signer
+   * Signs claims
+   *
+   * @param type   for this jwt
+   * @param claims fot this jwt
+   * @return a signed jwt
+   * @throws JOSEException
+   * @throws ParseException
    */
-  FederationSigner createSigner();
-
-  /**
-   * @return current sign key
-   */
-  JWK getSignKey();
-
-  /**
-   * @return all current keys
-   */
-  JWKSet getSignKeys();
+  SignedJWT sign(final JOSEObjectType type, final JWTClaimsSet claims) throws JOSEException, ParseException;
 }

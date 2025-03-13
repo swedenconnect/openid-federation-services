@@ -21,7 +21,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
-import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
@@ -38,6 +37,7 @@ import java.util.Optional;
 public class SubordinateStatementFactory {
 
   private final SignerFactory factory;
+
   /**
    * Constructor.
    *
