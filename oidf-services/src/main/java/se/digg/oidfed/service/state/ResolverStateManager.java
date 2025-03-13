@@ -38,17 +38,20 @@ public class ResolverStateManager extends ReadyStateComponent {
 
   /**
    * Constructor.
-   *
    * @param treeLoader
    * @param state
    * @param redisServiceLock
+   * @param properties
    */
-  public ResolverStateManager(final CompositeTreeLoader treeLoader,
-                              final FederationServiceState state,
-                              final ServiceLock redisServiceLock) {
+  public ResolverStateManager(
+      final CompositeTreeLoader treeLoader,
+      final FederationServiceState state,
+      final ServiceLock redisServiceLock,
+      final OpenIdFederationConfigurationProperties properties) {
     this.treeLoader = treeLoader;
     this.state = state;
     this.redisServiceLock = redisServiceLock;
+    this.properties = properties;
   }
 
   @Override
