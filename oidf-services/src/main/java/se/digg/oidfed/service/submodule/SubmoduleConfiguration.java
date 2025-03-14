@@ -18,6 +18,7 @@ package se.digg.oidfed.service.submodule;
 
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
@@ -54,15 +55,10 @@ public class SubmoduleConfiguration {
   @Bean
   SignerFactory entityToSignerAdapter(
       final FederationKeys keys,
-      final Clock clock,
-      final MeterRegistry registry
+      final ObservationRegistry registry
   ) {
-    final DistributionSummary register = DistributionSummary.builder("openid_federation_signer")
-        .publishPercentileHistogram(true)
-        .tags("operation", "sign")
-        .register(registry);
     final JWKSetSignerFactory inner = new JWKSetSignerFactory(keys.signKeys());
-    return new TimedSignerFactory(inner, clock, register);
+    return new TimedSignerFactory(inner, registry);
   }
 
   @Bean

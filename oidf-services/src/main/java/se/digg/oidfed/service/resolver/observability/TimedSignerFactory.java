@@ -18,12 +18,9 @@ package se.digg.oidfed.service.resolver.observability;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.observation.ObservationRegistry;
 import se.digg.oidfed.common.jwt.FederationSigner;
-import se.digg.oidfed.common.jwt.JWKFederationSigner;
 import se.digg.oidfed.common.jwt.SignerFactory;
-
-import java.time.Clock;
 
 /**
  * Signer factory for creating timed signers.
@@ -32,26 +29,21 @@ import java.time.Clock;
  */
 public class TimedSignerFactory implements SignerFactory {
   private final SignerFactory inner;
-  private final Clock clock;
-  private final DistributionSummary distributionSummary;
+  private final ObservationRegistry registry;
+
 
   /**
-   * @param inner signer
-   * @param clock for time keeping
-   * @param distributionSummary for reporting times
+   * @param inner    signer
+   * @param registry to use
    */
-  public TimedSignerFactory(
-      final SignerFactory inner,
-      final Clock clock,
-      final DistributionSummary distributionSummary) {
+  public TimedSignerFactory(final SignerFactory inner, final ObservationRegistry registry) {
     this.inner = inner;
-    this.clock = clock;
-    this.distributionSummary = distributionSummary;
+    this.registry = registry;
   }
 
   @Override
   public FederationSigner createSigner() {
-    return new TimedJWKFederationSigner(this.inner.createSigner(), this.clock, this.distributionSummary);
+    return new TimedJWKFederationSigner(this.inner.createSigner(), this.registry);
   }
 
   @Override

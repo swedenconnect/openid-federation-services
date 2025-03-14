@@ -21,12 +21,9 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
-import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import se.digg.oidfed.common.jwt.FederationSigner;
-
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
 
 /**
  * Federation signer with time keeping.
@@ -35,31 +32,40 @@ import java.time.Instant;
  */
 public class TimedJWKFederationSigner implements FederationSigner {
   private final FederationSigner signer;
-  private final Clock clock;
-  private final DistributionSummary register;
+  private final ObservationRegistry registry;
 
   /**
    * Constructor.
    *
    * @param signer   to use
-   * @param clock    to use
-   * @param register to use
+   * @param registry to use
    */
-  public TimedJWKFederationSigner(
-      final FederationSigner signer,
-      final Clock clock,
-      final DistributionSummary register) {
+  public TimedJWKFederationSigner(final FederationSigner signer, final ObservationRegistry registry) {
     this.signer = signer;
-    this.clock = clock;
-    this.register = register;
+    this.registry = registry;
   }
 
   @Override
   public SignedJWT sign(final JOSEObjectType type, final JWTClaimsSet claims) throws JOSEException, ParseException {
-    final Instant start = Instant.now(this.clock);
-    final SignedJWT sign = this.signer.sign(type, claims);
-    final long duration = Duration.between(start, Instant.now(this.clock)).toMillis();
-    this.register.record(duration);
-    return sign;
+    final Observation observation = Observation.createNotStarted("sign", this.registry)
+        .lowCardinalityKeyValue("type", type.getType());
+    try {
+      return observation.observe(() -> {
+        try {
+          return this.signer.sign(type, claims);
+        } catch (final JOSEException | ParseException e) {
+          throw new RuntimeException(e);
+        }
+      });
+    } catch (final RuntimeException e) {
+      if (e.getCause() instanceof ParseException) {
+        throw new ParseException("Failed to parse", e.getCause());
+      }
+      if (e.getCause() instanceof JOSEException) {
+        throw new JOSEException(e.getCause());
+      }
+      throw e;
+    }
+
   }
 }
