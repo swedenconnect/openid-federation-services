@@ -19,6 +19,7 @@ package se.digg.oidfed.common.entity.integration.registry;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +30,7 @@ import java.util.Map;
  * @author Felix Hellman
  */
 @Getter
-public class TrustAnchorModuleRecord {
+public class TrustAnchorModuleRecord implements Serializable {
   /** EntityId for the trust anchor */
   private String entityIdentifier;
   /** Is the module qctive */

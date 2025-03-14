@@ -20,6 +20,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -33,7 +34,7 @@ import java.util.Optional;
  */
 @Getter
 @Builder
-public class TrustMarkIssuerModuleRecord {
+public class TrustMarkIssuerModuleRecord implements Serializable {
   private Duration trustMarkValidityDuration;
   private String entityIdentifier;
   private List<TrustMarkResponse> trustMarks;
