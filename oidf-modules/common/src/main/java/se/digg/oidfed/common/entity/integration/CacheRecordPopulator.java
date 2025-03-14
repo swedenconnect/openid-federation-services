@@ -33,7 +33,7 @@ import java.util.UUID;
 public class CacheRecordPopulator {
   private final CachedRecordSource source;
   private final RecordRegistryIntegration integration;
-  private Boolean notified;
+  private Boolean notified = false;
   private final UUID instanceId;
 
   /**
