@@ -17,12 +17,10 @@
 package se.digg.oidfed.service.resolver.cache;
 
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
-import se.digg.oidfed.service.resolver.ResolverFactory;
+import se.digg.oidfed.service.submodule.ResolverRequestResponseModuleCache;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -33,9 +31,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ResolverCacheRegistry {
   private final Map<String, ResolverCacheRegistration> registrations = new ConcurrentHashMap<>();
+  private final Map<String, ResolverRequestResponseModuleCache> cacheModules = new ConcurrentHashMap<>();
 
   /**
-   * @param entityId        of the cache to register
+   * @param entityId     of the cache to register
    * @param registration for the cache
    */
   public void registerCache(final String entityId, final ResolverCacheRegistration registration) {
@@ -43,10 +42,13 @@ public class ResolverCacheRegistry {
   }
 
   /**
-   * @return a set of all aliases
+   * @param entityId to register cache for
+   * @param cache to register
    */
-  public Set<String> getEntityIds() {
-    return this.registrations.keySet();
+  public void registerModuleCache(
+      final String entityId,
+      final ResolverRequestResponseModuleCache cache) {
+    this.cacheModules.put(entityId, cache);
   }
 
   /**
@@ -68,5 +70,14 @@ public class ResolverCacheRegistry {
       log.warn("Tried to access cache by entityId {} but no such cache exists", entityId);
     }
     return cacheRegistration;
+  }
+
+
+  /**
+   * @param entityId of the cache to find
+   * @return cache if present
+   */
+  public Optional<ResolverRequestResponseModuleCache> getModuleCache(final String entityId) {
+    return Optional.ofNullable(this.cacheModules.get(entityId));
   }
 }

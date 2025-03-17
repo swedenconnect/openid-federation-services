@@ -14,18 +14,29 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver;
+package se.digg.oidfed.service.submodule;
 
-import org.springframework.stereotype.Component;
+import java.util.Set;
 
 /**
- * Scheduled tasks for the resolver.
+ * Request Response Cache.
  *
  * @author Felix Hellman
  */
-@Component
-public class ResolverScheduledTasks {
+public interface RequestResponseModuleCache {
+  /**
+   * @param requestResponseEntry to add
+   */
+  void add(final RequestResponseEntry requestResponseEntry);
+  /**
+   * Removes all keys and returns a subset depending on configuration.
+   * @return set of requests that has a score higher than configured threshold
+   */
+  Set<String> flushRequestKeys();
 
-  //Will be implemented later
-
+  /**
+   * @param key to fetch
+   * @return entry, null if missing
+   */
+  RequestResponseEntry get(final String key);
 }

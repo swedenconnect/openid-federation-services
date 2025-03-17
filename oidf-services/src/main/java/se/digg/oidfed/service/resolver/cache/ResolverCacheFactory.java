@@ -19,6 +19,10 @@ package se.digg.oidfed.service.resolver.cache;
 import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.VersionedCacheLayer;
+import se.digg.oidfed.resolver.Resolver;
+import se.digg.oidfed.service.submodule.RedisModuleRequestResponseCache;
+import se.digg.oidfed.service.submodule.RequestResponseModuleCache;
+import se.digg.oidfed.service.submodule.ResolverRequestResponseModuleCache;
 
 /**
  * Factory for creating {@link VersionedCacheLayer}
@@ -31,4 +35,10 @@ public interface ResolverCacheFactory {
    * @return new cache instance
    */
   ResolverCache create(final ResolverProperties properties);
+
+  /**
+   * @param resolver to use for refresh
+   * @return new cache instance
+   */
+  ResolverRequestResponseModuleCache createModuleCache(final Resolver resolver);
 }

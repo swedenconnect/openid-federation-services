@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
+import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.metadata.OIDFPolicyOperationFactory;
 import se.digg.oidfed.resolver.tree.resolution.DFSExecution;
@@ -37,6 +38,8 @@ import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 import se.digg.oidfed.service.resolver.observability.ObservableErrorContextFactory;
 
 import java.time.Clock;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * Configuration class for Resolver.
@@ -64,12 +67,12 @@ public class ResolverConfiguration {
       final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory,
       final ResolverCacheRegistry registry,
       final SignerFactory adapter,
-      final CacheFactory cacheFactory,
-      final Clock clock
+      final Clock clock,
+      final List<Function<Resolver, Resolver>> transformers
       ) {
     return new ResolverFactory(
         factory, processor, entityStatementTreeLoaderFactory,
-        registry, adapter, cacheFactory, clock);
+        registry, adapter, clock, transformers);
   }
 
   @Bean

@@ -23,6 +23,7 @@ import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.Tree;
 import se.digg.oidfed.resolver.Resolver;
 import se.digg.oidfed.resolver.ResolverResponseFactory;
+import se.digg.oidfed.resolver.ValidatingResolver;
 import se.digg.oidfed.resolver.chain.ChainValidator;
 import se.digg.oidfed.resolver.chain.ConstraintsValidationStep;
 import se.digg.oidfed.resolver.chain.CriticalClaimsValidationStep;
@@ -36,9 +37,10 @@ import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 
 import java.time.Clock;
 import java.util.List;
+import java.util.function.Function;
 
 /**
- * Factory class for creating {@link Resolver} from {@link ResolverProperties}
+ * Factory class for creating {@link ValidatingResolver} from {@link ResolverProperties}
  *
  * @author Felix Hellman
  */
@@ -49,8 +51,8 @@ public class ResolverFactory {
   private final EntityStatementTreeLoaderFactory treeLoaderFactory;
   private final ResolverCacheRegistry registry;
   private final SignerFactory signerFactory;
-  private final CacheFactory factory;
   private final Clock clock;
+  private final List<Function<Resolver, Resolver>> transformers;
 
   /**
    * Constructor.
@@ -60,8 +62,8 @@ public class ResolverFactory {
    * @param treeLoaderFactory    to use for creating tree loaders
    * @param registry             for caches
    * @param signerFactory        to use
-   * @param factory              for creating caches
    * @param clock                for time keeping
+   * @param transformers         functions to apply on resolver
    */
   public ResolverFactory(
       final ResolverCacheFactory resolverCacheFactory,
@@ -69,20 +71,22 @@ public class ResolverFactory {
       final EntityStatementTreeLoaderFactory treeLoaderFactory,
       final ResolverCacheRegistry registry,
       final SignerFactory signerFactory,
-      final CacheFactory factory,
-      final Clock clock) {
+      final Clock clock,
+      final List<Function<Resolver, Resolver>> transformers) {
 
     this.resolverCacheFactory = resolverCacheFactory;
     this.processor = processor;
     this.treeLoaderFactory = treeLoaderFactory;
     this.registry = registry;
     this.signerFactory = signerFactory;
-    this.factory = factory;
     this.clock = clock;
+    this.transformers = transformers;
   }
 
+
+
   /**
-   * Creates a new instance of a {@link Resolver}
+   * Creates a new instance of a {@link ValidatingResolver}
    *
    * @param properties to create a module from
    * @return new instance
@@ -94,9 +98,20 @@ public class ResolverFactory {
           new EntityStatementTree(new Tree<>(entityStatementSnapshotSource));
       this.registerCache(properties, entityStatementTree, entityStatementSnapshotSource);
     }
+
     final ResolverCacheRegistration registration = this.registry.getRegistration(properties.entityIdentifier()).get();
-    return new Resolver(properties, this.createChainValidator(properties), registration.tree(), this.processor,
-        this.resolverResponseFactory(properties), this.factory.create(String.class), this.clock);
+
+    final ValidatingResolver resolver = new ValidatingResolver(
+        properties,
+        this.createChainValidator(properties),
+        registration.tree(),
+        this.processor,
+        this.resolverResponseFactory(properties)
+    );
+
+    return this.transformers.stream()
+        .reduce(t -> t, Function::andThen)
+        .apply(resolver);
   }
 
   private void registerCache(

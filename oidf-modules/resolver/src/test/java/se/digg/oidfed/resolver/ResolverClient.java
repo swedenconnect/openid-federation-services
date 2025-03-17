@@ -29,13 +29,13 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class ResolverClient {
-  private final Resolver resolver;
+  private final ValidatingResolver resolver;
   private final String resolverIdentity;
   private final RSASSAVerifier verifier;
   private final Runnable treeReloadAction;
 
-  public ResolverClient(final Resolver resolver, final String resolverIdentity, final JWK resolverKey,
-      final Runnable treeReloadAction) {
+  public ResolverClient(final ValidatingResolver resolver, final String resolverIdentity, final JWK resolverKey,
+                        final Runnable treeReloadAction) {
     try {
       this.resolver = resolver;
       this.resolverIdentity = resolverIdentity;

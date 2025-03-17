@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
-import se.digg.oidfed.common.entity.integration.InMemoryCache;
 import se.digg.oidfed.common.entity.integration.federation.EntityConfigurationRequest;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
@@ -124,9 +123,9 @@ class ResolverTest {
     Assertions.assertTrue(SignedJWT.parse(response).verify(new RSASSAVerifier(KEY.toRSAKey())));
   }
 
-  private static Resolver createResolver(final ResolverProperties properties,
-                                         final Tree<EntityStatement> entityStatementTree) {
-    return new Resolver(properties,
+  private static ValidatingResolver createResolver(final ResolverProperties properties,
+                                                   final Tree<EntityStatement> entityStatementTree) {
+    return new ValidatingResolver(properties,
         new ChainValidator(List.of(
             new SignatureValidationStep(new JWKSet(List.of(KEY))),
             new CriticalClaimsValidationStep(),
@@ -134,8 +133,7 @@ class ResolverTest {
         ),
         new EntityStatementTree(entityStatementTree),
         new MetadataProcessor(new OIDFPolicyOperationFactory(), new DefaultPolicyOperationCombinationValidator()),
-        new ResolverResponseFactory(Clock.systemUTC(), properties, new JWKSetSignerFactory(new JWKSet(List.of(KEY))))
-        , new InMemoryCache<>(Clock.systemDefaultZone()), Clock.systemUTC());
+        new ResolverResponseFactory(Clock.systemUTC(), properties, new JWKSetSignerFactory(new JWKSet(List.of(KEY)))));
   }
 
   private static void mockSubordinateListing(final FederationClient mock, final String listEndpoint, final List<String> subordinates) {

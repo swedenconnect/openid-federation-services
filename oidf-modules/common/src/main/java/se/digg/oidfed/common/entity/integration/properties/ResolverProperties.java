@@ -31,7 +31,11 @@ import java.util.List;
  * @param stepRetryTime time to wait before retrying a step that has failed
  * @author Felix Hellman
  */
-public record ResolverProperties(String trustAnchor, Duration resolveResponseDuration, List<JWK> trustedKeys,
-    String entityIdentifier, Duration stepRetryTime) {
+public record ResolverProperties(
+    String trustAnchor,
+    Duration resolveResponseDuration,
+    List<JWK> trustedKeys,
+    String entityIdentifier,
+    Duration stepRetryTime) {
 }
 

@@ -29,6 +29,7 @@ import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.resolver.DiscoveryRequest;
 import se.digg.oidfed.resolver.Resolver;
+import se.digg.oidfed.resolver.ValidatingResolver;
 import se.digg.oidfed.service.resolver.ResolverFactory;
 
 import java.util.List;

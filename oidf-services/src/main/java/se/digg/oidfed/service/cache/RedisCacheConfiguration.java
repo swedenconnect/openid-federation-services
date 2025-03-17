@@ -25,16 +25,24 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import se.digg.oidfed.common.entity.EntityConfigurationFactory;
+import se.digg.oidfed.common.entity.integration.Cache;
+import se.digg.oidfed.common.tree.NodeKey;
 import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
+import se.digg.oidfed.service.entity.EntityConfiguration;
+import se.digg.oidfed.service.resolver.ResolverCacheTransformer;
 import se.digg.oidfed.service.resolver.cache.RedisResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
+import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 import se.digg.oidfed.service.resolver.cache.ResolverRedisOperations;
 import se.digg.oidfed.service.state.FederationServiceState;
 import se.digg.oidfed.service.state.RedisFederationServiceState;
 import se.digg.oidfed.service.state.RedisServiceLock;
 import se.digg.oidfed.service.state.ServiceLock;
+import se.digg.oidfed.service.submodule.RequestResponseEntry;
 
 import java.time.Clock;
+import java.util.function.Function;
 
 /**
  * Configuration class for redis.
@@ -76,11 +84,32 @@ public class RedisCacheConfiguration {
   }
 
   @Bean
+  RedisTemplate<String, RequestResponseEntry> requestResponseEntryRedisTemplate(final RedisConnectionFactory factory) {
+    final RedisTemplate<String, RequestResponseEntry> template = new RedisTemplate<>();
+    template.setConnectionFactory(factory);
+    return template;
+  }
+
+  @Bean
   ResolverCacheFactory resolverCacheFactory(
       final RedisTemplate<String, Integer> versionTemplate,
+      final RedisTemplate<String, String> requestTemplate,
+      final RedisTemplate<String, RequestResponseEntry> entryTemplate,
       final ResolverRedisOperations resolverRedisOperations
   ) {
-    return new RedisResolverCacheFactory(versionTemplate, resolverRedisOperations);
+    return new RedisResolverCacheFactory(
+        versionTemplate, 
+        requestTemplate,
+        entryTemplate, 
+        resolverRedisOperations
+    );
+  }
+
+  @Bean
+  ResolverCacheTransformer resolverCacheTransformer(final ResolverCacheRegistry registry,
+                                                    final ResolverCacheFactory factory) {
+
+    return new ResolverCacheTransformer(registry, factory);
   }
 
   @Bean

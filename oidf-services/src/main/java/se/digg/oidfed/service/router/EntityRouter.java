@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
-import se.digg.oidfed.common.entity.EntityConfigurationFactory;
+import se.digg.oidfed.common.entity.SigningEntityConfigurationFactory;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 
@@ -34,7 +34,7 @@ import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 @Component
 public class EntityRouter implements Router {
 
-  private final EntityConfigurationFactory factory;
+  private final SigningEntityConfigurationFactory factory;
   private final RouteFactory routeFactory;
 
   /**
@@ -42,7 +42,7 @@ public class EntityRouter implements Router {
    * @param factory for creating entity configurations
    * @param routeFactory for creating routes.
    */
-  public EntityRouter(final EntityConfigurationFactory factory, final RouteFactory routeFactory) {
+  public EntityRouter(final SigningEntityConfigurationFactory factory, final RouteFactory routeFactory) {
     this.factory = factory;
     this.routeFactory = routeFactory;
   }

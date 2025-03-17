@@ -17,18 +17,27 @@
 package se.digg.oidfed.service.submodule;
 
 import lombok.Getter;
-import lombok.Setter;
 
-import java.util.UUID;
+import java.io.Serializable;
 
 /**
- * Properties for submodules. Will probably be moved in a later version...
+ * Entity containing request and response.
  *
  * @author Felix Hellman
  */
 @Getter
-@Setter
-public class SubModuleConfigurationProperties {
-  private UUID instanceId;
-  private Boolean skipSubModuleLoad = false;
+public class RequestResponseEntry implements Serializable {
+  private final String request;
+  private final String response;
+
+  /**
+   * Constructor.
+   * @param request
+   * @param response
+   */
+  public RequestResponseEntry(final String request,
+                              final String response) {
+    this.request = request;
+    this.response = response;
+  }
 }

@@ -14,20 +14,17 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity;
-
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+package se.digg.oidfed.service.submodule;
 
 /**
- * Factory class for creating entity statements.
+ * RequestResponse Cache for Resolver.
  *
  * @author Felix Hellman
  */
-public interface EntityConfigurationFactory {
+public interface ResolverRequestResponseModuleCache extends RequestResponseModuleCache {
   /**
-   * @param record to create subject from
-   * @return entity statement
+   * @param request to resolve
+   * @return resolve response
    */
-  EntityStatement createEntityConfiguration(final EntityRecord record);
+  String resolve(final String request);
 }
