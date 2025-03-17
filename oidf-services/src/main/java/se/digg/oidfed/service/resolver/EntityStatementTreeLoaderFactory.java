@@ -18,7 +18,7 @@ package se.digg.oidfed.service.resolver;
 
 import org.springframework.context.ApplicationEventPublisher;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;
 import se.digg.oidfed.resolver.tree.resolution.ErrorContextFactory;
 import se.digg.oidfed.resolver.tree.resolution.ExecutionStrategy;

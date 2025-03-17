@@ -14,17 +14,15 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity.integration.registry;
+package se.digg.oidfed.common.entity.integration.properties;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.PostConstruct;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.common.validation.FederationAssert;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 
 import static se.digg.oidfed.common.validation.FederationAssert.assertNotEmpty;
 import static se.digg.oidfed.common.validation.FederationAssert.assertTrue;
@@ -57,32 +55,5 @@ public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, Enti
             .formatted(this.trustMarkValidityDuration));
 
     this.trustMarks.forEach(TrustMarkProperties::validate);
-  }
-
-  /**
-   * @param trustMarkId The Trust Mark ID
-   * @param logoUri     Optional logo for issued Trust Marks
-   * @param refUri      Optional URL to information about issued Trust Marks
-   * @param delegation  TrustMark delegation
-   * @param trustMarkSubjectRecords subjects
-   */
-  @Builder
-  public record TrustMarkProperties(TrustMarkId trustMarkId,
-                                    Optional<String> logoUri,
-                                    Optional<String> refUri,
-                                    Optional<TrustMarkDelegation> delegation,
-                                    List<TrustMarkSubjectRecord> trustMarkSubjectRecords) {
-    /**
-     * Validate content of configuration.
-     *
-     * @throws IllegalArgumentException is thrown when configuration is missing
-     */
-    @PostConstruct
-    public void validate() throws IllegalArgumentException {
-      FederationAssert.assertNotEmpty(this.trustMarkId, "TrustMarkId is expected");
-      FederationAssert.assertNotEmpty(this.delegation, "Delegation can not be null");
-      FederationAssert.assertNotEmpty(this.logoUri, "LogoUri can not be null");
-      FederationAssert.assertNotEmpty(this.refUri, "RefUri can not be null");
-    }
   }
 }

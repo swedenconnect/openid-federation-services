@@ -17,8 +17,12 @@
 package se.digg.oidfed.common.entity.integration.registry;
 
 import lombok.Builder;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 
 import java.util.List;
 import java.util.UUID;

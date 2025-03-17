@@ -17,7 +17,7 @@
 package se.digg.oidfed.service.trustmarkissuer;
 
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;
 import se.digg.oidfed.trustmarkissuer.TrustMarkSigner;
 

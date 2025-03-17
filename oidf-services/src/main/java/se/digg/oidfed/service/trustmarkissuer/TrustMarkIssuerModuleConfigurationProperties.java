@@ -22,9 +22,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.bind.DefaultValue;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.validation.FederationAssert;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 
@@ -40,7 +41,7 @@ import java.util.Optional;
  */
 @Getter
 @Setter
-public class TrustMarkIssuerModuleProperties {
+public class TrustMarkIssuerModuleConfigurationProperties {
   /**
    * For this proeprty.
    */
@@ -90,7 +91,7 @@ public class TrustMarkIssuerModuleProperties {
 
       String remoteSubjectRepositoryJwtTrustKeyAlias,
       @DefaultValue("PT30M") Duration trustMarkValidityDuration,
-      List<TrustMarkProperties> trustMarks) {
+      List<TrustMarkConfigurationProperties> trustMarks) {
     /**
      * Validate content of the configuration
      */
@@ -98,7 +99,7 @@ public class TrustMarkIssuerModuleProperties {
       FederationAssert.assertNotEmpty(this.trustMarks,
           "TrustMarks is empty. Must be configured");
 
-      this.trustMarks.forEach(TrustMarkProperties::validate);
+      this.trustMarks.forEach(TrustMarkConfigurationProperties::validate);
     }
 
     /**
@@ -107,7 +108,7 @@ public class TrustMarkIssuerModuleProperties {
      */
     public TrustMarkIssuerProperties toProperties() {
       return new TrustMarkIssuerProperties(this.trustMarkValidityDuration, new EntityID(this.entityIdentifier),
-          this.trustMarks.stream().map(TrustMarkProperties::toProperties).toList());
+          this.trustMarks.stream().map(TrustMarkConfigurationProperties::toProperties).toList());
     }
 
     /**
@@ -120,7 +121,7 @@ public class TrustMarkIssuerModuleProperties {
      * @param delegation  TrustMark delegation
      */
     @Builder
-    public record TrustMarkProperties(
+    public record TrustMarkConfigurationProperties(
         TrustMarkId trustMarkId,
         String logoUri,
         String refUri,
@@ -138,8 +139,8 @@ public class TrustMarkIssuerModuleProperties {
        * Converts to properties
        * @return new instance
        */
-      public TrustMarkIssuerProperties.TrustMarkProperties toProperties() {
-        return new TrustMarkIssuerProperties.TrustMarkProperties(this.trustMarkId, Optional.ofNullable(this.logoUri),
+      public TrustMarkProperties toProperties() {
+        return new TrustMarkProperties(this.trustMarkId, Optional.ofNullable(this.logoUri),
             Optional.ofNullable(this.refUri),
             Optional.ofNullable(this.delegation),
             Optional.ofNullable(this.trustMarkSubjects)

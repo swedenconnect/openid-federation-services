@@ -23,8 +23,9 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.Nullable;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.exception.ServerErrorException;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
@@ -77,7 +78,7 @@ public class TrustMarkSigner {
    */
   public SignedJWT sign(
       final TrustMarkIssuerProperties trustMarkIssuerProperties,
-      final TrustMarkIssuerProperties.TrustMarkProperties trustMarkProperties,
+      final TrustMarkProperties trustMarkProperties,
       final TrustMarkSubjectRecord trustMarkSubjectRecord) throws ServerErrorException, ParseException, JOSEException {
     // https://openid.net/specs/openid-federation-1_0.html#name-trust-mark-claims
     final JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()

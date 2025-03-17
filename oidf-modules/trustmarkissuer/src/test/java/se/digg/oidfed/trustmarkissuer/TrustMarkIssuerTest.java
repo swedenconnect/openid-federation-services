@@ -30,9 +30,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.exception.ServerErrorException;
@@ -116,7 +117,7 @@ class TrustMarkIssuerTest {
 
 
     this.trustMarkIssuerProperties.trustMarks()
-        .add(TrustMarkIssuerProperties.TrustMarkProperties.builder()
+        .add(TrustMarkProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
             .delegation(Optional.empty())
             .logoUri(Optional.empty())
@@ -161,7 +162,7 @@ class TrustMarkIssuerTest {
     final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
 
     final TrustMarkId trustMarkId = TrustMarkId.create("http://tm1.digg.se");
-    final TrustMarkIssuerProperties.TrustMarkProperties trustMark = TrustMarkIssuerProperties.TrustMarkProperties.builder()
+    final TrustMarkProperties trustMark = TrustMarkProperties.builder()
         .trustMarkId(trustMarkId)
         .refUri(Optional.of("http://digg.se/tm1/doc"))
         .logoUri(Optional.of("http://digg.se/tm1/logo.png"))
@@ -236,7 +237,7 @@ class TrustMarkIssuerTest {
             .granted(Instant.now().minus(10, ChronoUnit.MINUTES))
             .build();
 
-    this.trustMarkIssuerProperties.trustMarks().add(TrustMarkIssuerProperties.TrustMarkProperties.builder()
+    this.trustMarkIssuerProperties.trustMarks().add(TrustMarkProperties.builder()
         .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
         .delegation(Optional.empty())
         .logoUri(Optional.empty())

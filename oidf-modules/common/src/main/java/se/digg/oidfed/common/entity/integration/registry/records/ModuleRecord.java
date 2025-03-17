@@ -18,9 +18,6 @@ package se.digg.oidfed.common.entity.integration.registry.records;
 
 import lombok.Getter;
 import lombok.Setter;
-import se.digg.oidfed.common.entity.integration.registry.ResolverModuleRecord;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorModuleRecord;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerModuleRecord;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -37,6 +34,7 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 public class ModuleRecord implements Serializable {
+
   private List<ResolverModuleRecord> resolvers;
   private List<TrustAnchorModuleRecord> trustAnchors;
   private List<TrustMarkIssuerModuleRecord> trustMarkIssuers;
@@ -59,21 +57,21 @@ public class ModuleRecord implements Serializable {
    */
   public static ModuleRecord fromJson(final Map<String, Object> json) {
     final ModuleRecord response = new ModuleRecord();
-    response.resolvers = Optional.ofNullable(json.get("resolvers")).map(resolvers -> {
+    response.resolvers = Optional.ofNullable(json.get(RecordFields.Modules.RESOLVERS)).map(resolvers -> {
           return ((List<Map<String, Object>>) resolvers)
               .stream()
               .map(ResolverModuleRecord::fromJson)
               .toList();
         })
         .orElse(List.of());
-    response.trustAnchors = Optional.ofNullable(json.get("trust-anchors")).map(ta -> {
+    response.trustAnchors = Optional.ofNullable(json.get(RecordFields.Modules.TRUST_ANCHORS)).map(ta -> {
       return ((List<Map<String, Object>>) ta)
           .stream()
           .map(TrustAnchorModuleRecord::fromJson)
           .toList();
     }).orElse(List.of());
 
-    response.trustMarkIssuers = Optional.ofNullable(json.get("trust-mark-issuers")).map(tmi -> {
+    response.trustMarkIssuers = Optional.ofNullable(json.get(RecordFields.Modules.TRUST_MARK_ISSUERS)).map(tmi -> {
       return ((List<Map<String, Object>>) tmi)
           .stream()
           .map(TrustMarkIssuerModuleRecord::fromJson)
@@ -87,11 +85,11 @@ public class ModuleRecord implements Serializable {
    */
   public Map<String, Object> toJson() {
     final HashMap<String, Object> json = new HashMap<>();
-    Optional.ofNullable(this.resolvers).map(r -> json.put("resolvers",
+    Optional.ofNullable(this.resolvers).map(r -> json.put(RecordFields.Modules.RESOLVERS,
         this.resolvers.stream().map(ResolverModuleRecord::toJson).toList()));
-    Optional.ofNullable(this.trustAnchors).map(t -> json.put("trust-anchors",
+    Optional.ofNullable(this.trustAnchors).map(t -> json.put(RecordFields.Modules.TRUST_ANCHORS,
         this.trustAnchors.stream().map(TrustAnchorModuleRecord::toJson).toList()));
-    Optional.ofNullable(this.trustMarkIssuers).map(t -> json.put("trust-mark-issuers",
+    Optional.ofNullable(this.trustMarkIssuers).map(t -> json.put(RecordFields.Modules.TRUST_MARK_ISSUERS,
         this.trustMarkIssuers.stream().map(TrustMarkIssuerModuleRecord::toJson).toList()));
     return json;
   }

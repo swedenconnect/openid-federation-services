@@ -17,7 +17,7 @@
 package se.digg.oidfed.service.resolver.cache;
 
 import org.springframework.data.redis.core.RedisTemplate;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.tree.ResolverCache;
 
 /**

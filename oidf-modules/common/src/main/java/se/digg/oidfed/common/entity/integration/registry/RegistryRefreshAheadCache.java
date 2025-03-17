@@ -21,6 +21,7 @@ import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.Expirable;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 
 import java.util.List;
 import java.util.UUID;

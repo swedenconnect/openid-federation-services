@@ -14,10 +14,11 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity.integration.registry;
+package se.digg.oidfed.common.entity.integration.registry.records;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
+import se.digg.oidfed.common.entity.integration.properties.TrustAnchorProperties;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -31,10 +32,9 @@ import java.util.Map;
  */
 @Getter
 public class TrustAnchorModuleRecord implements Serializable {
+
   /** EntityId for the trust anchor */
   private String entityIdentifier;
-  /** Is the module qctive */
-  private Boolean active;
 
   /**
    * Converts this instance to json object {@link HashMap}
@@ -42,8 +42,7 @@ public class TrustAnchorModuleRecord implements Serializable {
    */
   public Map<String, Object> toJson() {
     final HashMap<String, Object> json = new HashMap<>();
-    json.put("entity-identifier", this.entityIdentifier);
-    json.put("active", this.active);
+    json.put(RecordFields.TrustAnchorModule.ENTITY_IDENTIFIER, this.entityIdentifier);
     return Collections.unmodifiableMap(json);
   }
 
@@ -54,8 +53,7 @@ public class TrustAnchorModuleRecord implements Serializable {
    */
   public static TrustAnchorModuleRecord fromJson(final Map<String, Object> json) {
     final TrustAnchorModuleRecord trustAnchorModuleRecord = new TrustAnchorModuleRecord();
-    trustAnchorModuleRecord.entityIdentifier = (String) json.get("entity-identifier");
-    trustAnchorModuleRecord.active = (Boolean) json.get("active");
+    trustAnchorModuleRecord.entityIdentifier = (String) json.get(RecordFields.TrustAnchorModule.ENTITY_IDENTIFIER);
     return trustAnchorModuleRecord;
   }
 

@@ -28,7 +28,7 @@ import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
 import se.digg.oidfed.common.entity.integration.federation.TrustMarkRequest;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
-import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSource;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSourceRecord;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
 import java.time.Instant;
@@ -75,10 +75,10 @@ public class EntityConfigurationFactory {
       if (Objects.isNull(record.getHostedRecord())) {
         return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signerFactory.getSignKey());
       }
-      final List<TrustMarkSource> trustMarkSources = record.getHostedRecord().getTrustMarkSources();
-      if (Objects.nonNull(trustMarkSources)) {
-        final List<TrustMarkEntry> trustMarks = trustMarkSources.stream()
-            .map(s -> new TrustMarkRequest(record.getSubject(), s.getIssuer(), new EntityID(s.getTrustMarkId())))
+      final List<TrustMarkSourceRecord> trustMarkSourceRecords = record.getHostedRecord().getTrustMarkSourceRecords();
+      if (Objects.nonNull(trustMarkSourceRecords)) {
+        final List<TrustMarkEntry> trustMarks = trustMarkSourceRecords.stream()
+            .map(s -> new TrustMarkRequest(record.getSubject(), s.issuer(), new EntityID(s.trustMarkId())))
             .map(request -> {
               final SignedJWT signedJWT =
                   this.federationClient.trustMark(new FederationRequest<>(request, Map.of(), true));

@@ -24,7 +24,7 @@ import se.digg.oidfed.common.tree.Node;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.SnapshotSource;
 import se.digg.oidfed.common.tree.VersionedCacheLayer;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 
 import java.util.List;
 import java.util.Optional;

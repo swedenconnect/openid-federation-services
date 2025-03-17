@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.service.resolver.cache;
 
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.resolver.tree.EntityStatementTree;
 import se.digg.oidfed.resolver.tree.EntityStatementTreeLoader;

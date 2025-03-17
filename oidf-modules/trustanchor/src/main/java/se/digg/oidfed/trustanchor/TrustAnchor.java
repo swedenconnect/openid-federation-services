@@ -26,7 +26,7 @@ import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
 import se.digg.oidfed.common.entity.integration.federation.FetchRequest;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustAnchorProperties;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidIssuerException;

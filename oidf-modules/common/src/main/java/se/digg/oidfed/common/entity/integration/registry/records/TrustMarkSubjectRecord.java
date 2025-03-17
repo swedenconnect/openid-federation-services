@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity.integration.registry;
+package se.digg.oidfed.common.entity.integration.registry.records;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -56,16 +56,16 @@ public record TrustMarkSubjectRecord(
    */
   public static TrustMarkSubjectRecord fromJson(final Map<String, Object> record) {
     final TrustMarkSubjectRecord.TrustMarkSubjectRecordBuilder tmisBuilder = TrustMarkSubjectRecord.builder()
-        .sub((String) record.get("sub"));
+        .sub((String) record.get(RecordFields.TrustMarkSubject.SUBJECT));
 
-    Optional.ofNullable((Boolean) record.get("revoked")).ifPresent(tmisBuilder::revoked);
+    Optional.ofNullable((Boolean) record.get(RecordFields.TrustMarkSubject.REVOKED)).ifPresent(tmisBuilder::revoked);
 
-    Optional.ofNullable((String) record.get("expires"))
+    Optional.ofNullable((String) record.get(RecordFields.TrustMarkSubject.EXPIRES))
         .filter(string -> !string.isBlank())
         .map(Instant::parse)
         .ifPresent(tmisBuilder::expires);
 
-    Optional.ofNullable((String) record.get("granted"))
+    Optional.ofNullable((String) record.get(RecordFields.TrustMarkSubject.GRANTED))
         .filter(string -> !string.isBlank())
         .map(Instant::parse)
         .ifPresent(tmisBuilder::granted);
@@ -85,7 +85,7 @@ public record TrustMarkSubjectRecord(
     FederationAssert.assertNotEmpty(this.sub, "Subject is expected");
     if (Objects.nonNull(this.granted) && Objects.nonNull(this.expires)) {
       FederationAssert.assertTrue(this.granted.isBefore(this.expires), "Expires expected to be after " +
-          "granted");
+          RecordFields.TrustMarkSubject.GRANTED);
       if (this.expires.isBefore(Instant.now())) {
         log.warn("TrustMark subject:'{}' has already expired. Consider to remove it. Expires:'{}'",
             this.sub, this.expires);
@@ -98,12 +98,12 @@ public record TrustMarkSubjectRecord(
    */
   public Map<String, Object> toJson() {
     final Map<String, Object> subject = Map.of(
-        "sub", this.sub,
-        "revoked", this.revoked
+        RecordFields.TrustMarkSubject.SUBJECT, this.sub,
+        RecordFields.TrustMarkSubject.REVOKED, this.revoked
     );
     final HashMap<String, Object> json = new HashMap<>(subject);
-    Optional.ofNullable(this.expires).ifPresent(exp -> json.put("expires", exp));
-    Optional.ofNullable(this.granted).ifPresent(granted -> json.put("granted", granted));
+    Optional.ofNullable(this.expires).ifPresent(exp -> json.put(RecordFields.TrustMarkSubject.EXPIRES, exp));
+    Optional.ofNullable(this.granted).ifPresent(granted -> json.put(RecordFields.TrustMarkSubject.GRANTED, granted));
     return json;
   }
 }

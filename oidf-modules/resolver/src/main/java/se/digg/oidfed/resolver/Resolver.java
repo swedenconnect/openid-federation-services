@@ -25,7 +25,7 @@ import net.minidev.json.JSONObject;
 import se.digg.oidfed.common.entity.integration.Cache;
 import se.digg.oidfed.common.entity.integration.Expirable;
 import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.common.exception.InvalidTrustAnchorException;
 import se.digg.oidfed.common.exception.NotFoundException;

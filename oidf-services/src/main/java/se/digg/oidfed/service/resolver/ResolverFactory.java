@@ -17,8 +17,7 @@
 package se.digg.oidfed.service.resolver;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import se.digg.oidfed.common.entity.integration.Cache;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.Tree;

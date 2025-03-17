@@ -14,21 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver.cache;
-
-import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
-import se.digg.oidfed.common.tree.ResolverCache;
-import se.digg.oidfed.common.tree.VersionedCacheLayer;
-
 /**
- * Factory for creating {@link VersionedCacheLayer}
+ * Properties package for OIDF.
  *
  * @author Felix Hellman
  */
-public interface ResolverCacheFactory {
-  /**
-   * @param properties to use for configuration
-   * @return new cache instance
-   */
-  ResolverCache create(final ResolverProperties properties);
-}
+package se.digg.oidfed.common.entity.integration.properties;
