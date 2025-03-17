@@ -25,7 +25,7 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.resolver.DiscoveryRequest;
 import se.digg.oidfed.resolver.Resolver;

@@ -18,11 +18,11 @@ package se.digg.oidfed.common.entity.integration;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.digg.oidfed.common.entity.integration.registry.RegistryProperties;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustAnchorProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.tree.NodeKey;
 
@@ -30,11 +30,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Property based {@link RecordSource} implementation.
+ * ConfigurationProperties based {@link RecordSource} implementation for local records.
  *
  * @author Felix Hellman
  */
-public class PropertyRecordSource implements RecordSource {
+public class LocalRecordSource implements RecordSource {
 
   private final RegistryProperties properties;
 
@@ -42,7 +42,7 @@ public class PropertyRecordSource implements RecordSource {
    * Constructor.
    * @param properties to get records from
    */
-  public PropertyRecordSource(final RegistryProperties properties) {
+  public LocalRecordSource(final RegistryProperties properties) {
     this.properties = properties;
   }
 

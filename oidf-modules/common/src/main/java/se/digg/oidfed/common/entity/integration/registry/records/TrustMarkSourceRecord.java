@@ -21,27 +21,14 @@ import lombok.Getter;
 
 import java.io.Serializable;
 import java.util.Map;
-
 /**
  * Data class for trust mark source.
+ * @param issuer      of the trust mark
+ * @param trustMarkId of the trust mark
  *
  * @author Felix Hellman
  */
-@Getter
-public class TrustMarkSource implements Serializable {
-  private final EntityID issuer;
-  private final String trustMarkId;
-
-  /**
-   * Constructor.
-   *
-   * @param issuer      of the trust mark
-   * @param trustMarkId of the trust mark
-   */
-  public TrustMarkSource(final EntityID issuer, final String trustMarkId) {
-    this.issuer = issuer;
-    this.trustMarkId = trustMarkId;
-  }
+public record TrustMarkSourceRecord(EntityID issuer, String trustMarkId) implements Serializable {
 
   /**
    * Creates a new instance from json object.
@@ -49,10 +36,10 @@ public class TrustMarkSource implements Serializable {
    * @param tmsJson to create instance from
    * @return new instance
    */
-  public static TrustMarkSource fromJson(final Map<String, Object> tmsJson) {
-    return new TrustMarkSource(
-        new EntityID((String) tmsJson.get("issuer")),
-        (String) tmsJson.get("trust_mark_id")
+  public static TrustMarkSourceRecord fromJson(final Map<String, Object> tmsJson) {
+    return new TrustMarkSourceRecord(
+        new EntityID((String) tmsJson.get(RecordFields.TrustMarkSource.ISSUER)),
+        (String) tmsJson.get(RecordFields.TrustMarkSource.TRUST_MARK_ID)
     );
   }
 
@@ -63,8 +50,8 @@ public class TrustMarkSource implements Serializable {
    */
   public Map<String, Object> toJson() {
     return Map.of(
-        "issuer", this.issuer.getValue(),
-        "trust_mark_id", this.trustMarkId
+        RecordFields.TrustMarkSource.ISSUER, this.issuer.getValue(),
+        RecordFields.TrustMarkSource.TRUST_MARK_ID, this.trustMarkId
     );
   }
 }

@@ -22,9 +22,10 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.exception.InvalidRequestException;
 import se.digg.oidfed.common.exception.NotFoundException;
 import se.digg.oidfed.common.exception.ServerErrorException;
@@ -141,7 +142,7 @@ public class TrustMarkIssuer {
    */
   public String trustMark(final TrustMarkRequest request) throws ServerErrorException, NotFoundException {
 
-    final TrustMarkIssuerProperties.TrustMarkProperties properties =
+    final TrustMarkProperties properties =
         this.trustMarkIssuerProperties.trustMarks().stream()
         .filter(tm -> request.trustMarkId().equals(tm.trustMarkId().getTrustMarkId()))
         .findFirst()

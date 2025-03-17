@@ -19,9 +19,7 @@ package se.digg.oidfed.service.configuration;
 import se.digg.oidfed.common.entity.integration.Expirable;
 import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
 import se.digg.oidfed.common.entity.integration.registry.RecordRegistryIntegration;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
-import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkRecord;
 
 import java.util.List;

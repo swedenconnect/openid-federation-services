@@ -24,7 +24,7 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.TrustMarkListingRequest;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerFactory;
 import se.digg.oidfed.trustmarkissuer.TrustMarkIssuer;

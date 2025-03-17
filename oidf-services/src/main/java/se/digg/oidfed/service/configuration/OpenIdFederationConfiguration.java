@@ -28,7 +28,7 @@ import org.springframework.web.client.RestClient;
 import se.digg.oidfed.common.entity.integration.CacheRecordPopulator;
 import se.digg.oidfed.common.entity.integration.CachedRecordSource;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
-import se.digg.oidfed.common.entity.integration.PropertyRecordSource;
+import se.digg.oidfed.common.entity.integration.LocalRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.entity.integration.federation.FederationLoadingCache;
 import se.digg.oidfed.common.entity.integration.registry.JWSRegistryVerifier;
@@ -36,7 +36,7 @@ import se.digg.oidfed.common.entity.integration.registry.RecordRegistryIntegrati
 import se.digg.oidfed.common.entity.integration.registry.RegistryProperties;
 import se.digg.oidfed.common.entity.integration.registry.RegistryRefreshAheadCache;
 import se.digg.oidfed.common.entity.integration.registry.RegistryVerifier;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;
@@ -49,7 +49,7 @@ import se.digg.oidfed.service.keys.FederationKeys;
 import se.digg.oidfed.service.rest.RestClientFactory;
 import se.digg.oidfed.service.rest.RestClientProperties;
 import se.digg.oidfed.service.trustanchor.TrustAnchorModuleProperties;
-import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
+import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleConfigurationProperties;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkSubjectProperties;
 
 import java.util.List;
@@ -115,7 +115,7 @@ public class OpenIdFederationConfiguration {
         properties.getRegistry().getIntegration().getEnabled(),
         Optional.ofNullable(modules.getTrustMarkIssuers())
             .orElse(List.of()).stream()
-            .map(TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty::toProperties)
+            .map(TrustMarkIssuerModuleConfigurationProperties.TrustMarkIssuerSubModuleProperty::toProperties)
             .toList(),
         Optional.ofNullable(modules.getTrustAnchors())
             .orElse(List.of()).stream()
@@ -144,11 +144,11 @@ public class OpenIdFederationConfiguration {
 
   @Bean
   CompositeRecordSource compositeRecordSource(
-      final PropertyRecordSource propertyRecordSource,
+      final LocalRecordSource localRecordSource,
       final CachedRecordSource cachedRecordSource) {
     return new CompositeRecordSource(
         List.of(
-            propertyRecordSource,
+            localRecordSource,
             cachedRecordSource
         )
     );
@@ -173,7 +173,7 @@ public class OpenIdFederationConfiguration {
   }
 
   @Bean
-  PropertyRecordSource propertyRecordSource(final RegistryProperties properties) {
-    return new PropertyRecordSource(properties);
+  LocalRecordSource propertyRecordSource(final RegistryProperties properties) {
+    return new LocalRecordSource(properties);
   }
 }

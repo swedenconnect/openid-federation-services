@@ -25,12 +25,10 @@ import se.digg.oidfed.service.entity.PolicyConfigurationProperties;
 import se.digg.oidfed.service.resolver.ResolverConfigurationProperties;
 import se.digg.oidfed.service.router.RouterProperties;
 import se.digg.oidfed.service.trustanchor.TrustAnchorModuleProperties;
-import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleProperties;
+import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerModuleConfigurationProperties;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkSubjectProperties;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -130,6 +128,6 @@ public class OpenIdFederationConfigurationProperties {
     @NestedConfigurationProperty
     private List<TrustAnchorModuleProperties.TrustAnchorSubModuleProperties> trustAnchors;
     @NestedConfigurationProperty
-    private List<TrustMarkIssuerModuleProperties.TrustMarkIssuerSubModuleProperty> trustMarkIssuers;
+    private List<TrustMarkIssuerModuleConfigurationProperties.TrustMarkIssuerSubModuleProperty> trustMarkIssuers;
   }
 }

@@ -40,7 +40,7 @@ import se.digg.oidfed.common.entity.integration.federation.FederationRequest;
 import se.digg.oidfed.common.entity.integration.federation.FetchRequest;
 import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.jwt.JWKSetSignerFactory;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.Tree;

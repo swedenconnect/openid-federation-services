@@ -17,14 +17,14 @@
 package se.digg.oidfed.common.entity.integration;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.digg.oidfed.common.entity.integration.registry.ResolverModuleRecord;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorModuleRecord;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.ResolverModuleRecord;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustAnchorModuleRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustAnchorProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerModuleRecord;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkIssuerModuleRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.CompositeRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.tree.NodeKey;

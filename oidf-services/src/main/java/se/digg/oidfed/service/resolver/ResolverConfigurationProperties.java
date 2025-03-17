@@ -23,7 +23,7 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.common.validation.FederationAssert;
-import se.digg.oidfed.common.entity.integration.registry.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;

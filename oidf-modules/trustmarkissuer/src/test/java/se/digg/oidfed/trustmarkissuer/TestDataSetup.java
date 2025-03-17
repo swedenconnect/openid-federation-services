@@ -32,10 +32,11 @@ import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.id.Subject;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkProperties;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
 import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkIssuerProperties;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkIssuerProperties;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -68,7 +69,7 @@ public class TestDataSetup {
             .build();
 
     trustMarkIssuerProperties.trustMarks()
-        .add(TrustMarkIssuerProperties.TrustMarkProperties.builder()
+        .add(TrustMarkProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm.digg.se/default"))
             .logoUri(Optional.empty())
             .refUri(Optional.empty())

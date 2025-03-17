@@ -1,6 +1,7 @@
 package se.digg.oidfed.common.entity.integration.registry;
 
 import org.junit.jupiter.api.Test;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustAnchorModuleRecord;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

@@ -18,7 +18,7 @@ package se.digg.oidfed.service.trustanchor;
 
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustAnchorProperties;
 import se.digg.oidfed.common.jwt.SignerFactory;
 import se.digg.oidfed.trustanchor.SubordinateStatementFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;

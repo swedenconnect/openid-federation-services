@@ -28,7 +28,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.HostedRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.ModuleRecord;

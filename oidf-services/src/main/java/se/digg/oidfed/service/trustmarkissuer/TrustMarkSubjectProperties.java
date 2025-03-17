@@ -16,7 +16,7 @@
  */
 package se.digg.oidfed.service.trustmarkissuer;
 
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSubjectRecord;
 
 import java.time.Instant;
 

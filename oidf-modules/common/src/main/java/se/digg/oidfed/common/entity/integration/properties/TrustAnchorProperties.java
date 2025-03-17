@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity.integration.registry;
+package se.digg.oidfed.common.entity.integration.properties;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;

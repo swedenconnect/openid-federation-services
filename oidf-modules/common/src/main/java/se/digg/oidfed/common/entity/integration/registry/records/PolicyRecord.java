@@ -56,8 +56,8 @@ public class PolicyRecord implements Serializable {
    */
   public static PolicyRecord fromJson(final Map<String, Object> policyRecord) {
     return new PolicyRecord(
-        (String) policyRecord.get("policy_record_id"),
-        (Map<String, Object>) policyRecord.get("policy")
+        (String) policyRecord.get(RecordFields.Policy.POLICY_RECORD_ID),
+        (Map<String, Object>) policyRecord.get(RecordFields.Policy.POLICY)
     );
   }
 
@@ -65,6 +65,6 @@ public class PolicyRecord implements Serializable {
    * @return current record as json object
    */
   public Map<String, Object> toJson() {
-    return Map.of("policy_record_id", this.id, "policy", this.policy);
+    return Map.of(RecordFields.Policy.POLICY_RECORD_ID, this.id, RecordFields.Policy.POLICY, this.policy);
   }
 }

@@ -16,7 +16,6 @@
  */
 package se.digg.oidfed.service.entity;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
@@ -27,7 +26,7 @@ import org.springframework.util.Assert;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.HostedRecord;
 import se.digg.oidfed.common.entity.integration.registry.records.PolicyRecord;
-import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSource;
+import se.digg.oidfed.common.entity.integration.registry.records.TrustMarkSourceRecord;
 import se.digg.oidfed.common.keys.KeyRegistry;
 import se.digg.oidfed.service.JsonObjectProperty;
 import se.digg.oidfed.service.keys.FederationKeys;
@@ -80,8 +79,8 @@ public class EntityProperty {
       /**
        * @return converted property
        */
-      public TrustMarkSource toTrustMarkSource() {
-        return new TrustMarkSource(new EntityID(this.issuer), this.trustMarkId);
+      public TrustMarkSourceRecord toTrustMarkSource() {
+        return new TrustMarkSourceRecord(new EntityID(this.issuer), this.trustMarkId);
       }
     }
   }

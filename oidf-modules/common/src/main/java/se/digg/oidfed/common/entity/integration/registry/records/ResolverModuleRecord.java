@@ -14,10 +14,12 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity.integration.registry;
+package se.digg.oidfed.common.entity.integration.registry.records;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import lombok.Getter;
+import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
+import se.digg.oidfed.common.entity.integration.registry.RegistryResponseException;
 
 import java.text.ParseException;
 import java.time.Duration;
@@ -33,12 +35,12 @@ import java.util.Map;
  */
 @Getter
 public class ResolverModuleRecord {
+
   private List<String> trustAnchors;
   private Duration resolveResponseDuration;
   private JWKSet trustedKeys;
   private String entityIdentifier;
   private Duration stepRetryTime;
-  private Boolean active;
 
   /**
    * Converts this instance to a json object {@link HashMap}
@@ -47,12 +49,11 @@ public class ResolverModuleRecord {
    */
   public Map<String, Object> toJson() {
     final HashMap<String, Object> json = new HashMap<>();
-    json.put("trust-anchors", this.trustAnchors);
-    json.put("resolve-response-duration", this.resolveResponseDuration);
-    json.put("trusted-keys", this.trustedKeys);
-    json.put("entity-identifier", this.entityIdentifier);
-    json.put("step-retry-time", this.stepRetryTime);
-    json.put("active", this.active);
+    json.put(RecordFields.ResolverModule.TRUST_ANCHORS, this.trustAnchors);
+    json.put(RecordFields.ResolverModule.RESOLVE_RESPONSE_DURATION, this.resolveResponseDuration);
+    json.put(RecordFields.ResolverModule.TRUSTED_KEYS, this.trustedKeys);
+    json.put(RecordFields.ResolverModule.ENTITY_IDENTIFIER, this.entityIdentifier);
+    json.put(RecordFields.ResolverModule.STEP_RETRY_TIME, this.stepRetryTime);
     return Collections.unmodifiableMap(json);
   }
 
@@ -64,21 +65,15 @@ public class ResolverModuleRecord {
    */
   public static ResolverModuleRecord fromJson(final Map<String, Object> json) {
     final ResolverModuleRecord resolver = new ResolverModuleRecord();
-    final Boolean isModuleActive = (Boolean) json.get("active");
-    resolver.active = false;
-    if (isModuleActive) {
-      resolver.trustAnchors = List.of( (String) json.get("trust-anchor"));
-      resolver.resolveResponseDuration = Duration.parse((String) json.get("resolve-response-duration"));
-
-      resolver.entityIdentifier = (String) json.get("entity-identifier");
-      resolver.stepRetryTime = Duration.parse((String) json.get("step-retry-duration")); // changed from step-retry-time
-      try {
-        resolver.trustedKeys = JWKSet.parse((String) json.get("trusted-keys"));
-      }
-      catch (final ParseException e) {
-        throw new RegistryResponseException("Unable to parse trusted-keys in to a JWKSet.",e);
-      }
-
+    resolver.trustAnchors = List.of((String) json.get(RecordFields.ResolverModule.TRUST_ANCHORS));
+    resolver.resolveResponseDuration =
+        Duration.parse((String) json.get(RecordFields.ResolverModule.RESOLVE_RESPONSE_DURATION));
+    resolver.entityIdentifier = (String) json.get(RecordFields.ResolverModule.ENTITY_IDENTIFIER);
+    resolver.stepRetryTime = Duration.parse((String) json.get(RecordFields.ResolverModule.STEP_RETRY_TIME));
+    try {
+      resolver.trustedKeys = JWKSet.parse((String) json.get(RecordFields.ResolverModule.TRUSTED_KEYS));
+    } catch (final ParseException e) {
+      throw new RegistryResponseException("Unable to parse trusted-keys in to a JWKSet.", e);
     }
     return resolver;
   }

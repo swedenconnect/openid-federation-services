@@ -25,7 +25,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.federation.FetchRequest;
 import se.digg.oidfed.common.entity.integration.federation.SubordinateListingRequest;
-import se.digg.oidfed.common.entity.integration.registry.TrustAnchorProperties;
+import se.digg.oidfed.common.entity.integration.properties.TrustAnchorProperties;
 import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.service.trustanchor.TrustAnchorFactory;
 import se.digg.oidfed.trustanchor.TrustAnchor;

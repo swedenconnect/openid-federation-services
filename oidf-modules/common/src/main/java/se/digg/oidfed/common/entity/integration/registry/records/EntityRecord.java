@@ -74,13 +74,14 @@ public class EntityRecord implements Serializable {
   public Map<String, Object> toJson() {
     final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-    builder.claim("issuer", this.issuer.getValue());
-    builder.claim("subject", this.subject.getValue());
-    builder.claim("policy_record", this.policyRecord);
+    builder.claim(RecordFields.Entity.ISSUER, this.issuer.getValue());
+    builder.claim(RecordFields.Entity.SUBJECT, this.subject.getValue());
+    builder.claim(RecordFields.Entity.POLICY_RECORD, this.policyRecord);
 
-    Optional.ofNullable(this.hostedRecord).ifPresent(record -> builder.claim("hosted_record", record.toJson()));
+    Optional.ofNullable(this.hostedRecord)
+        .ifPresent(record -> builder.claim(RecordFields.Entity.HOSTED_RECORD, record.toJson()));
     Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
-        "override_configuration_location", location));
+        RecordFields.Entity.OVERRIDE_CONFIGURATION_LOCATION, location));
     final JWTClaimsSet build = builder
         .build();
     return build.toJSONObject();
@@ -92,20 +93,22 @@ public class EntityRecord implements Serializable {
    * @throws ParseException if parse failed
    */
   public static EntityRecord fromJson(final Map<String, Object> entityRecord) throws ParseException {
-    final Optional<Object> hostedRecord = Optional.ofNullable(entityRecord.get("hosted_record"));
+    final Optional<Object> hostedRecord = Optional.ofNullable(entityRecord.get(RecordFields.Entity.HOSTED_RECORD));
     return new EntityRecord(
-        new EntityID((String) entityRecord.get("issuer")),
-        new EntityID((String) entityRecord.get("subject")),
-        PolicyRecord.fromJson((Map<String, Object>) entityRecord.get("policy_record")),
-        Optional.ofNullable(entityRecord.get("jwks")).map(jwks -> {
+        new EntityID((String) entityRecord.get(RecordFields.Entity.ISSUER)),
+        new EntityID((String) entityRecord.get(RecordFields.Entity.SUBJECT)),
+        PolicyRecord.fromJson((Map<String, Object>) entityRecord.get(RecordFields.Entity.POLICY_RECORD)),
+        Optional.ofNullable(entityRecord.get(RecordFields.Entity.JWKS)).map(jwks -> {
           try {
             return JWKSet.parse((Map<String, Object>) jwks);
           } catch (final ParseException e) {
             throw new IllegalArgumentException("JWKS claim is not json claim", e);
           }
         }).orElse(null),
-        Optional.ofNullable((String) entityRecord.get("override_configuration_location")).orElse(null),
-        hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
+        Optional.ofNullable((String) entityRecord.get(RecordFields.Entity.OVERRIDE_CONFIGURATION_LOCATION))
+            .orElse(null),
+        hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr))
+            .orElse(null));
   }
 
   /**

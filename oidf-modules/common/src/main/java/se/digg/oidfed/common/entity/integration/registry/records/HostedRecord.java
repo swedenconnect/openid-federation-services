@@ -35,23 +35,23 @@ import java.util.Optional;
 @Builder
 public class HostedRecord implements Serializable {
   private final Map<String, Object> metadata;
-  private final List<TrustMarkSource> trustMarkSources;
+  private final List<TrustMarkSourceRecord> trustMarkSourceRecords;
   private final List<String> authorityHints;
 
   /**
    * Constructor.
    *
    * @param metadata         for this record
-   * @param trustMarkSources for this record
+   * @param trustMarkSourceRecords for this record
    * @param authorityHints   for this record
    */
   public HostedRecord(
       final Map<String, Object> metadata,
-      final List<TrustMarkSource> trustMarkSources,
+      final List<TrustMarkSourceRecord> trustMarkSourceRecords,
       final List<String> authorityHints) {
 
     this.metadata = metadata;
-    this.trustMarkSources = trustMarkSources;
+    this.trustMarkSourceRecords = trustMarkSourceRecords;
     this.authorityHints = authorityHints;
   }
 
@@ -60,11 +60,11 @@ public class HostedRecord implements Serializable {
    */
   public Map<String, Object> toJson() {
     return Map.of(
-        "authority_hints", Optional.ofNullable(this.authorityHints).orElseGet(List::of),
-        "metadata", this.metadata,
-        "trust_mark_sources", Optional.ofNullable(this.trustMarkSources)
+        RecordFields.HostedRecord.AUTHORITY_HINTS, Optional.ofNullable(this.authorityHints).orElseGet(List::of),
+        RecordFields.HostedRecord.METADATA, this.metadata,
+        RecordFields.HostedRecord.TRUST_MARK_SOURCES, Optional.ofNullable(this.trustMarkSourceRecords)
             .map(tms -> tms.stream()
-                .map(TrustMarkSource::toJson)
+                .map(TrustMarkSourceRecord::toJson)
                 .toList()).orElseGet(List::of)
     );
   }
@@ -77,14 +77,15 @@ public class HostedRecord implements Serializable {
     if (json == null) {
       return null;
     }
-    final Map<String, Object> map = (Map<String, Object>) json.get("metadata");
-    final List<Map<String, Object>> tms = (List<Map<String, Object>>) json.get("trust_mark_sources");
-    final List<String> authorityHints = (List<String>) json.get("authority_hints");
+    final Map<String, Object> map = (Map<String, Object>) json.get(RecordFields.HostedRecord.METADATA);
+    final List<Map<String, Object>> tms =
+        (List<Map<String, Object>>) json.get(RecordFields.HostedRecord.TRUST_MARK_SOURCES);
+    final List<String> authorityHints = (List<String>) json.get(RecordFields.HostedRecord.AUTHORITY_HINTS);
     return new HostedRecord(
         Optional.ofNullable(map).orElseGet(Map::of),
         Optional.ofNullable(tms).map(trustmarksource -> trustmarksource
             .stream()
-            .map(TrustMarkSource::fromJson)
+            .map(TrustMarkSourceRecord::fromJson)
             .toList()
         ).orElseGet(List::of),
         Optional.ofNullable(authorityHints).orElseGet(List::of)

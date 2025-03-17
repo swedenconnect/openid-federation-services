@@ -18,12 +18,15 @@ package se.digg.oidfed.common.entity.integration.registry.records;
 
 import lombok.Builder;
 import lombok.Getter;
-import se.digg.oidfed.common.entity.integration.registry.TrustMarkSubjectRecord;
+import se.digg.oidfed.common.entity.integration.properties.TrustMarkProperties;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkDelegation;
+import se.digg.oidfed.common.entity.integration.registry.TrustMarkId;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Record class for trust mark.
@@ -68,12 +71,14 @@ public class TrustMarkRecord implements Serializable {
    */
   public Map<String, Object> toJson() {
     final Map<String, Object> json = new HashMap<>();
-    json.put("trust_mark_issuer_id", this.trustMarkIssuerId);
-    json.put("trust_mark_id", this.trustMarkId);
-    json.put("delegation", this.delegation);
-    json.put("ref", this.ref);
-    json.put("logo_uri", this.logoUri);
-    json.put("subjects", this.subjects.stream().map(TrustMarkSubjectRecord::toJson).toList());
+    json.put(RecordFields.TrustMark.TRUST_MARK_ISSUER_ID, this.trustMarkIssuerId);
+    json.put(RecordFields.TrustMark.TRUST_MARK_ID, this.trustMarkId);
+    json.put(RecordFields.TrustMark.DELEGATION, this.delegation);
+    json.put(RecordFields.TrustMark.REF, this.ref);
+    json.put(RecordFields.TrustMark.LOGO_URI, this.logoUri);
+    json.put(RecordFields.TrustMark.SUBJECTS, this.subjects.stream()
+        .map(TrustMarkSubjectRecord::toJson)
+        .toList());
     return json;
   }
 
@@ -85,16 +90,29 @@ public class TrustMarkRecord implements Serializable {
     final JsonObject jsonObject = new JsonObject(json);
 
     return TrustMarkRecord.builder()
-        .trustMarkIssuerId(jsonObject.getStringValue("trust_mark_issuer_id"))
-        .trustMarkId(jsonObject.getStringValue("trust_mark_id"))
-        .delegation(jsonObject.getStringValue("delegation"))
-        .ref(jsonObject.getStringValue("ref"))
-        .logoUri(jsonObject.getStringValue("logo_uri"))
-        .subjects(jsonObject.getObjectMapClaim("subjects")
+        .trustMarkIssuerId(jsonObject.getStringValue(RecordFields.TrustMark.TRUST_MARK_ISSUER_ID))
+        .trustMarkId(jsonObject.getStringValue(RecordFields.TrustMark.TRUST_MARK_ID))
+        .delegation(jsonObject.getStringValue(RecordFields.TrustMark.DELEGATION))
+        .ref(jsonObject.getStringValue(RecordFields.TrustMark.REF))
+        .logoUri(jsonObject.getStringValue(RecordFields.TrustMark.LOGO_URI))
+        .subjects(jsonObject.getObjectMapClaim(RecordFields.TrustMark.SUBJECTS)
             .stream()
             .map(m -> (Map<String, Object>) m)
             .map(TrustMarkSubjectRecord::fromJson)
             .toList())
         .build();
+  }
+
+  /**
+   * @return this record as property
+   */
+  public TrustMarkProperties toProperty() {
+    return new TrustMarkProperties(
+        new TrustMarkId(this.trustMarkId),
+        Optional.ofNullable(this.logoUri),
+        Optional.ofNullable(this.ref),
+        Optional.ofNullable(this.delegation).map(TrustMarkDelegation::new),
+        this.getSubjects()
+    );
   }
 }
