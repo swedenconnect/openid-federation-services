@@ -52,11 +52,11 @@ public class CacheBackedResolver implements Resolver {
   @Override
   public String resolve(final ResolveRequest request) throws FederationException {
     final EntityID entityId = this.inner.getEntityId();
-    this.cache.get(request.toKey(entityId));
-    final String response = this.inner.resolve(request);
-    if (Objects.nonNull(response) && !response.isBlank()) {
-      return response;
+    final String cachedResponse = this.cache.get(request.toKey(entityId));
+    if (Objects.nonNull(cachedResponse) && !cachedResponse.isBlank()) {
+      return cachedResponse;
     }
+    final String response = this.inner.resolve(request);
     this.cache.add(request.toKey(entityId), response);
     return response;
   }
