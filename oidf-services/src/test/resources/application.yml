@@ -56,7 +56,7 @@ server:
 logging:
   level:
     ROOT: INFO
-    se.digg: DEBUG
+    se.swedenconnect: DEBUG
 
 openid:
   federation:

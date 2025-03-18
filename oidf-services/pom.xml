@@ -115,17 +115,17 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidf</groupId>
+            <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>resolver</artifactId>
             <version>${oidf.modules.version}</version>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidf</groupId>
+            <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustanchor</artifactId>
             <version>${oidf.modules.version}</version>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidf</groupId>
+            <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustmarkissuer</artifactId>
             <version>${oidf.modules.version}</version>
         </dependency>
@@ -165,7 +165,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidf</groupId>
+            <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>test</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
@@ -184,7 +184,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>se.digg.oidf</groupId>
+            <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>common</artifactId>
             <version>${oidf.modules.version}</version>
         </dependency>
