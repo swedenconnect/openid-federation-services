@@ -91,14 +91,10 @@ public class RedisCacheConfiguration {
   @Bean
   ResolverCacheFactory resolverCacheFactory(
       final RedisTemplate<String, Integer> versionTemplate,
-      final RedisTemplate<String, String> requestTemplate,
-      final RedisTemplate<String, RequestResponseEntry> entryTemplate,
       final ResolverRedisOperations resolverRedisOperations
   ) {
     return new RedisResolverCacheFactory(
         versionTemplate,
-        requestTemplate,
-        entryTemplate,
         resolverRedisOperations
     );
   }

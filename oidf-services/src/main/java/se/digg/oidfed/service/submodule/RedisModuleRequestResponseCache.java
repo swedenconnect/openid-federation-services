@@ -68,9 +68,7 @@ public class RedisModuleRequestResponseCache implements RequestResponseModuleCac
   public Set<String> flushRequestKeys() {
     final Set<String> requests = this.hitsTemplate.opsForZSet().rangeByScore(this.getHitsKey(), this.threshold - 0.1,
         Double.MAX_VALUE);
-    if (!requests.isEmpty()) {
-      this.hitsTemplate.opsForZSet().remove(this.getHitsKey());
-    }
+    this.hitsTemplate.opsForZSet().removeRange(this.getHitsKey(), 0, Long.MAX_VALUE);
     return requests;
   }
 
