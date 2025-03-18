@@ -13,7 +13,7 @@ server:
 logging:
   level:
     ROOT: INFO
-    se.digg: INFO
+    se.swedenconnect: INFO
 openid:
   federation:
     storage: memory
