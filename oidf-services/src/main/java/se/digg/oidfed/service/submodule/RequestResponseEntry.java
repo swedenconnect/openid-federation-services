@@ -14,20 +14,30 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity;
+package se.digg.oidfed.service.submodule;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
+import lombok.Getter;
+
+import java.io.Serializable;
 
 /**
- * Factory class for creating entity statements.
+ * Entity containing request and response.
  *
  * @author Felix Hellman
  */
-public interface EntityConfigurationFactory {
+@Getter
+public class RequestResponseEntry implements Serializable {
+  private final String request;
+  private final String response;
+
   /**
-   * @param record to create subject from
-   * @return entity statement
+   * Constructor.
+   * @param request
+   * @param response
    */
-  EntityStatement createEntityConfiguration(final EntityRecord record);
+  public RequestResponseEntry(final String request,
+                              final String response) {
+    this.request = request;
+    this.response = response;
+  }
 }

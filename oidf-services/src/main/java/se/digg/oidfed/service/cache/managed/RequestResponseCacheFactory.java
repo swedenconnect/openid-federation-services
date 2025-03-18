@@ -14,33 +14,20 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.resolver;
+package se.digg.oidfed.service.cache.managed;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
-import se.digg.oidfed.common.exception.FederationException;
+import se.digg.oidfed.service.submodule.RequestResponseModuleCache;
 
 /**
- * Resolver interface.
+ * Factory for creating RequestResponse caches.
  *
  * @author Felix Hellman
  */
-public interface Resolver {
+public interface RequestResponseCacheFactory {
   /**
-   * @param request from the resolver api
-   * @return response
-   * @throws FederationException
+   * @param entityID of the cache
+   * @return new cache instance
    */
-  String resolve(final ResolveRequest request) throws FederationException;
-
-  /**
-   * @param request to process
-   * @return discovery response
-   */
-  DiscoveryResponse discovery(final DiscoveryRequest request);
-
-  /**
-   * @return entity id of this resolver
-   */
-  EntityID getEntityId();
+  RequestResponseModuleCache create(final EntityID entityID);
 }

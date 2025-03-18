@@ -26,7 +26,7 @@ import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
 
 /**
- * Router respoinsble for matching any entity configuration endpoints.
+ * Router responsible for matching any entity configuration endpoints.
  *
  * @author Felix Hellman
  */
@@ -39,7 +39,8 @@ public class EntityRouter implements Router {
 
   /**
    * Constructor.
-   * @param factory for creating entity configurations
+   *
+   * @param factory      for creating entity configurations
    * @param routeFactory for creating routes.
    */
   public EntityRouter(final EntityConfigurationFactory factory, final RouteFactory routeFactory) {

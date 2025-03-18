@@ -19,6 +19,10 @@ package se.digg.oidfed.service.cache;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.digg.oidfed.service.cache.managed.NoopRequestResponseCacheFactory;
+import se.digg.oidfed.service.cache.managed.ManagedCacheFactory;
+import se.digg.oidfed.service.cache.managed.ManagedCacheRepository;
+import se.digg.oidfed.service.cache.managed.RequestResponseCacheFactory;
 import se.digg.oidfed.service.resolver.cache.InMemoryResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
 import se.digg.oidfed.service.state.FederationServiceState;
@@ -55,5 +59,20 @@ public class InMemoryCacheConfiguration {
   @Bean
   ServiceLock noOperationServiceLock() {
     return new NoOperationServiceLock();
+  }
+
+  @Bean
+  ManagedCacheRepository managedCacheRepository(final ManagedCacheFactory factory) {
+    return new ManagedCacheRepository(factory);
+  }
+
+  @Bean
+  ManagedCacheFactory managedNoOpCacheFactory(final RequestResponseCacheFactory factory) {
+    return new ManagedCacheFactory(factory);
+  }
+
+  @Bean
+  RequestResponseCacheFactory noOpRequestResponseCacheFactory() {
+    return new NoopRequestResponseCacheFactory();
   }
 }

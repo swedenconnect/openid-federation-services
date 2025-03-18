@@ -14,21 +14,23 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.submodule;
+package se.digg.oidfed.service.configuration;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
-
 /**
- * Properties for submodules. Will probably be moved in a later version...
+ * Configuration Properties for caching.
  *
  * @author Felix Hellman
  */
 @Getter
 @Setter
-public class SubModuleConfigurationProperties {
-  private UUID instanceId;
-  private Boolean skipSubModuleLoad = false;
+public class CacheConfigurationProperties {
+
+  /**
+   * Threshold of how many times a requests needs to be
+   * queried before being internally re-evaluated.
+   */
+  private final Integer requestThreshold = 1;
 }

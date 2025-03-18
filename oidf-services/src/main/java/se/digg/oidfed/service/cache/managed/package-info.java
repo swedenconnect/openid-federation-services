@@ -14,20 +14,9 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.common.entity;
-
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import se.digg.oidfed.common.entity.integration.registry.records.EntityRecord;
-
 /**
- * Factory class for creating entity statements.
+ * Packages for managed caches.
  *
  * @author Felix Hellman
  */
-public interface EntityConfigurationFactory {
-  /**
-   * @param record to create subject from
-   * @return entity statement
-   */
-  EntityStatement createEntityConfiguration(final EntityRecord record);
-}
+package se.digg.oidfed.service.cache.managed;

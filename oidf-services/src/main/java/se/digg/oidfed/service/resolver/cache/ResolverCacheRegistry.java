@@ -17,12 +17,9 @@
 package se.digg.oidfed.service.resolver.cache;
 
 import lombok.extern.slf4j.Slf4j;
-import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
-import se.digg.oidfed.service.resolver.ResolverFactory;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,18 +32,11 @@ public class ResolverCacheRegistry {
   private final Map<String, ResolverCacheRegistration> registrations = new ConcurrentHashMap<>();
 
   /**
-   * @param entityId        of the cache to register
+   * @param entityId     of the cache to register
    * @param registration for the cache
    */
   public void registerCache(final String entityId, final ResolverCacheRegistration registration) {
     this.registrations.put(entityId, registration);
-  }
-
-  /**
-   * @return a set of all aliases
-   */
-  public Set<String> getEntityIds() {
-    return this.registrations.keySet();
   }
 
   /**

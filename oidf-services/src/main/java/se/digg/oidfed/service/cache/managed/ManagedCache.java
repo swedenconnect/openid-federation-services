@@ -14,33 +14,39 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.resolver;
+package se.digg.oidfed.service.cache.managed;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.digg.oidfed.common.entity.integration.federation.ResolveRequest;
-import se.digg.oidfed.common.exception.FederationException;
+import java.util.Set;
 
 /**
- * Resolver interface.
+ * Interface for a cache that can be reloaded externally.
+ * @param <K> key type
+ * @param <V> value type
  *
  * @author Felix Hellman
  */
-public interface Resolver {
+public interface ManagedCache<K,V> {
   /**
-   * @param request from the resolver api
-   * @return response
-   * @throws FederationException
+   * @param key to add
+   * @param value to add
    */
-  String resolve(final ResolveRequest request) throws FederationException;
+  void add(final K key, final V value);
 
   /**
-   * @param request to process
-   * @return discovery response
+   * @param key for value
+   * @return value or null
    */
-  DiscoveryResponse discovery(final DiscoveryRequest request);
+  V get(final K key);
 
   /**
-   * @return entity id of this resolver
+   * @param key to fetch
+   * @return new value from source
    */
-  EntityID getEntityId();
+  V fetch(final K key);
+
+  /**
+   * Removes all keys and returns a subset depending on configuration.
+   * @return set of requests that has a score higher than configured threshold
+   */
+  Set<K> flushRequestKeys();
 }

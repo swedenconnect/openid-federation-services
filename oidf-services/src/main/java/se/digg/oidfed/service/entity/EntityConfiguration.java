@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.EntityConfigurationFactory;
+import se.digg.oidfed.common.entity.SigningEntityConfigurationFactory;
 import se.digg.oidfed.common.entity.integration.federation.FederationClient;
 import se.digg.oidfed.common.jwt.SignerFactory;
 
@@ -32,15 +33,15 @@ import se.digg.oidfed.common.jwt.SignerFactory;
 @Configuration
 public class EntityConfiguration {
   /**
-   * Factory method to create an instance of {@link EntityConfigurationFactory}.
+   * Factory method to create an instance of {@link SigningEntityConfigurationFactory}.
    *
    * @param factory for signing
    * @param client  for fetching trust marks
-   * @return an instance of {@link EntityConfigurationFactory} configured with the specified signing key
+   * @return an instance of {@link SigningEntityConfigurationFactory} configured with the specified signing key
    */
   @Bean
   EntityConfigurationFactory entityStatementFactory(final SignerFactory factory,
                                                     final FederationClient client) {
-    return new EntityConfigurationFactory(factory, client);
+    return new SigningEntityConfigurationFactory(factory, client);
   }
 }

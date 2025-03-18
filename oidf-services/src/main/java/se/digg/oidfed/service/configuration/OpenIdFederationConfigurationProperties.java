@@ -40,6 +40,10 @@ import java.util.UUID;
 @Setter
 @ConfigurationProperties("openid.federation")
 public class OpenIdFederationConfigurationProperties {
+
+  @NestedConfigurationProperty
+  private CacheConfigurationProperties cache = new CacheConfigurationProperties();
+
   /**
    * Name of sign keys used for this instance
    */

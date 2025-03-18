@@ -16,6 +16,7 @@
  */
 package se.digg.oidfed.common.entity.integration.federation;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import se.digg.oidfed.common.tree.Node;
@@ -52,10 +53,29 @@ public record ResolveRequest(String subject, String trustAnchor, String type) im
   }
 
   /**
+   * @param resolverEntity of the resolver
    * @return this request as a string key
    */
-  public String toKey() {
-    return "%s:%s:%s".formatted(this.subject, this.trustAnchor, this.type);
+  public String toKey(final EntityID resolverEntity) {
+    return "%s|%s|%s|%s".formatted(
+        resolverEntity.getValue(),
+        this.subject,
+        this.trustAnchor,
+        this.type
+    );
+  }
+
+  /**
+   * @param key to parse
+   * @return key as request
+   */
+  public static ResolveRequest fromKey(final String key) {
+    final String[] split = key.split("\\|");
+    return new ResolveRequest(
+        split[1],
+        split[2],
+        split[3]
+    );
   }
 }
 
