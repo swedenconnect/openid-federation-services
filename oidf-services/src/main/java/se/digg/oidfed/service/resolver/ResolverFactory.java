@@ -30,7 +30,6 @@ import se.digg.oidfed.resolver.chain.CriticalClaimsValidationStep;
 import se.digg.oidfed.resolver.chain.SignatureValidationStep;
 import se.digg.oidfed.resolver.metadata.MetadataProcessor;
 import se.digg.oidfed.resolver.tree.EntityStatementTree;
-import se.digg.oidfed.service.cache.CacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistration;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
@@ -51,7 +50,6 @@ public class ResolverFactory {
   private final EntityStatementTreeLoaderFactory treeLoaderFactory;
   private final ResolverCacheRegistry registry;
   private final SignerFactory signerFactory;
-  private final Clock clock;
   private final List<Function<Resolver, Resolver>> transformers;
 
   /**
@@ -62,7 +60,6 @@ public class ResolverFactory {
    * @param treeLoaderFactory    to use for creating tree loaders
    * @param registry             for caches
    * @param signerFactory        to use
-   * @param clock                for time keeping
    * @param transformers         functions to apply on resolver
    */
   public ResolverFactory(
@@ -71,7 +68,6 @@ public class ResolverFactory {
       final EntityStatementTreeLoaderFactory treeLoaderFactory,
       final ResolverCacheRegistry registry,
       final SignerFactory signerFactory,
-      final Clock clock,
       final List<Function<Resolver, Resolver>> transformers) {
 
     this.resolverCacheFactory = resolverCacheFactory;
@@ -79,10 +75,8 @@ public class ResolverFactory {
     this.treeLoaderFactory = treeLoaderFactory;
     this.registry = registry;
     this.signerFactory = signerFactory;
-    this.clock = clock;
     this.transformers = transformers;
   }
-
 
 
   /**

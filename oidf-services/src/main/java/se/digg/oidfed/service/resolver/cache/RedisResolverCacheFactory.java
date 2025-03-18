@@ -62,20 +62,4 @@ public class RedisResolverCacheFactory implements ResolverCacheFactory {
   public ResolverCache create(final ResolverProperties properties) {
     return new RedisVersionedCacheLayer(this.versionTemplate, this.resolverRedisOperations, properties);
   }
-
-  @Override
-  public RedisModuleRequestResponseCache createModuleCache(final Resolver resolver) {
-    return new RedisModuleRequestResponseCache(
-        this.requestResponseEntryRedisTemplate,
-        this.requestSetTemplate,
-        key -> {
-          try {
-            return resolver.resolve(ResolveRequest.fromKey(key));
-          } catch (final FederationException e) {
-            log.warn("Failed to refresh resolve request {}, continuing ...", key);
-            return null;
-          }
-        }
-    );
-  }
 }

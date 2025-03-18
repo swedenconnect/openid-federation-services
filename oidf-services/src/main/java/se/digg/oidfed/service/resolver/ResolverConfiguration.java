@@ -67,12 +67,11 @@ public class ResolverConfiguration {
       final EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory,
       final ResolverCacheRegistry registry,
       final SignerFactory adapter,
-      final Clock clock,
       final List<Function<Resolver, Resolver>> transformers
       ) {
     return new ResolverFactory(
         factory, processor, entityStatementTreeLoaderFactory,
-        registry, adapter, clock, transformers);
+        registry, adapter, transformers);
   }
 
   @Bean

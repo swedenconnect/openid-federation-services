@@ -25,15 +25,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import se.digg.oidfed.common.entity.EntityConfigurationFactory;
-import se.digg.oidfed.common.entity.integration.Cache;
-import se.digg.oidfed.common.tree.NodeKey;
+import se.digg.oidfed.service.cache.managed.ManagedCacheFactory;
+import se.digg.oidfed.service.cache.managed.ManagedCacheRepository;
+import se.digg.oidfed.service.cache.managed.RedisRequestResponseCacheFactory;
+import se.digg.oidfed.service.cache.managed.RequestResponseCacheFactory;
 import se.digg.oidfed.service.configuration.OpenIdFederationConfigurationProperties;
-import se.digg.oidfed.service.entity.EntityConfiguration;
 import se.digg.oidfed.service.resolver.ResolverCacheTransformer;
 import se.digg.oidfed.service.resolver.cache.RedisResolverCacheFactory;
 import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
-import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
 import se.digg.oidfed.service.resolver.cache.ResolverRedisOperations;
 import se.digg.oidfed.service.state.FederationServiceState;
 import se.digg.oidfed.service.state.RedisFederationServiceState;
@@ -42,7 +41,6 @@ import se.digg.oidfed.service.state.ServiceLock;
 import se.digg.oidfed.service.submodule.RequestResponseEntry;
 
 import java.time.Clock;
-import java.util.function.Function;
 
 /**
  * Configuration class for redis.
@@ -98,18 +96,17 @@ public class RedisCacheConfiguration {
       final ResolverRedisOperations resolverRedisOperations
   ) {
     return new RedisResolverCacheFactory(
-        versionTemplate, 
+        versionTemplate,
         requestTemplate,
-        entryTemplate, 
+        entryTemplate,
         resolverRedisOperations
     );
   }
 
   @Bean
-  ResolverCacheTransformer resolverCacheTransformer(final ResolverCacheRegistry registry,
-                                                    final ResolverCacheFactory factory) {
+  ResolverCacheTransformer resolverCacheTransformer(final ManagedCacheRepository repository) {
 
-    return new ResolverCacheTransformer(registry, factory);
+    return new ResolverCacheTransformer(repository);
   }
 
   @Bean
@@ -119,7 +116,7 @@ public class RedisCacheConfiguration {
 
     final InstanceSpecificRedisKeySerializer keySerializer =
         new InstanceSpecificRedisKeySerializer(new StringRedisSerializer(),
-        properties.getRegistry().getIntegration().getInstanceId());
+            properties.getRegistry().getIntegration().getInstanceId());
 
     final RedisTemplate<String, String> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
@@ -142,5 +139,23 @@ public class RedisCacheConfiguration {
     template.setKeySerializer(keySerializer);
     template.afterPropertiesSet();
     return new RedisServiceLock(template);
+  }
+
+  @Bean
+  RequestResponseCacheFactory redisRequestResponseCacheFactory(
+      final RedisTemplate<String, String> requestTemplate,
+      final RedisTemplate<String, RequestResponseEntry> entryTemplate,
+      final OpenIdFederationConfigurationProperties properties) {
+    return new RedisRequestResponseCacheFactory(entryTemplate, requestTemplate, properties);
+  }
+
+  @Bean
+  ManagedCacheFactory managedRedisCacheFactory(final RequestResponseCacheFactory factory) {
+    return new ManagedCacheFactory(factory);
+  }
+
+  @Bean
+  ManagedCacheRepository managedRedisCacheRepository(final ManagedCacheFactory cacheFactory) {
+    return new ManagedCacheRepository(cacheFactory);
   }
 }

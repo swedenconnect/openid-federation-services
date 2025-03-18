@@ -16,62 +16,72 @@
  */
 package se.digg.oidfed.service.submodule;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * Redis Request Response cache for resolver.
  *
  * @author Felix Hellman
  */
-public class RedisModuleRequestResponseCache implements ResolverRequestResponseModuleCache {
+public class RedisModuleRequestResponseCache implements RequestResponseModuleCache {
   private final RedisTemplate<String, RequestResponseEntry> template;
   private final RedisTemplate<String, String> hitsTemplate;
-  private final Function<String, String> resolve;
+  private final EntityID entityID;
+  private final Integer threshold;
 
   /**
    * Constructor.
-   * @param template for entries
+   *
+   * @param template     for entries
    * @param hitsTemplate for request hits
-   * @param resolve for re-running a query.
+   * @param entityID     for cache
+   * @param threshold    for cache evaluation
    */
   public RedisModuleRequestResponseCache(
       final RedisTemplate<String, RequestResponseEntry> template,
       final RedisTemplate<String, String> hitsTemplate,
-      final Function<String, String> resolve) {
+      final EntityID entityID,
+      final Integer threshold) {
 
     this.template = template;
     this.hitsTemplate = hitsTemplate;
-    this.resolve = resolve;
+    this.entityID = entityID;
+    this.threshold = threshold;
   }
 
   @Override
   public void add(final RequestResponseEntry requestResponseEntry) {
     this.template.opsForValue().set(requestResponseEntry.getRequest(), requestResponseEntry,
         Duration.between(Instant.now(), Instant.now().plus(60, ChronoUnit.SECONDS)));
-    this.hitsTemplate.opsForZSet().incrementScore("resolver", requestResponseEntry.getRequest(), 1);
+    this.hitsTemplate.opsForZSet().incrementScore(this.getHitsKey(), requestResponseEntry.getRequest(), 1);
   }
 
 
   @Override
   public Set<String> flushRequestKeys() {
-    final Set<String> requests = this.hitsTemplate.opsForZSet().rangeByScore("requests", 0.9, Double.MAX_VALUE);
-    this.hitsTemplate.opsForZSet().remove("requests");
+    final Set<String> requests = this.hitsTemplate.opsForZSet().rangeByScore("requests", this.threshold - 0.1,
+        Double.MAX_VALUE);
+    this.hitsTemplate.opsForZSet().remove(this.getHitsKey());
     return requests;
   }
 
   @Override
   public RequestResponseEntry get(final String key) {
-    return this.template.opsForValue().get(key);
+    final RequestResponseEntry value = this.template.opsForValue().get(key);
+    if (Objects.nonNull(value)) {
+      this.hitsTemplate.opsForZSet().incrementScore(this.getHitsKey(), key, 1);
+    }
+    return value;
   }
 
-  @Override
-  public String resolve(final String request) {
-    return this.resolve.apply(request);
+  private String getHitsKey() {
+    return "%s:requests".formatted(this.entityID.getValue());
   }
 }

@@ -14,17 +14,23 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.submodule;
+package se.digg.oidfed.service.configuration;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * RequestResponse Cache for Resolver.
+ * Configuration Properties for caching.
  *
  * @author Felix Hellman
  */
-public interface ResolverRequestResponseModuleCache extends RequestResponseModuleCache {
+@Getter
+@Setter
+public class CacheConfigurationProperties {
+
   /**
-   * @param request to resolve
-   * @return resolve response
+   * Threshold of how many times a requests needs to be
+   * queried before being internally re-evaluated.
    */
-  String resolve(final String request);
+  private final Integer requestThreshold = 1;
 }

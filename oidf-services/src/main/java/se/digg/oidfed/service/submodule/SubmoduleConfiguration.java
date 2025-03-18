@@ -24,7 +24,9 @@ import org.springframework.context.annotation.Configuration;
 import se.digg.oidfed.common.entity.integration.CompositeRecordSource;
 import se.digg.oidfed.common.jwt.JWKSetSignerFactory;
 import se.digg.oidfed.common.jwt.SignerFactory;
+import se.digg.oidfed.service.cache.managed.ModuleLoader;
 import se.digg.oidfed.service.keys.FederationKeys;
+import se.digg.oidfed.service.resolver.ResolverFactory;
 import se.digg.oidfed.service.resolver.observability.TimedSignerFactory;
 import se.digg.oidfed.service.trustmarkissuer.TrustMarkIssuerFactory;
 import se.digg.oidfed.trustmarkissuer.TrustMarkSigner;
@@ -64,5 +66,10 @@ public class SubmoduleConfiguration {
   @Bean
   Clock clock() {
     return Clock.systemDefaultZone();
+  }
+
+  @Bean
+  ModuleLoader moduleLoader(final ResolverFactory factory, final CompositeRecordSource source) {
+    return  new ModuleLoader(factory, source);
   }
 }

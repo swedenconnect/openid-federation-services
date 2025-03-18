@@ -19,13 +19,6 @@ package se.digg.oidfed.service.resolver.cache;
 import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
 import se.digg.oidfed.common.tree.ResolverCache;
 import se.digg.oidfed.common.tree.VersionedInMemoryCache;
-import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.service.submodule.RedisModuleRequestResponseCache;
-import se.digg.oidfed.service.submodule.RequestResponseEntry;
-import se.digg.oidfed.service.submodule.RequestResponseModuleCache;
-import se.digg.oidfed.service.submodule.ResolverRequestResponseModuleCache;
-
-import java.util.Set;
 
 /**
  * Resolver cache factory for in memory caches.
@@ -37,30 +30,5 @@ public class InMemoryResolverCacheFactory implements ResolverCacheFactory {
   @Override
   public ResolverCache create(final ResolverProperties properties) {
     return new VersionedInMemoryCache();
-  }
-
-  @Override
-  public ResolverRequestResponseModuleCache createModuleCache(final Resolver resolver) {
-    return new ResolverRequestResponseModuleCache() {
-      @Override
-      public String resolve(final String request) {
-        return null;
-      }
-
-      @Override
-      public void add(final RequestResponseEntry requestResponseEntry) {
-
-      }
-
-      @Override
-      public Set<String> flushRequestKeys() {
-        return Set.of();
-      }
-
-      @Override
-      public RequestResponseEntry get(final String key) {
-        return null;
-      }
-    };
   }
 }

@@ -17,12 +17,9 @@
 package se.digg.oidfed.service.resolver;
 
 import se.digg.oidfed.resolver.Resolver;
-import se.digg.oidfed.service.resolver.cache.ResolverCacheFactory;
-import se.digg.oidfed.service.resolver.cache.ResolverCacheRegistry;
+import se.digg.oidfed.service.cache.managed.ManagedCacheRepository;
 import se.digg.oidfed.service.submodule.CacheBackedResolver;
-import se.digg.oidfed.service.submodule.ResolverRequestResponseModuleCache;
 
-import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -32,37 +29,19 @@ import java.util.function.Function;
  */
 public class ResolverCacheTransformer implements Function<Resolver, Resolver> {
 
-  private final ResolverCacheRegistry registry;
-  private final ResolverCacheFactory factory;
+  private final ManagedCacheRepository repository;
 
   /**
    * Constructor.
-   * @param registry
-   * @param factory
+   *
+   * @param repository
    */
-  public ResolverCacheTransformer(
-      final ResolverCacheRegistry registry,
-      final ResolverCacheFactory factory) {
-
-    this.registry = registry;
-    this.factory = factory;
+  public ResolverCacheTransformer(final ManagedCacheRepository repository) {
+    this.repository = repository;
   }
 
   @Override
   public Resolver apply(final Resolver resolver) {
-    final Optional<ResolverRequestResponseModuleCache> moduleCache =
-        this.registry.getModuleCache(resolver.getEntityId().getValue());
-    if (moduleCache.isEmpty()) {
-      final ResolverRequestResponseModuleCache cache = this.factory.createModuleCache(resolver);
-      this.registry.registerModuleCache(
-          resolver.getEntityId().getValue(),
-          cache
-      );
-      return new CacheBackedResolver(resolver, cache);
-    }
-    return new CacheBackedResolver(
-        resolver,
-        this.registry.getModuleCache(resolver.getEntityId().getValue()).get()
-    );
+    return new CacheBackedResolver(resolver, this.repository.createIfMissing(resolver));
   }
 }

@@ -14,21 +14,20 @@
  * limitations under the License.
  *
  */
-package se.digg.oidfed.service.resolver.cache;
+package se.digg.oidfed.service.cache.managed;
 
-import se.digg.oidfed.common.entity.integration.properties.ResolverProperties;
-import se.digg.oidfed.common.tree.ResolverCache;
-import se.digg.oidfed.common.tree.VersionedCacheLayer;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import se.digg.oidfed.service.submodule.RequestResponseModuleCache;
 
 /**
- * Factory for creating {@link VersionedCacheLayer}
+ * Factory for creating RequestResponse caches.
  *
  * @author Felix Hellman
  */
-public interface ResolverCacheFactory {
+public interface RequestResponseCacheFactory {
   /**
-   * @param properties to use for configuration
+   * @param entityID of the cache
    * @return new cache instance
    */
-  ResolverCache create(final ResolverProperties properties);
+  RequestResponseModuleCache create(final EntityID entityID);
 }

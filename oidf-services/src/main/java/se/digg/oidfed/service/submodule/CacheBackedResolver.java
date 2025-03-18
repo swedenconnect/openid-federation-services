@@ -22,6 +22,7 @@ import se.digg.oidfed.common.exception.FederationException;
 import se.digg.oidfed.resolver.DiscoveryRequest;
 import se.digg.oidfed.resolver.DiscoveryResponse;
 import se.digg.oidfed.resolver.Resolver;
+import se.digg.oidfed.service.cache.managed.ManagedCache;
 
 import java.util.Objects;
 
@@ -33,7 +34,7 @@ import java.util.Objects;
 public class CacheBackedResolver implements Resolver {
 
   private final Resolver inner;
-  private final RequestResponseModuleCache cache;
+  private final ManagedCache<String, String> cache;
 
   /**
    * Constructor.
@@ -42,7 +43,7 @@ public class CacheBackedResolver implements Resolver {
    */
   public CacheBackedResolver(
       final Resolver inner,
-      final RequestResponseModuleCache cache) {
+      final ManagedCache<String, String> cache) {
 
     this.inner = inner;
     this.cache = cache;
@@ -56,9 +57,7 @@ public class CacheBackedResolver implements Resolver {
     if (Objects.nonNull(response) && !response.isBlank()) {
       return response;
     }
-    final RequestResponseEntry requestResponseEntry = new RequestResponseEntry(
-        request.toKey(entityId), response);
-    this.cache.add(requestResponseEntry);
+    this.cache.add(request.toKey(entityId), response);
     return response;
   }
 
