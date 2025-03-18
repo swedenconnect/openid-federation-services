@@ -203,7 +203,7 @@ class TrustMarkIssuerTest {
     assertNotNull(unpackedClaims.getClaim("ref"));
     assertNotNull(unpackedClaims.getClaim("logo_uri"));
     assertNotNull(unpackedClaims.getClaim("iss"));
-    assertNotNull(unpackedClaims.getClaim("id"));
+    assertNotNull(unpackedClaims.getClaim("trust_mark_id"));
     assertNotNull(unpackedClaims.getClaim("exp"));
     assertNotNull(unpackedClaims.getClaim("iat"));
     assertNotNull(unpackedClaims.getClaim("jti"));

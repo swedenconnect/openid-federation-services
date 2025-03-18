@@ -97,7 +97,7 @@ public class TrustMarkSigner {
     }
 
     issuerEntityId.ifPresent(entityID -> claimsSetBuilder.issuer(entityID.getValue()));
-    claimsSetBuilder.claim("id", trustMarkProperties.trustMarkId().getTrustMarkId());
+    claimsSetBuilder.claim("trust_mark_id", trustMarkProperties.trustMarkId().getTrustMarkId());
 
     trustMarkProperties.logoUri().ifPresent((value) -> claimsSetBuilder.claim("logo_uri", value));
 

@@ -38,7 +38,7 @@ public class TrustMarkFactory {
       final JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
           .issuer(issuer)
           .subject(subject)
-          .claim("id", subject)
+          .claim("trust_mark_id", subject)
           .claim("policy_uri", "http://openid.swedenconnect.se/policy")
           .issueTime(Date.from(Instant.now()))
           .build();

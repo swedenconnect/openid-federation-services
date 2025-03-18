@@ -180,6 +180,11 @@ public class RecordFields {
      * Entity Identifier Field.
      */
     public static final String ENTITY_IDENTIFIER = "entity_identifier";
+
+    /**
+     * Trust Mark Issuers Field.
+     */
+    public static final String TRUST_MARK_ISSUERS = "trust_mark_issuers";
   }
 
   /**

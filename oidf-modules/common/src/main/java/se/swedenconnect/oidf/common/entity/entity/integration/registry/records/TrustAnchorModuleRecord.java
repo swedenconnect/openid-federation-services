@@ -16,6 +16,8 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 
+import com.nimbusds.oauth2.sdk.id.Identifier;
+import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
@@ -23,7 +25,9 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAn
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * TrustAnchor Module from Registry.
@@ -36,6 +40,8 @@ public class TrustAnchorModuleRecord implements Serializable {
   /** EntityId for the trust anchor */
   private String entityIdentifier;
 
+  private Map<String, List<String>> trustMarkIssuers;
+
   /**
    * Converts this instance to json object {@link HashMap}
    * @return json object
@@ -43,6 +49,7 @@ public class TrustAnchorModuleRecord implements Serializable {
   public Map<String, Object> toJson() {
     final HashMap<String, Object> json = new HashMap<>();
     json.put(RecordFields.TrustAnchorModule.ENTITY_IDENTIFIER, this.entityIdentifier);
+    json.put(RecordFields.TrustAnchorModule.TRUST_MARK_ISSUERS, this.trustMarkIssuers);
     return Collections.unmodifiableMap(json);
   }
 
@@ -54,6 +61,8 @@ public class TrustAnchorModuleRecord implements Serializable {
   public static TrustAnchorModuleRecord fromJson(final Map<String, Object> json) {
     final TrustAnchorModuleRecord trustAnchorModuleRecord = new TrustAnchorModuleRecord();
     trustAnchorModuleRecord.entityIdentifier = (String) json.get(RecordFields.TrustAnchorModule.ENTITY_IDENTIFIER);
+    trustAnchorModuleRecord.trustMarkIssuers =
+        (Map<String, List<String>>) json.get(RecordFields.TrustAnchorModule.TRUST_MARK_ISSUERS);
     return trustAnchorModuleRecord;
   }
 
@@ -62,7 +71,9 @@ public class TrustAnchorModuleRecord implements Serializable {
    * @return properties instance
    */
   public TrustAnchorProperties toProperties() {
-    return new TrustAnchorProperties(new EntityID(this.entityIdentifier));
+    return new TrustAnchorProperties(new EntityID(this.entityIdentifier),
+        this.trustMarkIssuers.entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
+            v -> v.getValue().stream().map(Issuer::new).toList())));
   }
 
 }
