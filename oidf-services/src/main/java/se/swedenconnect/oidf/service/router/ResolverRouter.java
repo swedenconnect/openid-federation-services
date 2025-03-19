@@ -108,7 +108,7 @@ public class ResolverRouter implements Router {
                 params.getFirst("trust_anchor"),
                 params.get("entity_type"),
                 params.get("trust_mark_id")
-            )));
+            )).supportedEntities());
           } catch (final FederationException e) {
             return this.errorHandler.handle(e);
           }

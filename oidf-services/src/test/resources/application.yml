@@ -75,7 +75,6 @@ openid:
           - submodule
           - trust-mark-subject
     modules:
-      base-path: https://municipality.local.swedenconnect.se/
       resolvers:
         - trusted-keys:
             - sign-key-1
