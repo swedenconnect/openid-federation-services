@@ -53,8 +53,14 @@ public record DiscoveryRequest(String trustAnchor, List<String> types, List<Stri
     }
 
     if (Objects.nonNull(this.trustMarkIds) && !this.trustMarkIds.isEmpty()) {
-      predicates.add((a, s) -> a.getClaimsSet().getTrustMarks().stream()
-          .anyMatch(tmp -> trustMarkIds().contains(tmp.getID().getValue())));
+      predicates.add((a, s) -> {
+        if (Objects.isNull(a.getClaimsSet().getTrustMarks())) {
+          //We requested trust marks but there is none in this entity statement
+          return false;
+        }
+        return a.getClaimsSet().getTrustMarks().stream()
+            .anyMatch(tmp -> this.trustMarkIds.contains(tmp.getID().getValue()));
+      });
     }
 
     return predicates.stream().reduce((a,b) -> true, BiPredicate::and);
