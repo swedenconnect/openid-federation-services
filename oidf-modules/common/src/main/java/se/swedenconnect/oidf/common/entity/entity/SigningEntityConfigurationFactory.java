@@ -49,19 +49,28 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
 
   private final FederationClient federationClient;
 
+  private final List<EntityConfigurationClaimCustomizer> customizers;
+
   /**
    * @param signerFactory    to sign entity statements with
    * @param federationClient to supply eventual trust marks
+   * @param customizers      to customize records with
    */
-  public SigningEntityConfigurationFactory(final SignerFactory signerFactory, final FederationClient federationClient) {
+  public SigningEntityConfigurationFactory(
+      final SignerFactory signerFactory,
+      final FederationClient federationClient,
+      final List<EntityConfigurationClaimCustomizer> customizers) {
+
     this.signerFactory = signerFactory;
     this.federationClient = federationClient;
+    this.customizers = customizers;
   }
 
   @Override
   public EntityStatement createEntityConfiguration(final EntityRecord record) {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
+      this.customizers.forEach(c -> c.customize(record, builder));
       builder.issuer(record.getIssuer().getValue());
       builder.subject(record.getSubject().getValue());
       builder.issueTime(Date.from(Instant.now()));

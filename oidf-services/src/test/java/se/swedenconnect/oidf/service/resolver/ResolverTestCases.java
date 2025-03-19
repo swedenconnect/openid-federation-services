@@ -16,12 +16,15 @@
  */
 package se.swedenconnect.oidf.service.resolver;
 
+import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -95,8 +98,25 @@ public class ResolverTestCases {
         }).toList();
 
     verifyTrustChain(trustChain);
-    final Identifier trustMark = trustChain.getFirst().getClaimsSet().getTrustMarks().getFirst().getID();
-    Assertions.assertEquals("https://authorization.local.swedenconnect.se/authorization-tmi/certified", trustMark.getValue());
+    final String expectedTrustMark = "https://authorization.local.swedenconnect.se/authorization-tmi/certified";
+    final String unexpectedTrustMark = "https://authorization.local.swedenconnect.se/authorization-tmi/uncertified";
+
+    final List<TrustMarkEntry> trustMarks = trustChain.getFirst().getClaimsSet().getTrustMarks();
+
+    final List<String> resolverTrustMarkIds =
+        resolve.getJWTClaimsSet().getStringListClaim("trust_marks").stream().map(tm -> {
+          try {
+            return SignedJWT.parse(tm).getJWTClaimsSet().getStringClaim("trust_mark_id");
+          } catch (ParseException e) {
+            throw new RuntimeException(e);
+          }
+        }).toList();
+    Assertions.assertEquals(1, resolverTrustMarkIds.size());
+    Assertions.assertTrue(resolverTrustMarkIds.contains(expectedTrustMark));
+    //Verify we filtered out invalid trust mark with resolver even though they remain in the entity configuration
+    Assertions.assertEquals(2, trustMarks.size());
+    Assertions.assertTrue(trustMarks.stream().anyMatch(tm -> tm.getID().getValue().equals(expectedTrustMark)));
+    Assertions.assertTrue(trustMarks.stream().anyMatch(tm -> tm.getID().getValue().equals(unexpectedTrustMark)));
   }
 
   @Test

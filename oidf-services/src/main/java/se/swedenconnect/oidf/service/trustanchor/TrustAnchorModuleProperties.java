@@ -16,12 +16,15 @@
  */
 package se.swedenconnect.oidf.service.trustanchor;
 
+import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.Setter;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Properties for trust anchor.
@@ -33,9 +36,6 @@ import java.util.List;
 public class TrustAnchorModuleProperties {
   /** Property path for this module */
   public static final String PROPERTY_PATH = "openid.federation.trust-anchor";
-
-  /** Set to true if this module should be active or not. */
-  private Boolean active;
 
   /** List of all trust anchor modules */
   private List<TrustAnchorSubModuleProperties> anchors;
@@ -51,12 +51,16 @@ public class TrustAnchorModuleProperties {
     /** EntityId for the trust anchor */
     private String entityIdentifier;
 
+    private Map<String, List<String>> trustMarkIssuers = Map.of();
+
     /**
      * Converts this to {@link TrustAnchorProperties}
      * @return property
      */
     public TrustAnchorProperties toTrustAnchorProperties() {
-      return new TrustAnchorProperties(new EntityID(this.entityIdentifier));
+      return new TrustAnchorProperties(new EntityID(this.entityIdentifier),
+          this.trustMarkIssuers.entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
+              v -> v.getValue().stream().map(Issuer::new).toList())));
     }
   }
 }

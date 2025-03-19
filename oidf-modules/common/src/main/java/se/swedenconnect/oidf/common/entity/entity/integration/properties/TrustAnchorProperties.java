@@ -16,9 +16,14 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
+import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.Setter;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Property class for trust anchor.
@@ -30,13 +35,17 @@ import lombok.Setter;
 public class TrustAnchorProperties {
   private final EntityID entityId;
 
+  private final Map<EntityID, List<Issuer>> trustMarkIssuers;
+
   /**
    * Constructor.
    *
    * @param entityId of the trust anchor
+   * @param trustMarkIssuers that are valid for this trust anchor
    */
-  public TrustAnchorProperties(final EntityID entityId) {
+  public TrustAnchorProperties(final EntityID entityId, final Map<EntityID, List<Issuer>> trustMarkIssuers) {
     this.entityId = entityId;
+    this.trustMarkIssuers = trustMarkIssuers;
   }
 
   /**

@@ -83,13 +83,32 @@ openid:
           trust-anchor: https://municipality.local.swedenconnect.se/municipality-ta
       trust-anchors:
         - entity-identifier: https://municipality.local.swedenconnect.se/municipality-ta
+          trust-mark-issuers:
+            '[https://authorization.local.swedenconnect.se/authorization-tmi/certified]':
+              - "https://authorization.local.swedenconnect.se/authorization-tmi"
         - entity-identifier: https://authorization.local.swedenconnect.se/authorization-ta
+          trust-mark-issuers:
+            '[https://authorization.local.swedenconnect.se/authorization-tmi/certified]' :
+              - "https://authorization.local.swedenconnect.se/authorization-tmi"
         - entity-identifier: https://private.local.swedenconnect.se/private-ta
+          trust-mark-issuers:
+            '[https://authorization.local.swedenconnect.se/authorization-tmi/certified]':
+              - "https://authorization.local.swedenconnect.se/authorization-tmi"
       trust-mark-issuers:
         - entity-identifier: https://authorization.local.swedenconnect.se/authorization-tmi
           trust-mark-validity-duration: PT29M
           trust-marks:
             - trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/certified
+              trust-mark-subjects:
+                - sub: https://authorization.local.swedenconnect.se/op-1
+                  granted: "2024-01-01T10:00:00Z"
+                  expires: "2030-01-01T10:00:00Z"
+                  revoked: false
+                - sub: https://authorization.local.swedenconnect.se/op-2
+                  granted: "2024-01-01T10:00:00Z"
+                  expires: "2030-01-01T10:00:00Z"
+                  revoked: true
+            - trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/uncertified
               trust-mark-subjects:
                 - sub: https://authorization.local.swedenconnect.se/op-1
                   granted: "2024-01-01T10:00:00Z"
@@ -164,7 +183,6 @@ openid:
         issuer: https://municipality.local.swedenconnect.se/municipality-ta
         public-keys:
           - sign-key-1
-        policy-name: authorization-policy
       - subject: https://private.local.swedenconnect.se/private-ta
         issuer: https://authorization.local.swedenconnect.se/authorization-ta
         public-keys:
@@ -175,6 +193,8 @@ openid:
           trust-mark-sources:
             - issuer: https://authorization.local.swedenconnect.se/authorization-tmi
               trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/certified
+            - issuer: https://authorization.local.swedenconnect.se/authorization-tmi
+              trust-mark-id: https://authorization.local.swedenconnect.se/authorization-tmi/uncertified
           metadata:
             json: |
               { "federation_entity": { "organization_name": "Authorization" },

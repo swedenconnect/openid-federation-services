@@ -19,10 +19,14 @@ package se.swedenconnect.oidf.service.entity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationClaimCustomizer;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.SigningEntityConfigurationFactory;
+import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
+
+import java.util.List;
 
 /**
  * Configuration for entity registry.
@@ -37,11 +41,18 @@ public class EntityConfiguration {
    *
    * @param factory for signing
    * @param client  for fetching trust marks
+   * @param customizers for customizing claims
    * @return an instance of {@link SigningEntityConfigurationFactory} configured with the specified signing key
    */
   @Bean
   EntityConfigurationFactory entityStatementFactory(final SignerFactory factory,
-                                                    final FederationClient client) {
-    return new SigningEntityConfigurationFactory(factory, client);
+                                                    final FederationClient client,
+                                                    final List<EntityConfigurationClaimCustomizer> customizers) {
+    return new SigningEntityConfigurationFactory(factory, client, customizers);
+  }
+
+  @Bean
+  TrustAnchorEntityCustomizer trustAnchorEntityCustomizer(final CompositeRecordSource source) {
+    return new TrustAnchorEntityCustomizer(source);
   }
 }
