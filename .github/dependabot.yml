@@ -1,6 +1,6 @@
 version: 2
 registries:
-  maven-artifactory:
+  maven-github:
     type: maven-repository
     url: https://maven.pkg.github.com/swedenconnect/*
     username: octocat
