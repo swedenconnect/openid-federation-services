@@ -36,6 +36,7 @@ import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Implementation of trust anchor.
@@ -84,6 +85,7 @@ public class TrustAnchor {
    */
   public String fetchEntityStatement(final FetchRequest request)
       throws InvalidIssuerException, NotFoundException {
+    this.debugLogRequest(request);
     final EntityRecord issuer = this.source.getEntity(
             new NodeKey(
                 this.properties.getEntityId().getValue(),
@@ -111,12 +113,17 @@ public class TrustAnchor {
         .serialize();
   }
 
+  private void debugLogRequest(final Object request) {
+    log.debug("{} trust anchor module received request {}", this.properties, request);
+  }
+
   /**
    * @param request to get subordinate listing for current module
    * @return listing of subordinates
    * @throws FederationException when loading entity configurations fails
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
+    this.debugLogRequest(request);
     final List<String> subordinates = this.source
         .findSubordinates(this.properties.getEntityId().getValue()).stream()
         .filter(er -> !er.getSubject().equals(this.properties.getEntityId()))

@@ -20,6 +20,7 @@ import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@ToString
 public class TrustAnchorProperties {
   private final EntityID entityId;
 
@@ -55,6 +57,7 @@ public class TrustAnchorProperties {
    */
   @Getter
   @Setter
+  @ToString
   public static class SubordinateListingProperty {
     /**
      * Constructor.
