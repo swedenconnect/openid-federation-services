@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -72,7 +73,8 @@ public class TrustAnchorModuleRecord implements Serializable {
    */
   public TrustAnchorProperties toProperties() {
     return new TrustAnchorProperties(new EntityID(this.entityIdentifier),
-        this.trustMarkIssuers.entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
+        Optional.ofNullable(this.trustMarkIssuers).orElse(Map.of())
+            .entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
             v -> v.getValue().stream().map(Issuer::new).toList())));
   }
 
