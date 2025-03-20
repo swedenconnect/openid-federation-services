@@ -23,8 +23,10 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.shaded.org.checkerframework.checker.nullness.qual.Nullable;
+import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 
 import java.text.ParseException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -60,5 +62,21 @@ public class ResolverClient {
     } catch (final ParseException e) {
       throw new RuntimeException("Failed to parse resolve response for resolver %s".formatted(resolver.getValue()));
     }
+  }
+
+  public List<String> discovery(final DiscoveryRequest request) {
+    final StringBuilder builder = new StringBuilder("/discovery?");
+    builder.append("trust_anchor=%s".formatted(request.trustAnchor()));
+    if (Objects.nonNull(request.trustMarkIds())) {
+      builder.append("&trust_mark_id=%s".formatted(request.trustMarkIds().get(0)));
+    }
+    if (Objects.nonNull(request.types())) {
+      builder.append("&entity_type=%s".formatted(request.types().get(0)));
+    }
+    final ResponseEntity<List> entity = client.get()
+        .uri(resolver.getValue() + builder)
+        .retrieve()
+        .toEntity(List.class);
+    return (List<String>) entity.getBody();
   }
 }

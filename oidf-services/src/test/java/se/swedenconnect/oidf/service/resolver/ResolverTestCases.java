@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.service.resolver;
 
-import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
@@ -24,8 +23,8 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.client.HttpClientErrorException;
+import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
 import se.swedenconnect.oidf.service.service.testclient.FederationClients;
 import se.swedenconnect.oidf.service.service.testclient.TestFederationClientParameterResolver;
@@ -49,7 +49,41 @@ public class ResolverTestCases {
   public void beforeMethod() {
     final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
     final boolean context = applicationContext != null;
-    org.junit.Assume.assumeTrue(context);
+    Assumptions.assumeTrue(context);
+  }
+
+
+  @Test
+  @DisplayName("Discovery OP : 200")
+  void discoverEntitiesByType(final FederationClients clients) {
+    final List<String> discovery = clients.municipality().resolver().discovery(new DiscoveryRequest(
+        TestFederationEntities.Municipality.TRUST_ANCHOR.getValue(),
+        List.of(EntityType.OPENID_PROVIDER.getValue()),
+        null)
+    );
+    Assertions.assertEquals(2, discovery.size(), "Size of discovery was wrong %s".formatted(discovery));
+  }
+
+  @Test
+  @DisplayName("Discovery ALL : 200")
+  void discoverAllEntities(final FederationClients clients) {
+    final List<String> discovery = clients.municipality().resolver().discovery(new DiscoveryRequest(
+        TestFederationEntities.Municipality.TRUST_ANCHOR.getValue(),
+        null,
+        null)
+    );
+    Assertions.assertEquals(6, discovery.size(), "Size of discovery was wrong %s".formatted(discovery));
+  }
+
+  @Test
+  @DisplayName("Discovery ALL : 200")
+  void discoverByTrustMark(final FederationClients clients) {
+    final List<String> discovery = clients.municipality().resolver().discovery(new DiscoveryRequest(
+        TestFederationEntities.Municipality.TRUST_ANCHOR.getValue(),
+        null,
+        List.of(TestFederationEntities.Authorization.TRUST_MARK_ISSUER.getValue() + "/certified"))
+    );
+    Assertions.assertEquals(1, discovery.size(), "Size of discovery was wrong %s".formatted(discovery));
   }
 
   @Test
