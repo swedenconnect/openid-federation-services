@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 
-import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
@@ -38,13 +37,16 @@ import java.util.stream.Collectors;
 @Getter
 public class TrustAnchorModuleRecord implements Serializable {
 
-  /** EntityId for the trust anchor */
+  /**
+   * EntityId for the trust anchor
+   */
   private String entityIdentifier;
 
   private Map<String, List<String>> trustMarkIssuers;
 
   /**
    * Converts this instance to json object {@link HashMap}
+   *
    * @return json object
    */
   public Map<String, Object> toJson() {
@@ -56,6 +58,7 @@ public class TrustAnchorModuleRecord implements Serializable {
 
   /**
    * Converts json object to new instance.
+   *
    * @param json to read
    * @return new instance
    */
@@ -69,13 +72,14 @@ public class TrustAnchorModuleRecord implements Serializable {
 
   /**
    * Concerts response to properties.
+   *
    * @return properties instance
    */
   public TrustAnchorProperties toProperties() {
     return new TrustAnchorProperties(new EntityID(this.entityIdentifier),
         Optional.ofNullable(this.trustMarkIssuers).orElse(Map.of())
             .entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
-            v -> v.getValue().stream().map(Issuer::new).toList())));
+                v -> v.getValue().stream().map(Issuer::new).toList())));
   }
 
 }

@@ -101,7 +101,11 @@ public class CachedRecordSource implements RecordSource {
 
   @Override
   public Optional<EntityRecord> getEntity(final NodeKey key) {
-    return Optional.empty();
+    return this.getRecord()
+        .flatMap(r -> r.getEntityRecords().getValue().stream()
+            .filter(er -> er.getIssuer().getValue().equals(key.issuer()))
+            .filter(er -> er.getSubject().getValue().equals(key.subject()))
+            .findFirst());
   }
 
   @Override

@@ -72,7 +72,7 @@ public class ResolverTestCases {
         null,
         null)
     );
-    Assertions.assertEquals(6, discovery.size(), "Size of discovery was wrong %s".formatted(discovery));
+    Assertions.assertEquals(7, discovery.size(), "Size of discovery was wrong %s".formatted(discovery));
   }
 
   @Test
