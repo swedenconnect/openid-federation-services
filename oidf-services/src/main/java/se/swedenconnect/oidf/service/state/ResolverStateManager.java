@@ -16,6 +16,9 @@
  */
 package se.swedenconnect.oidf.service.state;
 
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -29,23 +32,28 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Felix Hellman
  */
+@Slf4j
 @Component
 public class ResolverStateManager extends ReadyStateComponent {
 
   private final CompositeTreeLoader treeLoader;
   private final ServiceLock redisServiceLock;
+  private final ObservationRegistry registry;
 
   /**
    * Constructor.
    *
    * @param treeLoader
    * @param redisServiceLock
+   * @param registry
    */
   public ResolverStateManager(
       final CompositeTreeLoader treeLoader,
-      final ServiceLock redisServiceLock) {
+      final ServiceLock redisServiceLock,
+      final ObservationRegistry registry) {
     this.treeLoader = treeLoader;
     this.redisServiceLock = redisServiceLock;
+    this.registry = registry;
   }
 
   @Override
@@ -71,12 +79,24 @@ public class ResolverStateManager extends ReadyStateComponent {
   }
 
   private void reloadResolvers() {
-    if (this.redisServiceLock.acquireLock(this.name())) {
-      // --- Critical Section Start ---
-      this.treeLoader.loadTree();
-      this.redisServiceLock.close(this.name());
-      // --- Critical Section End
-    }
+    final Observation resolverReload = Observation.createNotStarted("resolver_reload", this.registry);
+    resolverReload.observe(() -> {
+      log.info("Starting resolver reload");
+      if (this.redisServiceLock.acquireLock(this.name())) {
+        log.info("Lock acquired");
+        try {
+          // --- Critical Section Start ---
+          log.info("Start Tree load");
+          this.treeLoader.loadTree();
+          log.info("Tree loaded");
+          // --- Critical Section End
+        } finally {
+          this.redisServiceLock.close(this.name());
+          log.info("Lock closed");
+        }
+        log.info("Resolver reload finished.");
+      }
+    });
   }
 }
 
