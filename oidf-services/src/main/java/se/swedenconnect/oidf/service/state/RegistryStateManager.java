@@ -67,11 +67,13 @@ public class RegistryStateManager extends ReadyStateComponent {
 
   /**
    * @param event to trigger from
+   * @return event to trigger next step
    */
   @EventListener
-  public void init(final ApplicationStartedEvent event) {
+  public RegistryReadyEvent init(final ApplicationStartedEvent event) {
     this.reloadFromRegistry();
     this.markReady();
+    return new RegistryReadyEvent();
   }
 
   /**

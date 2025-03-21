@@ -73,9 +73,14 @@ public class ResolverStateManager extends ReadyStateComponent {
   }
 
   @EventListener
-  void handle(final RegistryLoadedEvent event) {
+  void handle(final RegistryReadyEvent event) {
     this.reloadResolvers();
     this.markReady();
+  }
+
+  @EventListener
+  void handle(final RegistryLoadedEvent event) {
+    this.reloadResolvers();
   }
 
   private void reloadResolvers() {
