@@ -21,6 +21,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.Setter;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
 
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,10 @@ public class TrustAnchorModuleProperties {
 
     private Map<String, List<String>> trustMarkIssuers = Map.of();
 
+    private ConstraintRecord constraints = ConstraintRecord.builder()
+        .maxPathLength(10)
+        .build();
+
     /**
      * Converts this to {@link TrustAnchorProperties}
      * @return property
@@ -60,7 +65,9 @@ public class TrustAnchorModuleProperties {
     public TrustAnchorProperties toTrustAnchorProperties() {
       return new TrustAnchorProperties(new EntityID(this.entityIdentifier),
           this.trustMarkIssuers.entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
-              v -> v.getValue().stream().map(Issuer::new).toList())));
+              v -> v.getValue().stream().map(Issuer::new).toList())),
+          this.constraints
+      );
     }
   }
 }

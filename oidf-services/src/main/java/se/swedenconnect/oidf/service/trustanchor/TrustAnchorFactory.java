@@ -55,9 +55,10 @@ public class TrustAnchorFactory {
    * @param properties for trust anchor
    * @return new instance
    */
-  public TrustAnchor create(final TrustAnchorProperties properties) {
+  public TrustAnchor create(
+      final TrustAnchorProperties properties) {
     return new TrustAnchor(this.source, properties,
-        new SubordinateStatementFactory(this.signerFactory),
+        new SubordinateStatementFactory(this.signerFactory, properties),
         this.client
     );
   }
