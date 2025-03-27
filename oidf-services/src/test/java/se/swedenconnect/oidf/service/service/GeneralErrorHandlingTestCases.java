@@ -80,7 +80,7 @@ public class GeneralErrorHandlingTestCases {
     given()
         .when().log().all()
         .contentType("VerySpecialContentType")
-        .get("/authorization-tmi/trust_mark_listing")
+        .get("/im/tmi/trust_mark_listing")
         .then().log().all()
         .statusCode(HttpStatus.BAD_REQUEST.value())
         .body("error", Matchers.equalTo("invalid_request"))

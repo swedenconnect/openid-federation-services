@@ -80,6 +80,10 @@ openid:
           trust-anchor: http://localhost:11111/naming/ta
         - trusted-keys:
             - sign-key-1
+          entity-identifier: http://localhost:11111/policy/resolver
+          trust-anchor: http://localhost:11111/policy/ta
+        - trusted-keys:
+            - sign-key-1
           entity-identifier: http://localhost:11111/path/resolver
           trust-anchor: http://localhost:11111/path/ta
         - trusted-keys:
@@ -115,6 +119,7 @@ openid:
               - RELYING_PARTY
         - entity-identifier: http://localhost:11111/im
         - entity-identifier: http://localhost:11111/im/im
+        - entity-identifier: http://localhost:11111/policy/ta
       trust-mark-issuers:
         - entity-identifier: http://localhost:11111/im/tmi
           trust-marks:
@@ -135,6 +140,18 @@ openid:
                   "organization_name": "Authorization",
                   "federation_fetch_endpoint": "http://localhost:11111/naming/ta/fetch",
                   "federation_list_endpoint": "http://localhost:11111/naming/ta/subordinate_listing"
+                }
+              }
+      - subject: http://localhost:11111/policy/ta
+        issuer: http://localhost:11111/policy/ta
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": { 
+                  "organization_name": "Authorization",
+                  "federation_fetch_endpoint": "http://localhost:11111/policy/ta/fetch",
+                  "federation_list_endpoint": "http://localhost:11111/policy/ta/subordinate_listing"
                 }
               }
       - subject: http://localhost:11111/trust_mark_issuer/ta
@@ -212,6 +229,12 @@ openid:
         subject: http://localhost:11111/im
         public-keys:
           - sign-key-1
+      - issuer: http://localhost:11111/policy/ta
+        subject: http://localhost:11111/im
+        public-keys:
+          - sign-key-1
+        policy:
+          resource: classpath:authorization-policy.json
       - issuer: http://localhost:11111/anarchy/ta
         subject: http://localhost:11111/im
         public-keys:
@@ -259,7 +282,8 @@ openid:
                   "organization_name": "Authorization"
                 },
                 "openid_provider": {
-                  "logo_uri": "http://test.test"
+                  "logo_uri": "http://test.test",
+                  "id_token_signing_alg_values_supported": ["RS256", "ES256"]
                 }
               }
       - issuer: http://localhost:11111/im/im

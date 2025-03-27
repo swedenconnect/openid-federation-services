@@ -45,9 +45,9 @@ public class EntityConfiguration {
    * @return an instance of {@link SigningEntityConfigurationFactory} configured with the specified signing key
    */
   @Bean
-  EntityConfigurationFactory entityStatementFactory(final SignerFactory factory,
-                                                    final FederationClient client,
-                                                    final List<EntityConfigurationClaimCustomizer> customizers) {
+  EntityConfigurationFactory entityConfigurationFactory(final SignerFactory factory,
+                                                        final FederationClient client,
+                                                        final List<EntityConfigurationClaimCustomizer> customizers) {
     return new SigningEntityConfigurationFactory(factory, client, customizers);
   }
 

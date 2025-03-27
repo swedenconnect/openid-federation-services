@@ -95,7 +95,7 @@ public class TrustMarkRecord implements Serializable {
         .delegation(jsonObject.getStringValue(RecordFields.TrustMark.DELEGATION))
         .ref(jsonObject.getStringValue(RecordFields.TrustMark.REF))
         .logoUri(jsonObject.getStringValue(RecordFields.TrustMark.LOGO_URI))
-        .subjects(jsonObject.getObjectMapClaim(RecordFields.TrustMark.SUBJECTS)
+        .subjects(jsonObject.getObjectListClaim(RecordFields.TrustMark.SUBJECTS)
             .stream()
             .map(m -> (Map<String, Object>) m)
             .map(TrustMarkSubjectRecord::fromJson)

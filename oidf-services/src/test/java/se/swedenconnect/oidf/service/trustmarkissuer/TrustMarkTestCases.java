@@ -39,7 +39,7 @@ import java.util.List;
 public class TrustMarkTestCases {
 
 
-  public static final EntityID TRUST_MARK_ID = new EntityID("https://authorization.local.swedenconnect.se/authorization-tmi/certified");
+  public static final EntityID TRUST_MARK_ID = new EntityID("http://localhost:11111/im/tmi/certified");
 
   @BeforeEach
   public void beforeMethod() {
@@ -53,36 +53,36 @@ public class TrustMarkTestCases {
 
   @Test
   public void testTrustMark(final FederationClients clients) throws ParseException {
-    final SignedJWT trustMark = clients.authorization().trustMark().trustMark(
-        TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+    final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(
+        TestFederationEntities.IM.TRUST_MARK_ISSUER,
         TRUST_MARK_ID,
-        TestFederationEntities.Authorization.OP_1
+        TestFederationEntities.IM.OP
     );
 
-    Assertions.assertEquals(TestFederationEntities.Authorization.TRUST_MARK_ISSUER.getValue(),
+    Assertions.assertEquals(TestFederationEntities.IM.TRUST_MARK_ISSUER.getValue(),
         trustMark.getJWTClaimsSet().getIssuer());
   }
 
   @Test
   public void testTrustMarkListing(final FederationClients clients) {
-    final List<String> trustMarkListing = clients.authorization().trustMark().trustMarkListing(
-        TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+    final List<String> trustMarkListing = clients.anarchy().trustMark().trustMarkListing(
+        TestFederationEntities.IM.TRUST_MARK_ISSUER,
         TRUST_MARK_ID,
         null
     );
     Assertions.assertFalse(trustMarkListing.isEmpty(), "Found 0 trust marks");
-    final String expected = TestFederationEntities.Authorization.OP_1.getValue();
+    final String expected = TestFederationEntities.IM.OP.getValue();
     Assertions.assertTrue(trustMarkListing.contains(expected), "Trust " +
         "Mark Listing does not contain expected value:%s".formatted(expected));
   }
 
   @Test
   public void testTrustMarkStatusActive(final FederationClients clients) {
-    final TrustMarkStatusReply status = clients.authorization().trustMark()
+    final TrustMarkStatusReply status = clients.anarchy().trustMark()
         .trustMarkStatus(
-            TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+            TestFederationEntities.IM.TRUST_MARK_ISSUER,
             TRUST_MARK_ID,
-            TestFederationEntities.Authorization.OP_1,
+            TestFederationEntities.IM.OP,
             null
         );
     Assertions.assertTrue(status.getActive());
@@ -91,10 +91,10 @@ public class TrustMarkTestCases {
   @Test
   public void testTrustMarkStatusNotActive(final FederationClients clients) throws InterruptedException {
     Thread.sleep(3000L);
-    final TrustMarkStatusReply status = clients.authorization().trustMark().trustMarkStatus(
-        TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
+    final TrustMarkStatusReply status = clients.anarchy().trustMark().trustMarkStatus(
+        TestFederationEntities.IM.TRUST_MARK_ISSUER,
         TRUST_MARK_ID,
-        TestFederationEntities.Authorization.OP_2,
+        TestFederationEntities.IM.NestedIM.OP,
         null
     );
     Assertions.assertFalse(status.getActive());
@@ -103,9 +103,9 @@ public class TrustMarkTestCases {
 
   @Test
   public void testTrustMarkStatusError(final FederationClients clients) {
-    final Runnable throwingRunnable = () -> clients.authorization().trustMark().trustMarkStatus(
-        TestFederationEntities.Authorization.TRUST_MARK_ISSUER,
-        new EntityID("https://authorization.local.swedenconnect.se/not-found"),
+    final Runnable throwingRunnable = () -> clients.anarchy().trustMark().trustMarkStatus(
+        TestFederationEntities.IM.TRUST_MARK_ISSUER,
+        new EntityID("http://localhost:11111/im/im/accepted"),
         null,
         null
     );

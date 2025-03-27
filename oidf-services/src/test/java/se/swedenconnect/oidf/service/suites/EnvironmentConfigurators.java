@@ -19,33 +19,13 @@ package se.swedenconnect.oidf.service.suites;
 import com.redis.testcontainers.RedisContainer;
 import org.slf4j.Logger;
 import org.testcontainers.Testcontainers;
-import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
-import org.testcontainers.utility.MountableFile;
 import se.swedenconnect.oidf.test.testcontainer.RelyingPartyContainer;
 
 import java.util.List;
 
 public class EnvironmentConfigurators {
-  public static void configureNginx(final NginxContainer nginx, final Logger log) {
-    nginx.withNetworkAliases(
-        "authorization.local.swedenconnect.se",
-        "private.local.swedenconnect.se",
-        "municipality.local.swedenconnect.se"
-    );
-    nginx.withCopyFileToContainer(MountableFile.forClasspathResource("/nginx/default.conf.template"), "/etc/nginx/templates/default.conf.template");
-    nginx.withCopyFileToContainer(MountableFile.forClasspathResource("/nginx/mime.types"), "/etc/nginx/mime.types");
-    nginx.withCopyFileToContainer(MountableFile.forClasspathResource("/nginx/ca.pem"), "/etc/nginx/ca.pem");
-    nginx.withCopyFileToContainer(MountableFile.forClasspathResource("/nginx/server.crt"), "/etc/nginx/server.crt");
-    nginx.withCopyFileToContainer(MountableFile.forClasspathResource("/nginx/server.key"), "/etc/nginx/server.key");
-    nginx.withLogConsumer(new Slf4jLogConsumer(log));
-    nginx.withExposedPorts(443);
-    nginx.withAccessToHost(true);
-    nginx.setPortBindings(List.of("443:443"));
-    nginx.setWaitStrategy(new HostPortWaitStrategy().forPorts(443));
-  }
-
   public static void configureRedis(final RedisContainer redis, final Logger log) {
     redis.withLogConsumer(new Slf4jLogConsumer(log));
   }
@@ -63,14 +43,12 @@ public class EnvironmentConfigurators {
   }
 
   /**
-   * Configures Nginx, Testcontainer openings and relying party container
+   * Configures Testcontainer openings and relying party container
    */
   public static void configureDefaultEnvironment(
-      final NginxContainer nginxContainer,
       final RelyingPartyContainer relyingPartyContainer,
       final Logger log
   ) {
-    configureNginx(nginxContainer, log);
     configureRelyingParty(relyingPartyContainer, log);
     configureTestContainers();
   }

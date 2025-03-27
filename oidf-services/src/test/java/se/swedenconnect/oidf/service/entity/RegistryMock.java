@@ -81,7 +81,7 @@ public class RegistryMock {
     final String policyId = "my-super-policy";
     final List<EntityRecord> municipalityEntities = List.of(
         EntityRecord.builder()
-            .issuer(TestFederationEntities.Municipality.TRUST_ANCHOR)
+            .issuer(new EntityID(TestFederationEntities.IM.INTERMEDIATE.getValue() + "/dynamic"))
             .subject(RP_FROM_REGISTRY_ENTITY)
             .policyRecord(new PolicyRecord(policyId, Map.of()))
             .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",

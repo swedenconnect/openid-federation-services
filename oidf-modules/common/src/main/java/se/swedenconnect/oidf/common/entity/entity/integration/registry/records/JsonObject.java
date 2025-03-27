@@ -47,10 +47,15 @@ public class JsonObject {
 
   /**
    * @param key
-   * @return object map claim
+   * @return object list claim
    */
-  public List<Object> getObjectMapClaim(final String key) {
+  public List<Object> getObjectListClaim(final String key) {
     return Optional.ofNullable((List<Object>) this.json.get(key))
         .orElse(List.of());
+  }
+
+  public Map<String,Object> getObjectMapClaim(final String key) {
+    return Optional.ofNullable((Map<String,Object>) this.json.get(key))
+        .orElse(Map.of());
   }
 }

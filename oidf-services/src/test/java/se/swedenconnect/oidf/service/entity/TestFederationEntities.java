@@ -19,32 +19,39 @@ package se.swedenconnect.oidf.service.entity;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 
 public class TestFederationEntities {
-  public static class Authorization {
-    public static final EntityID TRUST_ANCHOR = new EntityID("https://authorization.local.swedenconnect" +
-        ".se/authorization-ta");
-    public static final EntityID RESOLVER = new EntityID("https://authorization.local.swedenconnect" +
-        ".se/authorization-resolver");
-    public static final EntityID TRUST_MARK_ISSUER = new EntityID("https://authorization.local.swedenconnect" +
-        ".se/authorization-tmi");
-    public static final EntityID OP_1 = new EntityID("https://authorization.local.swedenconnect" +
-        ".se/op-1");
-    public static final EntityID OP_2 = new EntityID("https://authorization.local.swedenconnect" +
-        ".se/op-2");
+  public static class Anarchy {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/anarchy/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/anarchy/resolver");
+  }
+  public static class Policy {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/policy/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/policy/resolver");
+  }
+  public static class TrustMarkIssuer {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/trust_mark_issuer/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/trust_mark_issuer/resolver");
+  }
+  public static class EntityType {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/entity_type/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/entity_type/resolver");
+  }
+  public static class Path {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/path/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/path/resolver");
+  }
+  public static class Naming {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/naming/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/naming/resolver");
   }
 
-  public static class Municipality {
-    public static final EntityID RESOLVER =
-        new EntityID("https://municipality.local.swedenconnect.se/municipality-resolver");
-    public static final EntityID TRUST_ANCHOR =
-        new EntityID("https://municipality.local.swedenconnect.se/municipality-ta");
-    public static final EntityID TRUST_MARK_ISSUER =
-        new EntityID("https://municipality.local.swedenconnect.se/municipality-tmi");
-  }
+  public static class IM {
+    public static EntityID INTERMEDIATE = new EntityID("http://localhost:11111/im");
+    public static EntityID TRUST_MARK_ISSUER = new EntityID("http://localhost:11111/im/tmi");
+    public static EntityID OP = new EntityID("http://localhost:11111/im/op");
 
-  public static class PrivateSector {
-    public static final EntityID RESOLVER = new EntityID("https://private.local.swedenconnect.se/private-resolver");
-    public static final EntityID TRUST_ANCHOR =    new EntityID("https://private.local.swedenconnect.se/private-ta");
-    public static final EntityID TRUST_MARK_ISSUER =    new EntityID("https://private.local.swedenconnect" +
-        ".se/private-tmi");
+    public static class NestedIM {
+      public static EntityID INTERMEDIATE = new EntityID("http://localhost:11111/im/im");
+      public static EntityID OP = new EntityID("http://localhost:11111/im/im/op");
+    }
   }
 }

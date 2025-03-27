@@ -26,15 +26,14 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
-import org.testcontainers.containers.NginxContainer;
-import org.testcontainers.utility.DockerImageName;
 import se.swedenconnect.oidf.service.Application;
+import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
+import se.swedenconnect.oidf.service.entity.RegistryMock;
+import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
+import se.swedenconnect.oidf.service.resolver.ResolverPolicyTestCases;
+import se.swedenconnect.oidf.service.resolver.ResolverTrustMarkTestCases;
 import se.swedenconnect.oidf.service.service.GeneralErrorHandlingTestCases;
 import se.swedenconnect.oidf.service.service.actuator.ActuatorTestCases;
-import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
-import se.swedenconnect.oidf.service.entity.EntityRegistryMockTestCases;
-import se.swedenconnect.oidf.service.entity.RegistryMock;
-import se.swedenconnect.oidf.service.resolver.ResolverTestCases;
 import se.swedenconnect.oidf.service.trustanchor.TrustAnchorTestCases;
 import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkTestCases;
 import se.swedenconnect.oidf.test.testcontainer.RelyingPartyContainer;
@@ -45,16 +44,15 @@ import java.util.Random;
 @Suite
 @SuiteDisplayName("In Memory Test Suite")
 @SelectClasses(value = {
+    ResolverConstraintTestCases.class,
+    ResolverTrustMarkTestCases.class,
     GeneralErrorHandlingTestCases.class,
     TrustMarkTestCases.class,
     TrustAnchorTestCases.class,
     ActuatorTestCases.class,
-    EntityRegistryMockTestCases.class,
-    ResolverTestCases.class
+    ResolverPolicyTestCases.class
 })
 public class InMemoryTestSuite {
-  private static final NginxContainer nginx = new NginxContainer(DockerImageName.parse("nginx:stable"));
-
   private static final RelyingPartyContainer relyingParty = new RelyingPartyContainer();
 
   private static ConfigurableApplicationContext configurableApplicationContext;
@@ -64,9 +62,8 @@ public class InMemoryTestSuite {
   @BeforeSuite
   public static void start() throws InterruptedException {
     // Configure default environment
-    EnvironmentConfigurators.configureDefaultEnvironment(nginx, relyingParty, log);
+    EnvironmentConfigurators.configureDefaultEnvironment(relyingParty, log);
     relyingParty.start();
-    nginx.start();
     try {
       final int port = new Random().nextInt(10000 - 9000) + 9000;
       registryMock = new RegistryMock(port);
@@ -77,12 +74,12 @@ public class InMemoryTestSuite {
     configurableApplicationContext = new SpringApplicationBuilder()
         .sources(Application.class)
         .environment(new MockEnvironment()
-            .withProperty("server.port", "6000")
+            .withProperty("server.port", "11111")
             .withProperty("management.server.port", "6001")
             .withProperty("openid.federation.storage", "memory")
             .withProperty("openid.federation.registry.integration.endpoints.base-path",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
-                "/federationservice")
+                    "/federationservice")
         )
         .profiles("integration-test")
         .run();
@@ -101,7 +98,6 @@ public class InMemoryTestSuite {
   public static void stop() {
     configurableApplicationContext.stop();
     relyingParty.stop();
-    nginx.stop();
     Context.applicationContext.remove();
   }
 }

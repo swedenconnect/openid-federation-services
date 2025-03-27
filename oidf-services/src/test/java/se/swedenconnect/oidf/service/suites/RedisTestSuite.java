@@ -30,13 +30,17 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.env.MockEnvironment;
-import org.testcontainers.containers.NginxContainer;
 import org.testcontainers.utility.DockerImageName;
 import se.swedenconnect.oidf.service.Application;
-import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
+import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
+import se.swedenconnect.oidf.service.resolver.ResolverPolicyTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverTrustMarkTestCases;
+import se.swedenconnect.oidf.service.service.GeneralErrorHandlingTestCases;
+import se.swedenconnect.oidf.service.service.actuator.ActuatorTestCases;
+import se.swedenconnect.oidf.service.trustanchor.TrustAnchorTestCases;
+import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkTestCases;
 import se.swedenconnect.oidf.test.testcontainer.RelyingPartyContainer;
 
 import java.util.Random;
@@ -46,13 +50,16 @@ import java.util.Random;
 @SuiteDisplayName("Redis Test Suite")
 @SelectClasses(value = {
     ResolverConstraintTestCases.class,
-    ResolverTrustMarkTestCases.class
+    ResolverTrustMarkTestCases.class,
+    GeneralErrorHandlingTestCases.class,
+    TrustMarkTestCases.class,
+    TrustAnchorTestCases.class,
+    ActuatorTestCases.class,
+    ResolverPolicyTestCases.class
 })
 public class RedisTestSuite {
 
   private static final RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:6.2.6"));
-
-  private static final NginxContainer nginx = new NginxContainer(DockerImageName.parse("nginx:stable"));
 
   private static final RelyingPartyContainer relyingParty = new RelyingPartyContainer();
 
@@ -62,18 +69,10 @@ public class RedisTestSuite {
 
   @BeforeSuite
   public static void start() throws InterruptedException {
-    final YamlMapFactoryBean factory = new YamlMapFactoryBean();
-    factory.setResolutionMethod(YamlProcessor.ResolutionMethod.OVERRIDE);
-    factory.setResources(
-        new ClassPathResource("application.yml"),
-        new ClassPathResource("application-entitytypes.yml")
-    );
-    // Configure default environment
-    EnvironmentConfigurators.configureDefaultEnvironment(nginx, relyingParty, log);
+    EnvironmentConfigurators.configureDefaultEnvironment(relyingParty, log);
     // Add redis configuration
     EnvironmentConfigurators.configureRedis(redis, log);
     relyingParty.start();
-    nginx.start();
     redis.start();
     try {
       final int port = new Random().nextInt(10000 - 9000) + 9000;
@@ -110,7 +109,6 @@ public class RedisTestSuite {
   public static void stop() {
     configurableApplicationContext.stop();
     relyingParty.stop();
-    nginx.stop();
     redis.stop();
     registryMock.stop();
   }
