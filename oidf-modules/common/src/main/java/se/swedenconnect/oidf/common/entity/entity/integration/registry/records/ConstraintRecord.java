@@ -16,9 +16,10 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashMap;
@@ -34,10 +35,12 @@ import java.util.Optional;
 @Builder
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ConstraintRecord {
-  private Integer maxPathLength;
+  private Long maxPathLength;
   private NamingConstraints namingConstraints;
-  private List<EntityType> allowedEntityTypes;
+  private List<String> allowedEntityTypes;
 
   /**
    * @return this object as json
@@ -54,9 +57,9 @@ public class ConstraintRecord {
     });
 
     Optional.ofNullable(this.allowedEntityTypes)
-            .ifPresent(allowed -> {
-              json.put("allowed_entity_types", allowed);
-            });
+        .ifPresent(allowed -> {
+          json.put("allowed_entity_types", allowed);
+        });
 
     return json;
   }
@@ -69,7 +72,7 @@ public class ConstraintRecord {
     final ConstraintRecordBuilder builder = ConstraintRecord.builder();
 
     Optional.ofNullable(json.get("max_path_length")).ifPresent(length -> {
-      builder.maxPathLength((int) length);
+      builder.maxPathLength((long) length);
     });
 
     Optional.ofNullable(json.get("naming_constraints")).ifPresent(namingConstraints -> {
@@ -77,7 +80,7 @@ public class ConstraintRecord {
     });
 
     Optional.ofNullable(json.get("allowed_entity_types")).ifPresent(allowed -> {
-      builder.allowedEntityTypes((List<EntityType>) allowed);
+      builder.allowedEntityTypes((List<String>) allowed);
     });
 
     return builder.build();

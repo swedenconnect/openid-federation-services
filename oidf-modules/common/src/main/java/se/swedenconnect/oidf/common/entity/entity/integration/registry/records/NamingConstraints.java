@@ -16,13 +16,16 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Data class for naming constraints.
@@ -32,18 +35,9 @@ import java.util.Map;
 @Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class NamingConstraints {
-
-  /**
-   * Constructor.
-   * @param permitted
-   * @param excluded
-   */
-  public NamingConstraints(final List<String> permitted, final List<String> excluded) {
-    this.permitted = permitted;
-    this.excluded = excluded;
-  }
-
   private List<String> permitted;
   private List<String> excluded;
 
@@ -53,8 +47,8 @@ public class NamingConstraints {
    */
   public static NamingConstraints fromJson(final Map<String, Object> json) {
     return NamingConstraints.builder()
-        .permitted((List<String>) json.get("permitted"))
-        .excluded((List<String>) json.get("excluded"))
+        .permitted((List<String>) Optional.ofNullable(json.get("permitted")).orElse(List.of()))
+        .excluded((List<String>) Optional.ofNullable(json.get("excluded")).orElse(List.of()))
         .build();
   }
 

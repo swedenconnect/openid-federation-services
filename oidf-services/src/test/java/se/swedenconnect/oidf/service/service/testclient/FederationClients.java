@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.service.service.testclient;
 
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
+import se.swedenconnect.oidf.service.resolver.ResolverDifferentiator;
 
 public class FederationClients {
 
@@ -27,30 +28,25 @@ public class FederationClients {
     this.client = client;
   }
 
-  public TestFederationClient authorization() {
+  public TestFederationClient anarchy() {
     return new TestFederationClient(
         client,
-        TestFederationEntities.Authorization.RESOLVER,
-        TestFederationEntities.Authorization.TRUST_ANCHOR,
-        TestFederationEntities.Authorization.TRUST_MARK_ISSUER
+        TestFederationEntities.Anarchy.RESOLVER,
+        TestFederationEntities.Anarchy.TRUST_ANCHOR,
+        TestFederationEntities.IM.TRUST_MARK_ISSUER
     );
   }
 
-  public TestFederationClient municipality() {
-    return new TestFederationClient(
-        client,
-        TestFederationEntities.Municipality.RESOLVER,
-        TestFederationEntities.Municipality.TRUST_ANCHOR,
-        TestFederationEntities.Municipality.TRUST_MARK_ISSUER
-    );
+  public TrustAnchorClient intermediate() {
+    return new TrustAnchorClient(client, TestFederationEntities.IM.INTERMEDIATE);
   }
 
-  public TestFederationClient privateSector() {
-    return new TestFederationClient(
-        client,
-        TestFederationEntities.PrivateSector.RESOLVER,
-        TestFederationEntities.PrivateSector.TRUST_ANCHOR,
-        TestFederationEntities.PrivateSector.TRUST_MARK_ISSUER
+  public ResolverDifferentiator policy() {
+    return new ResolverDifferentiator(client,
+        TestFederationEntities.Anarchy.TRUST_ANCHOR,
+        TestFederationEntities.Anarchy.RESOLVER,
+        TestFederationEntities.Policy.TRUST_ANCHOR,
+        TestFederationEntities.Policy.RESOLVER
     );
   }
 

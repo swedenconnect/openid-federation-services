@@ -20,11 +20,13 @@ import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -35,10 +37,14 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class TrustAnchorModuleProperties {
-  /** Property path for this module */
+  /**
+   * Property path for this module
+   */
   public static final String PROPERTY_PATH = "openid.federation.trust-anchor";
 
-  /** List of all trust anchor modules */
+  /**
+   * List of all trust anchor modules
+   */
   private List<TrustAnchorSubModuleProperties> anchors;
 
   /**
@@ -49,24 +55,33 @@ public class TrustAnchorModuleProperties {
   @Getter
   @Setter
   public static class TrustAnchorSubModuleProperties {
-    /** EntityId for the trust anchor */
+    /**
+     * EntityId for the trust anchor
+     */
     private String entityIdentifier;
 
     private Map<String, List<String>> trustMarkIssuers = Map.of();
 
-    private ConstraintRecord constraints = ConstraintRecord.builder()
-        .maxPathLength(10)
-        .build();
+    @NestedConfigurationProperty
+    private ConstraintProperties constraints;
 
     /**
      * Converts this to {@link TrustAnchorProperties}
+     *
      * @return property
      */
     public TrustAnchorProperties toTrustAnchorProperties() {
       return new TrustAnchorProperties(new EntityID(this.entityIdentifier),
           this.trustMarkIssuers.entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
               v -> v.getValue().stream().map(Issuer::new).toList())),
-          this.constraints
+          Optional.ofNullable(this.constraints).map(c -> {
+                return new ConstraintRecord(
+                    this.constraints.getMaxPathLength(),
+                    this.constraints.getNaming(),
+                    this.constraints.getAllowedEntityTypes()
+                );
+              })
+              .orElse(null)
       );
     }
   }

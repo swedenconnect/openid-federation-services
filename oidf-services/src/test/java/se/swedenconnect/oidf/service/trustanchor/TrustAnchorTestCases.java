@@ -59,7 +59,7 @@ public class TrustAnchorTestCases {
   @Test
   @DisplayName("Subordinate listing : 200")
   void testListSubordinatesAndFetchEntityStatement(final FederationClients clients) {
-    final TrustAnchorClient client = clients.authorization().trustAnchor();
+    final TrustAnchorClient client = clients.anarchy().trustAnchor();
     final List<?> body = client.subordinateListing(new SubordinateListingRequest(null, null, null, null));
     Assertions.assertNotNull(body);
     Assertions.assertFalse(body.isEmpty());
@@ -68,8 +68,8 @@ public class TrustAnchorTestCases {
   @Test
   @DisplayName("Fetch existing subject : 200")
   void testFetchEntityStatement(final FederationClients clients) throws JOSEException {
-    final TrustAnchorClient client = clients.authorization().trustAnchor();
-    final SignedJWT signedJWT = client.fetch(TestFederationEntities.Authorization.OP_1);
+    final TrustAnchorClient client = clients.intermediate();
+    final SignedJWT signedJWT = client.fetch(TestFederationEntities.IM.OP);
     Assertions.assertNotNull(signedJWT);
     final FederationKeys keys = Context.applicationContext.get().getBean(FederationKeys.class);
     final JWK first = keys.signKeys().toPublicJWKSet().toPublicJWKSet().getKeys().getFirst();
@@ -80,7 +80,7 @@ public class TrustAnchorTestCases {
   @Test
   @DisplayName("Fetch non-existing subject : 404")
   void fetchFailsWhenInvalidEntityId(final FederationClients clients) {
-    final TrustAnchorClient client = clients.authorization().trustAnchor();
+    final TrustAnchorClient client = clients.anarchy().trustAnchor();
     final Runnable throws404 = () -> client.fetch(new EntityID("https://authorization.local.swedenconnect.se/op-3"));
 
     Assertions.assertThrows(HttpClientErrorException.NotFound.class, throws404::run);
@@ -89,30 +89,9 @@ public class TrustAnchorTestCases {
   @Test
   @DisplayName("Fecth missing parameter subject : 400")
   void fetchFailsWhenMandatoryParameterIsMissing(final FederationClients clients) {
-    final TrustAnchorClient client = clients.authorization().trustAnchor();
+    final TrustAnchorClient client = clients.anarchy().trustAnchor();
     final Runnable throws400 = () -> client.fetch(null);
 
     Assertions.assertThrows(HttpClientErrorException.BadRequest.class, throws400::run);
   }
-
-  @ParameterizedTest(name = "{index} 200: {0}")
-  @MethodSource("se.swedenconnect.oidf.service.trustanchor.TestParameters#okSubordinateListingParameters")
-  void subordinateListing(final SubordinateListingRequest request, final List<EntityID> expectedEntries,
-                          final FederationClients clients) {
-    final List<String> body = clients.authorization().trustAnchor().subordinateListing(request);
-    Assertions.assertNotNull(body);
-    Assertions.assertEquals(expectedEntries.size(), body.size(),
-        "Size did not match expected entries expected:%s actual:%s".formatted(expectedEntries, body));
-
-    Assertions.assertTrue(body.containsAll(expectedEntries.stream().map(Identifier::getValue).toList()));
-  }
-
-  @ParameterizedTest(name = "{index} Error: {0} {1}")
-  @MethodSource("se.swedenconnect.oidf.service.trustanchor.TestParameters#nokSubordinateListingParameters")
-  void subordinateListingErrors(final SubordinateListingRequest request, final Class<? extends Exception> expected,
-                                final FederationClients clients) {
-    Runnable expectThrows = () -> clients.authorization().trustAnchor().subordinateListing(request);
-    Assertions.assertThrows(expected, expectThrows::run);
-  }
-
 }

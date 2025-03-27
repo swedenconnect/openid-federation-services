@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.service.JsonObjectProperty;
 import se.swedenconnect.oidf.service.keys.FederationKeys;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -46,7 +47,7 @@ import java.util.Optional;
 public class EntityProperty {
   private String issuer;
   private String subject;
-  private PolicyRecord policyRecord;
+  private JsonObjectProperty policy;
   private String overrideConfigurationLocation;
   private List<String> publicKeys;
   @NestedConfigurationProperty
@@ -111,10 +112,16 @@ public class EntityProperty {
       jwkSet = keys.validationKeys().toPublicJWKSet();
     }
 
+
+    final PolicyRecord loaded1 = Optional.ofNullable(this.policy)
+        .map(JsonObjectProperty::toJsonObject)
+        .map(json -> new PolicyRecord("loaded", json))
+        .orElse(null);
+
     return new EntityRecord(
         new EntityID(this.issuer),
         new EntityID(this.subject),
-        this.policyRecord,
+        loaded1,
         jwkSet,
         this.overrideConfigurationLocation,
         this.hostedRecord(this.hostedRecord).orElse(null)
