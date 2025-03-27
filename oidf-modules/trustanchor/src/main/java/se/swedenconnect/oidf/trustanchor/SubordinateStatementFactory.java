@@ -21,6 +21,8 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
+import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
@@ -37,14 +39,17 @@ import java.util.Optional;
 public class SubordinateStatementFactory {
 
   private final SignerFactory factory;
+  private final TrustAnchorProperties properties;
 
   /**
    * Constructor.
    *
    * @param factory for signing hosted records
+   * @param properties for reading additional properties from
    */
-  public SubordinateStatementFactory(final SignerFactory factory) {
+  public SubordinateStatementFactory(final SignerFactory factory, final TrustAnchorProperties properties) {
     this.factory = factory;
+    this.properties = properties;
   }
 
   /**
@@ -57,6 +62,11 @@ public class SubordinateStatementFactory {
   public SignedJWT createEntityStatement(final EntityRecord issuer, final EntityRecord subject) {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
+
+      Optional.ofNullable(this.properties.getConstraintRecord())
+              .ifPresent(constraint -> {
+                builder.claim("constraints", constraint.toJson());
+              });
 
       Optional.ofNullable(subject.getPolicyRecord()).ifPresent(policyRecord -> builder.claim("metadata_policy",
           policyRecord.getPolicy()));

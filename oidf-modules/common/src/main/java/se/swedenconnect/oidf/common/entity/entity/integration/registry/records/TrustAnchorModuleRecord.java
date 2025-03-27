@@ -44,6 +44,8 @@ public class TrustAnchorModuleRecord implements Serializable {
 
   private Map<String, List<String>> trustMarkIssuers;
 
+  private ConstraintRecord constraints;
+
   /**
    * Converts this instance to json object {@link HashMap}
    *
@@ -79,7 +81,8 @@ public class TrustAnchorModuleRecord implements Serializable {
     return new TrustAnchorProperties(new EntityID(this.entityIdentifier),
         Optional.ofNullable(this.trustMarkIssuers).orElse(Map.of())
             .entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
-                v -> v.getValue().stream().map(Issuer::new).toList())));
+                v -> v.getValue().stream().map(Issuer::new).toList())),
+        this.constraints);
   }
 
 }
