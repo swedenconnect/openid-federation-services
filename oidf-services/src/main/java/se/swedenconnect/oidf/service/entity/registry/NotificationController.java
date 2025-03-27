@@ -16,7 +16,9 @@
  */
 package se.swedenconnect.oidf.service.entity.registry;
 
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.common.entity.entity.RecordVerificationException;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
@@ -51,8 +53,8 @@ public class NotificationController {
    * @param body notification
    * @throws InvalidRequestException if notification can not be verified.
    */
-  @PostMapping("/registry/notify")
-  public void notify(final String body) throws InvalidRequestException {
+  @PostMapping(value = "/registry/notify")
+  public void notify(@RequestBody final String body) throws InvalidRequestException {
     try {
       this.registryVerifier.verifyNotification(body);
       this.populator.notifyPopulator();
