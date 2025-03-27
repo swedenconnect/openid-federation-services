@@ -14,23 +14,47 @@
  * limitations under the License.
  *
  */
-
 package se.swedenconnect.oidf.service.trustanchor;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.NamingConstraints;
 
 import java.util.List;
 
+/**
+ * Properties class for constraints.
+ *
+ * @author Felix Hellman
+ */
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class ConstraintProperties {
+
+  /**
+   * Default constructor.
+   */
+  public ConstraintProperties() {
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param maxPathLength
+   * @param naming
+   * @param allowedEntityTypes
+   */
+  public ConstraintProperties(
+      final Long maxPathLength,
+      final NamingConstraints naming,
+      final List<String> allowedEntityTypes) {
+
+    this.maxPathLength = maxPathLength;
+    this.naming = naming;
+    this.allowedEntityTypes = allowedEntityTypes;
+  }
+
   private Long maxPathLength;
   @NestedConfigurationProperty
   private NamingConstraints naming;

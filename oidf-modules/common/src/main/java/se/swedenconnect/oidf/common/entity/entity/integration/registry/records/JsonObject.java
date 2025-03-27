@@ -53,9 +53,4 @@ public class JsonObject {
     return Optional.ofNullable((List<Object>) this.json.get(key))
         .orElse(List.of());
   }
-
-  public Map<String,Object> getObjectMapClaim(final String key) {
-    return Optional.ofNullable((Map<String,Object>) this.json.get(key))
-        .orElse(Map.of());
-  }
 }
