@@ -37,7 +37,7 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
       Set.of("subject_entity_configuration_location");
 
   /**
-   * This implementation supports the additional metadata operators regexp & instersects.
+   * This implementation supports the additional metadata operators regexp and instersects.
    */
   public static final Set<String> SUPPORTED_METADATA_CLAIMS = Set.of(
       "regexp", "intersects"

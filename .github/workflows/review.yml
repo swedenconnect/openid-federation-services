@@ -23,9 +23,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - run: | 
-          sudo echo "127.0.0.1 authorization.local.swedenconnect.se" | sudo tee -a /etc/hosts
-          sudo echo "127.0.0.1 municipality.local.swedenconnect.se" | sudo tee -a /etc/hosts
-          sudo echo "127.0.0.1 private.local.swedenconnect.se" | sudo tee -a /etc/hosts
-          mvn clean verify --no-transfer-progress
+          mvn clean verify javadoc:javadoc --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
