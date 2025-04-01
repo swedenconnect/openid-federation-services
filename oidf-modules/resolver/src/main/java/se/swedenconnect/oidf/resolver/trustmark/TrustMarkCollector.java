@@ -16,6 +16,15 @@
  */
 package se.swedenconnect.oidf.resolver.trustmark;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKMatcher;
+import com.nimbusds.jose.jwk.JWKSelector;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
@@ -25,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
+import java.security.Key;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -50,8 +60,27 @@ public class TrustMarkCollector {
     final EntityStatement superiorStatement = chain.get(2);
     final String subject = leafStatement.getClaimsSet().getSubject().getValue();
 
-    leafStatement.getClaimsSet().getJSONArrayClaim("trust_marks");
     final List<TrustMarkEntry> trustMarks = TrustMarkCollector.parseTrustMark(leafStatement);
+    final JSONObject trustMarkOwners = trustAnchor.getClaimsSet().getJSONObjectClaim("trust_mark_owners");
+    trustMarkOwners.keySet().forEach(key -> {
+      trustMarks.stream().filter(k -> k.getID().getValue().equals(key))
+          .forEach(tm -> {
+            final Map<String, Object> trustMarkOwner = (Map<String, Object>) trustMarkOwners.get(key);
+            try {
+              final JWKSet parsed = JWKSet.parse((Map<String, Object>) trustMarkOwner.get("jwks"));
+              tm.getTrustMark()
+                  .verify(new DefaultJWSVerifierFactory()
+                      .createJWSVerifier(
+                          tm.getTrustMark().getHeader(),
+                          selectKey(tm.getTrustMark(), parsed)
+                      )
+                  );
+            } catch (java.text.ParseException | JOSEException e) {
+              throw new RuntimeException(e);
+            }
+          });
+
+    });
     if (superiorStatement.getClaimsSet().getSubject().getValue().equals(subject)) {
       // If the superior statement is issued for the subject,
       // then collect any trust marks not present in the leaf statement
@@ -117,5 +146,24 @@ public class TrustMarkCollector {
             throw new IllegalArgumentException("Failed to parse TrustMarkEntry", e);
           }
         }).toList();
+  }
+
+  protected static Key selectKey(final SignedJWT jwt, final JWKSet jwks) throws JOSEException {
+    final JWKSelector selector = new JWKSelector(new JWKMatcher.Builder()
+        .keyID(jwt.getHeader().getKeyID())
+        .build());
+
+    final JWK jwk = selector
+        .select(jwks)
+        .stream()
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Unable to resolve key for JWT with kid:'%s' "
+            .formatted(jwt.getHeader().getKeyID())));
+
+    return switch (jwk.getKeyType().getValue()) {
+      case "EC" -> jwk.toECKey().toKeyPair().getPublic();
+      case "RSA" -> jwk.toRSAKey().toKeyPair().getPublic();
+      case null, default -> throw new IllegalArgumentException("Unsupported key type");
+    };
   }
 }

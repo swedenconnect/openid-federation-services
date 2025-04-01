@@ -52,6 +52,11 @@ public class TestFederationEntities {
     public static EntityID RESOLVER = new EntityID("http://localhost:11111/metadata_policy_crit/resolver");
   }
 
+  public static class TrustMarkOwner {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/trust_mark_owner/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/trust_mark_owner/resolver");
+  }
+
   public static class IM {
     public static EntityID INTERMEDIATE = new EntityID("http://localhost:11111/im");
     public static EntityID TRUST_MARK_ISSUER = new EntityID("http://localhost:11111/im/tmi");

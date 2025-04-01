@@ -22,10 +22,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Property class for trust anchor.
@@ -40,6 +40,8 @@ public class TrustAnchorProperties {
 
   private final Map<EntityID, List<Issuer>> trustMarkIssuers;
 
+  private final Map<EntityID, TrustMarkOwner> trustMarkOwners;
+
   private final ConstraintRecord constraintRecord;
 
   /**
@@ -48,14 +50,17 @@ public class TrustAnchorProperties {
    * @param entityId of the trust anchor
    * @param trustMarkIssuers that are valid for this trust anchor
    * @param constraintRecord for constraints
+   * @param trustMarkOwners to trust
    */
   public TrustAnchorProperties(
       final EntityID entityId,
       final Map<EntityID, List<Issuer>> trustMarkIssuers,
-      final ConstraintRecord constraintRecord) {
+      final ConstraintRecord constraintRecord,
+      final Map<EntityID, TrustMarkOwner> trustMarkOwners) {
     this.entityId = entityId;
     this.trustMarkIssuers = trustMarkIssuers;
     this.constraintRecord = constraintRecord;
+    this.trustMarkOwners = trustMarkOwners;
   }
 
   /**
@@ -80,5 +85,19 @@ public class TrustAnchorProperties {
 
     private String entityIdentifier;
     private String policy;
+  }
+
+  /**
+   * @return json of trust mark owners
+   */
+  public Map<String, Object> trustMarkOwnersJson() {
+    return this.getTrustMarkOwners().entrySet().stream()
+        .collect(Collectors.toMap(
+            k -> k.getKey().getValue(),
+            k -> Map.of(
+                "sub", k.getValue().getSub(),
+                "jwks", k.getValue().getJwks().toJSONObject()
+            )
+        ));
   }
 }

@@ -30,7 +30,7 @@ public class FederationClients {
 
   public TestFederationClient anarchy() {
     return new TestFederationClient(
-        client,
+        this.client,
         TestFederationEntities.Anarchy.RESOLVER,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,
         TestFederationEntities.IM.TRUST_MARK_ISSUER
@@ -38,11 +38,11 @@ public class FederationClients {
   }
 
   public TrustAnchorClient intermediate() {
-    return new TrustAnchorClient(client, TestFederationEntities.IM.INTERMEDIATE);
+    return new TrustAnchorClient(this.client, TestFederationEntities.IM.INTERMEDIATE);
   }
 
   public ResolverDifferentiator policy() {
-    return new ResolverDifferentiator(client,
+    return new ResolverDifferentiator(this.client,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,
         TestFederationEntities.Anarchy.RESOLVER,
         TestFederationEntities.Policy.TRUST_ANCHOR,
@@ -51,7 +51,7 @@ public class FederationClients {
   }
 
   public ResolverDifferentiator crit() {
-    return new ResolverDifferentiator(client,
+    return new ResolverDifferentiator(this.client,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,
         TestFederationEntities.Anarchy.RESOLVER,
         TestFederationEntities.Crit.TRUST_ANCHOR,
@@ -60,11 +60,20 @@ public class FederationClients {
   }
 
   public ResolverDifferentiator metadataCrit() {
-    return new ResolverDifferentiator(client,
+    return new ResolverDifferentiator(this.client,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,
         TestFederationEntities.Anarchy.RESOLVER,
         TestFederationEntities.MetadataPolicyCrit.TRUST_ANCHOR,
         TestFederationEntities.MetadataPolicyCrit.RESOLVER
+    );
+  }
+
+  public ResolverDifferentiator trustMarkOwners() {
+    return new ResolverDifferentiator(this.client,
+        TestFederationEntities.Anarchy.TRUST_ANCHOR,
+        TestFederationEntities.Anarchy.RESOLVER,
+        TestFederationEntities.TrustMarkOwner.TRUST_ANCHOR,
+        TestFederationEntities.TrustMarkOwner.RESOLVER
     );
   }
 
