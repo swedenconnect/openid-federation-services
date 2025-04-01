@@ -21,7 +21,7 @@
     <name>OpenID Federation :: Parent</name>
     <groupId>se.swedenconnect.oidf</groupId>
     <artifactId>oidf-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <url>https://docs.swedenconnect.se/openid-federation-services</url>
     <description>Parent pom for oidf services</description>
     <packaging>pom</packaging>
@@ -31,6 +31,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <credentials-support.version>2.0.3</credentials-support.version>
+        <revision>0.5.9-SNAPSHOT</revision>
     </properties>
 
     <modules>
@@ -180,7 +181,31 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.1.0</version>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok-maven-plugin</artifactId>
