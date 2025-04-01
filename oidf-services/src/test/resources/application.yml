@@ -76,6 +76,10 @@ openid:
       resolvers:
         - trusted-keys:
             - sign-key-1
+          entity-identifier: http://localhost:11111/trust_mark_owner/resolver
+          trust-anchor: http://localhost:11111/trust_mark_owner/ta
+        - trusted-keys:
+            - sign-key-1
           entity-identifier: http://localhost:11111/crit/resolver
           trust-anchor: http://localhost:11111/crit/ta
         - trusted-keys:
@@ -130,6 +134,27 @@ openid:
         - entity-identifier: http://localhost:11111/policy/ta
         - entity-identifier: http://localhost:11111/crit/ta
         - entity-identifier: http://localhost:11111/metadata_policy_crit/ta
+        - entity-identifier: http://localhost:11111/trust_mark_owner/ta
+          trust-mark-owners:
+            - trust-mark-id: http://localhost:11111/im/tmi/certified
+              trust-mark-owner:
+                sub: http://localhost:11111/im/op
+                jwks:
+                  json: |
+                      {
+                        "keys": [
+                          {
+                            "kty": "RSA",
+                            "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+                            "nbf": 1736846580,
+                            "e": "AQAB",
+                            "kid": "1xK_ja8KSC74CHdSNqHFGfkKeEV_94BigwBDY2TlXuQ",
+                            "exp": 2052206580,
+                            "iat": 1736846580,
+                            "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+                          }
+                        ]
+                      }
       trust-mark-issuers:
         - entity-identifier: http://localhost:11111/im/tmi
           trust-marks:
@@ -150,6 +175,18 @@ openid:
                   "organization_name": "Authorization",
                   "federation_fetch_endpoint": "http://localhost:11111/naming/ta/fetch",
                   "federation_list_endpoint": "http://localhost:11111/naming/ta/subordinate_listing"
+                }
+              }
+      - subject: http://localhost:11111/trust_mark_owner/ta
+        issuer: http://localhost:11111/trust_mark_owner/ta
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": { 
+                  "organization_name": "Authorization",
+                  "federation_fetch_endpoint": "http://localhost:11111/trust_mark_owner/ta/fetch",
+                  "federation_list_endpoint": "http://localhost:11111/trust_mark_owner/ta/subordinate_listing"
                 }
               }
       - subject: http://localhost:11111/crit/ta
@@ -289,6 +326,10 @@ openid:
         subject: http://localhost:11111/im
         public-keys:
           - sign-key-1
+      - issuer: http://localhost:11111/trust_mark_owner/ta
+        subject: http://localhost:11111/im
+        public-keys:
+          - sign-key-1
       - issuer: http://localhost:11111/metadata_policy_crit/ta
         subject: http://localhost:11111/im
         public-keys:
@@ -303,8 +344,6 @@ openid:
         crit:
           - subject_entity_configuration_location
         override-configuration-location: "http://localhost:11111/im/.well-known/openid-federation"
-
-
       - subject: http://localhost:11111/entity_type/ta
         issuer: http://localhost:11111/entity_type/ta
         hosted-record:
@@ -364,6 +403,16 @@ openid:
               }
       - issuer: http://localhost:11111/path/ta
         subject: http://localhost:11111/path/resolver
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": { 
+                  "organization_name": "Authorization"
+                }
+              }
+      - issuer: http://localhost:11111/trust_mark_owner/ta
+        subject: http://localhost:11111/trust_mark_owner/resolver
         hosted-record:
           metadata:
             json: |

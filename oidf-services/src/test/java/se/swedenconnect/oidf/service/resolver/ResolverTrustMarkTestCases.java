@@ -20,15 +20,20 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.shaded.com.google.common.collect.MapDifference;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
+import se.swedenconnect.oidf.service.entity.TestFederationEntities;
+import se.swedenconnect.oidf.service.service.testclient.FederationClients;
+import se.swedenconnect.oidf.service.service.testclient.TestFederationClientParameterResolver;
 
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
+@ExtendWith(TestFederationClientParameterResolver.class)
 public class ResolverTrustMarkTestCases {
 
   @Test
@@ -54,5 +59,19 @@ public class ResolverTrustMarkTestCases {
     List<String> right = (List<String>) difference.getJsonDifference().get("trust_marks").rightValue();
     Assertions.assertEquals(2, left.size());
     Assertions.assertEquals(1, right.size());
+  }
+
+  @Test
+  void resolveTrustMarkOwner(final FederationClients clients) throws ParseException {
+    final ResolverDifferentiator.ResponseDifference diff = clients.trustMarkOwners().getResponseDifference(
+        new ResolveRequest(
+            TestFederationEntities.IM.OP.getValue(),
+            TestFederationEntities.TrustMarkOwner.TRUST_ANCHOR.getValue(),
+            null
+        )
+    );
+    final Map<String, MapDifference.ValueDifference<Object>> trustChainEntryDifference =
+        diff.getTrustChainEntryDifference(3);
+    Assertions.assertTrue(trustChainEntryDifference.containsKey("trust_mark_owners"));
   }
 }

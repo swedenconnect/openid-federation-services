@@ -22,8 +22,10 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkOwner;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
 
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,6 +67,9 @@ public class TrustAnchorModuleProperties {
     @NestedConfigurationProperty
     private ConstraintProperties constraints;
 
+    @NestedConfigurationProperty
+    private List<TrustMarkOwnerProperties> trustMarkOwners;
+
     /**
      * Converts this to {@link TrustAnchorProperties}
      *
@@ -81,8 +86,19 @@ public class TrustAnchorModuleProperties {
                     this.constraints.getAllowedEntityTypes()
                 );
               })
-              .orElse(null)
+              .orElse(null),
+          Optional.ofNullable(this.trustMarkOwners).map(this::getTrustMarkOwnerMap).orElse(Map.of())
       );
+    }
+
+    private Map<EntityID, TrustMarkOwner> getTrustMarkOwnerMap(final List<TrustMarkOwnerProperties> list) {
+      return list.stream().collect(Collectors.toMap(v -> new EntityID(v.getTrustMarkId()), v -> {
+        try {
+          return v.toTrustMarkOwner();
+        } catch (final ParseException e) {
+          throw new RuntimeException(e);
+        }
+      }));
     }
   }
 }

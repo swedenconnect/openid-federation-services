@@ -20,8 +20,10 @@ import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkOwner;
 
 import java.io.Serializable;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +48,8 @@ public class TrustAnchorModuleRecord implements Serializable {
 
   private ConstraintRecord constraints;
 
+  private List<TrustMarkOwnerRecord> trustMarkOwners;
+
   /**
    * Converts this instance to json object {@link HashMap}
    *
@@ -69,6 +73,17 @@ public class TrustAnchorModuleRecord implements Serializable {
     trustAnchorModuleRecord.entityIdentifier = (String) json.get(RecordFields.TrustAnchorModule.ENTITY_IDENTIFIER);
     trustAnchorModuleRecord.trustMarkIssuers =
         (Map<String, List<String>>) json.get(RecordFields.TrustAnchorModule.TRUST_MARK_ISSUERS);
+    trustAnchorModuleRecord.constraints = ConstraintRecord.fromJson((Map<String, Object>) json.get("constraints"));
+    trustAnchorModuleRecord.trustMarkOwners = ((List<Map<String, Object>>) json.get("trust_mark_owners"))
+        .stream()
+        .map(tmo -> {
+          try {
+            return TrustMarkOwnerRecord.fromJson(tmo);
+          } catch (final ParseException e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .toList();
     return trustAnchorModuleRecord;
   }
 
@@ -82,7 +97,16 @@ public class TrustAnchorModuleRecord implements Serializable {
         Optional.ofNullable(this.trustMarkIssuers).orElse(Map.of())
             .entrySet().stream().collect(Collectors.toMap(k -> new EntityID(k.getKey()),
                 v -> v.getValue().stream().map(Issuer::new).toList())),
-        this.constraints);
+        this.constraints,
+        this.trustMarkOwners.stream()
+            .collect(
+                Collectors
+                    .toMap(
+                        tmo -> new EntityID(tmo.getTrustMarkId()),
+                        tmo -> new TrustMarkOwner(new EntityID(tmo.getSubject()), tmo.getJwks().toPublicJWKSet())
+                    )
+            )
+    );
   }
 
 }
