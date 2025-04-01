@@ -23,7 +23,7 @@
     <artifactId>oidf-services</artifactId>
     <name>OpenID Federation :: Service</name>
 
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
 
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
