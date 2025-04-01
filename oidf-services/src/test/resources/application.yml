@@ -76,6 +76,14 @@ openid:
       resolvers:
         - trusted-keys:
             - sign-key-1
+          entity-identifier: http://localhost:11111/crit/resolver
+          trust-anchor: http://localhost:11111/crit/ta
+        - trusted-keys:
+            - sign-key-1
+          entity-identifier: http://localhost:11111/metadata_policy_crit/resolver
+          trust-anchor: http://localhost:11111/metadata_policy_crit/ta
+        - trusted-keys:
+            - sign-key-1
           entity-identifier: http://localhost:11111/naming/resolver
           trust-anchor: http://localhost:11111/naming/ta
         - trusted-keys:
@@ -120,6 +128,8 @@ openid:
         - entity-identifier: http://localhost:11111/im
         - entity-identifier: http://localhost:11111/im/im
         - entity-identifier: http://localhost:11111/policy/ta
+        - entity-identifier: http://localhost:11111/crit/ta
+        - entity-identifier: http://localhost:11111/metadata_policy_crit/ta
       trust-mark-issuers:
         - entity-identifier: http://localhost:11111/im/tmi
           trust-marks:
@@ -140,6 +150,30 @@ openid:
                   "organization_name": "Authorization",
                   "federation_fetch_endpoint": "http://localhost:11111/naming/ta/fetch",
                   "federation_list_endpoint": "http://localhost:11111/naming/ta/subordinate_listing"
+                }
+              }
+      - subject: http://localhost:11111/crit/ta
+        issuer: http://localhost:11111/crit/ta
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": { 
+                  "organization_name": "Authorization",
+                  "federation_fetch_endpoint": "http://localhost:11111/crit/ta/fetch",
+                  "federation_list_endpoint": "http://localhost:11111/crit/ta/subordinate_listing"
+                }
+              }
+      - subject: http://localhost:11111/metadata_policy_crit/ta
+        issuer: http://localhost:11111/metadata_policy_crit/ta
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": { 
+                  "organization_name": "Authorization",
+                  "federation_fetch_endpoint": "http://localhost:11111/metadata_policy_crit/ta/fetch",
+                  "federation_list_endpoint": "http://localhost:11111/metadata_policy_crit/ta/subordinate_listing"
                 }
               }
       - subject: http://localhost:11111/policy/ta
@@ -255,6 +289,22 @@ openid:
         subject: http://localhost:11111/im
         public-keys:
           - sign-key-1
+      - issuer: http://localhost:11111/metadata_policy_crit/ta
+        subject: http://localhost:11111/im
+        public-keys:
+          - sign-key-1
+        metadata-policy-crit:
+          - regexp
+          - intersects
+      - issuer: http://localhost:11111/crit/ta
+        subject: http://localhost:11111/im
+        public-keys:
+          - sign-key-1
+        crit:
+          - subject_entity_configuration_location
+        override-configuration-location: "http://localhost:11111/im/.well-known/openid-federation"
+
+
       - subject: http://localhost:11111/entity_type/ta
         issuer: http://localhost:11111/entity_type/ta
         hosted-record:
@@ -314,6 +364,26 @@ openid:
               }
       - issuer: http://localhost:11111/path/ta
         subject: http://localhost:11111/path/resolver
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": { 
+                  "organization_name": "Authorization"
+                }
+              }
+      - issuer: http://localhost:11111/crit/ta
+        subject: http://localhost:11111/crit/resolver
+        hosted-record:
+          metadata:
+            json: |
+              {
+                "federation_entity": { 
+                  "organization_name": "Authorization"
+                }
+              }
+      - issuer: http://localhost:11111/metadata_policy_crit/ta
+        subject: http://localhost:11111/metadata_policy_crit/resolver
         hosted-record:
           metadata:
             json: |

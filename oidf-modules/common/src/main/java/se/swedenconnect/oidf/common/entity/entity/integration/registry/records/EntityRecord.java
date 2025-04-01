@@ -24,9 +24,13 @@ import lombok.Getter;
 
 import java.io.Serializable;
 import java.text.ParseException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+
+import static se.swedenconnect.oidf.common.entity.entity.integration.registry.records.RecordFields.Entity.CRIT;
+import static se.swedenconnect.oidf.common.entity.entity.integration.registry.records.RecordFields.Entity.METADATA_POLICY_CRIT;
 
 /**
  * Data class for entity record.
@@ -42,6 +46,9 @@ public class EntityRecord implements Serializable {
   private JWKSet jwks;
   private String overrideConfigurationLocation;
   private final HostedRecord hostedRecord;
+  private final List<String> crit;
+  private final List<String> metadataPolicyCrit;
+
 
   /**
    * Constructor.
@@ -52,6 +59,8 @@ public class EntityRecord implements Serializable {
    * @param jwks                          of the entity
    * @param overrideConfigurationLocation of the entity
    * @param hostedRecord                  optional parameter if the record is hosted
+   * @param crit                          of the entity
+   * @param metadataPolicyCrit            of the entity
    */
   public EntityRecord(
       final EntityID issuer,
@@ -59,13 +68,17 @@ public class EntityRecord implements Serializable {
       final PolicyRecord policyRecord,
       final JWKSet jwks,
       final String overrideConfigurationLocation,
-      final HostedRecord hostedRecord) {
+      final HostedRecord hostedRecord,
+      final List<String> crit,
+      final List<String> metadataPolicyCrit) {
     this.issuer = issuer;
     this.subject = subject;
     this.policyRecord = policyRecord;
     this.jwks = jwks;
     this.overrideConfigurationLocation = overrideConfigurationLocation;
     this.hostedRecord = hostedRecord;
+    this.crit = crit;
+    this.metadataPolicyCrit = metadataPolicyCrit;
   }
 
   /**
@@ -77,6 +90,8 @@ public class EntityRecord implements Serializable {
     builder.claim(RecordFields.Entity.ISSUER, this.issuer.getValue());
     builder.claim(RecordFields.Entity.SUBJECT, this.subject.getValue());
     builder.claim(RecordFields.Entity.POLICY_RECORD, this.policyRecord);
+    builder.claim(CRIT, this.crit);
+    builder.claim(METADATA_POLICY_CRIT, this.metadataPolicyCrit);
 
     Optional.ofNullable(this.hostedRecord)
         .ifPresent(record -> builder.claim(RecordFields.Entity.HOSTED_RECORD, record.toJson()));
@@ -88,27 +103,30 @@ public class EntityRecord implements Serializable {
   }
 
   /**
-   * @param entityRecord json to create instance from
+   * @param json to create instance from
    * @return instance of EntityRecord
    * @throws ParseException if parse failed
    */
-  public static EntityRecord fromJson(final Map<String, Object> entityRecord) throws ParseException {
-    final Optional<Object> hostedRecord = Optional.ofNullable(entityRecord.get(RecordFields.Entity.HOSTED_RECORD));
+  public static EntityRecord fromJson(final Map<String, Object> json) throws ParseException {
+    final Optional<Object> hostedRecord = Optional.ofNullable(json.get(RecordFields.Entity.HOSTED_RECORD));
     return new EntityRecord(
-        new EntityID((String) entityRecord.get(RecordFields.Entity.ISSUER)),
-        new EntityID((String) entityRecord.get(RecordFields.Entity.SUBJECT)),
-        PolicyRecord.fromJson((Map<String, Object>) entityRecord.get(RecordFields.Entity.POLICY_RECORD)),
-        Optional.ofNullable(entityRecord.get(RecordFields.Entity.JWKS)).map(jwks -> {
+        new EntityID((String) json.get(RecordFields.Entity.ISSUER)),
+        new EntityID((String) json.get(RecordFields.Entity.SUBJECT)),
+        PolicyRecord.fromJson((Map<String, Object>) json.get(RecordFields.Entity.POLICY_RECORD)),
+        Optional.ofNullable(json.get(RecordFields.Entity.JWKS)).map(jwks -> {
           try {
             return JWKSet.parse((Map<String, Object>) jwks);
           } catch (final ParseException e) {
             throw new IllegalArgumentException("JWKS claim is not json claim", e);
           }
         }).orElse(null),
-        Optional.ofNullable((String) entityRecord.get(RecordFields.Entity.OVERRIDE_CONFIGURATION_LOCATION))
+        Optional.ofNullable((String) json.get(RecordFields.Entity.OVERRIDE_CONFIGURATION_LOCATION))
             .orElse(null),
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr))
-            .orElse(null));
+            .orElse(null),
+        (List<String>) json.get(RecordFields.Entity.CRIT),
+        (List<String>) json.get(RecordFields.Entity.METADATA_POLICY_CRIT)
+    );
   }
 
   /**

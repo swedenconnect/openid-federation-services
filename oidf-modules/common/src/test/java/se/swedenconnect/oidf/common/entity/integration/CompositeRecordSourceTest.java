@@ -34,15 +34,19 @@ class CompositeRecordSourceTest {
     Mockito.when(first.findSubordinates(Mockito.anyString()))
         .thenReturn(
             List.of(
-                new EntityRecord(new EntityID("http://first"), new EntityID("http://first"), null, null, null, null),
-                new EntityRecord(new EntityID("http://second"), new EntityID("http://second"), null, null, null, null)
+                new EntityRecord(new EntityID("http://first"), new EntityID("http://first"), null, null, null, null,
+                    null, null),
+                new EntityRecord(new EntityID("http://second"), new EntityID("http://second"), null, null, null, null
+                    , null, null)
             ));
     final RecordSource second = Mockito.mock(RecordSource.class);
     Mockito.when(second.findSubordinates(Mockito.anyString()))
         .thenReturn(
             List.of(
-                new EntityRecord(new EntityID("http://third"), new EntityID("http://third"), null, null, null, null),
-                new EntityRecord(new EntityID("http://fourth"), new EntityID("http://fourth"), null, null, null, null)
+                new EntityRecord(new EntityID("http://third"), new EntityID("http://third"), null, null, null, null,
+                    null, null),
+                new EntityRecord(new EntityID("http://fourth"), new EntityID("http://fourth"), null, null, null, null
+                    , null, null)
             ));
 
     final CompositeRecordSource source = new CompositeRecordSource(List.of(first, second));
