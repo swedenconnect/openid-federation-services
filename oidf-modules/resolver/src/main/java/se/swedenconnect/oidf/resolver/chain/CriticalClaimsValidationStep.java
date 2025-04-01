@@ -20,25 +20,45 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
- * Validates critical claims of the chain.
+ * Validates crit and metadata_policy_crit claims of the chain.
  *
  * @author Felix Hellman
  */
 public class CriticalClaimsValidationStep implements ChainValidationStep {
 
-  private final List<String> supportedCriticalClaims =
-      List.of("subject_entity_configuration_location");
+  /**
+   * This implementation supports the subject_entity_configuration_location claim.
+   */
+  public static final Set<String> SUPPORTED_CRITICAL_CLAIMS =
+      Set.of("subject_entity_configuration_location");
+
+  /**
+   * This implementation supports the additional metadata operators regexp and instersects.
+   */
+  public static final Set<String> SUPPORTED_METADATA_CLAIMS = Set.of(
+      "regexp", "intersects"
+  );
 
   @Override
   public void validate(final List<EntityStatement> chain) {
-    if (chain.stream()
-        .map(es -> es.getClaimsSet().getStringListClaim("crit"))
-        .filter(criticalClaims -> criticalClaims != null && !criticalClaims.isEmpty())
-        .anyMatch(criticalClaims -> !new HashSet<>(this.supportedCriticalClaims).containsAll(criticalClaims))
-    ) {
-      throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");
-    }
+    chain
+        .forEach(es -> {
+          Optional.ofNullable(es.getClaimsSet().getCriticalExtensionClaims())
+              .ifPresent(crit -> {
+                if (!new HashSet<>(crit).containsAll(SUPPORTED_CRITICAL_CLAIMS)) {
+                  throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");
+                }
+              });
+          Optional.ofNullable(es.getClaimsSet().getStringListClaim("metadata_policy_crit"))
+              .ifPresent(critMetadata -> {
+                if (!new HashSet<>(critMetadata).containsAll(SUPPORTED_METADATA_CLAIMS)) {
+                  throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");
+                }
+              });
+        });
   }
 }

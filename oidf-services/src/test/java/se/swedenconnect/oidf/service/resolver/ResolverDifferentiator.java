@@ -118,7 +118,7 @@ public class ResolverDifferentiator {
     private Response reference;
     private Response response;
 
-    private static final List<String> IGNORED_FIELDS = List.of("iat", "exp");
+    private static final List<String> IGNORED_FIELDS = List.of("iat", "exp", "trust_chain", "iss");
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -130,6 +130,43 @@ public class ResolverDifferentiator {
       ).entriesDiffering();
 
       final Map<String, MapDifference.ValueDifference<Object>> result = new HashMap<>(stringValueDifferenceMap);
+      IGNORED_FIELDS.forEach(result::remove);
+      return result;
+    }
+    public Map<String, MapDifference.ValueDifference<Object>> getTrustChainEntryDifference(final int index) throws ParseException {
+      final SignedJWT responseJwt = SignedJWT.parse(this.response.body);
+      final SignedJWT referenceJwt = SignedJWT.parse(this.reference.body);
+
+      final String responseEntry = responseJwt.getJWTClaimsSet().getStringListClaim("trust_chain").get(index);
+      final String referenceEntry = referenceJwt.getJWTClaimsSet().getStringListClaim("trust_chain").get(index);
+
+      final Map<String, MapDifference.ValueDifference<Object>> stringValueDifferenceMap = Maps.difference(
+          SignedJWT.parse(responseEntry).getJWTClaimsSet().toJSONObject(),
+          SignedJWT.parse(referenceEntry).getJWTClaimsSet().toJSONObject()
+      ).entriesDiffering();
+
+      final Map<String, MapDifference.ValueDifference<Object>> result = new HashMap<>(stringValueDifferenceMap);
+
+
+      final Map<String, Object> left = Maps.difference(
+          SignedJWT.parse(responseEntry).getJWTClaimsSet().toJSONObject(),
+          SignedJWT.parse(referenceEntry).getJWTClaimsSet().toJSONObject()
+      ).entriesOnlyOnLeft();
+
+      left.entrySet().forEach(kv -> {
+        result.put(kv.getKey(), new MapDifference.ValueDifference<Object>() {
+          @Override
+          public Object leftValue() {
+            return kv.getValue();
+          }
+
+          @Override
+          public Object rightValue() {
+            return null;
+          }
+        });
+      });
+
       IGNORED_FIELDS.forEach(result::remove);
       return result;
     }

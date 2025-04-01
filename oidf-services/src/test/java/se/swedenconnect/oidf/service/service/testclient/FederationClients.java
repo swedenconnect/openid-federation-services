@@ -50,6 +50,24 @@ public class FederationClients {
     );
   }
 
+  public ResolverDifferentiator crit() {
+    return new ResolverDifferentiator(client,
+        TestFederationEntities.Anarchy.TRUST_ANCHOR,
+        TestFederationEntities.Anarchy.RESOLVER,
+        TestFederationEntities.Crit.TRUST_ANCHOR,
+        TestFederationEntities.Crit.RESOLVER
+    );
+  }
+
+  public ResolverDifferentiator metadataCrit() {
+    return new ResolverDifferentiator(client,
+        TestFederationEntities.Anarchy.TRUST_ANCHOR,
+        TestFederationEntities.Anarchy.RESOLVER,
+        TestFederationEntities.MetadataPolicyCrit.TRUST_ANCHOR,
+        TestFederationEntities.MetadataPolicyCrit.RESOLVER
+    );
+  }
+
   public EntityClient entity() {
     return new EntityClient(client);
   }

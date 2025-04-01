@@ -103,7 +103,7 @@ public class ResolverConstraintTestCases {
     );
     Assertions.assertNull(difference.getReference().getError());
     Assertions.assertNull(difference.getResponse().getError());
-    Assertions.assertEquals(2, difference.getJsonDifference().size());
+    Assertions.assertEquals(0, difference.getJsonDifference().size());
 
     final ResolverDifferentiator.ResponseDifference difference2 = differentiator.getResponseDifference(
         new ResolveRequest(

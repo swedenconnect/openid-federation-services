@@ -68,6 +68,20 @@ public class SubordinateStatementFactory {
                 builder.claim("constraints", constraint.toJson());
               });
 
+      Optional.ofNullable(subject.getCrit()).ifPresent(
+          crit -> builder.claim("crit", crit)
+      );
+
+      Optional.ofNullable(subject.getOverrideConfigurationLocation()).ifPresent(
+          location -> {
+            builder.claim("subject_entity_configuration_location", location);
+          }
+      );
+
+      Optional.ofNullable(subject.getMetadataPolicyCrit()).ifPresent(
+          metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
+      );
+
       Optional.ofNullable(subject.getPolicyRecord()).ifPresent(policyRecord -> builder.claim("metadata_policy",
           policyRecord.getPolicy()));
 

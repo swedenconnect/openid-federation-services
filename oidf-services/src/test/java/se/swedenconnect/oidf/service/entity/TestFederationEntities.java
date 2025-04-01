@@ -43,6 +43,14 @@ public class TestFederationEntities {
     public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/naming/ta");
     public static EntityID RESOLVER = new EntityID("http://localhost:11111/naming/resolver");
   }
+  public static class Crit {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/crit/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/crit/resolver");
+  }
+  public static class MetadataPolicyCrit {
+    public static EntityID TRUST_ANCHOR = new EntityID("http://localhost:11111/metadata_policy_crit/ta");
+    public static EntityID RESOLVER = new EntityID("http://localhost:11111/metadata_policy_crit/resolver");
+  }
 
   public static class IM {
     public static EntityID INTERMEDIATE = new EntityID("http://localhost:11111/im");

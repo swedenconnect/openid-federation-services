@@ -30,6 +30,7 @@ import se.swedenconnect.oidf.service.Application;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
 import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
+import se.swedenconnect.oidf.service.resolver.ResolverCritTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverPolicyTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverTrustMarkTestCases;
 import se.swedenconnect.oidf.service.service.GeneralErrorHandlingTestCases;
@@ -50,7 +51,8 @@ import java.util.Random;
     TrustMarkTestCases.class,
     TrustAnchorTestCases.class,
     ActuatorTestCases.class,
-    ResolverPolicyTestCases.class
+    ResolverPolicyTestCases.class,
+    ResolverCritTestCases.class
 })
 public class InMemoryTestSuite {
   private static final RelyingPartyContainer relyingParty = new RelyingPartyContainer();

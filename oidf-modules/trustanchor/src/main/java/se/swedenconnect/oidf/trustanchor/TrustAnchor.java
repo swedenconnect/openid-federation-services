@@ -80,7 +80,6 @@ public class TrustAnchor {
    * @param request to fetch entity statement for
    * @return entity statement
    * @throws InvalidIssuerException
-   * @throws InvalidRequestException
    * @throws NotFoundException
    */
   public String fetchEntityStatement(final FetchRequest request)

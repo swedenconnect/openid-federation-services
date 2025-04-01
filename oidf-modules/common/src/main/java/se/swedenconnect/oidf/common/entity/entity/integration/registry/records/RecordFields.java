@@ -27,6 +27,14 @@ public class RecordFields {
    */
   public static class Entity {
     /**
+     * metadata_policy_crit name.
+     */
+    public static final String METADATA_POLICY_CRIT = "metadata_policy_crit";
+    /**
+     * crit name.
+     */
+    public static final String CRIT = "crit";
+    /**
      * Issuer field name.
      */
     public static final String ISSUER = "issuer";
