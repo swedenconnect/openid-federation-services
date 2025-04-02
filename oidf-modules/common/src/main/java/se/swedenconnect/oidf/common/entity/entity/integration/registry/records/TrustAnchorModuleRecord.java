@@ -77,7 +77,8 @@ public class TrustAnchorModuleRecord implements Serializable {
         Optional.ofNullable((Map<String, Object>) json.get("constraints"))
             .map(ConstraintRecord::fromJson)
             .orElse(null);
-    trustAnchorModuleRecord.trustMarkOwners = Optional.ofNullable((List<Map<String, Object>>) json.get("trust_mark_owners"))
+    trustAnchorModuleRecord.trustMarkOwners =
+        Optional.ofNullable((List<Map<String, Object>>) json.get("trust_mark_owners"))
         .map(trustMarkOwners -> {
           return trustMarkOwners.stream()
               .map(tmo -> {
