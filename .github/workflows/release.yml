@@ -19,6 +19,6 @@ jobs:
     uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@workflow
     secrets: inherit
     with:
-      auto-update-revision: true
+      auto-update-revision: false
       revision-property: service-revision
     needs: release
