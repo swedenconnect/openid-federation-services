@@ -9,6 +9,7 @@ jobs:
     secrets: inherit
     with:
       service-path: oidf-services
+      revision-property: service-revision
   finalize-release:
     uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@workflow
     secrets: inherit
