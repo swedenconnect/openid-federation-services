@@ -1,36 +1,14 @@
-name: Automated publication of docker image
+name: Snapshot publication of docker image
 on:
   push:
     tags-ignore:
       - '**'
     branches:
       - main
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: 'maven'
-      - run: | 
-          sudo echo "127.0.0.1 authorization.local.swedenconnect.se" | sudo tee -a /etc/hosts
-          sudo echo "127.0.0.1 municipality.local.swedenconnect.se" | sudo tee -a /etc/hosts
-          sudo echo "127.0.0.1 private.local.swedenconnect.se" | sudo tee -a /etc/hosts
-      - run: mvn clean install --no-transfer-progress
-        env:
-          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
-      - run: cd oidf-services; DOCKER_REPO=ghcr.io mvn clean package jib:build --no-transfer-progress
+  publish-snapshot:
+    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@workflow
+    secrets: inherit
+    with:
+      service-path: oidf-services
