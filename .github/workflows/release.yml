@@ -4,11 +4,6 @@ on:
     tags:
       - 'v*'
 jobs:
-  prepare:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/mvn-artifact-version-prepare.yml@workflow
-    secrets: inherit
-    with:
-      revision-property: service-revision
   release:
     uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@workflow
     secrets: inherit
