@@ -21,7 +21,7 @@
     <name>OpenID Federation :: Parent</name>
     <groupId>se.swedenconnect.oidf</groupId>
     <artifactId>oidf-parent</artifactId>
-    <version>${revision}</version>
+    <version>${service-revision}</version>
     <url>https://docs.swedenconnect.se/openid-federation-services</url>
     <description>Parent pom for oidf services</description>
     <packaging>pom</packaging>
@@ -31,7 +31,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <credentials-support.version>2.0.3</credentials-support.version>
-        <revision>0.5.9-SNAPSHOT</revision>
+        <service-revision>0.5.9-SNAPSHOT</service-revision>
     </properties>
 
     <modules>

@@ -23,7 +23,7 @@
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-modules</artifactId>
-        <version>${revision}</version>
+        <version>${service-revision}</version>
     </parent>
 
     <name>OIDF :: Modules :: Common</name>

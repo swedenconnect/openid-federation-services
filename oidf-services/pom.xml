@@ -23,7 +23,7 @@
     <artifactId>oidf-services</artifactId>
     <name>OpenID Federation :: Service</name>
 
-    <version>${service.revision}</version>
+    <version>${service-revision}</version>
 
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
@@ -61,7 +61,7 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>3.3.4</spring.boot.version>
-        <service.revision>0.5.9-SNAPSHOT</service.revision>
+        <service-revision>0.5.9-SNAPSHOT</service-revision>
     </properties>
 
     <dependencies>
@@ -117,17 +117,17 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>resolver</artifactId>
-            <version>${service.revision}</version>
+            <version>${service-revision}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustanchor</artifactId>
-            <version>${service.revision}</version>
+            <version>${service-revision}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustmarkissuer</artifactId>
-            <version>${service.revision}</version>
+            <version>${service-revision}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -161,7 +161,7 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>test</artifactId>
-            <version>${revision}</version>
+            <version>${service-revision}</version>
         </dependency>
         <dependency>
             <groupId>com.nimbusds</groupId>
@@ -180,7 +180,7 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>common</artifactId>
-            <version>${revision}</version>
+            <version>${service-revision}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.platform</groupId>
