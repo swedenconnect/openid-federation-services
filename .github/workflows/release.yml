@@ -1,4 +1,4 @@
-name: Automated publication of docker image
+name: Versioned publication of docker image
 on:
   push:
     tags:
