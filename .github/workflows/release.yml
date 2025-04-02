@@ -5,16 +5,18 @@ on:
       - 'v*'
 jobs:
   prepare:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/mvn-artifact-version-prepare.yml@b6e6b3476ff07b22669107f25f97b15bf450fc4e
+    uses: swedenconnect/openid-federation-commons/.github/workflows/mvn-artifact-version-prepare.yml@workflow
     secrets: inherit
+    with:
+      revision-property: service-revision
   release:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@b6e6b3476ff07b22669107f25f97b15bf450fc4e
+    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@workflow
     secrets: inherit
     with:
       service-path: oidf-services
     needs: prepare
   finalize-release:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@b6e6b3476ff07b22669107f25f97b15bf450fc4e
+    uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@workflow
     secrets: inherit
     with:
       auto-update-revision: true

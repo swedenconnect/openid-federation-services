@@ -23,7 +23,7 @@
     <artifactId>oidf-services</artifactId>
     <name>OpenID Federation :: Service</name>
 
-    <version>${revision}</version>
+    <version>${service.revision}</version>
 
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
@@ -61,6 +61,7 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>3.3.4</spring.boot.version>
+        <service.revision>0.5.9-SNAPSHOT</service.revision>
     </properties>
 
     <dependencies>
@@ -116,17 +117,17 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>resolver</artifactId>
-            <version>${revision}</version>
+            <version>${service.revision}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustanchor</artifactId>
-            <version>${revision}</version>
+            <version>${service.revision}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustmarkissuer</artifactId>
-            <version>${revision}</version>
+            <version>${service.revision}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
