@@ -73,17 +73,23 @@ public class TrustAnchorModuleRecord implements Serializable {
     trustAnchorModuleRecord.entityIdentifier = (String) json.get(RecordFields.TrustAnchorModule.ENTITY_IDENTIFIER);
     trustAnchorModuleRecord.trustMarkIssuers =
         (Map<String, List<String>>) json.get(RecordFields.TrustAnchorModule.TRUST_MARK_ISSUERS);
-    trustAnchorModuleRecord.constraints = ConstraintRecord.fromJson((Map<String, Object>) json.get("constraints"));
-    trustAnchorModuleRecord.trustMarkOwners = ((List<Map<String, Object>>) json.get("trust_mark_owners"))
-        .stream()
-        .map(tmo -> {
-          try {
-            return TrustMarkOwnerRecord.fromJson(tmo);
-          } catch (final ParseException e) {
-            throw new RuntimeException(e);
-          }
-        })
-        .toList();
+    trustAnchorModuleRecord.constraints =
+        Optional.ofNullable((Map<String, Object>) json.get("constraints"))
+            .map(ConstraintRecord::fromJson)
+            .orElse(null);
+    trustAnchorModuleRecord.trustMarkOwners = Optional.ofNullable((List<Map<String, Object>>) json.get("trust_mark_owners"))
+        .map(trustMarkOwners -> {
+          return trustMarkOwners.stream()
+              .map(tmo -> {
+                try {
+                  return TrustMarkOwnerRecord.fromJson(tmo);
+                } catch (final ParseException e) {
+                  throw new RuntimeException(e);
+                }
+              })
+              .toList();
+        }).orElse(List.of());
+
     return trustAnchorModuleRecord;
   }
 
