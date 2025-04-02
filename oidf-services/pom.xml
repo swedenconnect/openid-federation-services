@@ -179,7 +179,7 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>common</artifactId>
-            <version>${oidf.modules.version}</version>
+            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.platform</groupId>
