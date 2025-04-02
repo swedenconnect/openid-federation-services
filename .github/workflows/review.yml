@@ -5,7 +5,7 @@ on:
 
 jobs:
   prepare:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-review.yml@workflow
+    uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-review.yml@main
     secrets: inherit
     with:
       require-gh-docker: true
