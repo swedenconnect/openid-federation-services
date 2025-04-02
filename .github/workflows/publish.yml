@@ -1,4 +1,4 @@
-name: Snapshot publication of docker image
+name: Snapshot publication
 on:
   push:
     tags-ignore:
