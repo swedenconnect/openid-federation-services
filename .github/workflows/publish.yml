@@ -8,13 +8,13 @@ on:
 
 jobs:
   publish-snapshot-ghcr:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@2825f04704c8934e46d635bae5efd5c6438b841c
+    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@d50c520502b220103cef45775f3253a48610fb1a
     secrets: inherit
     with:
       service-path: oidf-services
       revision-property: service-revision
   publish-snapshot-mvn:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/mvn-release.yml@2825f04704c8934e46d635bae5efd5c6438b841c
+    uses: swedenconnect/openid-federation-commons/.github/workflows/mvn-release.yml@d50c520502b220103cef45775f3253a48610fb1a
     secrets: inherit
     with:
       revision-property: service-revision
