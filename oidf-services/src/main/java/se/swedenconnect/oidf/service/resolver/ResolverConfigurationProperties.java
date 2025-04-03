@@ -99,6 +99,11 @@ public class ResolverConfigurationProperties {
     private String alias;
 
     /**
+     * Number of failures when resolving a tree before a cached value shall be considered.
+     */
+    private Integer useCachedValue = 3;
+
+    /**
      * @param registry to load keys from
      * @return properties
      */
@@ -113,7 +118,8 @@ public class ResolverConfigurationProperties {
           this.duration,
           list,
           this.entityIdentifier,
-          Duration.ofSeconds(10)
+          Duration.ofSeconds(10),
+          this.useCachedValue
       );
     }
 
