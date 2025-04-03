@@ -106,7 +106,7 @@ class ResolverTest {
 
 
     final EntityStatementTreeLoader entityStatementTreeLoader = new EntityStatementTreeLoader(mock, new DFSExecution(), new DeferredStepRecoveryStrategy(),
-        new DefaultErrorContextFactory());
+        new DefaultErrorContextFactory(), 3);
 
     final ResolverCache dataLayer = new VersionedInMemoryCache();
     final Tree<EntityStatement> entityStatementTree =
@@ -115,7 +115,7 @@ class ResolverTest {
     entityStatementTreeLoader.resolveTree("https://start.test", entityStatementTree);
 
     final ResolverProperties properties = new ResolverProperties("https://start.test", Duration.ofDays(7), List.of(KEY), "https://resolver" +
-        ".test", Duration.ofSeconds(10));
+        ".test", Duration.ofSeconds(10), 3);
     final String response = createResolver(properties, entityStatementTree).resolve(new ResolveRequest("https://second.test", "https://start" +
         ".test", null));
 

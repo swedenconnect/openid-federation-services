@@ -83,7 +83,7 @@ public class EntityStatementTreeLoader {
   /**
    * Number of tries to try a step before using cached values.
    */
-  public static final int USE_CACHE_THRESHOLD = 1;
+  private final int useCacheThreshold;
 
   private final FederationClient client;
 
@@ -100,17 +100,20 @@ public class EntityStatementTreeLoader {
    * @param executionStrategy   to use when iterating through the federation
    * @param recoveryStrategy    to use when recovering from a failed step
    * @param errorContextFactory to use when creating new error contexts
+   * @param useCacheThreshold   how many times a step can fail before a cached value is considered
    */
   public EntityStatementTreeLoader(
       final FederationClient client,
       final ExecutionStrategy executionStrategy,
       final StepRecoveryStrategy recoveryStrategy,
-      final ErrorContextFactory errorContextFactory) {
+      final ErrorContextFactory errorContextFactory,
+      final int useCacheThreshold) {
 
     this.client = client;
     this.executionStrategy = executionStrategy;
     this.recoveryStrategy = recoveryStrategy;
     this.errorContextFactory = errorContextFactory;
+    this.useCacheThreshold = useCacheThreshold;
   }
 
   /**
@@ -152,7 +155,7 @@ public class EntityStatementTreeLoader {
           this.client.entityConfiguration(new FederationRequest<>(
               entityConfigurationRequest,
               Map.of(),
-              context.getErrorCount() < USE_CACHE_THRESHOLD));
+              useCachedValue(context)));
       final CacheSnapshot<EntityStatement> snapshot = tree.addRoot(root, entityStatement);
       final NodeKey key = root.getKey();
       this.executionStrategy.execute(() -> this.subordinateListing(snapshot.getData(key), nodeKey, tree,
@@ -190,7 +193,7 @@ public class EntityStatementTreeLoader {
             new FederationRequest<>(
                 subordinateListingRequest,
                 metadataMap,
-                context.getErrorCount() < USE_CACHE_THRESHOLD);
+                useCachedValue(context));
         final List<String> subordinateListing = this.client.subordinateListing(request);
         subordinateListing.forEach(subordinate -> this.resolveSubordinate(subordinate, parentKey, tree, snapshot,
             this.errorContextFactory.createEmpty(),
@@ -218,7 +221,7 @@ public class EntityStatementTreeLoader {
           new FederationRequest<>(
               new FetchRequest(subordinate),
               metadataMap,
-              context.getErrorCount() < USE_CACHE_THRESHOLD)
+              useCachedValue(context))
       );
       final Node<EntityStatement> subNode = new Node<>(NodeKey.fromEntityStatement(subordinateStatement));
       tree.addChild(subNode, parentKey, subordinateStatement, snapshot);
@@ -253,7 +256,7 @@ public class EntityStatementTreeLoader {
       final EntityConfigurationRequest entityConfigurationRequest = new EntityConfigurationRequest(subjectEntityID);
       final EntityStatement entityConfiguration =
           this.client.entityConfiguration(new FederationRequest<>(entityConfigurationRequest,
-              subordinateMetadataMap, context.getErrorCount() < USE_CACHE_THRESHOLD));
+              subordinateMetadataMap, useCachedValue(context)));
       final Node<EntityStatement> node = new Node<>(NodeKey.fromEntityStatement(entityConfiguration));
       tree.addChild(node, subordinateNode.getKey(), entityConfiguration, snapshot);
       this.executionStrategy.execute(() ->
@@ -278,6 +281,10 @@ public class EntityStatementTreeLoader {
           context, e
       );
     }
+  }
+
+  private boolean useCachedValue(final ErrorContext context) {
+    return context.getErrorCount() >= this.useCacheThreshold;
   }
 
   void handleError(

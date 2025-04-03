@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Data class for resolver modules from registry.
@@ -41,6 +42,7 @@ public class ResolverModuleRecord {
   private JWKSet trustedKeys;
   private String entityIdentifier;
   private Duration stepRetryTime;
+  private Integer useCachedValue;
 
   /**
    * Converts this instance to a json object {@link HashMap}
@@ -68,6 +70,8 @@ public class ResolverModuleRecord {
     resolver.trustAnchors = List.of((String) json.get(RecordFields.ResolverModule.TRUST_ANCHORS));
     resolver.resolveResponseDuration =
         Duration.parse((String) json.get(RecordFields.ResolverModule.RESOLVE_RESPONSE_DURATION));
+    Optional.ofNullable(json.get(RecordFields.ResolverModule.STEP_RETRY_TIME)).map(Integer.class::cast)
+        .orElseGet(() -> 3);
     resolver.entityIdentifier = (String) json.get(RecordFields.ResolverModule.ENTITY_IDENTIFIER);
     resolver.stepRetryTime = Duration.parse((String) json.get(RecordFields.ResolverModule.STEP_RETRY_TIME));
     try {
@@ -89,6 +93,7 @@ public class ResolverModuleRecord {
         this.resolveResponseDuration,
         this.trustedKeys.getKeys(),
         this.entityIdentifier,
-        this.stepRetryTime);
+        this.stepRetryTime,
+        this.useCachedValue);
   }
 }

@@ -36,6 +36,7 @@ public record ResolverProperties(
     Duration resolveResponseDuration,
     List<JWK> trustedKeys,
     String entityIdentifier,
-    Duration stepRetryTime) {
+    Duration stepRetryTime,
+    int useCachedValue) {
 }
 
