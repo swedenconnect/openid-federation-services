@@ -23,4 +23,4 @@ jobs:
     with:
       auto-update-revision: false
       revision-property: service-revision
-    needs: release
+    needs: mvn-release
