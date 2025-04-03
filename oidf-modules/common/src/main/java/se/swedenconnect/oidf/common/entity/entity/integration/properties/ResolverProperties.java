@@ -29,6 +29,7 @@ import java.util.List;
  * @param trustedKeys Keys trusted by this resolver to validate Entity Statement chains
  * @param entityIdentifier for the resolver
  * @param stepRetryTime time to wait before retrying a step that has failed
+ * @param useCachedValue threshold for error context
  * @author Felix Hellman
  */
 public record ResolverProperties(
