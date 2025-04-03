@@ -6,7 +6,7 @@ To build the project image the following can be run in the services directory
 
 The following checks should be run before merging.
 ```
-mvn clean checkstyle:check verify
+mvn clean checkstyle:check javadoc:javadoc verify
 ```
 
 
