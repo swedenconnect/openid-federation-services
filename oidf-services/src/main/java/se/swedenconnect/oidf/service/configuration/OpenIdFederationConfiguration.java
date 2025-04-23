@@ -87,7 +87,8 @@ public class OpenIdFederationConfiguration {
   @Qualifier("module-client")
   RestClient resolverClient(final RestClientFactory factory, final OpenIdFederationConfigurationProperties properties) {
     final RestClientProperties.RestClientProperty property = new RestClientProperties.RestClientProperty();
-    property.setTrustStoreBundleName("oidf-internal");
+    Optional.ofNullable(properties.getTrustStoreName())
+            .ifPresent(property::setTrustStoreBundleName);
     property.setName("module-client");
     return factory.create(property);
   }

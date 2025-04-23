@@ -41,6 +41,11 @@ import java.util.UUID;
 @ConfigurationProperties("openid.federation")
 public class OpenIdFederationConfigurationProperties {
 
+  /**
+   * Trust Store Name
+   */
+  private String trustStoreName;
+
   @NestedConfigurationProperty
   private CacheConfigurationProperties cache = new CacheConfigurationProperties();
 

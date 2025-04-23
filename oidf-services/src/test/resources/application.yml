@@ -485,3 +485,4 @@ openid:
       - id: authorization-policy
         policy:
           resource: classpath:authorization-policy.json
+    trust-store-name: oidf-internal
