@@ -45,7 +45,7 @@ public class ScheduledStepRecoveryStrategy implements StepRecoveryStrategy {
   @Override
   public void handle(final StepExecutionError executionError) {
     this.executorService.schedule(() -> executionError.getStep().accept(executionError.getErrorContext()),
-        this.properties.stepRetryTime().getSeconds(),
+        60,
         TimeUnit.SECONDS);
   }
 }
