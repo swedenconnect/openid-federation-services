@@ -189,7 +189,7 @@ public class EntityStatementTreeLoader {
       if (Objects.nonNull(parse.getFederationListEndpointURI())
               && Objects.nonNull(parse.getFederationFetchEndpointURI())) {
         // Entity is intermediate
-        final Map<String, String> metadataMap = metadata
+        final Map<String, Object> metadataMap = metadata
             .entrySet()
             .stream()
             .collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()));
@@ -220,7 +220,7 @@ public class EntityStatementTreeLoader {
                           final CacheSnapshot<EntityStatement> snapshot,
                           final ErrorContext context,
                           final ResolutionContext resolutionContext,
-                          final Map<String, String> metadataMap) {
+                          final Map<String, Object> metadataMap) {
     try {
       final EntityStatement subordinateStatement = this.client.fetch(
           new FederationRequest<>(
@@ -254,7 +254,7 @@ public class EntityStatementTreeLoader {
       final JSONObject subordinateMetadata = Optional.ofNullable(
           subordinateStatement.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY))
           .orElse(new JSONObject());
-      final Map<String, String> subordinateMetadataMap = subordinateMetadata
+      final Map<String, Object> subordinateMetadataMap = subordinateMetadata
           .entrySet()
           .stream()
           .collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()));

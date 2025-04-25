@@ -52,6 +52,8 @@ public class RestClientFederationClient implements FederationClient {
   public EntityStatement entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
     final String jwt = Optional.ofNullable(request.federationEntityMetadata()
             .get("subject_entity_configuration_location"))
+        .filter(l -> l instanceof String)
+        .map(String.class::cast)
         .map(location -> {
           if (location.startsWith("data:application/entity-statement+jwt,")) {
             return location.split(",")[1];
@@ -80,7 +82,10 @@ public class RestClientFederationClient implements FederationClient {
 
   @Override
   public EntityStatement fetch(final FederationRequest<FetchRequest> request) {
-    final String url = request.federationEntityMetadata().get("federation_fetch_endpoint");
+    final String url = Optional.ofNullable(request.federationEntityMetadata().get("federation_fetch_endpoint"))
+        .filter(u -> u instanceof String)
+        .map(String.class::cast)
+        .orElseThrow();
     final String body = this.client.mutate().baseUrl(url).build()
         .get()
         .uri(builder -> builder
@@ -98,7 +103,11 @@ public class RestClientFederationClient implements FederationClient {
 
   @Override
   public List<String> subordinateListing(final FederationRequest<SubordinateListingRequest> request) {
-    final String url = request.federationEntityMetadata().get("federation_list_endpoint");
+    final String url = Optional.ofNullable(request.federationEntityMetadata().get("federation_list_endpoint"))
+        .filter(u -> u instanceof String)
+        .map(String.class::cast)
+        .orElseThrow();
+
     return (List<String>) this.client.mutate().baseUrl(url).build()
         .get()
         .retrieve()
@@ -108,6 +117,8 @@ public class RestClientFederationClient implements FederationClient {
   @Override
   public SignedJWT trustMark(final FederationRequest<TrustMarkRequest> request) {
     final String path = Optional.ofNullable(request.federationEntityMetadata().get("federation_trust_mark_endpoint"))
+        .filter(p -> p instanceof String)
+        .map(String.class::cast)
         .orElseGet(() -> request.parameters().trustMarkIssuer().getValue() + "/trust_mark");
     final String body = this.client.mutate().baseUrl(path).build()
         .get()

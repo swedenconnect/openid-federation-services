@@ -27,7 +27,7 @@ import java.util.Objects;
  */
 public final class FederationRequest<T>  {
   private final T parameters;
-  private final Map<String, String> federationEntityMetadata;
+  private final Map<String, Object> federationEntityMetadata;
   private final Boolean useCachedValue;
 
   /**
@@ -37,7 +37,7 @@ public final class FederationRequest<T>  {
    * @param useCachedValue if false, a request will skip cache to fetch from integration
    */
   public FederationRequest(final T parameters,
-                           final Map<String, String> federationEntityMetadata,
+                           final Map<String, Object> federationEntityMetadata,
                            final Boolean useCachedValue) {
     this.parameters = parameters;
     this.federationEntityMetadata = federationEntityMetadata;
@@ -54,7 +54,7 @@ public final class FederationRequest<T>  {
   /**
    * @return metadata of the request
    */
-  public Map<String, String> federationEntityMetadata() {
+  public Map<String, Object> federationEntityMetadata() {
     return this.federationEntityMetadata;
   }
 
