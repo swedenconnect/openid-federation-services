@@ -257,7 +257,7 @@ public class EntityStatementTreeLoader {
       final Map<String, Object> subordinateMetadataMap = subordinateMetadata
           .entrySet()
           .stream()
-          .collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()));
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       final EntityConfigurationRequest entityConfigurationRequest = new EntityConfigurationRequest(subjectEntityID);
       final EntityStatement entityConfiguration =
           this.client.entityConfiguration(new FederationRequest<>(entityConfigurationRequest,
