@@ -294,7 +294,10 @@ public class EntityStatementTreeLoader {
       final ErrorContext context,
       final Exception e
   ) {
-    log.error("TreeLoader {} {} failed: ", node.getKey(), stepName.name(), e);
+    log.error("TreeLoader {} {} failed with exception {} enable trace log for more details", node.getKey(),
+        stepName.name(),
+        e.getClass().getCanonicalName());
+    log.trace("TreeLoader {} {} failed: ", node.getKey(), stepName.name(), e);
     final StepExecutionError error = new StepExecutionError(
         "%s_%s".formatted(stepName, node.getKey()),
         step,
