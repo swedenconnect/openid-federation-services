@@ -177,7 +177,8 @@ public class EntityStatementTreeLoader {
       final CacheSnapshot<EntityStatement> snapshot,
       final ErrorContext context, final ResolutionContext resolutionContext
   ) {
-    if (!((Map<String, Object>) parent.getClaimsSet().getClaim("metadata")).containsKey(EntityType.FEDERATION_ENTITY.getValue())) {
+    if (!((Map<String, Object>) parent.getClaimsSet().getClaim("metadata"))
+        .containsKey(EntityType.FEDERATION_ENTITY.getValue())) {
       //Stop resolving if entity does not declare federation entity metadata.
       return;
     }
