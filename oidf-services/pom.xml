@@ -61,7 +61,7 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.boot.version>3.3.4</spring.boot.version>
-        <service-revision>0.5.32-SNAPSHOT</service-revision>
+        <service-revision>0.6.1-SNAPSHOT</service-revision>
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 

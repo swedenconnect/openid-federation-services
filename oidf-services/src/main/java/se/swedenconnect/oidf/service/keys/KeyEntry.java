@@ -16,20 +16,27 @@
  */
 package se.swedenconnect.oidf.service.keys;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.List;
+import com.nimbusds.jose.jwk.JWK;
+import org.bouncycastle.util.encoders.Base64;
+
+import java.nio.charset.Charset;
 
 /**
- * Configuration properties for keys.
+ * @param name
+ * @param base64EncodedPublicJwk
  *
  * @author Felix Hellman
  */
-@Getter
-@Setter
-public class FederationKeyConfigurationProperties {
-  private List<String> sign;
-  private List<String> validation;
+public record KeyEntry(String name, String base64EncodedPublicJwk) {
+  /**
+   * @return parsed key
+   */
+  public JWK getKey() {
+    try {
+      return JWK.parse(new String(Base64.decode(this.base64EncodedPublicJwk), Charset.defaultCharset()));
+    } catch (final Exception e) {
+      throw new RuntimeException("Failed to load additional key", e);
+    }
+  }
 }

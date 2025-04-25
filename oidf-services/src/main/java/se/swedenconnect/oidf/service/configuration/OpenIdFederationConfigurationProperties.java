@@ -22,6 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import se.swedenconnect.oidf.service.entity.EntityProperty;
 import se.swedenconnect.oidf.service.entity.PolicyConfigurationProperties;
+import se.swedenconnect.oidf.service.keys.KeyEntry;
 import se.swedenconnect.oidf.service.resolver.ResolverConfigurationProperties;
 import se.swedenconnect.oidf.service.router.RouterProperties;
 import se.swedenconnect.oidf.service.trustanchor.TrustAnchorModuleProperties;
@@ -45,6 +46,12 @@ public class OpenIdFederationConfigurationProperties {
    * Trust Store Name
    */
   private String trustStoreName;
+
+  /**
+   * Additional Keys
+   */
+  @NestedConfigurationProperty
+  private List<KeyEntry> additionalKeys = List.of();
 
   @NestedConfigurationProperty
   private CacheConfigurationProperties cache = new CacheConfigurationProperties();

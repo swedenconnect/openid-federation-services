@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.service.keys;
 
 
+import com.nimbusds.jose.jwk.JWK;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.keys.KeyProperty;
@@ -34,7 +35,8 @@ import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 @Configuration
 public class KeyConfiguration {
   @Bean
-  KeyRegistry keyRegistry(final CredentialBundles bundles) {
+  KeyRegistry keyRegistry(final CredentialBundles bundles,
+                          final OpenIdFederationConfigurationProperties properties) {
     final KeyRegistry keyRegistry = new KeyRegistry();
     final JwkTransformerFunction jwkTransformerFunction = new JwkTransformerFunction()
         .withRsaCustomizer(rsa -> rsa.x509CertChain(null))
@@ -48,6 +50,16 @@ public class KeyConfiguration {
       property.setAlias(key);
       keyRegistry.register(property);
     });
+
+    properties.getAdditionalKeys()
+        .forEach(key -> {
+          final JWK parsed = key.getKey();
+          final KeyProperty property = new KeyProperty();
+          property.setKey(parsed);
+          property.setAlias(key.name());
+          keyRegistry.register(property);
+        });
+
     return keyRegistry;
   }
 
