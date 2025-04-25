@@ -48,7 +48,7 @@ public class CompositeTreeLoader {
    * Load/Reloads all trees.
    */
   public void loadTree() {
-    this.source.getResolverProperties().stream()
+    this.source.getResolverProperties().parallelStream()
         .map(this.factory::create)
         .forEach(resolver -> {
           this.registry.getRegistration(resolver.getEntityId().getValue()).ifPresent(r -> {
