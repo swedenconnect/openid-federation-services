@@ -189,20 +189,16 @@ public class EntityStatementTreeLoader {
       if (Objects.nonNull(parse.getFederationListEndpointURI())
               && Objects.nonNull(parse.getFederationFetchEndpointURI())) {
         // Entity is intermediate
-        final Map<String, Object> metadataMap = metadata
-            .entrySet()
-            .stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> (String) e.getValue()));
         final SubordinateListingRequest subordinateListingRequest = SubordinateListingRequest.requestAll();
         final FederationRequest<SubordinateListingRequest> request =
             new FederationRequest<>(
                 subordinateListingRequest,
-                metadataMap,
+                metadata,
                 this.useCachedValue(context));
         final List<String> subordinateListing = this.client.subordinateListing(request);
         subordinateListing.forEach(subordinate -> this.resolveSubordinate(subordinate, parentKey, tree, snapshot,
             this.errorContextFactory.createEmpty(),
-            resolutionContext, metadataMap));
+            resolutionContext, metadata));
       }
     } catch (final Exception e) {
       this.handleError(
@@ -254,14 +250,10 @@ public class EntityStatementTreeLoader {
       final JSONObject subordinateMetadata = Optional.ofNullable(
           subordinateStatement.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY))
           .orElse(new JSONObject());
-      final Map<String, Object> subordinateMetadataMap = subordinateMetadata
-          .entrySet()
-          .stream()
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       final EntityConfigurationRequest entityConfigurationRequest = new EntityConfigurationRequest(subjectEntityID);
       final EntityStatement entityConfiguration =
           this.client.entityConfiguration(new FederationRequest<>(entityConfigurationRequest,
-              subordinateMetadataMap, this.useCachedValue(context)));
+              subordinateMetadata, this.useCachedValue(context)));
       final Node<EntityStatement> node = new Node<>(NodeKey.fromEntityStatement(entityConfiguration));
       tree.addChild(node, subordinateNode.getKey(), entityConfiguration, snapshot);
       this.executionStrategy.execute(() ->
