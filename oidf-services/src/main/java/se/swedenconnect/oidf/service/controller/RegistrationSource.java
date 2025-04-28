@@ -30,14 +30,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Make the docs happy.
+ *
+ * @author Felix Hellman
+ */
 public class RegistrationSource implements RecordSource {
 
   private final List<EntityRecord> registerdEntities;
 
+  /**
+   * Default constructor,
+   */
   public RegistrationSource() {
     this.registerdEntities = new ArrayList<>();
   }
 
+  /**
+   * @param record to add
+   */
   public void addEntity(final EntityRecord record) {
     this.registerdEntities.add(record);
   }
@@ -81,7 +92,11 @@ public class RegistrationSource implements RecordSource {
   }
 
   @Override
-  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(final EntityID issuer, final TrustMarkId id, final EntityID subject) {
+  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
+      final EntityID issuer,
+      final TrustMarkId id,
+      final EntityID subject) {
+
     return Optional.empty();
   }
 
