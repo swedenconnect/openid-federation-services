@@ -14,27 +14,9 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.service.controller;
-
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-
 /**
- * Make the documentation happy.
+ * Make docs happy
  *
  * @author Felix Hellman
  */
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
-@ToString
-public class RegistrationRequest {
-  private JWKSet jwks;
-  private EntityID subject;
-}
+package se.swedenconnect.oidf.service.controller;

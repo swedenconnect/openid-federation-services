@@ -34,6 +34,10 @@ import java.util.List;
 @Slf4j
 public class RegistrationController {
 
+  /**
+   * Constructor
+   * @param registrationSource
+   */
   public RegistrationController(final RegistrationSource registrationSource) {
     this.registrationSource = registrationSource;
   }
