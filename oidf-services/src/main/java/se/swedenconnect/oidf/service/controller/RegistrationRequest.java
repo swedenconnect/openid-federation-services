@@ -24,6 +24,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.Map;
+
 /**
  * Make the documentation happy.
  *
@@ -35,6 +37,6 @@ import lombok.ToString;
 @Setter
 @ToString
 public class RegistrationRequest {
-  private JWKSet jwks;
+  private Map<String, Object> jwks;
   private EntityID subject;
 }

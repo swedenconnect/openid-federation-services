@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.service.controller;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.RecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
@@ -35,6 +36,7 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class RegistrationSource implements RecordSource {
 
   private final List<EntityRecord> registerdEntities;
@@ -51,6 +53,7 @@ public class RegistrationSource implements RecordSource {
    */
   public void addEntity(final EntityRecord record) {
     this.registerdEntities.add(record);
+    log.info("Added entity, new listing {}", this.registerdEntities);
   }
 
 
@@ -78,12 +81,16 @@ public class RegistrationSource implements RecordSource {
 
   @Override
   public List<EntityRecord> getAllEntities() {
+    log.info("Requested all entities from registration, returning {}", this.registerdEntities);
     return this.registerdEntities;
   }
 
   @Override
   public List<EntityRecord> findSubordinates(final String issuer) {
-    return List.of();
+    if (!issuer.equals("https://dev.swedenconnect.se/interop/im")) {
+      return List.of();
+    }
+    return this.registerdEntities;
   }
 
   @Override
