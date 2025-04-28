@@ -16,13 +16,18 @@
  */
 package se.swedenconnect.oidf.service.controller;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
+import se.swedenconnect.oidf.service.state.RegistryLoadedEvent;
 
+import java.text.ParseException;
 import java.util.List;
 
 /**
@@ -35,30 +40,46 @@ import java.util.List;
 public class RegistrationController {
 
   /**
+   * Constructor.
+   *
+   * @param registrationSource
+   * @param publisher
+   */
+  public RegistrationController(
+      final RegistrationSource registrationSource,
+      final ApplicationEventPublisher publisher) {
+    this.registrationSource = registrationSource;
+    this.publisher = publisher;
+  }
+
+  /**
    * Constructor
    * @param registrationSource
    */
-  public RegistrationController(final RegistrationSource registrationSource) {
-    this.registrationSource = registrationSource;
-  }
+
 
   private final RegistrationSource registrationSource;
+  private final ApplicationEventPublisher publisher;
 
   /**
    * @param request Make the documentation happy
+   * @throws ParseException
    */
   @PostMapping("/register")
-  public void register(@RequestBody final RegistrationRequest request) {
+  public void register(@RequestBody final RegistrationRequest request) throws ParseException {
     log.info("Recieved request {}", request);
+    final JWKSet jwkSet = JWKSet.parse(request.getJwks());
     this.registrationSource.addEntity(new EntityRecord(
         new EntityID("https://dev.swedenconnect.se/interop/im"),
         request.getSubject(),
-        null,
-        request.getJwks(),
+        new PolicyRecord(),
+        jwkSet,
         null,
         null,
         List.of(),
         List.of()
     ));
+
+    this.publisher.publishEvent(new RegistryLoadedEvent());
   }
 }

@@ -43,6 +43,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.M
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.service.cache.CacheFactory;
+import se.swedenconnect.oidf.service.controller.RegistrationSource;
 import se.swedenconnect.oidf.service.entity.PolicyConfigurationProperties;
 import se.swedenconnect.oidf.service.entity.RestClientFederationClient;
 import se.swedenconnect.oidf.service.keys.FederationKeys;
@@ -146,11 +147,13 @@ public class OpenIdFederationConfiguration {
   @Bean
   CompositeRecordSource compositeRecordSource(
       final LocalRecordSource localRecordSource,
-      final CachedRecordSource cachedRecordSource) {
+      final CachedRecordSource cachedRecordSource,
+      final RegistrationSource registrationSource) {
     return new CompositeRecordSource(
         List.of(
             localRecordSource,
-            cachedRecordSource
+            cachedRecordSource,
+            registrationSource
         )
     );
   }
