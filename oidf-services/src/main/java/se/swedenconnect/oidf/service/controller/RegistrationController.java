@@ -67,7 +67,6 @@ public class RegistrationController {
    */
   @PostMapping("/register")
   public void register(@RequestBody final RegistrationRequest request) throws ParseException {
-    log.info("Recieved request {}", request);
     final JWKSet jwkSet = JWKSet.parse(request.getJwks());
     this.registrationSource.addEntity(new EntityRecord(
         new EntityID("https://dev.swedenconnect.se/interop/im"),

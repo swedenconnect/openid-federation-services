@@ -101,7 +101,7 @@ public class FederationLoadingCache implements FederationClient {
     if (!request.useCachedValue() || this.subordinateListingCache.shouldRefresh(request.toString())) {
       final List<String> subordinateListing = this.client.subordinateListing(request);
       final Expirable<List<String>> expirable =
-          new Expirable<>(Instant.now().plus(Duration.ofHours(1)), Instant.now(), subordinateListing);
+          new Expirable<>(Instant.now().plus(Duration.ofSeconds(30)), Instant.now(), subordinateListing);
       this.subordinateListingCache.add(request.toString(), expirable);
       return subordinateListing;
     }
@@ -136,7 +136,7 @@ public class FederationLoadingCache implements FederationClient {
     if (!request.useCachedValue() || this.trustMarkListingCache.shouldRefresh(request.toString())) {
       final List<String> trustMarkedListing = this.client.trustMarkedListing(request);
       final Expirable<List<String>> expirable =
-          new Expirable<>(Instant.now().plus(Duration.ofDays(1)), Instant.now(), trustMarkedListing);
+          new Expirable<>(Instant.now().plus(Duration.ofSeconds(30)), Instant.now(), trustMarkedListing);
       this.trustMarkListingCache.add(request.toString(), expirable);
       return trustMarkedListing;
     }

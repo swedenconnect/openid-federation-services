@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.service.controller;
 
-import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
