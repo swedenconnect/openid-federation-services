@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.resolver.tree.resolution;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * Context for resolver resolution.
@@ -26,7 +27,7 @@ import java.util.Set;
  * @author Felix Hellman
  */
 public class ResolutionContext {
-  private final Set<String> visited = new HashSet<>();
+  private final Set<String> visited = new ConcurrentSkipListSet<>();
 
   /**
    * Adds an entity
@@ -35,20 +36,5 @@ public class ResolutionContext {
    */
   public boolean add(final String entity) {
     return this.visited.add(entity);
-  }
-
-  /**
-   * Adds entities to context
-   * @param toAdd to add to context
-   * @return all unseen entities
-   */
-  public Set<String> addEnteties(final List<String> toAdd) {
-    final Set<String> addedEntities = new HashSet<>();
-    toAdd.stream().forEach(entity -> {
-      if (this.visited.add(entity)) {
-        addedEntities.add(entity);
-      }
-    });
-    return addedEntities;
   }
 }

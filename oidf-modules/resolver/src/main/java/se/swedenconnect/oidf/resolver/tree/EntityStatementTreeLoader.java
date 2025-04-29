@@ -156,6 +156,7 @@ public class EntityStatementTreeLoader {
               entityConfigurationRequest,
               Map.of(),
               this.useCachedValue(context)));
+      resolutionContext.add(entityStatement.getEntityID().getValue());
       final CacheSnapshot<EntityStatement> snapshot = tree.addRoot(root, entityStatement);
       final NodeKey key = root.getKey();
       this.executionStrategy.execute(() -> this.subordinateListing(snapshot.getData(key), nodeKey, tree,
@@ -175,8 +176,8 @@ public class EntityStatementTreeLoader {
       final NodeKey parentKey,
       final Tree<EntityStatement> tree,
       final CacheSnapshot<EntityStatement> snapshot,
-      final ErrorContext context, final ResolutionContext resolutionContext
-  ) {
+      final ErrorContext context,
+      final ResolutionContext resolutionContext) {
     if (!((Map<String, Object>) parent.getClaimsSet().getClaim("metadata"))
         .containsKey(EntityType.FEDERATION_ENTITY.getValue())) {
       //Stop resolving if entity does not declare federation entity metadata.
@@ -196,9 +197,12 @@ public class EntityStatementTreeLoader {
                 metadata,
                 this.useCachedValue(context));
         final List<String> subordinateListing = this.client.subordinateListing(request);
-        subordinateListing.forEach(subordinate -> this.resolveSubordinate(subordinate, parentKey, tree, snapshot,
-            this.errorContextFactory.createEmpty(),
-            resolutionContext, metadata));
+        subordinateListing.parallelStream().forEach(subordinate -> {
+          if (resolutionContext.add(subordinate)) {
+          this.resolveSubordinate(subordinate, parentKey, tree, snapshot,
+              this.errorContextFactory.createEmpty(),
+              resolutionContext, metadata);
+        }});
       }
     } catch (final Exception e) {
       this.handleError(
