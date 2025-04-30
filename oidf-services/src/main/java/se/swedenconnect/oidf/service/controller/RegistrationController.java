@@ -76,7 +76,8 @@ public class RegistrationController {
         null,
         null,
         List.of(),
-        List.of()
+        List.of(),
+        List.of("https://dev.swedenconnect.se/interop/im")
     ));
 
     this.publisher.publishEvent(new RegistryLoadedEvent());

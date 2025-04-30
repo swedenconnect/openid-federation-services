@@ -31,6 +31,10 @@ public class RecordFields {
      */
     public static final String METADATA_POLICY_CRIT = "metadata_policy_crit";
     /**
+     *
+     */
+    public static final String AUTHORITY_HINTS = "authority_hints";
+    /**
      * crit name.
      */
     public static final String CRIT = "crit";

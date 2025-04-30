@@ -54,6 +54,7 @@ public class EntityProperty {
   private HostedRecordProperty hostedRecord;
   private List<String> crit;
   private List<String> metadataPolicyCrit;
+  private List<String> authorityHints;
 
   /**
    * Properties for hosted trustMarkSubjects
@@ -129,7 +130,8 @@ public class EntityProperty {
         this.overrideConfigurationLocation,
         this.hostedRecord(this.hostedRecord).orElse(null),
         this.crit,
-        this.metadataPolicyCrit
+        this.metadataPolicyCrit,
+        this.authorityHints
     );
   }
 

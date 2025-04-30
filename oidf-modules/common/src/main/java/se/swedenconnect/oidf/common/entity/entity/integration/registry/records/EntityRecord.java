@@ -50,6 +50,7 @@ public class EntityRecord implements Serializable {
   private final HostedRecord hostedRecord;
   private final List<String> crit;
   private final List<String> metadataPolicyCrit;
+  private final List<String> authorityHints;
 
 
   /**
@@ -63,6 +64,7 @@ public class EntityRecord implements Serializable {
    * @param hostedRecord                  optional parameter if the record is hosted
    * @param crit                          of the entity
    * @param metadataPolicyCrit            of the entity
+   * @param authorityHints                of the entity
    */
   public EntityRecord(
       final EntityID issuer,
@@ -72,7 +74,8 @@ public class EntityRecord implements Serializable {
       final String overrideConfigurationLocation,
       final HostedRecord hostedRecord,
       final List<String> crit,
-      final List<String> metadataPolicyCrit) {
+      final List<String> metadataPolicyCrit,
+      final List<String> authorityHints) {
     this.issuer = issuer;
     this.subject = subject;
     this.policyRecord = policyRecord;
@@ -81,6 +84,7 @@ public class EntityRecord implements Serializable {
     this.hostedRecord = hostedRecord;
     this.crit = crit;
     this.metadataPolicyCrit = metadataPolicyCrit;
+    this.authorityHints = authorityHints;
   }
 
   /**
@@ -127,7 +131,8 @@ public class EntityRecord implements Serializable {
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr))
             .orElse(null),
         (List<String>) json.get(RecordFields.Entity.CRIT),
-        (List<String>) json.get(RecordFields.Entity.METADATA_POLICY_CRIT)
+        (List<String>) json.get(RecordFields.Entity.METADATA_POLICY_CRIT),
+        (List<String>) json.get(RecordFields.Entity.AUTHORITY_HINTS)
     );
   }
 

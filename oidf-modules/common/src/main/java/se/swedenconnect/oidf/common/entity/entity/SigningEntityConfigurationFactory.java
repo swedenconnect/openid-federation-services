@@ -31,12 +31,15 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSourceRecord;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
+import javax.swing.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Factory class for creating entity statements.
@@ -76,7 +79,15 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
       builder.issueTime(Date.from(Instant.now()));
       builder.expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)));
       builder.claim("metadata", record.getHostedRecord().getMetadata());
-      builder.claim("authority_hint", record.getIssuer());
+      final List<String> authorityHints = new ArrayList<>();
+      Optional.ofNullable(record.getAuthorityHints())
+          .ifPresent(authorityHints::addAll);
+      if (!record.getSubject().getValue().equals(record.getIssuer().getValue())) {
+        authorityHints.add(record.getIssuer().getValue());
+      }
+      if (!authorityHints.isEmpty()) {
+        builder.claim("authority_hints", authorityHints);
+      }
       builder.claim("jwks", this.signerFactory.getSignKeys().toPublicJWKSet().toJSONObject());
       if (Objects.isNull(record.getHostedRecord())) {
         return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signerFactory.getSignKey());
