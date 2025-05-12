@@ -17,20 +17,21 @@
 package se.swedenconnect.oidf.common.entity.entity.integration;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ResolverModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustAnchorModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkIssuerModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ResolverModuleRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustAnchorModuleRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkIssuerModuleRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Cache backed implementation of {@link RecordSource}.
@@ -130,11 +131,18 @@ public class CachedRecordSource implements RecordSource {
   public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
     return this.getRecord()
         .map(r ->
-            r.getTrustMarkRecords().getValue().stream()
-                .filter(record -> record.getTrustMarkId().equals(id.getTrustMarkId()))
-                .filter(record -> record.getTrustMarkIssuerId().equals(issuer.getValue()))
-                .flatMap(record -> record.getSubjects().stream())
-                .toList()
+            Stream.concat(
+                r.getModuleRecord().getValue().getTrustMarkIssuers().stream()
+                    .flatMap(
+                        tmr -> tmr.getTrustMarks()
+                            .stream()
+                            .flatMap(tmi -> tmi.getSubjects().stream())
+                    ),
+                r.getTrustMarkRecords().getValue().stream()
+                    .filter(record -> record.getTrustMarkId().equals(id.getTrustMarkId()))
+                    .filter(record -> record.getTrustMarkIssuerId().equals(issuer.getValue()))
+                    .flatMap(record -> record.getSubjects().stream())
+            ).toList()
         ).orElse(List.of());
 
   }
