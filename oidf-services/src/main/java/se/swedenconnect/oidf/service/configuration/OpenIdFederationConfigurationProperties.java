@@ -62,6 +62,11 @@ public class OpenIdFederationConfigurationProperties {
   private List<String> sign;
 
   /**
+   * Algorithm for key id loaded by the node.
+   */
+  private String kidAlgorithm;
+
+  /**
    * Registry properties
    */
   @NestedConfigurationProperty

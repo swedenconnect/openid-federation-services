@@ -38,10 +38,14 @@ public class KeyConfiguration {
   KeyRegistry keyRegistry(final CredentialBundles bundles,
                           final OpenIdFederationConfigurationProperties properties) {
     final KeyRegistry keyRegistry = new KeyRegistry();
-    final JwkTransformerFunction jwkTransformerFunction = new JwkTransformerFunction()
+
+    final JwkTransformerFunction jwkTransformerFunction = getTransformer(properties);
+
+    jwkTransformerFunction
         .withRsaCustomizer(rsa -> rsa.x509CertChain(null))
         .withEcKeyCustomizer(ec -> ec.x509CertChain(null))
         .serializable();
+
     bundles.getRegisteredCredentials().forEach(key -> {
       final KeyProperty property = new KeyProperty();
       final PkiCredential credential = bundles.getCredential(key);
@@ -61,6 +65,14 @@ public class KeyConfiguration {
         });
 
     return keyRegistry;
+  }
+
+  private static JwkTransformerFunction getTransformer(final OpenIdFederationConfigurationProperties properties) {
+    if (properties.getKidAlgorithm().equals("serial")) {
+      return SerialKeyIdAlgorithm.setKeyIdAlgorithm(new JwkTransformerFunction());
+    }
+
+    return new JwkTransformerFunction();
   }
 
   @Bean
