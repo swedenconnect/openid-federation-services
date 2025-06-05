@@ -22,7 +22,16 @@ import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
 import java.security.cert.X509Certificate;
 
+/**
+ * KeyId Algorithm that derives kid from certificate serial number.
+ *
+ * @author Felix  Hellman
+ */
 public class SerialKeyIdAlgorithm {
+  /**
+   * @param function to modify
+   * @return function
+   */
   public static JwkTransformerFunction setKeyIdAlgorithm(final JwkTransformerFunction function) {
     return function
         .withRsaCustomizer(rsa -> {
