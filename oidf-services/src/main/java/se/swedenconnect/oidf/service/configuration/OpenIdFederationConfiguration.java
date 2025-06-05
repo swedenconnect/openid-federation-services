@@ -36,11 +36,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordReg
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryRefreshAheadCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.service.cache.CacheFactory;
 import se.swedenconnect.oidf.service.entity.PolicyConfigurationProperties;
@@ -88,7 +88,7 @@ public class OpenIdFederationConfiguration {
   RestClient resolverClient(final RestClientFactory factory, final OpenIdFederationConfigurationProperties properties) {
     final RestClientProperties.RestClientProperty property = new RestClientProperties.RestClientProperty();
     Optional.ofNullable(properties.getTrustStoreName())
-            .ifPresent(property::setTrustStoreBundleName);
+        .ifPresent(property::setTrustStoreBundleName);
     property.setName("module-client");
     return factory.create(property);
   }

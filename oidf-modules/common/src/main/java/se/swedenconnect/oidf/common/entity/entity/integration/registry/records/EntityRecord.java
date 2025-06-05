@@ -21,6 +21,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.text.ParseException;
@@ -39,6 +40,7 @@ import static se.swedenconnect.oidf.common.entity.entity.integration.registry.re
  */
 @Getter
 @Builder
+@ToString
 public class EntityRecord implements Serializable {
   private final EntityID issuer;
   private final EntityID subject;
