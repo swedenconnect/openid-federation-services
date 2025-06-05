@@ -18,10 +18,11 @@ be loaded from the registry or configured with properties.
 
 `openid.federation.*`
 
-| Property  | Description                                                              | Type           | Default value |
-|:----------|:-------------------------------------------------------------------------|:---------------|:--------------|
-| `storage` | Storage module to use, either memory (in memory) or redis                | String         | memory        |
-| `sign`    | List of credential names used for signing jwts that the service produces | List\<String\> | Empty List    |
+| Property        | Description                                                              | Type           | Default value |
+|:----------------|:-------------------------------------------------------------------------|:---------------|:--------------|
+| `storage`       | Storage module to use, either memory (in memory) or redis                | String         | memory        |
+| `sign`          | List of credential names used for signing jwts that the service produces | List\<String\> | Empty List    |
+| `kid-algorithm` | key id algorithm, thumbprint or serial                                   | String         | thumbprint    |
 
 ### Registry configuration
 
@@ -33,7 +34,6 @@ be loaded from the registry or configured with properties.
 | `instance-id`         | Instance id for node group                                                   | UUID           | null          |
 | `endpoints.base-path` | Base path for registry.                                                      | String         | null          |
 | `validation-keys`     | List of credential names used for validating jwts that the registry produces | List\<String\> | Empty List    |
-| `skip-init`           | List of registry loading steps to skip at initialization                     | List\<String\> | Empty List    |
 
 ### Module and submodule configuration
 
