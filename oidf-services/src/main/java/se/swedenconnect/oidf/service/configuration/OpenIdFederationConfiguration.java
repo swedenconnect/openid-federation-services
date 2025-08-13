@@ -112,7 +112,7 @@ public class OpenIdFederationConfiguration {
     final OpenIdFederationConfigurationProperties.Modules modules =
         Optional.ofNullable(properties.getModules()).orElse(new OpenIdFederationConfigurationProperties.Modules());
     return new RegistryProperties(
-        properties.getRegistry().getIntegration().getInstanceId(),
+        properties.getRedisKeyName(),
         properties.getRegistry().getIntegration().getEnabled(),
         Optional.ofNullable(modules.getTrustMarkIssuers())
             .orElse(List.of()).stream()
@@ -169,7 +169,7 @@ public class OpenIdFederationConfiguration {
     return new CacheRecordPopulator(
         cachedRecordSource,
         recordRegistryIntegration,
-        properties.getRegistry().getIntegration().getInstanceId()
+        properties.getRedisKeyName()
     );
   }
 

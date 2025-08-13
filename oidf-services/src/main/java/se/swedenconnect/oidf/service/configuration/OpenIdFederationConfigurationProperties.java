@@ -30,6 +30,7 @@ import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkIssuerModuleConfig
 import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkSubjectProperties;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -41,6 +42,22 @@ import java.util.UUID;
 @Setter
 @ConfigurationProperties("openid.federation")
 public class OpenIdFederationConfigurationProperties {
+
+  /**
+   * @return uuid for redis key
+   */
+  public UUID getRedisKeyName() {
+    return Optional.ofNullable(this.getRegistry())
+        .flatMap(r -> Optional.ofNullable(r.getIntegration()))
+        .flatMap(i -> {
+          if (i.getEnabled()) {
+            return Optional.of(i.getInstanceId());
+          }
+          return Optional.empty();
+        }).orElseGet(
+            () -> UUID.fromString("11111111-1111-1111-1111-111111111111")
+        );
+  }
 
   /**
    * Trust Store Name
