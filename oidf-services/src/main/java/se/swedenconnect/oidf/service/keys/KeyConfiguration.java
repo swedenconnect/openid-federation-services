@@ -27,6 +27,9 @@ import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
+import java.util.List;
+import java.util.Optional;
+
 /**
  * Configuration class for keys and key-registry.
  *
@@ -79,8 +82,14 @@ public class KeyConfiguration {
   FederationKeys federationKeys(
       final OpenIdFederationConfigurationProperties properties,
       final KeyRegistry registry) {
+
+    final List<String> validationKeys = Optional.ofNullable(properties.getRegistry())
+        .flatMap(r -> Optional.ofNullable(r.getIntegration()))
+        .flatMap(i -> Optional.ofNullable(i.getValidationKeys()))
+        .orElse(List.of());
+
     return new FederationKeys(registry.getSet(properties.getSign()),
-        registry.getSet(properties.getRegistry().getIntegration().getValidationKeys()));
+        registry.getSet(validationKeys));
   }
 
 }

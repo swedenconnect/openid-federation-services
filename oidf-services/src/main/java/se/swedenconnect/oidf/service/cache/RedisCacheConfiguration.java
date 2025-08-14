@@ -55,7 +55,7 @@ public class RedisCacheConfiguration {
   @Bean
   CacheFactory redisCacheFactory(final RedisConnectionFactory factory, final Clock clock,
                                  final OpenIdFederationConfigurationProperties properties) {
-    return new RedisCacheFactory(clock, factory, properties.getRegistry().getIntegration().getInstanceId());
+    return new RedisCacheFactory(clock, factory, properties.getRedisKeyName());
   }
 
   @Bean
@@ -112,7 +112,7 @@ public class RedisCacheConfiguration {
 
     final InstanceSpecificRedisKeySerializer keySerializer =
         new InstanceSpecificRedisKeySerializer(new StringRedisSerializer(),
-            properties.getRegistry().getIntegration().getInstanceId());
+            properties.getRedisKeyName());
 
     final RedisTemplate<String, String> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
@@ -127,7 +127,7 @@ public class RedisCacheConfiguration {
       final OpenIdFederationConfigurationProperties properties) {
     final InstanceSpecificRedisKeySerializer keySerializer = new InstanceSpecificRedisKeySerializer(
         new StringRedisSerializer(),
-        properties.getRegistry().getIntegration().getInstanceId()
+        properties.getRedisKeyName()
     );
 
     final RedisTemplate<String, String> template = new RedisTemplate<>();
