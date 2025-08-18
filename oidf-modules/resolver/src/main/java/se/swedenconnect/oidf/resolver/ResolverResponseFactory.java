@@ -78,7 +78,10 @@ public class ResolverResponseFactory {
             .expirationTime(Date.from(now.plus(this.properties.resolveResponseDuration())))
             .claim("metadata", resolverResponse.metadata())
             .claim("trust_marks",
-                resolverResponse.trustMarkEntries().stream().map(trustMark -> trustMark.getTrustMark().serialize())
+                resolverResponse.trustMarkEntries().stream().map(trustMark -> {
+                      final String jwt = trustMark.getTrustMark().serialize();
+                      return Map.of("trust_mark", jwt, "trust_mark_id", trustMark.getID().getValue());
+                    })
                     .toList())
             .claim("trust_chain",
                 resolverResponse.trustChain().stream().map(statement -> statement.getSignedStatement().serialize())
