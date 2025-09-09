@@ -58,6 +58,4 @@ public class JWKSetSignerFactory implements SignerFactory {
   public JWKSetSignerFactory(final JWKSet jwkSet) {
     this.jwkSet = jwkSet;
   }
-
-
 }

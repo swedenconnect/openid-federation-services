@@ -21,7 +21,6 @@ import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -29,8 +28,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.client.HttpClientErrorException;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
@@ -75,6 +72,13 @@ public class TrustAnchorTestCases {
     final JWK first = keys.signKeys().toPublicJWKSet().toPublicJWKSet().getKeys().getFirst();
     final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory().createJWSVerifier(signedJWT.getHeader(), first.toRSAKey().toKeyPair().getPublic());
     signedJWT.verify(jwsVerifier);
+  }
+
+  @Test
+  @DisplayName("Subordinate Listing : 200")
+  void testSubordinateListing(final FederationClients clients) throws JOSEException {
+    final TrustAnchorClient client = clients.intermediate();
+    final List<String> subordinates = client.subordinateListing(SubordinateListingRequest.requestAll());
   }
 
   @Test

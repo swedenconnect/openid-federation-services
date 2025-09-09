@@ -48,12 +48,14 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
     chain
         .forEach(es -> {
           Optional.ofNullable(es.getClaimsSet().getCriticalExtensionClaims())
+              .filter(crit -> !crit.isEmpty())
               .ifPresent(crit -> {
                 if (!new HashSet<>(crit).containsAll(SUPPORTED_CRITICAL_CLAIMS)) {
                   throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");
                 }
               });
           Optional.ofNullable(es.getClaimsSet().getStringListClaim("metadata_policy_crit"))
+              .filter(critMetadata -> !critMetadata.isEmpty())
               .ifPresent(critMetadata -> {
                 if (!new HashSet<>(critMetadata).containsAll(SUPPORTED_METADATA_CLAIMS)) {
                   throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");

@@ -28,6 +28,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRe
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.HostedRecord;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
@@ -37,6 +38,7 @@ import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Implementation of trust anchor.
@@ -123,19 +125,22 @@ public class TrustAnchor {
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
     this.debugLogRequest(request);
-    final List<String> subordinates = this.source
+    final List<EntityRecord> subordinates = this.source
         .findSubordinates(this.properties.getEntityId().getValue()).stream()
         .filter(er -> !er.getSubject().equals(this.properties.getEntityId()))
-        .map(ec -> ec.getSubject().getValue())
         .toList();
 
     if (!request.requiresFiltering()) {
-      return subordinates;
+      return subordinates.stream().map(e -> e.getSubject().getValue()).toList();
     }
 
     final List<String> list = subordinates.stream().toList()
         .stream()
-        .map(s -> new FederationRequest<>(new EntityConfigurationRequest(new EntityID(s)), Map.of(), true))
+        .map(entity -> new FederationRequest<>(new EntityConfigurationRequest(new EntityID(entity.getSubject().getValue())),
+            Optional.ofNullable(entity.getHostedRecord())
+                .map(HostedRecord::getMetadata)
+                .orElse(Map.of()),
+            true))
         .map(this.federationClient::entityConfiguration)
         .filter(request.toPredicate())
         .map(EntityStatement::getEntityID)
