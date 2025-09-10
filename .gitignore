@@ -47,5 +47,4 @@ ${BACKUP_DIR}
 *.iml
 .idea
 out
-
 .flattened-pom.xml
