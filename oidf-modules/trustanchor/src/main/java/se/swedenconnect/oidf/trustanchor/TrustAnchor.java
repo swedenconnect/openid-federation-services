@@ -136,11 +136,14 @@ public class TrustAnchor {
 
     final List<String> list = subordinates.stream().toList()
         .stream()
-        .map(entity -> new FederationRequest<>(new EntityConfigurationRequest(new EntityID(entity.getSubject().getValue())),
-            Optional.ofNullable(entity.getHostedRecord())
-                .map(HostedRecord::getMetadata)
-                .orElse(Map.of()),
-            true))
+        .map(entity -> {
+          final EntityID entityID = new EntityID(entity.getSubject().getValue());
+          return new FederationRequest<>(new EntityConfigurationRequest(entityID),
+              Optional.ofNullable(entity.getHostedRecord())
+                  .map(HostedRecord::getMetadata)
+                  .orElse(Map.of()),
+              true);
+        })
         .map(this.federationClient::entityConfiguration)
         .filter(request.toPredicate())
         .map(EntityStatement::getEntityID)
