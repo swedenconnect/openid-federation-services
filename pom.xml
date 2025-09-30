@@ -30,7 +30,7 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <credentials-support.version>2.0.5</credentials-support.version>
+        <credentials-support.version>2.0.7</credentials-support.version>
         <service-revision>0.6.1-SNAPSHOT</service-revision>
     </properties>
 
@@ -44,7 +44,7 @@
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
-                <version>9.40</version>
+                <version>10.0.1</version>
             </dependency>
             <dependency>
                 <groupId>com.nimbusds</groupId>
@@ -54,7 +54,7 @@
             <dependency>
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk18on</artifactId>
-                <version>1.79</version>
+                <version>1.82</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -99,7 +99,20 @@
 
     <build>
         <plugins>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.34</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <!-- Style-check -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
