@@ -1,4 +1,4 @@
-# OpenID Federation Services
+# OpenID Federation Services 
 
 The OpenID Federation Services implements necessary apis to support OpenID Federation in accordance
 to https://openid.net/specs/openid-federation-1_0.html
