@@ -8,7 +8,7 @@ on:
 
 jobs:
   publish-snapshot-ghcr:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@main
+    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@69cd6cc92e35a71cff1ba85746fdb43974d2e106
     secrets: inherit
     with:
       service-path: oidf-services
