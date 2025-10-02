@@ -72,6 +72,10 @@ public class ResolverModuleRecord implements Serializable {
     resolver.resolveResponseDuration =
         Duration.parse((String) json.get(RecordFields.ResolverModule.RESOLVE_RESPONSE_DURATION));
 
+    resolver.useCachedValue = Optional.ofNullable(json.get(RecordFields.ResolverModule.STEP_CACHED_VALUE_THRESHOLD))
+        .map(Integer.class::cast)
+        .orElseGet(() -> 3);
+
     resolver.entityIdentifier = (String) json.get(RecordFields.ResolverModule.ENTITY_IDENTIFIER);
     resolver.stepRetryTime = Duration.parse((String) json.get(RecordFields.ResolverModule.STEP_RETRY_TIME));
     try {
