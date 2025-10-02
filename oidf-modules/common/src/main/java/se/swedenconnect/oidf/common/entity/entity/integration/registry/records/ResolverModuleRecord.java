@@ -21,6 +21,7 @@ import lombok.Getter;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryResponseException;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.time.Duration;
 import java.util.Collections;
@@ -35,7 +36,7 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 @Getter
-public class ResolverModuleRecord {
+public class ResolverModuleRecord implements Serializable {
 
   private List<String> trustAnchors;
   private Duration resolveResponseDuration;
