@@ -131,18 +131,13 @@ public class CachedRecordSource implements RecordSource {
   public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
     return this.getRecord()
         .map(r ->
-            Stream.concat(
                 r.getModuleRecord().getValue().getTrustMarkIssuers().stream()
                     .flatMap(
                         tmr -> tmr.getTrustMarks()
                             .stream()
                             .flatMap(tmi -> tmi.getSubjects().stream())
-                    ),
-                r.getTrustMarkRecords().getValue().stream()
-                    .filter(record -> record.getTrustMarkId().equals(id.getTrustMarkId()))
-                    .filter(record -> record.getTrustMarkIssuerId().equals(issuer.getValue()))
-                    .flatMap(record -> record.getSubjects().stream())
-            ).toList()
+                    )
+            .toList()
         ).orElse(List.of());
 
   }

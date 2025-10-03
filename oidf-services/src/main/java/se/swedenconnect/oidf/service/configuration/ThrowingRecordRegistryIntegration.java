@@ -41,8 +41,4 @@ public class ThrowingRecordRegistryIntegration implements RecordRegistryIntegrat
     throw new IllegalStateException("Client is configured to not contact registry, this method should not be called");
   }
 
-  @Override
-  public Expirable<List<TrustMarkRecord>> getTrustMarks(final UUID instanceId) {
-    throw new IllegalStateException("Client is configured to not contact registry, this method should not be called");
-  }
 }

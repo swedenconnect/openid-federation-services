@@ -71,7 +71,7 @@ public class KeyConfiguration {
   }
 
   private static JwkTransformerFunction getTransformer(final OpenIdFederationConfigurationProperties properties) {
-    if (properties.getKidAlgorithm().equals("serial")) {
+    if ("serial".equalsIgnoreCase(properties.getKidAlgorithm())) {
       return SerialKeyIdAlgorithm.setKeyIdAlgorithm(new JwkTransformerFunction());
     }
 

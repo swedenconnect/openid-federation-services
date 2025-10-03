@@ -36,21 +36,17 @@ import java.util.Optional;
 public class CompositeRecord implements Serializable {
   private final Expirable<List<EntityRecord>> entityRecords;
   private final Expirable<ModuleRecord> moduleRecord;
-  private final Expirable<List<TrustMarkRecord>> trustMarkRecords;
 
   /**
    * @param entityRecords    with entities
    * @param moduleRecord     with modules
-   * @param trustMarkRecords with trust marks
    */
   public CompositeRecord(
       final Expirable<List<EntityRecord>> entityRecords,
-      final Expirable<ModuleRecord> moduleRecord,
-      final Expirable<List<TrustMarkRecord>> trustMarkRecords) {
+      final Expirable<ModuleRecord> moduleRecord) {
 
     this.entityRecords = entityRecords;
     this.moduleRecord = moduleRecord;
-    this.trustMarkRecords = trustMarkRecords;
   }
 
   /**
@@ -60,7 +56,6 @@ public class CompositeRecord implements Serializable {
     final ArrayList<Instant> expirations = new ArrayList<>();
     expirations.add(this.moduleRecord.getExpiration());
     expirations.add(this.entityRecords.getExpiration());
-    expirations.add(this.trustMarkRecords.getExpiration());
     return Optional.ofNullable(expirations.getFirst()).orElse(Instant.now());
   }
 
@@ -71,7 +66,6 @@ public class CompositeRecord implements Serializable {
     final ArrayList<Instant> issuedAt = new ArrayList<>();
     issuedAt.add(this.moduleRecord.getIssuedAt());
     issuedAt.add(this.entityRecords.getIssuedAt());
-    issuedAt.add(this.trustMarkRecords.getIssuedAt());
     return Optional.ofNullable(issuedAt.getFirst()).orElse(Instant.now());
   }
 }

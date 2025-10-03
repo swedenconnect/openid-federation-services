@@ -69,16 +69,4 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
         .body(String.class);
     return this.verifier.verifyModuleResponse(body);
   }
-
-  @Override
-  public Expirable<List<TrustMarkRecord>> getTrustMarks(final UUID instanceId) {
-    final String body = this.client.get()
-        .uri(builder -> builder
-            .queryParam("instanceid", instanceId.toString())
-            .path("/trustmarks_record")
-            .build())
-        .retrieve()
-        .body(String.class);
-    return this.verifier.verifyTrustMark(body);
-  }
 }
