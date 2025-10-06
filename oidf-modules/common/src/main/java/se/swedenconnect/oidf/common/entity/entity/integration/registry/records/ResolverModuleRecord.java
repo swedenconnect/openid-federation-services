@@ -57,6 +57,7 @@ public class ResolverModuleRecord implements Serializable {
     json.put(RecordFields.ResolverModule.TRUSTED_KEYS, this.trustedKeys);
     json.put(RecordFields.ResolverModule.ENTITY_IDENTIFIER, this.entityIdentifier);
     json.put(RecordFields.ResolverModule.STEP_RETRY_TIME, this.stepRetryTime);
+    json.put(RecordFields.ResolverModule.STEP_CACHED_VALUE_THRESHOLD, this.useCachedValue);
     return Collections.unmodifiableMap(json);
   }
 

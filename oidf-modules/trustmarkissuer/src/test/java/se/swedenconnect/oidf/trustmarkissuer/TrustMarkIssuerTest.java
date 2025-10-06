@@ -157,18 +157,11 @@ class TrustMarkIssuerTest {
 
   @Test
   public void testTrustMarkCreation()
-      throws NotFoundException, InvalidRequestException, ServerErrorException, ParseException {
+      throws NotFoundException, ServerErrorException, ParseException {
 
     final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
 
     final TrustMarkId trustMarkId = TrustMarkId.create("http://tm1.digg.se");
-    final TrustMarkProperties trustMark = TrustMarkProperties.builder()
-        .trustMarkId(trustMarkId)
-        .refUri(Optional.of("http://digg.se/tm1/doc"))
-        .logoUri(Optional.of("http://digg.se/tm1/logo.png"))
-        .delegation(Optional.empty())
-        .build();
-    this.trustMarkIssuerProperties.trustMarks().add(trustMark);
 
     final TrustMarkSubjectRecord sub1 =
         TrustMarkSubjectRecord.builder()
@@ -176,6 +169,16 @@ class TrustMarkIssuerTest {
             .granted(Instant.now())
             .expires(Instant.now().plus(10, ChronoUnit.DAYS))
             .build();
+
+    final TrustMarkProperties trustMark = TrustMarkProperties.builder()
+        .trustMarkId(trustMarkId)
+        .refUri(Optional.of("http://digg.se/tm1/doc"))
+        .logoUri(Optional.of("http://digg.se/tm1/logo.png"))
+        .delegation(Optional.empty())
+        .trustMarkSubjectRecords(List.of(sub1))
+        .build();
+    this.trustMarkIssuerProperties.trustMarks().add(trustMark);
+
 
 
     Mockito.when(

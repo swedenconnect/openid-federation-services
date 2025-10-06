@@ -58,8 +58,7 @@ public class CacheRecordPopulator {
   public CompositeRecord reload() {
     final Expirable<List<EntityRecord>> entityRecords = this.integration.getEntityRecords(this.instanceId);
     final Expirable<ModuleRecord> modules = this.integration.getModules(this.instanceId);
-    final Expirable<List<TrustMarkRecord>> trustMarks = this.integration.getTrustMarks(this.instanceId);
-    final CompositeRecord compositeRecord = new CompositeRecord(entityRecords, modules, trustMarks);
+    final CompositeRecord compositeRecord = new CompositeRecord(entityRecords, modules);
     this.source.addRecord(compositeRecord);
     //Clear notification
     this.notified = false;

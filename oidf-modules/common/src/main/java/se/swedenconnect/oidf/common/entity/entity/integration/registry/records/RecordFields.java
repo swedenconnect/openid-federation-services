@@ -151,7 +151,7 @@ public class RecordFields {
     /**
      * Subjects Field Name
      */
-    public static final String SUBJECTS = "subjects";
+    public static final String SUBJECTS = "trust_mark_subjects";
   }
 
   /**

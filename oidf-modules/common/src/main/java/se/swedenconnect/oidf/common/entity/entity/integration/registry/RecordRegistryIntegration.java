@@ -43,12 +43,4 @@ public interface RecordRegistryIntegration {
    * @return modules
    */
   Expirable<ModuleRecord> getModules(final UUID instanceId);
-
-  /**
-   * Fetches what trust marks that should be configured
-   *
-   * @param instanceId of this instance
-   * @return list of subjects
-   */
-  Expirable<List<TrustMarkRecord>> getTrustMarks(final UUID instanceId);
 }

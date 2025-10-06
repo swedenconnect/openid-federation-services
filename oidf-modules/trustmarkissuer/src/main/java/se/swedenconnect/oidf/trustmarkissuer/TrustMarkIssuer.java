@@ -148,9 +148,10 @@ public class TrustMarkIssuer {
         .findFirst()
         .get();
 
-    final Optional<TrustMarkSubjectRecord> subject =
-        this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.issuerEntityId(),
-        TrustMarkId.create(request.trustMarkId()), new EntityID(request.subject()));
+    final Optional<TrustMarkSubjectRecord> subject = properties.trustMarkSubjectRecords()
+        .stream()
+        .filter(trustMarkSubjectRecord -> trustMarkSubjectRecord.sub().equals(request.subject()))
+        .findFirst();
     if (subject.isEmpty()) {
       throw new NotFoundException("Could not find subject");
     }
