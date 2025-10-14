@@ -33,7 +33,12 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.C
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * Class responsible for hashing internal state.
@@ -82,9 +87,32 @@ public class StateHashFactory {
   }
 
   /**
-   * A serializer for {@link JWKSet}
+   * A custom serializer for {@link JWKSet} objects. This serializer ensures that the JSON representation
+   * of the {@link JWKSet} maintains a predictable order of keys by recursively sorting the keys alphabetically.
+   * This is achieved by processing the {@link JWKSet} into a {@link TreeMap} structure where applicable.
    */
   public static class JWKSetSerializer extends JsonSerializer<JWKSet> {
+    private Object preserveOrderRecursive(final Object obj) {
+      if (obj instanceof Map<?, ?> map) {
+        final TreeMap<String, Object> treeMap = new TreeMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+          final String key = entry.getKey().toString();
+          final Object value = preserveOrderRecursive(entry.getValue()); // rekursivt
+          treeMap.put(key, value);
+        }
+        return treeMap;
+      }else if (obj instanceof List<?> list) {
+        final List<Object> newList = new ArrayList<>();
+        for (Object item : list) {
+          newList.add(preserveOrderRecursive(item));
+        }
+        return newList;
+      }
+      else {
+        return obj;
+      }
+    }
+
     @Override
     public void serialize(final JWKSet value,
         final JsonGenerator gen,
@@ -94,7 +122,7 @@ public class StateHashFactory {
         gen.writeNull();
         return;
       }
-      gen.writeObject(value.toJSONObject());
+      gen.writeObject(this.preserveOrderRecursive(value.toJSONObject()));
     }
   }
 }

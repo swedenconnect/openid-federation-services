@@ -24,6 +24,9 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +80,9 @@ public class RegistryMock {
     this.wireMockServer.start();
     WireMock.configureFor(this.port);
 
-
+    final RSAKey key =  new RSAKeyGenerator(2048)
+        .keyUse(KeyUse.SIGNATURE)
+        .generate();
     final String policyId = "my-super-policy";
     final List<EntityRecord> municipalityEntities = List.of(
         EntityRecord.builder()
@@ -86,6 +91,7 @@ public class RegistryMock {
             .policyRecord(new PolicyRecord(policyId, Map.of()))
             .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",
                 "Municipality"))).build())
+            .jwks(new JWKSet(key.toPublicJWK()))
             .build()
     );
 

@@ -95,9 +95,12 @@ public class EntityRecord implements Serializable {
     builder.claim(CRIT, this.crit);
     builder.claim(METADATA_POLICY_CRIT, this.metadataPolicyCrit);
 
+    Optional.ofNullable(this.jwks)
+        .ifPresent(jwkSet -> builder.claim(RecordFields.Entity.JWKS, jwkSet.toJSONObject(true)));
     Optional.ofNullable(this.hostedRecord)
         .ifPresent(record -> builder.claim(RecordFields.Entity.HOSTED_RECORD, record.toJson()));
-    Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
+    Optional.ofNullable(this.overrideConfigurationLocation)
+        .ifPresent(location -> builder.claim(
         RecordFields.Entity.OVERRIDE_CONFIGURATION_LOCATION, location));
 
     final JWTClaimsSet build = builder
