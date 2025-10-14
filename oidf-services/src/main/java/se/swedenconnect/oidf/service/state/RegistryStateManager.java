@@ -107,7 +107,7 @@ public class RegistryStateManager extends ReadyStateComponent {
               log.debug("Registry updated with new hash {}", registrySha256);
               this.state.updateRegistryState(registrySha256);
             } catch (final Exception e) {
-              log.error("Failed to serialize state");
+              log.error("Failed to serialize state",e);
             }
           } catch (final Exception e) {
             log.error("Failed to load from registry", e);
