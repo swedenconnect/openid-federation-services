@@ -16,13 +16,24 @@
  */
 package se.swedenconnect.oidf.service.state;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nimbusds.jose.jwk.JWKSet;
 import org.bouncycastle.util.encoders.Hex;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Map;
 
 /**
  * Class responsible for hashing internal state.
@@ -34,6 +45,12 @@ public class StateHashFactory {
 
   static {
     MAPPER.registerModule(new JavaTimeModule());
+
+    final SimpleModule module = new SimpleModule();
+    module.addSerializer(JWKSet.class, new JWKSetSerializer());
+    module.addDeserializer(JWKSet.class, new JWKSetDeserializer());
+    MAPPER.registerModule(module);
+
   }
 
   /**
@@ -46,5 +63,38 @@ public class StateHashFactory {
     final MessageDigest digest = MessageDigest.getInstance("SHA-256");
     final byte[] hash = digest.digest(json.getBytes(StandardCharsets.UTF_8));
     return new String(Hex.encode(hash));
+  }
+
+  /**
+   * A deserializer for {@link JWKSet} instances used to convert JSON representations into {@link JWKSet} objects.
+   */
+  public static class JWKSetDeserializer extends JsonDeserializer<JWKSet> {
+    @Override
+    public JWKSet deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
+      final Map<String, Object> jwkMap = p.readValueAs(new TypeReference<>() {});
+      try {
+        return JWKSet.parse(jwkMap);
+      }
+      catch (final Exception e) {
+        throw new IOException("Failed to parse JWKSet", e);
+      }
+    }
+  }
+
+  /**
+   * A serializer for {@link JWKSet}
+   */
+  public static class JWKSetSerializer extends JsonSerializer<JWKSet> {
+    @Override
+    public void serialize(final JWKSet value,
+        final JsonGenerator gen,
+        final SerializerProvider serializers) throws IOException {
+
+      if (value == null) {
+        gen.writeNull();
+        return;
+      }
+      gen.writeObject(value.toJSONObject());
+    }
   }
 }

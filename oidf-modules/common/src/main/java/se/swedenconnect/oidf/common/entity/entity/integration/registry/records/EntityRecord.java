@@ -99,6 +99,7 @@ public class EntityRecord implements Serializable {
         .ifPresent(record -> builder.claim(RecordFields.Entity.HOSTED_RECORD, record.toJson()));
     Optional.ofNullable(this.overrideConfigurationLocation).ifPresent(location -> builder.claim(
         RecordFields.Entity.OVERRIDE_CONFIGURATION_LOCATION, location));
+
     final JWTClaimsSet build = builder
         .build();
     return build.toJSONObject();
