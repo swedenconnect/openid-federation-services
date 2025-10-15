@@ -97,14 +97,14 @@ public class StateHashFactory {
         final TreeMap<String, Object> treeMap = new TreeMap<>();
         for (Map.Entry<?, ?> entry : map.entrySet()) {
           final String key = entry.getKey().toString();
-          final Object value = preserveOrderRecursive(entry.getValue()); // rekursivt
+          final Object value = this.preserveOrderRecursive(entry.getValue()); // rekursivt
           treeMap.put(key, value);
         }
         return treeMap;
       }else if (obj instanceof List<?> list) {
         final List<Object> newList = new ArrayList<>();
         for (Object item : list) {
-          newList.add(preserveOrderRecursive(item));
+          newList.add(this.preserveOrderRecursive(item));
         }
         return newList;
       }
