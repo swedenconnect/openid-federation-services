@@ -27,7 +27,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheRepository;
-import se.swedenconnect.oidf.service.cache.managed.RedisRequestResponseCacheFactory;
+import se.swedenconnect.oidf.service.cache.managed.NoopRequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.configuration.OpenIdFederationConfigurationProperties;
 import se.swedenconnect.oidf.service.resolver.ResolverCacheTransformer;
@@ -138,11 +138,8 @@ public class RedisCacheConfiguration {
   }
 
   @Bean
-  RequestResponseCacheFactory redisRequestResponseCacheFactory(
-      final RedisTemplate<String, String> requestTemplate,
-      final RedisTemplate<String, RequestResponseEntry> entryTemplate,
-      final OpenIdFederationConfigurationProperties properties) {
-    return new RedisRequestResponseCacheFactory(entryTemplate, requestTemplate, properties);
+  RequestResponseCacheFactory redisRequestResponseCacheFactory() {
+    return new NoopRequestResponseCacheFactory();
   }
 
   @Bean
