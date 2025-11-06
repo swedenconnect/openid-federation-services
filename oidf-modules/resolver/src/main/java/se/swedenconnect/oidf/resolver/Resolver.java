@@ -46,5 +46,9 @@ public interface Resolver {
    */
   EntityID getEntityId();
 
+  /**
+   * @param request to process
+   * @return explanation of all errors
+   */
   Map<Integer, Map<String, String>> explain(final ResolveRequest request);
 }

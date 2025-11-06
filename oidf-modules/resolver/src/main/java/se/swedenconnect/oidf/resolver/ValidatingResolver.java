@@ -83,7 +83,7 @@ public class ValidatingResolver implements Resolver {
   public Map<Integer, Map<String, String>> explain(final ResolveRequest request) {
     final HashMap<Integer, Map<String, String>> explanation = new HashMap<>();
     final AtomicInteger counter = new AtomicInteger();
-    internalResolve(request).validationErrors()
+    this.internalResolve(request).validationErrors()
         .forEach(error -> {
           explanation.put(counter.getAndIncrement(), Map.of(error.getClass().getCanonicalName(), error.getMessage()));
         });

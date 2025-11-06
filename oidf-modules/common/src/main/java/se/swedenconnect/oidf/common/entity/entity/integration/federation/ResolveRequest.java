@@ -31,6 +31,7 @@ import java.util.function.BiPredicate;
  * @param subject
  * @param trustAnchor
  * @param type
+ * @param explain
  * @author Felix Hellman
  */
 public record ResolveRequest(String subject, String trustAnchor, String type, Boolean explain) implements Serializable {

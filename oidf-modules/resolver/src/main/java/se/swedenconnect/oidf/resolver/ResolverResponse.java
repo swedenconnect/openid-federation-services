@@ -29,6 +29,7 @@ import java.util.List;
  * @param metadata that has been processed by the policy
  * @param trustMarkEntries for the trust chain
  * @param trustChain for this response
+ * @param validationErrors for this response
  *
  * @author Felix Hellman
  */
