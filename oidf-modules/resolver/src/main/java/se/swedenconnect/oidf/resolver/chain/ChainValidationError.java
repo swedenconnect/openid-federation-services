@@ -16,7 +16,17 @@
  */
 package se.swedenconnect.oidf.resolver.chain;
 
+/**
+ * Error class for chain validations.
+ *
+ * @author Felix Hellman
+ */
 public class ChainValidationError extends RuntimeException {
+  /**
+   * Constructor.
+   * @param message
+   * @param cause
+   */
   public ChainValidationError(final String message, final Throwable cause) {
     super(message, cause);
   }

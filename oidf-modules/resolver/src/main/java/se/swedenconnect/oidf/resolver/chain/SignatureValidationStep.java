@@ -47,7 +47,7 @@ public class SignatureValidationStep implements ChainValidationStep {
   @Override
   public List<ChainValidationError> validate(final List<EntityStatement> chain) {
     final ArrayList<ChainValidationError> errors = new ArrayList<>();
-    
+
     //Verify leaf
     final EntityStatement leaf = chain.getFirst();
     try {
@@ -79,7 +79,9 @@ public class SignatureValidationStep implements ChainValidationStep {
       try {
         verifyValidityTime(current);
       } catch (final Exception e) {
-        errors.add(new ChainValidationError("Failed to verify validity time of %s".formatted(current.getEntityID()), e));
+        errors.add(
+            new ChainValidationError("Failed to verify validity time of %s".formatted(current.getEntityID()), e)
+        );
       }
     }
 

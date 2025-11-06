@@ -20,16 +20,19 @@ import java.util.List;
 
 /**
  * Result of a given chain validation step.
- * @param name of the step
- * @param valid true if the step validation has completed with error
- * @param error the error that must be supplied if valid == false to indicate the source of the problem.
  *
+ * @param name             of the step
+ * @param valid            true if the step validation has completed with error
+ * @param error            the error that must be supplied if valid == false to indicate the source of the problem.
+ * @param validationErrors of details that went wrong
  * @author Felix Hellman
  */
-public record ChainValidationStepResult(String name, boolean valid, Throwable error, List<ChainValidationError> validationErrors) {
+public record ChainValidationStepResult(String name, boolean valid, Throwable error,
+                                        List<ChainValidationError> validationErrors) {
 
   /**
    * Factory method for creating a valid response.
+   *
    * @param name of the step
    * @return result instance
    */
@@ -39,11 +42,16 @@ public record ChainValidationStepResult(String name, boolean valid, Throwable er
 
   /**
    * Factory method for creating an invalid response.
-   * @param name of the step
-   * @param error of what went wrong
+   *
+   * @param name             of the step
+   * @param error            of what went wrong
+   * @param validationErrors of details that went wrong
    * @return result instance
    */
-  public static ChainValidationStepResult invalid(final String name, final Exception error, final List<ChainValidationError> validationErrors) {
+  public static ChainValidationStepResult invalid(
+      final String name,
+      final Exception error,
+      final List<ChainValidationError> validationErrors) {
     return new ChainValidationStepResult(name, false, error, validationErrors);
   }
 }
