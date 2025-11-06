@@ -22,6 +22,7 @@ import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,31 +37,53 @@ public class SignatureValidationStep implements ChainValidationStep {
 
   /**
    * Constructor.
+   *
    * @param trustedKeys for verification of TrustAnchor signature.
    */
   public SignatureValidationStep(final JWKSet trustedKeys) {
     this.trustedKeys = trustedKeys;
   }
-  
+
   @Override
-  public void validate(final List<EntityStatement> chain) {
+  public List<ChainValidationError> validate(final List<EntityStatement> chain) {
+    final ArrayList<ChainValidationError> errors = new ArrayList<>();
+    
+    //Verify leaf
+    final EntityStatement leaf = chain.getFirst();
     try {
-
-      //Verify leaf
-      final EntityStatement leaf = chain.getFirst();
       Objects.requireNonNull(leaf.verifySignatureOfSelfStatement());
+    } catch (final Exception e) {
+      errors.add(new ChainValidationError("Invalid leaf statement", e));
+    }
+    try {
       verifyValidityTime(leaf);
-      //Verify TA
+    } catch (final Exception e) {
+      errors.add(new ChainValidationError("Leaf validity time has expired", e));
+    }
+    //Verify TA
+    try {
       this.verifyEntity(chain.getLast());
+    } catch (final Exception e) {
+      errors.add(new ChainValidationError("TA is not valid", e));
+    }
 
-      for (int i = 0 ; i < chain.size() - 1; i++) {
-        verifyLink(chain.get(i), chain.get(i+1));
-        verifyValidityTime(chain.get(i));
+    for (int i = 0; i < chain.size() - 1; i++) {
+      final EntityStatement current = chain.get(i);
+      final EntityStatement next = chain.get(i + 1);
+      try {
+        verifyLink(current, next);
+      } catch (final Exception e) {
+        errors.add(new ChainValidationError("Failed to verify link between %s and %s"
+            .formatted(current.getEntityID(), next.getEntityID()), e));
+      }
+      try {
+        verifyValidityTime(current);
+      } catch (final Exception e) {
+        errors.add(new ChainValidationError("Failed to verify validity time of %s".formatted(current.getEntityID()), e));
       }
     }
-    catch (BadJOSEException | JOSEException e) {
-      throw new IllegalArgumentException("Failed to validate trustchain signatures", e);
-    }
+
+    return errors;
   }
 
   private static void verifyLink(final EntityStatement current, final EntityStatement next)

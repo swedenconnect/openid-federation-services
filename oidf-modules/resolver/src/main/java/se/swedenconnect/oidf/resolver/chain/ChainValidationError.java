@@ -16,20 +16,8 @@
  */
 package se.swedenconnect.oidf.resolver.chain;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-
-import java.util.List;
-
-/**
- * Interface for executing a validation step on the chain.
- *
- * @author Felix Hellman
- */
-public interface ChainValidationStep {
-  /**
-   * Validation shall throw an unchecked exception upon failed validation.
-   * @param chain to validate
-   * @return validation errors
-   */
-  List<ChainValidationError> validate(final List<EntityStatement> chain);
+public class ChainValidationError extends RuntimeException {
+  public ChainValidationError(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

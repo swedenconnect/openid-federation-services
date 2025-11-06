@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.resolver.chain;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +45,8 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
   );
 
   @Override
-  public void validate(final List<EntityStatement> chain) {
+  public List<ChainValidationError> validate(final List<EntityStatement> chain) {
+    final ArrayList<ChainValidationError> errors = new ArrayList<>();
     chain
         .forEach(es -> {
           Optional.ofNullable(es.getClaimsSet().getCriticalExtensionClaims())
@@ -62,5 +64,6 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
                 }
               });
         });
+    return errors;
   }
 }

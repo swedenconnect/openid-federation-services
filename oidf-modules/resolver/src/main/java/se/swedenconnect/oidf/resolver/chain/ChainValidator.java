@@ -36,6 +36,7 @@ public class ChainValidator {
 
   /**
    * Constructor
+   *
    * @param chainValidationSteps to execute upon every chain
    */
   public ChainValidator(final List<ChainValidationStep> chainValidationSteps) {
@@ -76,11 +77,13 @@ public class ChainValidator {
   private static ChainValidationStepResult execute(final ChainValidationStep step, final List<EntityStatement> chain) {
     final String name = step.getClass().getCanonicalName();
     try {
-      step.validate(chain);
-      return ChainValidationStepResult.valid(name);
-    }
-    catch (final Exception e) {
-      return ChainValidationStepResult.invalid(name, e);
+      final List<ChainValidationError> validate = step.validate(chain);
+      if (validate.isEmpty()) {
+        return ChainValidationStepResult.valid(name);
+      }
+      return ChainValidationStepResult.invalid(name, validate.getFirst(), validate);
+    } catch (final Exception e) {
+      return ChainValidationStepResult.invalid(name, e, List.of());
     }
   }
 }

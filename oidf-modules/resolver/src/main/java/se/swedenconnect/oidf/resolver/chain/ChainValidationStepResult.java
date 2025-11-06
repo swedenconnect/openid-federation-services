@@ -16,6 +16,8 @@
  */
 package se.swedenconnect.oidf.resolver.chain;
 
+import java.util.List;
+
 /**
  * Result of a given chain validation step.
  * @param name of the step
@@ -24,7 +26,7 @@ package se.swedenconnect.oidf.resolver.chain;
  *
  * @author Felix Hellman
  */
-public record ChainValidationStepResult(String name, boolean valid, Throwable error) {
+public record ChainValidationStepResult(String name, boolean valid, Throwable error, List<ChainValidationError> validationErrors) {
 
   /**
    * Factory method for creating a valid response.
@@ -32,7 +34,7 @@ public record ChainValidationStepResult(String name, boolean valid, Throwable er
    * @return result instance
    */
   public static ChainValidationStepResult valid(final String name) {
-    return new ChainValidationStepResult(name, true, null);
+    return new ChainValidationStepResult(name, true, null, List.of());
   }
 
   /**
@@ -41,7 +43,7 @@ public record ChainValidationStepResult(String name, boolean valid, Throwable er
    * @param error of what went wrong
    * @return result instance
    */
-  public static ChainValidationStepResult invalid(final String name, final Exception error) {
-    return new ChainValidationStepResult(name, false, error);
+  public static ChainValidationStepResult invalid(final String name, final Exception error, final List<ChainValidationError> validationErrors) {
+    return new ChainValidationStepResult(name, false, error, validationErrors);
   }
 }

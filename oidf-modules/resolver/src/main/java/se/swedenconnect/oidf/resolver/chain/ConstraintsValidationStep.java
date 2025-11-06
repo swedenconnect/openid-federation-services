@@ -25,6 +25,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaims
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,7 +46,8 @@ import java.util.Set;
  */
 public class ConstraintsValidationStep implements ChainValidationStep {
   @Override
-  public void validate(final List<EntityStatement> chain) {
+  public List<ChainValidationError> validate(final List<EntityStatement> chain) {
+    final ArrayList<ChainValidationError> errors = new ArrayList<>();
     try {
       for (int x = chain.size() - 1; x >= 0; x--) {
         final EntityStatement current = chain.get(x);
@@ -55,11 +57,11 @@ public class ConstraintsValidationStep implements ChainValidationStep {
           final ConstraintRecord constraints = ConstraintRecord.fromJson(jsonConstraints);
           this.verifySubordinates(constraints, chain.subList(0, x));
         }
-
       }
     } catch (final Exception e) {
       throw new RuntimeException("Failed to validate", e);
     }
+    return errors;
   }
 
   private void verifySubordinates(
