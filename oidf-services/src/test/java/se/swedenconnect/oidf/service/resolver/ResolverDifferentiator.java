@@ -65,7 +65,8 @@ public class ResolverDifferentiator {
     final ResolveRequest referenceRequest = new ResolveRequest(
         resolveRequest.subject(),
         this.anarchyTrustAnchor.getValue(),
-        resolveRequest.type()
+        resolveRequest.type(),
+        false
     );
 
     final Response reference = this.getResponse(referenceRequest, this.anarchyResolver.getValue());

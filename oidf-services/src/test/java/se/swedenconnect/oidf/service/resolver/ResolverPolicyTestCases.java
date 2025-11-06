@@ -38,7 +38,7 @@ public class ResolverPolicyTestCases {
     final ResolverDifferentiator.ResponseDifference difference = clients.policy().getResponseDifference(new ResolveRequest(
         TestFederationEntities.IM.OP.getValue(),
         TestFederationEntities.Policy.TRUST_ANCHOR.getValue(),
-        null
+        null,false
     ));
     final MapDifference.ValueDifference<Object> metadata = difference.getJsonDifference().get("metadata");
     //Verify difference in metadata

@@ -33,6 +33,10 @@ import java.util.List;
  * @author Felix Hellman
  */
 @Builder
-public record ResolverResponse(EntityStatement entityStatement, JSONObject metadata,
-    List<TrustMarkEntry> trustMarkEntries, List<EntityStatement> trustChain) {
+public record ResolverResponse(
+    EntityStatement entityStatement,
+    JSONObject metadata,
+    List<TrustMarkEntry> trustMarkEntries,
+    List<EntityStatement> trustChain,
+    List<Exception> validationErrors) {
 }

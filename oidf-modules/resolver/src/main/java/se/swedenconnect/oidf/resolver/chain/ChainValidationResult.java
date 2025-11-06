@@ -27,6 +27,6 @@ import java.util.List;
  *
  * @author Felix Hellman
  */
-public record ChainValidationResult(List<EntityStatement> chain) {
+public record ChainValidationResult(List<EntityStatement> chain, List<Exception> errors) {
 
 }
