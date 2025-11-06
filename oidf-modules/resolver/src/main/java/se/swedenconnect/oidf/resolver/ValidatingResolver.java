@@ -33,8 +33,12 @@ import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import se.swedenconnect.oidf.resolver.trustmark.TrustMarkCollector;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Resolver implementation.
@@ -75,38 +79,83 @@ public class ValidatingResolver implements Resolver {
     this.factory = factory;
   }
 
+  @Override
+  public Map<Integer, Map<String, String>> explain(final ResolveRequest request) {
+    final HashMap<Integer, Map<String, String>> explanation = new HashMap<>();
+    final AtomicInteger counter = new AtomicInteger();
+    this.internalResolve(request).validationErrors()
+        .forEach(error -> {
+          explanation.put(counter.getAndIncrement(), Map.of(error.getClass().getCanonicalName(), error.getMessage()));
+        });
+    return explanation;
+  }
 
   @Override
   public String resolve(final ResolveRequest request) throws FederationException {
 
-    if (!request.trustAnchor().equalsIgnoreCase(this.resolverProperties.trustAnchor())) {
-      throw new InvalidTrustAnchorException("The Trust Anchor cannot be found or used.");
+    final ResolverResponse response = this.internalResolve(request);
+
+    if (!response.validationErrors().isEmpty()) {
+      final Exception exception = response.validationErrors().getFirst();
+      if (exception instanceof FederationException federationException) {
+        throw federationException;
+      }
+      throw new FederationException("Validation failed with %d errors".formatted(response.validationErrors().size()),
+          exception.getMessage(),
+          exception);
     }
-
-    final Set<EntityStatement> chain = this.tree.getTrustChain(request);
-    if (chain.isEmpty()) {
-      throw new NotFoundException("Resolver found no subject with requested EntityID:%s".formatted(request.subject()));
-    }
-    final ChainValidationResult chainValidationResult = this.validator.validate(chain.stream().toList());
-
-    final JSONObject processedMetadata = this.processor.processMetadata(chainValidationResult.chain());
-    final List<TrustMarkEntry> trustMarkEntries =
-        TrustMarkCollector.collectSubjectTrustMarks(chainValidationResult.chain());
-
-    final EntityStatement leaf = chainValidationResult.chain().getFirst();
-
-    final ResolverResponse response = ResolverResponse.builder()
-        .entityStatement(leaf)
-        .metadata(processedMetadata)
-        .trustMarkEntries(trustMarkEntries)
-        .trustChain(chainValidationResult.chain())
-        .build();
 
     try {
       return this.factory.sign(response);
     } catch (final JOSEException | ParseException e) {
       throw new ResolverException("Failed to sign resolver response", e);
     }
+  }
+
+  private ResolverResponse internalResolve(final ResolveRequest request) {
+    final List<Exception> validationErrors = new ArrayList<>();
+
+    if (!request.trustAnchor().equalsIgnoreCase(this.resolverProperties.trustAnchor())) {
+      validationErrors.add(new InvalidTrustAnchorException("The Trust Anchor cannot be found or used."));
+    }
+
+    final Set<EntityStatement> chain = this.tree.getTrustChain(request);
+    if (chain.isEmpty()) {
+      validationErrors.add(
+          new NotFoundException("Resolver found no subject with requested EntityID:%s".formatted(request.subject()))
+      );
+    }
+    ChainValidationResult chainValidationResult = null;
+    try {
+      chainValidationResult = this.validator.validate(chain.stream().toList());
+      validationErrors.addAll(chainValidationResult.errors());
+    } catch (final Exception e) {
+      validationErrors.add(e);
+    }
+
+
+    JSONObject processedMetadata = null;
+    try {
+      processedMetadata = this.processor.processMetadata(chainValidationResult.chain());
+    } catch (final Exception e) {
+      validationErrors.add(e);
+    }
+    List<TrustMarkEntry> trustMarkEntries = null;
+    try {
+      trustMarkEntries = TrustMarkCollector.collectSubjectTrustMarks(chainValidationResult.chain());
+    } catch (final Exception e) {
+      validationErrors.add(e);
+    }
+
+    final EntityStatement leaf = chainValidationResult.chain().getFirst();
+
+    return ResolverResponse.builder()
+        .entityStatement(leaf)
+        .metadata(processedMetadata)
+        .trustMarkEntries(trustMarkEntries)
+        .trustChain(chainValidationResult.chain())
+        .validationErrors(validationErrors)
+        .build();
   }
 
   @Override

@@ -45,7 +45,8 @@ public class ResolverConstraintTestCases {
         new ResolveRequest(
             "http://localhost:11111/im/op",
             trustAnchor.getValue(),
-            null
+            null,
+            false
         )
     );
     Assertions.assertNull(difference.getReference().getError());
@@ -71,7 +72,8 @@ public class ResolverConstraintTestCases {
         new ResolveRequest(
             "http://localhost:11111/im/im/op",
             trustAnchor.getValue(),
-            null
+            null,
+            false
         )
     );
     Assertions.assertNull(difference.getReference().getError());
@@ -98,7 +100,7 @@ public class ResolverConstraintTestCases {
         new ResolveRequest(
             "http://localhost:11111/im/im/op",
             trustAnchor.getValue(),
-            null
+            null,false
         )
     );
     Assertions.assertNull(difference.getReference().getError());
@@ -109,7 +111,7 @@ public class ResolverConstraintTestCases {
         new ResolveRequest(
             "http://localhost:11111/im/im/rp",
             trustAnchor.getValue(),
-            null
+            null,false
         )
     );
     Assertions.assertNull(difference2.getReference().getError());

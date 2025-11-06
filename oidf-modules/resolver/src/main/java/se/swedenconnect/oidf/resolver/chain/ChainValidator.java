@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.resolver.chain;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import se.swedenconnect.oidf.common.entity.exception.InvalidTrustChainException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,8 +49,9 @@ public class ChainValidator {
    */
   public ChainValidationResult validate(final List<EntityStatement> chain) throws InvalidTrustChainException {
     // Check that chain has at least length = 3
+    final List<Exception> errors = new ArrayList<>();
     if (chain.size() < 3) {
-      throw new InvalidTrustChainException("Chain does not include at least three statements");
+      errors.add(new InvalidTrustChainException("Chain does not include at least three statements"));
     }
 
     final List<ChainValidationStepResult> failedValidationSteps =
@@ -65,10 +67,10 @@ public class ChainValidator {
       final List<String> messages = failedValidationSteps.stream().map(s -> s.error().getMessage()).toList();
       final String exceptionMessage =
           "Failed to validate trust chain:%s messages:%s".formatted(failedValidationStepNames, messages);
-      throw new InvalidTrustChainException(exceptionMessage);
+      errors.add(new InvalidTrustChainException(exceptionMessage));
     }
 
-    return new ChainValidationResult(chain);
+    return new ChainValidationResult(chain, errors);
   }
 
   private static ChainValidationStepResult execute(final ChainValidationStep step, final List<EntityStatement> chain) {

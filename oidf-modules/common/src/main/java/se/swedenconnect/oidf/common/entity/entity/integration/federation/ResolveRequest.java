@@ -31,9 +31,10 @@ import java.util.function.BiPredicate;
  * @param subject
  * @param trustAnchor
  * @param type
+ * @param explain
  * @author Felix Hellman
  */
-public record ResolveRequest(String subject, String trustAnchor, String type) implements Serializable {
+public record ResolveRequest(String subject, String trustAnchor, String type, Boolean explain) implements Serializable {
   /**
    * @return this request as a search predicate
    */
@@ -74,7 +75,8 @@ public record ResolveRequest(String subject, String trustAnchor, String type) im
     return new ResolveRequest(
         split[1],
         split[2],
-        split[3]
+        split[3],
+        false
     );
   }
 }

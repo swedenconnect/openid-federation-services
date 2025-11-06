@@ -29,10 +29,15 @@ import java.util.List;
  * @param metadata that has been processed by the policy
  * @param trustMarkEntries for the trust chain
  * @param trustChain for this response
+ * @param validationErrors for this response
  *
  * @author Felix Hellman
  */
 @Builder
-public record ResolverResponse(EntityStatement entityStatement, JSONObject metadata,
-    List<TrustMarkEntry> trustMarkEntries, List<EntityStatement> trustChain) {
+public record ResolverResponse(
+    EntityStatement entityStatement,
+    JSONObject metadata,
+    List<TrustMarkEntry> trustMarkEntries,
+    List<EntityStatement> trustChain,
+    List<Exception> validationErrors) {
 }

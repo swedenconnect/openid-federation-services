@@ -24,9 +24,9 @@ import java.util.List;
  * Response type for {@link ChainValidator} containing the trustchain of a given subject.
  *
  * @param chain that has been validated
- *
+ * @param errors for this chain validation
  * @author Felix Hellman
  */
-public record ChainValidationResult(List<EntityStatement> chain) {
+public record ChainValidationResult(List<EntityStatement> chain, List<Exception> errors) {
 
 }

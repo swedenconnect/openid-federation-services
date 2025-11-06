@@ -20,6 +20,8 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 
+import java.util.Map;
+
 /**
  * Resolver interface.
  *
@@ -43,4 +45,10 @@ public interface Resolver {
    * @return entity id of this resolver
    */
   EntityID getEntityId();
+
+  /**
+   * @param request to process
+   * @return explanation of all errors
+   */
+  Map<Integer, Map<String, String>> explain(final ResolveRequest request);
 }

@@ -51,7 +51,7 @@ public class ResolverTrustMarkTestCases {
     );
 
     final ResolverDifferentiator.ResponseDifference difference = differentiator.getResponseDifference(new ResolveRequest("http://localhost:11111/im/op", "http://localhost:11111" +
-        "/trust_mark_issuer/ta", null));
+        "/trust_mark_issuer/ta", null, false));
 
     final Map<String, MapDifference.ValueDifference<Object>> jsonDifference = difference.getJsonDifference();
     System.out.println(jsonDifference);
@@ -67,7 +67,8 @@ public class ResolverTrustMarkTestCases {
         new ResolveRequest(
             TestFederationEntities.IM.OP.getValue(),
             TestFederationEntities.TrustMarkOwner.TRUST_ANCHOR.getValue(),
-            null
+            null,
+            false
         )
     );
     final Map<String, MapDifference.ValueDifference<Object>> trustChainEntryDifference =

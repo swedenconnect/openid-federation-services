@@ -39,7 +39,7 @@ public class ResolverCritTestCases {
     final ResolverDifferentiator.ResponseDifference difference = clients.crit().getResponseDifference(new ResolveRequest(
         TestFederationEntities.IM.OP.getValue(),
         TestFederationEntities.Crit.TRUST_ANCHOR.getValue(),
-        null
+        null,false
     ));
 
     Assertions.assertEquals(0, difference.getJsonDifference().size());
@@ -58,7 +58,7 @@ public class ResolverCritTestCases {
     final ResolverDifferentiator.ResponseDifference difference = clients.metadataCrit().getResponseDifference(new ResolveRequest(
         TestFederationEntities.IM.OP.getValue(),
         TestFederationEntities.MetadataPolicyCrit.TRUST_ANCHOR.getValue(),
-        null
+        null,false
     ));
 
     Assertions.assertEquals(0, difference.getJsonDifference().size());

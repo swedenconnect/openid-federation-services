@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.resolver.DiscoveryResponse;
 import se.swedenconnect.oidf.resolver.Resolver;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCache;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -69,5 +70,10 @@ public class CacheBackedResolver implements Resolver {
   @Override
   public EntityID getEntityId() {
     return this.inner.getEntityId();
+  }
+
+  @Override
+  public Map<Integer, Map<String, String>> explain(final ResolveRequest request) {
+    return this.inner.explain(request);
   }
 }

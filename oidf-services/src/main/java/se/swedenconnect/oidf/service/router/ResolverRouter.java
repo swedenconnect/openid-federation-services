@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.resolver.Resolver;
 import se.swedenconnect.oidf.service.resolver.ResolverFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Responsible for matching requests for any resolver module.
@@ -79,10 +80,20 @@ public class ResolverRouter implements Router {
                 request.params(),
                 List.of("sub", "trust_anchor")
             );
+
+            if (params.containsKey("explain") && Boolean.parseBoolean(params.getFirst("explain"))) {
+              return ServerResponse.ok().body(resolver.explain(new ResolveRequest(
+                  params.getFirst("sub"),
+                  params.getFirst("trust_anchor"),
+                  params.getFirst("entity_type"),
+                  true
+              )));
+            }
             return ServerResponse.ok().body(resolver.resolve(new ResolveRequest(
                 params.getFirst("sub"),
                 params.getFirst("trust_anchor"),
-                params.getFirst("entity_type")
+                params.getFirst("entity_type"),
+                false
             )));
           } catch (final FederationException e) {
             return this.errorHandler.handle(e);

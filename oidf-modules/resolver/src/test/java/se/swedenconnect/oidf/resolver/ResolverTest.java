@@ -117,7 +117,7 @@ class ResolverTest {
     final ResolverProperties properties = new ResolverProperties("https://start.test", Duration.ofDays(7), List.of(KEY), "https://resolver" +
         ".test", Duration.ofSeconds(10), 3);
     final String response = createResolver(properties, entityStatementTree).resolve(new ResolveRequest("https://second.test", "https://start" +
-        ".test", null));
+        ".test", null, false));
 
 
     Assertions.assertTrue(SignedJWT.parse(response).verify(new RSASSAVerifier(KEY.toRSAKey())));
