@@ -5,20 +5,20 @@ on:
       - 'v*'
 jobs:
   ghcr-release:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@v0.5.9
+    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@v0.5.10
     secrets: inherit
     with:
       service-path: oidf-services
       revision-property: service-revision
   mvn-release:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/mvn-release.yml@v0.5.9
+    uses: swedenconnect/openid-federation-commons/.github/workflows/mvn-release.yml@v0.5.10
     secrets: inherit
     with:
       revision-property: service-revision
       release-to-github: true
       release-to-maven-central: false
   finalize-release:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@v0.5.9
+    uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@v0.5.10
     secrets: inherit
     with:
       auto-update-revision: false
