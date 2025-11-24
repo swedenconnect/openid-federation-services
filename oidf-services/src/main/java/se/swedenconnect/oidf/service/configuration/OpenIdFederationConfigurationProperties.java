@@ -134,6 +134,7 @@ public class OpenIdFederationConfigurationProperties {
     @Setter
     @Getter
     public static final class Integration {
+      private String trustStoreBundleName;
       private UUID instanceId;
       private Boolean enabled;
       @NestedConfigurationProperty

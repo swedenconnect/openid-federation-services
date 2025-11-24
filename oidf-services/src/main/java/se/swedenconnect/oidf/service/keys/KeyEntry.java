@@ -16,27 +16,50 @@
  */
 package se.swedenconnect.oidf.service.keys;
 
-
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.RSAKey;
 import org.bouncycastle.util.encoders.Base64;
 
 import java.nio.charset.Charset;
+import java.security.PublicKey;
 
 /**
- * @param name
- * @param base64EncodedPublicJwk
- *
+ * @param name Name of key
+ * @param base64EncodedPublicJwk Base 64 encoded jwk
+ * @param certificates Pem certificate
  * @author Felix Hellman
  */
-public record KeyEntry(String name, String base64EncodedPublicJwk) {
+public record KeyEntry(String name, String base64EncodedPublicJwk, String certificates) {
   /**
    * @return parsed key
    */
   public JWK getKey() {
     try {
+      if (this.certificates != null) {
+
+        final JWK jwk = JWK.parseFromPEMEncodedObjects(this.certificates);
+        return switch (jwk.getKeyType().getValue()) {
+          case "RSA" ->
+            // Om det är RSA, bygg om som RSAKey och sätt kid
+              new RSAKey.Builder(((RSAKey) jwk).toRSAPublicKey())
+                  .keyUse(jwk.getKeyUse())
+                  .algorithm(jwk.getAlgorithm())
+                  .keyIDFromThumbprint()
+                  .build();
+          case "EC" -> new ECKey.Builder(jwk.toECKey())
+              .keyUse(jwk.getKeyUse())
+              .algorithm(jwk.getAlgorithm())
+              .keyIDFromThumbprint()
+              .build();
+          default -> throw new IllegalArgumentException("Unsupported key type: " + jwk.getKeyType());
+        };
+      }
       return JWK.parse(new String(Base64.decode(this.base64EncodedPublicJwk), Charset.defaultCharset()));
-    } catch (final Exception e) {
+    }
+    catch (final Exception e) {
       throw new RuntimeException("Failed to load additional key", e);
     }
   }
+
 }
