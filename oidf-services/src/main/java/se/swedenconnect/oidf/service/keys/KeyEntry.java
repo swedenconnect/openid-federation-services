@@ -19,7 +19,9 @@ package se.swedenconnect.oidf.service.keys;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
+import jakarta.annotation.PostConstruct;
 import org.bouncycastle.util.encoders.Base64;
+import org.springframework.util.Assert;
 
 import java.nio.charset.Charset;
 import java.security.PublicKey;
@@ -27,18 +29,18 @@ import java.security.PublicKey;
 /**
  * @param name Name of key
  * @param base64EncodedPublicJwk Base 64 encoded jwk
- * @param certificates Pem certificate
+ * @param certificate Pem certificate
  * @author Felix Hellman
  */
-public record KeyEntry(String name, String base64EncodedPublicJwk, String certificates) {
+public record KeyEntry(String name, String base64EncodedPublicJwk, String certificate) {
   /**
    * @return parsed key
    */
   public JWK getKey() {
     try {
-      if (this.certificates != null) {
+      if (this.certificate != null) {
 
-        final JWK jwk = JWK.parseFromPEMEncodedObjects(this.certificates);
+        final JWK jwk = JWK.parseFromPEMEncodedObjects(this.certificate);
         return switch (jwk.getKeyType().getValue()) {
           case "RSA" ->
             // Om det är RSA, bygg om som RSAKey och sätt kid
@@ -60,6 +62,23 @@ public record KeyEntry(String name, String base64EncodedPublicJwk, String certif
     catch (final Exception e) {
       throw new RuntimeException("Failed to load additional key", e);
     }
+  }
+
+  /**
+   * Validate content
+   */
+  public void validate() {
+    final String basePropName = "openid.federation.additional-keys.";
+
+    Assert.hasText(this.name, basePropName + "name must be set");
+
+    final boolean hasJwk = this.base64EncodedPublicJwk != null && !this.base64EncodedPublicJwk.isEmpty();
+    final boolean hasCert = this.certificate != null && !this.certificate.isEmpty();
+
+    Assert.isTrue(hasJwk ^ hasCert,
+        String.format("Exactly one of %1$sbase64EncodedPublicJwk or %1$scertificate must be set", basePropName));
+
+    this.getKey();
   }
 
 }

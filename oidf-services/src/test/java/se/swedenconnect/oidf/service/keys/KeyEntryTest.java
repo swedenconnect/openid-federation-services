@@ -25,6 +25,22 @@ class KeyEntryTest {
     final String key = """
         ewogICAgICAgICJhbGciOiAiRVM1MTIiLAogICAgICAgICJjcnYiOiAiUC01MjEiLAogICAgICAgICJraWQiOiAiQjRkbGU1ajJYT19yLXZsdG9qSDB6X0FHTEhUSjVTamR0di04MDA1YzRMNCIsCiAgICAgICAgImt0eSI6ICJFQyIsCiAgICAgICAgInVzZSI6ICJzaWciLAogICAgICAgICJ4IjogIkFJMXRINm5qRlRBT1hiVDFQVkp3QS1VaWh1R3dwdk5HX1BYWm50R1lIM0o4QzFDcjd2MmZiVkxyM1l4VnR3bW10cGZsZWVoN3dxUWtndWdRWm1iVjV6T3kiLAogICAgICAgICJ5IjogIkFFdTNoa1NycTVHZVN5ZW5rUkxfR180QkJlVXRpLXV5ZDVOQzBiZmlkYlR2VnBkdXZVTHVHSGV2QXRZUUFmUnJYYTlOekFkTHVJQkFpbWFXbWNlLTBmc2wiCiAgICAgIH0K
         """;
+
+    final KeyEntry parsedKey = new KeyEntry("name", key,null);
+    parsedKey.validate();
+    Assertions.assertEquals("B4dle5j2XO_r-vltojH0z_AGLHTJ5Sjdtv-8005c4L4", parsedKey.getKey().getKeyID());
+
+  }
+
+  @Test
+  void testParseKeyFail() {
+    Assertions.assertThrows(IllegalArgumentException.class, () -> new KeyEntry("name", null,null).validate());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> new KeyEntry("name", "value","value").validate());
+  }
+
+  @Test
+  void testParseKeyPem() {
+
     final String pem = """
         -----BEGIN CERTIFICATE-----
         MIIFGTCCAwGgAwIBAgIUMACsMXZsd7j+wAd4XJETj39Z8jYwDQYJKoZIhvcNAQEL
@@ -57,10 +73,9 @@ class KeyEntryTest {
         nSHLYt/MgpL7yoZFVQ==
         -----END CERTIFICATE-----""";
 
-    final KeyEntry parsedKey = new KeyEntry("name", key,null);
-    Assertions.assertEquals("B4dle5j2XO_r-vltojH0z_AGLHTJ5Sjdtv-8005c4L4", parsedKey.getKey().getKeyID());
-
-    Assertions.assertEquals("_ex9CH8rrUNrheFsZrpbsqctsnwusja404CIGe4-Q9Y",new KeyEntry("name",null,pem).getKey().getKeyID());
+    final KeyEntry parsedKey = new KeyEntry("name",null,pem);
+    parsedKey.validate();
+    Assertions.assertEquals("_ex9CH8rrUNrheFsZrpbsqctsnwusja404CIGe4-Q9Y",parsedKey.getKey().getKeyID());
   }
 
 }

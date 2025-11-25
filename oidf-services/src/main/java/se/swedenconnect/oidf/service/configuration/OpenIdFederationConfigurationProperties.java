@@ -16,10 +16,12 @@
  */
 package se.swedenconnect.oidf.service.configuration;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.util.Assert;
 import se.swedenconnect.oidf.service.entity.EntityProperty;
 import se.swedenconnect.oidf.service.entity.PolicyConfigurationProperties;
 import se.swedenconnect.oidf.service.keys.KeyEntry;
@@ -151,6 +153,20 @@ public class OpenIdFederationConfigurationProperties {
       public static final class Endpoints {
         private String basePath;
       }
+
+      /**
+       * If enabled properties are validated
+       */
+      public void validate() {
+        if(this.enabled == null || !this.enabled) {
+          return;
+        }
+        final String basePropName = "openid.federation.registry.integration.";
+        Assert.notNull(this.instanceId, basePropName + "instance-id must be configured");
+        Assert.notNull(this.endpoints, basePropName + "endpoints must be configured");
+        Assert.notNull(this.validationKeys, basePropName + "validationKeys must be configured");
+        Assert.isTrue(!this.validationKeys.isEmpty(), basePropName + "validationKeys must be configured");
+      }
     }
   }
 
@@ -168,5 +184,14 @@ public class OpenIdFederationConfigurationProperties {
     private List<TrustAnchorModuleProperties.TrustAnchorSubModuleProperties> trustAnchors;
     @NestedConfigurationProperty
     private List<TrustMarkIssuerModuleConfigurationProperties.TrustMarkIssuerSubModuleProperty> trustMarkIssuers;
+  }
+
+  /**
+   * Validate that the right data is set in properties
+   */
+  @PostConstruct
+  public void validate(){
+    this.additionalKeys.forEach(KeyEntry::validate);
+    Optional.ofNullable(this.getRegistry()).map(Registry::getIntegration).ifPresent(Registry.Integration::validate);
   }
 }
