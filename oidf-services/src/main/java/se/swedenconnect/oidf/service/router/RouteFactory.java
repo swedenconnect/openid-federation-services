@@ -90,7 +90,11 @@ public class RouteFactory {
           this.context.getContextPath()
       );
     }
-    final String internalEndpoint = this.getInternalEndpoint(endpoint, path, Objects.nonNull(entity.getOverrideConfigurationLocation()));
+    final String internalEndpoint = this.getInternalEndpoint(
+        endpoint,
+        path,
+        Objects.nonNull(entity.getOverrideConfigurationLocation())
+    );
     final RequestPredicate hostPredicate = r -> Optional.ofNullable(r.headers().header("host").getFirst()).orElse(
         "").equals(host);
     final RequestPredicate pathPredicate = r -> r.path().equals(internalEndpoint);
@@ -109,7 +113,8 @@ public class RouteFactory {
   }
 
   private URI getUri(final EntityRecord entity) {
-    if (Objects.nonNull(entity.getOverrideConfigurationLocation()) && ! entity.getOverrideConfigurationLocation().isBlank()) {
+    if (Objects.nonNull(entity.getOverrideConfigurationLocation())
+        && ! entity.getOverrideConfigurationLocation().isBlank()) {
       return URI.create(entity.getOverrideConfigurationLocation());
     }
     return URI.create(entity.getSubject().getValue());
