@@ -17,14 +17,59 @@
 package se.swedenconnect.oidf.common.entity.entity.integration.federation;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
+import java.io.Serial;
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Request class for fetching entity configuration.
- * @param entityID to fetch
  *
  * @author Felix Hellman
  */
-public record EntityConfigurationRequest(EntityID entityID) implements Serializable {
+@Builder
+@Getter
+public final class EntityConfigurationRequest implements Serializable {
+  private final EntityID entityID;
+  private final String ecLocation;
+
+  /**
+   * @param entityID to fetch
+   */
+  public EntityConfigurationRequest(final EntityID entityID) {
+    this.entityID = entityID;
+    this.ecLocation = null;
+  }
+
+  /**
+   * @param entityID to fetch
+   * @param ecLocation optional location for entity configuration
+   */
+  public EntityConfigurationRequest(final EntityID entityID, final String ecLocation) {
+    this.entityID = entityID;
+    this.ecLocation = ecLocation;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (obj == null || obj.getClass() != this.getClass()) return false;
+    var that = (EntityConfigurationRequest) obj;
+    return Objects.equals(this.entityID, that.entityID);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(entityID);
+  }
+
+  @Override
+  public String toString() {
+    return "EntityConfigurationRequest[" +
+           "entityID=" + entityID + ']';
+  }
+
 }
