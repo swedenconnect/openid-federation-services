@@ -77,7 +77,8 @@ public class EntityRouter implements Router {
     final Optional<RequestPredicate> alternateRoute = Optional.ofNullable(entity.getOverrideConfigurationLocation())
         .map(this.routeFactory::createAlternateRoute);
 
-    final RequestPredicate defaultRoute = this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation");
+    final RequestPredicate defaultRoute = this.routeFactory
+        .createRoute(entity.getSubject(), "/.well-known/openid-federation");
 
     return alternateRoute
         .map(requestPredicate -> requestPredicate.or(defaultRoute))

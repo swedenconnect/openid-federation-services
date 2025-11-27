@@ -86,6 +86,10 @@ public class RouteFactory {
     return pathPredicate;
   }
 
+  /**
+   * @param urlOrEndpoint to create endpoint for
+   * @return predicate
+   */
   public RequestPredicate createAlternateRoute(final String urlOrEndpoint) {
     if (!urlOrEndpoint.contains(this.context.getContextPath())) {
       log.warn("Could not create alternate route {}, path does not contain server context path {}",
