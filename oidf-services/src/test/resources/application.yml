@@ -273,6 +273,7 @@ openid:
               }
       - subject: http://localhost:11111/im
         issuer: http://localhost:11111/im
+        override-configuration-location: "http://localhost:11111/im/banan"
         hosted-record:
           metadata:
             json: |
@@ -342,7 +343,7 @@ openid:
           - sign-key-1
         crit:
           - subject_entity_configuration_location
-        override-configuration-location: "http://localhost:11111/im/.well-known/openid-federation"
+        override-configuration-location: "http://localhost:11111/im/banan"
       - subject: http://localhost:11111/entity_type/ta
         issuer: http://localhost:11111/entity_type/ta
         hosted-record:

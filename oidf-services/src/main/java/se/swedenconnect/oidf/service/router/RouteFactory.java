@@ -85,4 +85,17 @@ public class RouteFactory {
     }
     return pathPredicate;
   }
+
+  public RequestPredicate createAlternateRoute(final String urlOrEndpoint) {
+    if (!urlOrEndpoint.contains(this.context.getContextPath())) {
+      log.warn("Could not create alternate route {}, path does not contain server context path {}",
+          urlOrEndpoint,
+          this.context.getContextPath()
+      );
+    }
+    if (urlOrEndpoint.startsWith("/")) {
+      return r -> r.path().equals(urlOrEndpoint);
+    }
+    return r -> r.uri().equals(URI.create(urlOrEndpoint));
+  }
 }

@@ -25,6 +25,10 @@ import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
+import java.io.ObjectStreamClass;
+import java.util.Objects;
+import java.util.Optional;
+
 /**
  * Router responsible for matching any entity configuration endpoints.
  *
@@ -53,13 +57,13 @@ public class EntityRouter implements Router {
     route.GET(request -> {
       return source.getAllEntities().stream()
           .filter(EntityRecord::isHosted)
-          .map(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation"))
+          .map(entity -> this.getRouteForEntity(entity))
           .reduce(p -> false, RequestPredicate::or)
           .test(request);
     }, request -> {
       final EntityRecord entityRecord = source.getAllEntities().stream()
           .filter(EntityRecord::isHosted)
-          .filter(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation")
+          .filter(entity -> this.getRouteForEntity(entity)
               .test(request))
           .findFirst()
           .get();
@@ -67,5 +71,16 @@ public class EntityRouter implements Router {
           .body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement()
               .serialize());
     });
+  }
+
+  private RequestPredicate getRouteForEntity(final EntityRecord entity) {
+    final Optional<RequestPredicate> alternateRoute = Optional.ofNullable(entity.getOverrideConfigurationLocation())
+        .map(this.routeFactory::createAlternateRoute);
+
+    final RequestPredicate defaultRoute = this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation");
+
+    return alternateRoute
+        .map(requestPredicate -> requestPredicate.or(defaultRoute))
+        .orElse(defaultRoute);
   }
 }
