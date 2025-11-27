@@ -50,7 +50,10 @@ public class RestClientFederationClient implements FederationClient {
 
   @Override
   public EntityStatement entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
-    final String jwt = Optional.ofNullable(request.parameters().getEcLocation())
+    final String jwt = Optional.ofNullable(request.federationEntityMetadata()
+            .get("subject_entity_configuration_location"))
+        .filter(l -> l instanceof String)
+        .map(String.class::cast)
         .map(location -> {
           if (location.startsWith("data:application/entity-statement+jwt,")) {
             return location.split(",")[1];
@@ -64,7 +67,7 @@ public class RestClientFederationClient implements FederationClient {
         })
         .orElseGet(
             () -> this.client.mutate()
-                .baseUrl(request.parameters().getEntityID().getValue())
+                .baseUrl(request.parameters().entityID().getValue())
                 .build()
                 .get()
                 .uri(builder -> builder.path("/.well-known/openid-federation").build()).retrieve()

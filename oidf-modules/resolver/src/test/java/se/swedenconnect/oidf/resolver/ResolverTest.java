@@ -156,7 +156,7 @@ class ResolverTest {
   private static void mockEntityStatement(final FederationClient mock,
                                           final EntityStatement entityConfiguration) {
     final FederationRequest<EntityConfigurationRequest> matcher = ArgumentMatchers.argThat(request -> {
-      return request != null && request.parameters().getEntityID().equals(entityConfiguration.getEntityID());
+      return request != null && request.parameters().entityID().equals(entityConfiguration.getEntityID());
     });
     Mockito.when(mock.entityConfiguration(matcher)).thenReturn(entityConfiguration);
   }
