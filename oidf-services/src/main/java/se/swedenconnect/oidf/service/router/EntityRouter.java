@@ -63,7 +63,7 @@ public class EntityRouter implements Router {
     }, request -> {
       final EntityRecord entityRecord = source.getAllEntities().stream()
           .filter(EntityRecord::isHosted)
-          .filter(entity -> this.routeFactory.createRoute(entity, "/.well-known/openid-federation")
+          .filter(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation")
               .test(request))
           .findFirst()
           .get();
