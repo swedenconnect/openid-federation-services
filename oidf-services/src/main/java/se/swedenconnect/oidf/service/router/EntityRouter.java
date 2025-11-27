@@ -25,8 +25,6 @@ import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
-import java.util.Objects;
-
 /**
  * Router responsible for matching any entity configuration endpoints.
  *
@@ -55,9 +53,7 @@ public class EntityRouter implements Router {
     route.GET(request -> {
       return source.getAllEntities().stream()
           .filter(EntityRecord::isHosted)
-          .map(entity -> {
-            return this.routeFactory.createRoute(entity, "/.well-known/openid-federation");
-          })
+          .map(entity -> this.routeFactory.createRoute(entity.getSubject(), "/.well-known/openid-federation"))
           .reduce(p -> false, RequestPredicate::or)
           .test(request);
     }, request -> {

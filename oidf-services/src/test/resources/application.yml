@@ -342,7 +342,7 @@ openid:
           - sign-key-1
         crit:
           - subject_entity_configuration_location
-        override-configuration-location: "http://localhost:11111/im/banan"
+        override-configuration-location: "http://localhost:11111/im/.well-known/openid-federation"
       - subject: http://localhost:11111/entity_type/ta
         issuer: http://localhost:11111/entity_type/ta
         hosted-record:

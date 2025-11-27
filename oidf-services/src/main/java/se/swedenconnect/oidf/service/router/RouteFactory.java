@@ -21,12 +21,11 @@ import jakarta.servlet.ServletContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RequestPredicate;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.service.configuration.OpenIdFederationConfigurationProperties;
+import se.swedenconnect.oidf.service.error.ErrorHandler;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -59,38 +58,25 @@ public class RouteFactory {
 
   /**
    * Creates a route for an entity.
-   *
-   * @param entityId   for this route
+   * @param entityID for this route
    * @param endpoint for this route
    * @return route predicate
    */
   public RequestPredicate createRoute(
-      final EntityID entityId,
+      final EntityID entityID,
       final String endpoint) {
-    return this.createRoute(EntityRecord.builder().subject(entityId).build(), endpoint);
-  }
-
-  /**
-   * Creates a route for an entity.
-   *
-   * @param entity   for this route
-   * @param endpoint for this route
-   * @return route predicate
-   */
-  public RequestPredicate createRoute(
-      final EntityRecord entity,
-      final String endpoint) {
-    final URI uri = this.getUri(entity);
+    final URI uri = URI.create(entityID.getValue());
     final String path = uri.getPath();
     final String host = uri.getHost();
     if (!uri.toString().contains(this.context.getContextPath())) {
       log.warn("Could not create route {}/{}, path does not contain server context path {}",
-          uri.toASCIIString(),
+          entityID.getValue(),
           endpoint,
           this.context.getContextPath()
       );
     }
-    final String internalEndpoint = this.getInternalEndpoint(endpoint, path, Objects.nonNull(entity.getOverrideConfigurationLocation()));
+    final String contextAwarePath = path.replace(this.context.getContextPath(), "");
+    final String internalEndpoint = "%s%s".formatted(contextAwarePath, endpoint);
     final RequestPredicate hostPredicate = r -> Optional.ofNullable(r.headers().header("host").getFirst()).orElse(
         "").equals(host);
     final RequestPredicate pathPredicate = r -> r.path().equals(internalEndpoint);
@@ -98,20 +84,5 @@ public class RouteFactory {
       return hostPredicate.and(pathPredicate);
     }
     return pathPredicate;
-  }
-
-  private String getInternalEndpoint(final String endpoint, final String path, final boolean override) {
-    String internalEndpoint = path.replace(this.context.getContextPath(), "");
-    if (!override) {
-      internalEndpoint += endpoint;
-    }
-    return internalEndpoint;
-  }
-
-  private URI getUri(final EntityRecord entity) {
-    if (Objects.nonNull(entity.getOverrideConfigurationLocation()) && ! entity.getOverrideConfigurationLocation().isBlank()) {
-      return URI.create(entity.getOverrideConfigurationLocation());
-    }
-    return URI.create(entity.getSubject().getValue());
   }
 }
