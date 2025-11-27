@@ -50,10 +50,7 @@ public class RestClientFederationClient implements FederationClient {
 
   @Override
   public EntityStatement entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
-    final String jwt = Optional.ofNullable(request.federationEntityMetadata()
-            .get("subject_entity_configuration_location"))
-        .filter(l -> l instanceof String)
-        .map(String.class::cast)
+    final String jwt = Optional.ofNullable(request.parameters().ecLocation())
         .map(location -> {
           if (location.startsWith("data:application/entity-statement+jwt,")) {
             return location.split(",")[1];

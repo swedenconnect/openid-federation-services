@@ -138,7 +138,8 @@ public class TrustAnchor {
         .stream()
         .map(entity -> {
           final EntityID entityID = new EntityID(entity.getSubject().getValue());
-          return new FederationRequest<>(new EntityConfigurationRequest(entityID),
+          return new FederationRequest<>(
+              new EntityConfigurationRequest(entityID, entity.getOverrideConfigurationLocation()),
               Optional.ofNullable(entity.getHostedRecord())
                   .map(HostedRecord::getMetadata)
                   .orElse(Map.of()),

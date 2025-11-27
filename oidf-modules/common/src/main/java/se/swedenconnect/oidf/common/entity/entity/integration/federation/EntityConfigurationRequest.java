@@ -23,8 +23,9 @@ import java.io.Serializable;
 /**
  * Request class for fetching entity configuration.
  * @param entityID to fetch
+ * @param ecLocation alternate location
  *
  * @author Felix Hellman
  */
-public record EntityConfigurationRequest(EntityID entityID) implements Serializable {
+public record EntityConfigurationRequest(EntityID entityID, String ecLocation) implements Serializable {
 }
