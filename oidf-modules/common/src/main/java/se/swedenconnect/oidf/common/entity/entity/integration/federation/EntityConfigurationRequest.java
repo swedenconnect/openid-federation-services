@@ -54,24 +54,22 @@ public final class EntityConfigurationRequest implements Serializable {
   }
 
   @Override
-  public boolean equals(final Object obj) {
+  public boolean equals(Object obj) {
     if (obj == this) return true;
     if (obj == null || obj.getClass() != this.getClass()) return false;
-    final EntityConfigurationRequest that = (EntityConfigurationRequest) obj;
+    var that = (EntityConfigurationRequest) obj;
     return Objects.equals(this.entityID, that.entityID);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.entityID);
+    return Objects.hash(entityID);
   }
 
   @Override
   public String toString() {
-    final StringBuffer sb = new StringBuffer("EntityConfigurationRequest{");
-    sb.append("entityID=").append(this.entityID);
-    sb.append(", ecLocation='").append(this.ecLocation).append('\'');
-    sb.append('}');
-    return sb.toString();
+    return "EntityConfigurationRequest[" +
+           "entityID=" + entityID + ']';
   }
+
 }
