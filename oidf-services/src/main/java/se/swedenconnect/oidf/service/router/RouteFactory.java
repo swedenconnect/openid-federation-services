@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.function.RequestPredicate;
 import se.swedenconnect.oidf.service.configuration.OpenIdFederationConfigurationProperties;
-import se.swedenconnect.oidf.service.error.ErrorHandler;
 
 import java.net.URI;
 import java.util.List;
@@ -42,6 +41,7 @@ public class RouteFactory {
 
   /**
    * Constructor.
+   *
    * @param context
    * @param properties
    */
@@ -58,6 +58,7 @@ public class RouteFactory {
 
   /**
    * Creates a route for an entity.
+   *
    * @param entityID for this route
    * @param endpoint for this route
    * @return route predicate
@@ -65,41 +66,57 @@ public class RouteFactory {
   public RequestPredicate createRoute(
       final EntityID entityID,
       final String endpoint) {
-    final URI uri = URI.create(entityID.getValue());
-    final String path = uri.getPath();
-    final String host = uri.getHost();
-    if (!uri.toString().contains(this.context.getContextPath())) {
-      log.warn("Could not create route {}/{}, path does not contain server context path {}",
-          entityID.getValue(),
-          endpoint,
-          this.context.getContextPath()
-      );
-    }
-    final String contextAwarePath = path.replace(this.context.getContextPath(), "");
-    final String internalEndpoint = "%s%s".formatted(contextAwarePath, endpoint);
-    final RequestPredicate hostPredicate = r -> Optional.ofNullable(r.headers().header("host").getFirst()).orElse(
-        "").equals(host);
-    final RequestPredicate pathPredicate = r -> r.path().equals(internalEndpoint);
-    if (this.properties.getMode().equals(RouterProperties.DomainEvaluationMode.STRICT)) {
-      return hostPredicate.and(pathPredicate);
-    }
-    return pathPredicate;
+    return this.createRoute(entityID, endpoint, true);
   }
 
-  /**
-   * @param urlOrEndpoint to create endpoint for
-   * @return predicate
-   */
-  public RequestPredicate createAlternateRoute(final String urlOrEndpoint) {
-    if (!urlOrEndpoint.contains(this.context.getContextPath())) {
-      log.warn("Could not create alternate route {}, path does not contain server context path {}",
-          urlOrEndpoint,
-          this.context.getContextPath()
-      );
-    }
-    if (urlOrEndpoint.startsWith("/")) {
-      return r -> r.path().equals(urlOrEndpoint);
-    }
-    return r -> r.uri().equals(URI.create(urlOrEndpoint));
+/**
+ * Creates a route for an entity.
+ *
+ * @param entityID for this route
+ * @param endpoint for this route
+ * @param logOnWarning log warning, disable this if an alternate route is feasible
+ * @return route predicate
+ */
+public RequestPredicate createRoute(
+    final EntityID entityID,
+    final String endpoint,
+    final Boolean logOnWarning) {
+  final URI uri = URI.create(entityID.getValue());
+  final String path = uri.getPath();
+  final String host = uri.getHost();
+  if (!uri.toString().contains(this.context.getContextPath()) && logOnWarning) {
+    log.warn("Could not create route {}/{}, path does not contain server context path {}",
+        entityID.getValue(),
+        endpoint,
+        this.context.getContextPath()
+    );
+    return r -> false;
   }
+  final String contextAwarePath = path.replace(this.context.getContextPath(), "");
+  final String internalEndpoint = "%s%s".formatted(contextAwarePath, endpoint);
+  final RequestPredicate hostPredicate = r -> Optional.ofNullable(r.headers().header("host").getFirst()).orElse(
+      "").equals(host);
+  final RequestPredicate pathPredicate = r -> r.path().equals(internalEndpoint);
+  if (this.properties.getMode().equals(RouterProperties.DomainEvaluationMode.STRICT)) {
+    return hostPredicate.and(pathPredicate);
+  }
+  return pathPredicate;
+}
+
+/**
+ * @param urlOrEndpoint to create endpoint for
+ * @return predicate
+ */
+public RequestPredicate createAlternateRoute(final String urlOrEndpoint) {
+  if (!urlOrEndpoint.contains(this.context.getContextPath())) {
+    log.warn("Could not create alternate route {}, path does not contain server context path {}",
+        urlOrEndpoint,
+        this.context.getContextPath()
+    );
+  }
+  if (urlOrEndpoint.startsWith("/")) {
+    return r -> r.path().equals(urlOrEndpoint);
+  }
+  return r -> r.uri().equals(URI.create(urlOrEndpoint));
+}
 }
