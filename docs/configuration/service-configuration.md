@@ -23,17 +23,28 @@ be loaded from the registry or configured with properties.
 | `storage`       | Storage module to use, either memory (in memory) or redis                | String         | memory        |
 | `sign`          | List of credential names used for signing jwts that the service produces | List\<String\> | Empty List    |
 | `kid-algorithm` | key id algorithm, thumbprint or serial                                   | String         | thumbprint    |
+    
+`openid.federation.additional-keys*`
+
+| Property                    | Description                        | Type   | Default value |
+|:----------------------------|:-----------------------------------|:-------|:--------------|
+| `name`                      | Name of key that can be referenced | String | null          |
+| `base64-encoded-public-jwk` | base64 encoded JWK key             | String | null          |
+| `certificate`               | Pem public key or certificate      | String | null          |
+
+
 
 ### Registry configuration
 
 `openid.federation.registry.integration.*`
 
-| Property              | Description                                                                  | Type           | Default value |
-|:----------------------|:-----------------------------------------------------------------------------|:---------------|:--------------|
-| `enabled`             | Set this to true to enable registry integration                              | Boolean        | false         |
-| `instance-id`         | Instance id for node group                                                   | UUID           | null          |
-| `endpoints.base-path` | Base path for registry.                                                      | String         | null          |
-| `validation-keys`     | List of credential names used for validating jwts that the registry produces | List\<String\> | Empty List    |
+| Property                  | Description                                                                  | Type           | Default value |
+|:--------------------------|:-----------------------------------------------------------------------------|:---------------|:--------------|
+| `enabled`                 | Set this to true to enable registry integration                              | Boolean        | false         |
+| `instance-id`             | Instance id for node group                                                   | UUID           | null          |
+| `endpoints-base-path`     | Base path for registry.                                                      | String         | null          |
+| `trust-store-bundle-name` | Name of trust bundle to use for this integration if needed.                  | String         | null          |
+| `validation-keys`         | List of credential names used for validating jwts that the registry produces | List\<String\> | Empty List    |
 
 ### Module and submodule configuration
 
