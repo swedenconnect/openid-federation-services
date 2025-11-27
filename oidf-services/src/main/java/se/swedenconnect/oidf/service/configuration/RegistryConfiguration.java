@@ -28,8 +28,6 @@ import se.swedenconnect.oidf.service.entity.registry.RestClientRecordIntegration
 import se.swedenconnect.oidf.service.rest.RestClientFactory;
 import se.swedenconnect.oidf.service.rest.RestClientProperties;
 
-import java.util.Optional;
-
 /**
  * Configuration for running towards local configuration AND/OR a registry service.
  *
@@ -47,12 +45,9 @@ public class RegistryConfiguration {
   @Qualifier("registry-client")
   RestClient registryClient(final RestClientFactory factory, final OpenIdFederationConfigurationProperties properties) {
     final RestClientProperties.RestClientProperty property = new RestClientProperties.RestClientProperty();
-    final OpenIdFederationConfigurationProperties.Registry.Integration registryIntegration =
-        properties.getRegistry().getIntegration();
-    Optional.ofNullable(registryIntegration.getTrustStoreBundleName()).ifPresent(property::setTrustStoreBundleName);
-
+    property.setTrustStoreBundleName("oidf-internal");
     property.setName("registry-client");
-    property.setBaseUri(registryIntegration.getEndpoints().getBasePath());
+    property.setBaseUri(properties.getRegistry().getIntegration().getEndpoints().getBasePath());
     return factory.create(property);
   }
 

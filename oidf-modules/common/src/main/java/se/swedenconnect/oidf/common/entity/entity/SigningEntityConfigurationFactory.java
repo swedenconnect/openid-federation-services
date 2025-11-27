@@ -76,7 +76,7 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
       builder.issueTime(Date.from(Instant.now()));
       builder.expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)));
       builder.claim("metadata", record.getHostedRecord().getMetadata());
-      builder.claim("authority_hint", record.getIssuer().getValue());
+      builder.claim("authority_hint", record.getIssuer());
       builder.claim("jwks", this.signerFactory.getSignKeys().toPublicJWKSet().toJSONObject());
       if (Objects.isNull(record.getHostedRecord())) {
         return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signerFactory.getSignKey());
