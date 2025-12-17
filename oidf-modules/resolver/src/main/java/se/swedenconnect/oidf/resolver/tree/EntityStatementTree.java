@@ -108,4 +108,8 @@ public class EntityStatementTree {
     //Intermediates and trust anchors MUST have a federation_fetch_endpoint
     return Objects.nonNull(metadata) && metadata.containsKey("federation_fetch_endpoint");
   }
+
+  public Set<Tree.SearchResult<EntityStatement>> getAll() {
+    return this.tree.search(new SearchRequest<>((parent, child) -> true, false, this.tree.getCurrentSnapshot()));
+  }
 }
