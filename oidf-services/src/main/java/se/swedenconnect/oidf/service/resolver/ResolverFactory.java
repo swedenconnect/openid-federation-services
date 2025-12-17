@@ -131,9 +131,4 @@ public class ResolverFactory {
   private ResolverResponseFactory resolverResponseFactory(final ResolverProperties properties) {
     return new ResolverResponseFactory(Clock.systemUTC(), properties, this.signerFactory);
   }
-
-  public EntityStatementTree getTree(final ResolverProperties properties) {
-    final ResolverCacheRegistration registration = this.registry.getRegistration(properties.entityIdentifier()).get();
-    return registration.tree();
-  }
 }

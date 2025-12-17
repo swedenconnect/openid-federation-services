@@ -109,6 +109,10 @@ public class EntityStatementTree {
     return Objects.nonNull(metadata) && metadata.containsKey("federation_fetch_endpoint");
   }
 
+  /**
+   * Get all entity statements in federation.
+   * @return all ES
+   */
   public Set<Tree.SearchResult<EntityStatement>> getAll() {
     return this.tree.search(new SearchRequest<>((parent, child) -> true, false, this.tree.getCurrentSnapshot()));
   }

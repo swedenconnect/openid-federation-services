@@ -32,6 +32,11 @@ import se.swedenconnect.oidf.service.resolver.cache.ResolverCacheRegistry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Export endpoint for oidf service.
+ *
+ * @author Felix Hellman
+ */
 @Endpoint(id = "export")
 @Component
 @AllArgsConstructor
@@ -40,6 +45,11 @@ public class ExportEndpoint {
   private final CompositeRecordSource source;
   private final ObjectMapper mapper;
 
+  /**
+   * Exports federation as json
+   * @return federation as json
+   * @throws JsonProcessingException
+   */
   @ReadOperation
   public String exportFederation() throws JsonProcessingException {
     final ResolverProperties properties = this.source.getResolverProperties().getFirst();
