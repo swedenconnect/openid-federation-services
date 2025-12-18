@@ -22,20 +22,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
+import se.swedenconnect.oidf.service.resolver.ResolverFactory;
 import se.swedenconnect.oidf.service.resolver.cache.ResolverCacheRegistry;
 import se.swedenconnect.oidf.service.state.StateHashFactory;
 
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Export endpoint for oidf service.
@@ -44,10 +47,12 @@ import java.util.stream.Collectors;
  */
 @Endpoint(id = "export")
 @Component
+@Slf4j
 @AllArgsConstructor
 public class ExportEndpoint {
   private final ResolverCacheRegistry registry;
   private final CompositeRecordSource source;
+  private final ResolverFactory factory;
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   static {
@@ -69,12 +74,35 @@ public class ExportEndpoint {
   @ReadOperation
   public String exportFederation() throws JsonProcessingException {
     final ResolverProperties properties = this.source.getResolverProperties().getFirst();
+    final List<ExportStatement> selfStatements = new ArrayList<>();
+    final List<ExportStatement> subordinateStatements = new ArrayList<>();
 
     final EntityStatementTree tree = this.registry.getRegistration(properties.entityIdentifier()).get().tree();
-    final Set<EntityStatement> result = tree.getAll()
+    tree.getAll()
         .stream()
         .map(Tree.SearchResult::getData)
-        .collect(Collectors.toSet());
-    return this.MAPPER.writeValueAsString(result);
+        .peek(es -> es.getClaimsSet().toJSONObject())
+        .forEach(es -> {
+          if (es.getClaimsSet().isSelfStatement()) {
+            selfStatements.add(new ExportStatement(es));
+          } else {
+            subordinateStatements.add(new ExportStatement(es));
+          }
+        });
+
+    selfStatements.forEach(ss -> {
+      try {
+        final Map<Integer, Map<String, String>> explain = this.factory.create(properties).explain(new ResolveRequest(
+            ss.getEntityStatement().getEntityID().getValue(), properties.trustAnchor(), null, true));
+        ss.withResolverExplanation(explain);
+      } catch (final Exception e) {
+        log.error("Failed to add explanation to entity statement from resolver", e);
+      }
+    });
+
+    return MAPPER.writeValueAsString(Map.of(
+        "nodes", selfStatements.stream().map(ExportStatement::toJsonObject).toList(),
+        "edges", subordinateStatements.stream().map(ExportStatement::toJsonObject).toList()
+    ));
   }
 }
