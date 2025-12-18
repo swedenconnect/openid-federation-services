@@ -19,7 +19,6 @@ package se.swedenconnect.oidf.service.management;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
@@ -58,10 +57,10 @@ public class ExportFriendlyEndpoint {
         "tmi", "pen",
         "ta", "anchor",
         "im", "globe",
-        "op", "credit-card",
-        "idp", "credit-card",
-        "rp", "user",
-        "sp", "user",
+        "openid_provider", "credit-card",
+        "saml_identity_provider", "credit-card",
+        "openid_relying_party", "user",
+        "saml_service_provider", "user",
         "error", "exclamation-circle"
     );
     final Map<String, List<Map<String, Object>>> nodesAndEdges = this.exportEndpoint.getNodesAndEdges();
@@ -71,6 +70,28 @@ public class ExportFriendlyEndpoint {
           final Map<String, Object> claims = (Map<String, Object>) node.get("claims");
           final String sub = (String) claims.get("sub");
           final String iss = (String) claims.get("iss");
+
+          final String evaluatedRole = Optional.ofNullable(claims.get("metadata"))
+              .map(metadata -> (Map<String, Object>) metadata)
+              .flatMap(metadata -> {
+                return Optional.ofNullable(metadata.get("federation_entity"));
+              })
+              .map(metadata -> (Map<String, Object>) metadata)
+              .map(federationMetadata -> {
+                if (federationMetadata.containsKey("federation_resolve_endpoint")) {
+                  return "ta";
+                }
+                if (federationMetadata.containsKey("federation_fetch_endpoint")) {
+                  return "im";
+                }
+                if (federationMetadata.containsKey("federation_trust_mark_endpoint")) {
+                  return "tmi";
+                }
+                return null;
+              })
+              .orElse(null);
+
+
           final List<String> types = ((Map<String, Object>) claims.get("metadata")).entrySet().stream()
               .filter(f -> !"federation_entity".equals(f.getKey()))
               .map(Map.Entry::getKey)
@@ -87,7 +108,12 @@ public class ExportFriendlyEndpoint {
               "icon", "check-circle"
           ));
 
-
+          Optional.ofNullable(evaluatedRole).ifPresent(role -> {
+            Optional.ofNullable(icons.get(role)).ifPresent(icon -> {
+              nodeJson.put("icon", icon);
+            });
+          });
+          
           try {
             final AtomicInteger counter = new AtomicInteger();
             JWKSet.parse((Map<String, Object>) claims.get("jwks")).getKeys()
@@ -100,19 +126,25 @@ public class ExportFriendlyEndpoint {
             nodeJson.put("detail__kid_failed_to_parse", "true");
           }
 
+          Optional.ofNullable(types).ifPresent(foundTypes -> {
+            if (!foundTypes.stream().filter(type -> !type.equals("federation_entity")).toList().isEmpty()) {
+              final String type = foundTypes.getFirst();
+              nodeJson.put("subtitle", type);
+              Optional.ofNullable(icons.get(type)).ifPresent(icon -> {
+                nodeJson.put("icon", icon);
+              });
+            }
+          });
+
           if (errorsPresent) {
             final AtomicInteger counter = new AtomicInteger();
-            explanation.forEach((a,b) -> {
+            explanation.forEach((a, b) -> {
               nodeJson.put("detail__expl_%s".formatted(counter.getAndIncrement()), b.toString());
             });
             nodeJson.put("icon", icons.get("error"));
           }
 
-          Optional.ofNullable(types).ifPresent(foundTypes -> {
-            if (!foundTypes.stream().filter(type -> !type.equals("federation_entity")).toList().isEmpty()) {
-              nodeJson.put("subtitle", foundTypes.getFirst());
-            }
-          });
+
           return nodeJson;
         }).toList();
     final List<Map<String, String>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
