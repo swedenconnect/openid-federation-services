@@ -76,10 +76,14 @@ public class ExportEndpoint {
    */
   @ReadOperation
   public String exportFederation() throws JsonProcessingException {
-    final Map<String, List<Map<String, Object>>> nodes = getNodesAndEdges();
+    final Map<String, List<Map<String, Object>>> nodes = this.getNodesAndEdges();
     return MAPPER.writeValueAsString(nodes);
   }
 
+  /**
+   * Gets nodes an edges in map format
+   * @return map of nodes and edges
+   */
   public Map<String, List<Map<String, Object>>> getNodesAndEdges() {
     final ResolverProperties properties = this.source.getResolverProperties().getFirst();
     final List<ExportStatement> selfStatements = new ArrayList<>();

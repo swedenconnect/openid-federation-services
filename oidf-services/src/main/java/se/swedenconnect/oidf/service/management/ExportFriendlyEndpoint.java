@@ -26,14 +26,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Grafana friendly export of JSON graph
+ *
+ * @author Felix Hellman
+ */
 @AllArgsConstructor
-@Endpoint(id = "export-friendly")
+@Endpoint(id = "export-grafana")
 @Component
 public class ExportFriendlyEndpoint {
   private final ExportEndpoint exportEndpoint;
 
+  /**
+   * Exports federation in grafana friendly format
+   * @return json string
+   * @throws JsonProcessingException
+   */
   @ReadOperation
-  public String getFriendlyJson() throws JsonProcessingException {
+  public String getGrafanaFriendlyJson() throws JsonProcessingException {
     final Map<String, List<Map<String, Object>>> nodesAndEdges = this.exportEndpoint.getNodesAndEdges();
     final List<Map<String, String>> nodes = nodesAndEdges.get("nodes")
         .stream().map(node -> {
