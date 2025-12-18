@@ -22,12 +22,17 @@ import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Grafana friendly export of JSON graph
+ *
+ * https://grafana.com/docs/grafana/latest/visualizations/panels-visualizations/visualizations/node-graph
+ * https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview
  *
  * @author Felix Hellman
  */
@@ -55,13 +60,23 @@ public class ExportFriendlyEndpoint {
               .map(Map.Entry::getKey)
               .toList();
           final Map<String, Object> explanation = (Map<String, Object>) node.get("explanation");
-          final String color = Map.of(true, "red", false, "green").get(Objects.nonNull(explanation));
-          return Map.of(
+          final String color =
+              Map.of(true, "red", false, "green").get(Objects.nonNull(explanation) && !explanation.isEmpty());
+
+          final Map<String, String> nodeJson = new HashMap<>(Map.of(
               "id", sub,
               "color", color,
               "title", sub,
               "icon", "check-circle"
-          );
+          ));
+
+          Optional.ofNullable(types).ifPresent(foundTypes -> {
+            if (!foundTypes.stream().filter(type -> !type.equals("federation_entity")).toList().isEmpty()) {
+              nodeJson.put("subtitle", foundTypes.getFirst());
+            }
+          });
+
+          return nodeJson;
         }).toList();
     final List<Map<String, String>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
       final Map<String, Object> claims = (Map<String, Object>) edge.get("claims");
