@@ -16,8 +16,12 @@
  */
 package se.swedenconnect.oidf.service.management;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
@@ -28,6 +32,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import se.swedenconnect.oidf.service.resolver.cache.ResolverCacheRegistry;
+import se.swedenconnect.oidf.service.state.StateHashFactory;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,7 +48,18 @@ import java.util.stream.Collectors;
 public class ExportEndpoint {
   private final ResolverCacheRegistry registry;
   private final CompositeRecordSource source;
-  private final ObjectMapper mapper;
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+
+  static {
+    MAPPER.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+
+    MAPPER.registerModule(new JavaTimeModule());
+
+    final SimpleModule module = new SimpleModule();
+    module.addSerializer(JWKSet.class, new StateHashFactory.JWKSetSerializer());
+    module.addDeserializer(JWKSet.class, new StateHashFactory.JWKSetDeserializer());
+    MAPPER.registerModule(module);
+  }
 
   /**
    * Exports federation as json
@@ -59,6 +75,6 @@ public class ExportEndpoint {
         .stream()
         .map(Tree.SearchResult::getData)
         .collect(Collectors.toSet());
-    return this.mapper.writeValueAsString(result);
+    return this.MAPPER.writeValueAsString(result);
   }
 }
