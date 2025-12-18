@@ -17,16 +17,21 @@
 package se.swedenconnect.oidf.service.management;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.stereotype.Component;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Grafana friendly export of JSON graph
@@ -49,6 +54,16 @@ public class ExportFriendlyEndpoint {
    */
   @ReadOperation
   public String getGrafanaFriendlyJson() throws JsonProcessingException {
+    Map<String, String> icons = Map.of(
+        "tmi", "pen",
+        "ta", "anchor",
+        "im", "globe",
+        "op", "credit-card",
+        "idp", "credit-card",
+        "rp", "user",
+        "sp", "user",
+        "error", "exclamation-circle"
+    );
     final Map<String, List<Map<String, Object>>> nodesAndEdges = this.exportEndpoint.getNodesAndEdges();
     final List<Map<String, String>> nodes = nodesAndEdges.get("nodes")
         .stream().map(node -> {
@@ -57,11 +72,13 @@ public class ExportFriendlyEndpoint {
           final String sub = (String) claims.get("sub");
           final String iss = (String) claims.get("iss");
           final List<String> types = ((Map<String, Object>) claims.get("metadata")).entrySet().stream()
+              .filter(f -> !"federation_entity".equals(f.getKey()))
               .map(Map.Entry::getKey)
               .toList();
           final Map<String, Object> explanation = (Map<String, Object>) node.get("explanation");
+          final boolean errorsPresent = Objects.nonNull(explanation) && !explanation.isEmpty();
           final String color =
-              Map.of(true, "red", false, "green").get(Objects.nonNull(explanation) && !explanation.isEmpty());
+              Map.of(true, "red", false, "green").get(errorsPresent);
 
           final Map<String, String> nodeJson = new HashMap<>(Map.of(
               "id", sub,
@@ -70,23 +87,55 @@ public class ExportFriendlyEndpoint {
               "icon", "check-circle"
           ));
 
+
+          try {
+            final AtomicInteger counter = new AtomicInteger();
+            JWKSet.parse((Map<String, Object>) claims.get("jwks")).getKeys()
+                .stream()
+                .map(JWK::getKeyID)
+                .forEach(kid -> {
+                  nodeJson.put("details__kid_%s".formatted(counter.getAndIncrement()), kid);
+                });
+          } catch (ParseException e) {
+            nodeJson.put("details__kid_failed_to_parse", "true");
+          }
+
+          if (errorsPresent) {
+            final AtomicInteger counter = new AtomicInteger();
+            explanation.forEach((a,b) -> {
+              nodeJson.put("detail__expl_%s".formatted(counter.getAndIncrement()), b.toString());
+            });
+            nodeJson.put("icon", icons.get("error"));
+          }
+
           Optional.ofNullable(types).ifPresent(foundTypes -> {
             if (!foundTypes.stream().filter(type -> !type.equals("federation_entity")).toList().isEmpty()) {
               nodeJson.put("subtitle", foundTypes.getFirst());
             }
           });
-
           return nodeJson;
         }).toList();
     final List<Map<String, String>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
       final Map<String, Object> claims = (Map<String, Object>) edge.get("claims");
       final String sub = (String) claims.get("sub");
       final String iss = (String) claims.get("iss");
-      return Map.of(
+      final Map<String, String> edgeJson = new HashMap<>(Map.of(
           "id", iss + "|" + sub,
           "source", iss,
           "target", sub
-      );
+      ));
+      try {
+        final AtomicInteger counter = new AtomicInteger();
+        JWKSet.parse((Map<String, Object>) claims.get("jwks")).getKeys()
+            .stream()
+            .map(JWK::getKeyID)
+            .forEach(kid -> {
+              edgeJson.put("details__kid_%s".formatted(counter.getAndIncrement()), kid);
+            });
+      } catch (ParseException e) {
+        edgeJson.put("details__kid_failed_to_parse", "true");
+      }
+      return edgeJson;
     }).toList();
 
     return ExportEndpoint.MAPPER.writeValueAsString(Map.of("nodes", nodes, "edges", edges));
