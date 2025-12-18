@@ -53,7 +53,10 @@ public class ExportEndpoint {
   private final ResolverCacheRegistry registry;
   private final CompositeRecordSource source;
   private final ResolverFactory factory;
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  /**
+   * JSON mapper for serializing graphs
+   */
+  public static final ObjectMapper MAPPER = new ObjectMapper();
 
   static {
     MAPPER.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
@@ -73,6 +76,11 @@ public class ExportEndpoint {
    */
   @ReadOperation
   public String exportFederation() throws JsonProcessingException {
+    final Map<String, List<Map<String, Object>>> nodes = getNodesAndEdges();
+    return MAPPER.writeValueAsString(nodes);
+  }
+
+  public Map<String, List<Map<String, Object>>> getNodesAndEdges() {
     final ResolverProperties properties = this.source.getResolverProperties().getFirst();
     final List<ExportStatement> selfStatements = new ArrayList<>();
     final List<ExportStatement> subordinateStatements = new ArrayList<>();
@@ -100,9 +108,10 @@ public class ExportEndpoint {
       }
     });
 
-    return MAPPER.writeValueAsString(Map.of(
+    final Map<String, List<Map<String, Object>>> nodes = Map.of(
         "nodes", selfStatements.stream().map(ExportStatement::toJsonObject).toList(),
         "edges", subordinateStatements.stream().map(ExportStatement::toJsonObject).toList()
-    ));
+    );
+    return nodes;
   }
 }
