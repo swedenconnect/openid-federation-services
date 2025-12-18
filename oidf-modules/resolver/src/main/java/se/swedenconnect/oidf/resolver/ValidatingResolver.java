@@ -119,6 +119,14 @@ public class ValidatingResolver implements Resolver {
       validationErrors.add(new InvalidTrustAnchorException("The Trust Anchor cannot be found or used."));
     }
 
+    if (request.trustAnchor().equals(request.subject())) {
+      final Set<EntityStatement> trustChain = this.tree.getTrustChain(request);
+      return ResolverResponse.builder()
+          .entityStatement(trustChain.stream().findFirst().get())
+          .build();
+    }
+
+
     final Set<EntityStatement> chain = this.tree.getTrustChain(request);
     if (chain.isEmpty()) {
       validationErrors.add(
@@ -156,6 +164,7 @@ public class ValidatingResolver implements Resolver {
         .trustChain(chainValidationResult.chain())
         .validationErrors(validationErrors)
         .build();
+
   }
 
   @Override
