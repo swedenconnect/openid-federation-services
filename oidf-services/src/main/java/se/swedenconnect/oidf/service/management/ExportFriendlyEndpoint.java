@@ -94,10 +94,10 @@ public class ExportFriendlyEndpoint {
                 .stream()
                 .map(JWK::getKeyID)
                 .forEach(kid -> {
-                  nodeJson.put("details__kid_%s".formatted(counter.getAndIncrement()), kid);
+                  nodeJson.put("detail__kid_%s".formatted(counter.getAndIncrement()), kid);
                 });
           } catch (final ParseException e) {
-            nodeJson.put("details__kid_failed_to_parse", "true");
+            nodeJson.put("detail__kid_failed_to_parse", "true");
           }
 
           if (errorsPresent) {
@@ -130,10 +130,10 @@ public class ExportFriendlyEndpoint {
             .stream()
             .map(JWK::getKeyID)
             .forEach(kid -> {
-              edgeJson.put("details__kid_%s".formatted(counter.getAndIncrement()), kid);
+              edgeJson.put("detail__kid_%s".formatted(counter.getAndIncrement()), kid);
             });
       } catch (final ParseException e) {
-        edgeJson.put("details__kid_failed_to_parse", "true");
+        edgeJson.put("detail__kid_failed_to_parse", "true");
       }
       return edgeJson;
     }).toList();
