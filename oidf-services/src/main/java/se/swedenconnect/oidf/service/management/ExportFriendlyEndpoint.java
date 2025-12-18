@@ -54,7 +54,7 @@ public class ExportFriendlyEndpoint {
    */
   @ReadOperation
   public String getGrafanaFriendlyJson() throws JsonProcessingException {
-    Map<String, String> icons = Map.of(
+    final Map<String, String> icons = Map.of(
         "tmi", "pen",
         "ta", "anchor",
         "im", "globe",
@@ -96,7 +96,7 @@ public class ExportFriendlyEndpoint {
                 .forEach(kid -> {
                   nodeJson.put("details__kid_%s".formatted(counter.getAndIncrement()), kid);
                 });
-          } catch (ParseException e) {
+          } catch (final ParseException e) {
             nodeJson.put("details__kid_failed_to_parse", "true");
           }
 
@@ -132,7 +132,7 @@ public class ExportFriendlyEndpoint {
             .forEach(kid -> {
               edgeJson.put("details__kid_%s".formatted(counter.getAndIncrement()), kid);
             });
-      } catch (ParseException e) {
+      } catch (final ParseException e) {
         edgeJson.put("details__kid_failed_to_parse", "true");
       }
       return edgeJson;
