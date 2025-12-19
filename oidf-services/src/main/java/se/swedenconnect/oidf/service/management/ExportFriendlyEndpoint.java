@@ -96,7 +96,7 @@ public class ExportFriendlyEndpoint {
               .filter(f -> !"federation_entity".equals(f.getKey()))
               .map(Map.Entry::getKey)
               .toList();
-          final Map<String, Object> explanation = (Map<String, Object>) node.get("explanation");
+          final Map<Integer, Map<String, String>> explanation = (Map<Integer, Map<String, String>>) node.get("explanation");
           final boolean errorsPresent = Objects.nonNull(explanation) && !explanation.isEmpty();
           final String color =
               Map.of(true, "red", false, "green").get(errorsPresent);
