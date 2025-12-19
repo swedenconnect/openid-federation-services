@@ -89,10 +89,12 @@ public class ValidatingResolver implements Resolver {
             .ifPresent(validationErrors -> {
               validationErrors
                   .forEach(error -> {
-                    explanation.put(counter.getAndIncrement(), Map.of(error.getClass().getCanonicalName(), error.getMessage()));
+                    explanation.put(
+                        counter.getAndIncrement(),
+                        Map.of(error.getClass().getCanonicalName(), error.getMessage())
+                    );
                   });
             });
-    
     return explanation;
   }
 
