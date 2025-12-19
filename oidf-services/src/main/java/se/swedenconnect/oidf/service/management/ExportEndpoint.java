@@ -109,7 +109,9 @@ public class ExportEndpoint {
       try {
         final Map<Integer, Map<String, String>> explain = this.factory.create(properties).explain(new ResolveRequest(
             ss.getEntityStatement().getEntityID().getValue(), properties.trustAnchor(), null, true));
-        ss.withResolverExplanation(explain);
+        if (explain != null) {
+          ss.withResolverExplanation(explain);
+        }
         final double success = this.meterRegistry.counter("GET_entity_configuration", List.of(
             Tag.of("entityId", ss.getEntityStatement().getEntityID().getValue()),
             Tag.of("outcome", "success")
