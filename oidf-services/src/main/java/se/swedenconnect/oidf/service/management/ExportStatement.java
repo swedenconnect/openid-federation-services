@@ -41,6 +41,9 @@ public class ExportStatement {
   @Getter
   private final EntityStatement entityStatement;
   private Map<Integer, Map<String, String>> explanation;
+  private Double success;
+  private Double failure;
+  private Double total;
 
   /**
    * @return json object
@@ -60,6 +63,11 @@ public class ExportStatement {
     Optional.ofNullable(this.explanation).ifPresent(expl -> {
       json.put("explanation", expl);
     });
+
+    Optional.ofNullable(this.total).ifPresent(tot -> {
+      json.put("metrics", Map.of("total", tot, "success", this.success, "failure", this.failure));
+    });
+
     return json;
   }
 
@@ -70,6 +78,20 @@ public class ExportStatement {
    */
   public ExportStatement withResolverExplanation(final Map<Integer, Map<String, String>> explanation) {
     this.explanation = explanation;
+    return this;
+  }
+
+  /**
+   * Add metrics to this node
+   * @param total
+   * @param success
+   * @param failure
+   * @return this
+   */
+  public ExportStatement withMetrics(final double total, final double success, final double failure) {
+    this.success = success / total;
+    this.failure = failure/total;
+    this.total = total;
     return this;
   }
 }

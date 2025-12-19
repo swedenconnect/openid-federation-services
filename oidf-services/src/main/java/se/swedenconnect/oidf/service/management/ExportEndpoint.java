@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nimbusds.jose.jwk.JWKSet;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
@@ -53,6 +55,7 @@ public class ExportEndpoint {
   private final ResolverCacheRegistry registry;
   private final CompositeRecordSource source;
   private final ResolverFactory factory;
+  private final MeterRegistry meterRegistry;
   /**
    * JSON mapper for serializing graphs
    */
@@ -107,6 +110,16 @@ public class ExportEndpoint {
         final Map<Integer, Map<String, String>> explain = this.factory.create(properties).explain(new ResolveRequest(
             ss.getEntityStatement().getEntityID().getValue(), properties.trustAnchor(), null, true));
         ss.withResolverExplanation(explain);
+        final double success = this.meterRegistry.counter("GET_entity_configuration", List.of(
+            Tag.of("entityId", ss.getEntityStatement().getEntityID().getValue()),
+            Tag.of("outcome", "success")
+        )).count();
+        final double failure = this.meterRegistry.counter("GET_entity_configuration", List.of(
+            Tag.of("entityId", ss.getEntityStatement().getEntityID().getValue()),
+            Tag.of("outcome", "failure")
+        )).count();
+        final double total = success + failure;
+        ss.withMetrics(total, success, failure);
       } catch (final Exception e) {
         log.error("Failed to add explanation to entity statement from resolver", e);
       }

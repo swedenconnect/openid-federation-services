@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.service.configuration;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -67,8 +68,9 @@ public class OpenIdFederationConfiguration {
   @Bean
   FederationClient federationClient(
       @Qualifier("module-client") final RestClient client,
-      final CacheFactory factory) {
-    return new FederationLoadingCache(new RestClientFederationClient(client),
+      final CacheFactory factory,
+      final MeterRegistry registry) {
+    return new FederationLoadingCache(new RestClientFederationClient(client, registry),
         factory.create(EntityStatement.class),
         factory.create(EntityStatement.class),
         factory.createListValueCache(String.class),

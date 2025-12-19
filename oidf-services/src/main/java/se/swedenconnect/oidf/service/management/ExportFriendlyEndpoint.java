@@ -108,12 +108,19 @@ public class ExportFriendlyEndpoint {
               "icon", "check-circle"
           ));
 
+          Optional.ofNullable(node.get("metrics"))
+              .map(metrics -> (Map<String, String>) metrics)
+              .ifPresent(metrics -> {
+                nodeJson.put("arc__success", metrics.get("success"));
+                nodeJson.put("arc__failure", metrics.get("failure"));
+              });
+
           Optional.ofNullable(evaluatedRole).ifPresent(role -> {
             Optional.ofNullable(icons.get(role)).ifPresent(icon -> {
               nodeJson.put("icon", icon);
             });
           });
-          
+
           try {
             final AtomicInteger counter = new AtomicInteger();
             JWKSet.parse((Map<String, Object>) claims.get("jwks")).getKeys()
