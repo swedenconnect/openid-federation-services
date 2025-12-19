@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Grafana friendly export of JSON graph
@@ -153,7 +154,8 @@ public class ExportFriendlyEndpoint {
           if (errorsPresent) {
             final AtomicInteger counter = new AtomicInteger();
             explanation.forEach((a, b) -> {
-              nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()), b.toString());
+              nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()),
+                  b.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.joining(",")));
             });
             nodeJson.put("icon", icons.get("error"));
           }
