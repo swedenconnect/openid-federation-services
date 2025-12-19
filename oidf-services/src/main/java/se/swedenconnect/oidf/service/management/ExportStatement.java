@@ -89,9 +89,11 @@ public class ExportStatement {
    * @return this
    */
   public ExportStatement withMetrics(final double total, final double success, final double failure) {
-    this.success = success / total;
-    this.failure = failure/total;
-    this.total = total;
+    if (total != 0) {
+      this.success = success / total;
+      this.failure = failure / total;
+      this.total = total;
+    }
     return this;
   }
 }
