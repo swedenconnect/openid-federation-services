@@ -115,6 +115,8 @@ public class ExportFriendlyEndpoint {
                 if (!errorsPresent) {
                   nodeJson.put("arc__success", String.valueOf(metrics.get("success")));
                   nodeJson.put("arc__failure", String.valueOf(metrics.get("failure")));
+                } else {
+                  nodeJson.put("arc__failure", "1.0");
                 }
                 nodeJson.put("mainstat", String.valueOf((Integer) node.get("mainstat")));
                 nodeJson.put("seconddarystat", String.valueOf((Integer) node.get("seconddarystat")));
@@ -156,7 +158,7 @@ public class ExportFriendlyEndpoint {
             nodeJson.put("icon", icons.get("error"));
           }
 
-
+          nodeJson.remove("icon");
           return nodeJson;
         }).toList();
     final List<Map<String, String>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
