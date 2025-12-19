@@ -117,7 +117,7 @@ public class ExportFriendlyEndpoint {
                   nodeJson.put("arc__success", String.valueOf(metrics.get("success")));
                   nodeJson.put("arc__failure", String.valueOf(metrics.get("failure")));
                 } else {
-                  nodeJson.put("arc__failure", "1.0");
+                  nodeJson.put("arc__validation", "1.0");
                 }
                 nodeJson.put("mainstat", String.valueOf((Integer) node.get("mainstat")));
                 nodeJson.put("seconddarystat", String.valueOf((Integer) node.get("seconddarystat")));
@@ -155,12 +155,15 @@ public class ExportFriendlyEndpoint {
             final AtomicInteger counter = new AtomicInteger();
             explanation.forEach((a, b) -> {
               nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()),
-                  b.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.joining(",")));
+                  b.entrySet().stream().map(Map.Entry::getValue).map(m -> {
+                    if (m.contains("messages:")) {
+                      return m.split("messages:")[1];
+                    }
+                    return m;
+                  }).collect(Collectors.joining(",")));
             });
             nodeJson.put("icon", icons.get("error"));
           }
-
-          nodeJson.remove("icon");
           return nodeJson;
         }).toList();
     final List<Map<String, String>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
