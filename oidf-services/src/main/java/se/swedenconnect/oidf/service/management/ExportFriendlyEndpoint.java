@@ -146,7 +146,7 @@ public class ExportFriendlyEndpoint {
           if (errorsPresent) {
             final AtomicInteger counter = new AtomicInteger();
             explanation.forEach((a, b) -> {
-              nodeJson.put("detail__expl_%s".formatted(counter.getAndIncrement()), b.toString());
+              nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()), b.toString());
             });
             nodeJson.put("icon", icons.get("error"));
           }
