@@ -44,6 +44,8 @@ public class ExportStatement {
   private Double success;
   private Double failure;
   private Double total;
+  private Integer successCount;
+  private Integer failureCount;
 
   /**
    * @return json object
@@ -66,6 +68,8 @@ public class ExportStatement {
 
     Optional.ofNullable(this.total).ifPresent(tot -> {
       json.put("metrics", Map.of("total", tot, "success", this.success, "failure", this.failure));
+      json.put("mainstat", this.successCount);
+      json.put("seconddarystat", this.failureCount);
     });
 
     return json;
@@ -92,6 +96,8 @@ public class ExportStatement {
     if (total != 0) {
       this.success = success / total;
       this.failure = failure / total;
+      this.successCount = (int) Math.floor(this.success);
+      this.failureCount = (int) Math.floor(this.failure);
       this.total = total;
     }
     return this;
