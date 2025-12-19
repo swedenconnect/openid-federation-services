@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -83,10 +84,15 @@ public class ValidatingResolver implements Resolver {
   public Map<Integer, Map<String, String>> explain(final ResolveRequest request) {
     final HashMap<Integer, Map<String, String>> explanation = new HashMap<>();
     final AtomicInteger counter = new AtomicInteger();
-    this.internalResolve(request).validationErrors()
-        .forEach(error -> {
-          explanation.put(counter.getAndIncrement(), Map.of(error.getClass().getCanonicalName(), error.getMessage()));
-        });
+    final ResolverResponse resolverResponse = this.internalResolve(request);
+    Optional.ofNullable(resolverResponse.validationErrors())
+            .ifPresent(validationErrors -> {
+              validationErrors
+                  .forEach(error -> {
+                    explanation.put(counter.getAndIncrement(), Map.of(error.getClass().getCanonicalName(), error.getMessage()));
+                  });
+            });
+    
     return explanation;
   }
 
