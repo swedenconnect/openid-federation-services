@@ -111,8 +111,8 @@ public class ExportFriendlyEndpoint {
           Optional.ofNullable(node.get("metrics"))
               .map(metrics -> (Map<String, String>) metrics)
               .ifPresent(metrics -> {
-                nodeJson.put("arc__success", metrics.get("success"));
-                nodeJson.put("arc__failure", metrics.get("failure"));
+                nodeJson.put("arc__success", "" + metrics.get("success"));
+                nodeJson.put("arc__failure", "" + metrics.get("failure"));
               });
 
           Optional.ofNullable(evaluatedRole).ifPresent(role -> {
