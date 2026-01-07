@@ -37,7 +37,6 @@ import se.swedenconnect.oidf.service.service.GeneralErrorHandlingTestCases;
 import se.swedenconnect.oidf.service.service.actuator.ActuatorTestCases;
 import se.swedenconnect.oidf.service.trustanchor.TrustAnchorTestCases;
 import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkTestCases;
-import se.swedenconnect.oidf.test.testcontainer.RelyingPartyContainer;
 
 import java.util.Random;
 
@@ -55,7 +54,6 @@ import java.util.Random;
     ResolverCritTestCases.class
 })
 public class InMemoryTestSuite {
-  private static final RelyingPartyContainer relyingParty = new RelyingPartyContainer();
 
   private static ConfigurableApplicationContext configurableApplicationContext;
 
@@ -63,9 +61,6 @@ public class InMemoryTestSuite {
 
   @BeforeSuite
   public static void start() throws InterruptedException {
-    // Configure default environment
-    EnvironmentConfigurators.configureDefaultEnvironment(relyingParty, log);
-    relyingParty.start();
     try {
       final int port = new Random().nextInt(10000 - 9000) + 9000;
       registryMock = new RegistryMock(port);
@@ -99,7 +94,6 @@ public class InMemoryTestSuite {
   @AfterSuite
   public static void stop() {
     configurableApplicationContext.stop();
-    relyingParty.stop();
     Context.applicationContext.remove();
   }
 }

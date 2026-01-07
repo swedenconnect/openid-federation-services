@@ -48,3 +48,4 @@ ${BACKUP_DIR}
 .idea
 out
 .flattened-pom.xml
+/**/.flattened-pom.xml
