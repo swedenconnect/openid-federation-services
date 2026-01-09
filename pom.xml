@@ -37,6 +37,7 @@
     <modules>
         <module>oidf-modules</module>
         <module>oidf-services</module>
+        <module>oidf-starters</module>
     </modules>
 
     <dependencyManagement>

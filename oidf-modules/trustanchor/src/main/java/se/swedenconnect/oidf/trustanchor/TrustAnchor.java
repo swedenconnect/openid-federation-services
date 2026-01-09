@@ -28,16 +28,13 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRe
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.HostedRecord;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
-import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -89,28 +86,29 @@ public class TrustAnchor {
     this.debugLogRequest(request);
     final EntityRecord issuer = this.source.getEntity(
             new NodeKey(
-                this.properties.getEntityId().getValue(),
-                this.properties.getEntityId().getValue()
+                this.properties.getEntityIdentifier().getValue(),
+                this.properties.getEntityIdentifier().getValue()
             )
         )
         .orElseThrow(
-            () -> new InvalidIssuerException("Entity not found for:'%s'".formatted(this.properties.getEntityId()))
-        );
-    final EntityRecord subject = this.source.getEntity(new NodeKey(
-            this.properties.getEntityId().getValue(),
-            request.subject()
-        ))
-        .orElseThrow(
-            () -> new NotFoundException("Entity not found for subject:'%s'".formatted(request.subject()))
+            () -> new InvalidIssuerException(
+                "Entity not found for:'%s'".formatted(this.properties.getEntityIdentifier())
+            )
         );
 
-    if (!subject.getIssuer().equals(issuer.getSubject())) {
-      throw new IllegalArgumentException("Subject is not listed under this issuer trustMarkIssuer:%s sub:%s"
-          .formatted(subject.getIssuer(), issuer.getSubject()));
+    final Optional<TrustAnchorProperties.SubordinateListingProperty> first = this.properties.getSubordinates().stream()
+        .filter(p -> request.subject().equals(p.getEntityIdentifier().getValue()))
+        .findFirst();
+
+    if (first.isEmpty()) {
+      throw new NotFoundException("No subordinates found");
     }
 
+    final TrustAnchorProperties.SubordinateListingProperty subordinate = first.get();
+
+
     return this.factory
-        .createEntityStatement(issuer, subject)
+        .createEntityStatement(issuer, subordinate)
         .serialize();
   }
 
@@ -125,24 +123,22 @@ public class TrustAnchor {
    */
   public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
     this.debugLogRequest(request);
-    final List<EntityRecord> subordinates = this.source
-        .findSubordinates(this.properties.getEntityId().getValue()).stream()
-        .filter(er -> !er.getSubject().equals(this.properties.getEntityId()))
+
+    final List<TrustAnchorProperties.SubordinateListingProperty> subordinates = this.source
+        .findSubordinates(this.properties.getEntityIdentifier().getValue()).stream()
         .toList();
 
     if (!request.requiresFiltering()) {
-      return subordinates.stream().map(e -> e.getSubject().getValue()).toList();
+      return subordinates.stream().map(e -> e.getEntityIdentifier().getValue()).toList();
     }
 
     final List<String> list = subordinates.stream().toList()
         .stream()
         .map(entity -> {
-          final EntityID entityID = new EntityID(entity.getSubject().getValue());
+          final EntityID entityID = entity.getEntityIdentifier();
           return new FederationRequest<>(
               new EntityConfigurationRequest(entityID, entity.getOverrideConfigurationLocation()),
-              Optional.ofNullable(entity.getHostedRecord())
-                  .map(HostedRecord::getMetadata)
-                  .orElse(Map.of()),
+              Map.of(),
               true);
         })
         .map(this.federationClient::entityConfiguration)
@@ -160,6 +156,6 @@ public class TrustAnchor {
    * @return entity id of this trust anchor
    */
   public EntityID getEntityId() {
-    return this.properties.getEntityId();
+    return this.properties.getEntityIdentifier();
   }
 }

@@ -28,8 +28,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSourceRecord;
-import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSourceProperty;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -45,23 +44,18 @@ import java.util.Objects;
  */
 public class SigningEntityConfigurationFactory implements EntityConfigurationFactory {
 
-  private final SignerFactory signerFactory;
-
   private final FederationClient federationClient;
 
   private final List<EntityConfigurationClaimCustomizer> customizers;
 
   /**
-   * @param signerFactory    to sign entity statements with
    * @param federationClient to supply eventual trust marks
    * @param customizers      to customize records with
    */
   public SigningEntityConfigurationFactory(
-      final SignerFactory signerFactory,
       final FederationClient federationClient,
       final List<EntityConfigurationClaimCustomizer> customizers) {
 
-    this.signerFactory = signerFactory;
     this.federationClient = federationClient;
     this.customizers = customizers;
   }
@@ -71,20 +65,17 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
       this.customizers.forEach(c -> c.customize(record, builder));
-      builder.issuer(record.getIssuer().getValue());
-      builder.subject(record.getSubject().getValue());
+      builder.issuer(record.getEntityIdentifier().getValue());
+      builder.subject(record.getEntityIdentifier().getValue());
       builder.issueTime(Date.from(Instant.now()));
       builder.expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)));
-      builder.claim("metadata", record.getHostedRecord().getMetadata());
-      builder.claim("authority_hint", record.getIssuer().getValue());
-      builder.claim("jwks", this.signerFactory.getSignKeys().toPublicJWKSet().toJSONObject());
-      if (Objects.isNull(record.getHostedRecord())) {
-        return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signerFactory.getSignKey());
-      }
-      final List<TrustMarkSourceRecord> trustMarkSourceRecords = record.getHostedRecord().getTrustMarkSourceRecords();
-      if (Objects.nonNull(trustMarkSourceRecords)) {
-        final List<TrustMarkEntry> trustMarks = trustMarkSourceRecords.stream()
-            .map(s -> new TrustMarkRequest(record.getSubject(), s.issuer(), new EntityID(s.trustMarkId())))
+      builder.claim("metadata", record.getMetadata());
+      builder.claim("authority_hints", record.getAuthorityHints());
+      builder.claim("jwks", record.getJwks().toPublicJWKSet().toJSONObject());
+      final List<TrustMarkSourceProperty> trustMarkSourceProperties = record.getTrustMarkSource();
+      if (Objects.nonNull(trustMarkSourceProperties)) {
+        final List<TrustMarkEntry> trustMarks = trustMarkSourceProperties.stream()
+            .map(s -> new TrustMarkRequest(record.getEntityIdentifier(), s.issuer(), new EntityID(s.trustMarkId())))
             .map(request -> {
               final SignedJWT signedJWT =
                   this.federationClient.trustMark(new FederationRequest<>(request, Map.of(), true));
@@ -93,8 +84,7 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
             .toList();
         builder.claim("trust_marks", trustMarks.stream().map(TrustMarkEntry::toJSONObject).toList());
       }
-      builder.issuer(record.getSubject().getValue());
-      return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), this.signerFactory.getSignKey());
+      return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), record.getJwks().getKeys().getFirst());
     } catch (JOSEException | ParseException e) {
       throw new IllegalArgumentException("Failed to sign entity configuration", e);
     }

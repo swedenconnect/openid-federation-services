@@ -1,0 +1,42 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>se.swedenconnect.oidf</groupId>
+        <artifactId>oidf-starters</artifactId>
+        <version>${service-revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>trustmarkissuer-starter</artifactId>
+    <packaging>jar</packaging>
+
+    <name>OpenID Federation :: Starter :: Trustmark Issuer</name>
+    <url>http://maven.apache.org</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>21</java.version>
+        <service-revision>0.8.23-SNAPSHOT</service-revision>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>se.swedenconnect.oidf</groupId>
+            <artifactId>trustmarkissuer</artifactId>
+            <version>${service-revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>se.swedenconnect.oidf</groupId>
+            <artifactId>federation-starter</artifactId>
+            <version>${service-revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+</project>

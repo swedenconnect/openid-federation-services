@@ -25,7 +25,8 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.Nullable;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
@@ -68,46 +69,50 @@ public class TrustMarkSigner {
   /**
    * Signs a trust mark.
    *
+   * @param trustMarkIssuerEntity
    * @param trustMarkIssuerProperties
    * @param trustMarkProperties
-   * @param trustMarkSubjectRecord
+   * @param trustMarkSubjectProperty
    * @return signed jwt
    * @throws ServerErrorException
    * @throws ParseException
    * @throws JOSEException
    */
   public SignedJWT sign(
+      final EntityRecord trustMarkIssuerEntity,
       final TrustMarkIssuerProperties trustMarkIssuerProperties,
       final TrustMarkProperties trustMarkProperties,
-      final TrustMarkSubjectRecord trustMarkSubjectRecord) throws ServerErrorException, ParseException, JOSEException {
+      final TrustMarkSubjectProperty trustMarkSubjectProperty)
+      throws ServerErrorException, ParseException, JOSEException {
     // https://openid.net/specs/openid-federation-1_0.html#name-trust-mark-claims
     final JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
         .issueTime(new Date(Instant.now(this.clock).toEpochMilli()))
         .jwtID(new BigInteger(128, rng).toString(16))
-        .subject(trustMarkSubjectRecord.sub());
+        .subject(trustMarkSubjectProperty.sub());
 
 
     claimsSetBuilder.expirationTime(
-        this.calculateExp(trustMarkIssuerProperties.trustMarkValidityDuration(), trustMarkSubjectRecord.expires()));
+        this.calculateExp(trustMarkIssuerProperties.trustMarkValidityDuration(), trustMarkSubjectProperty.expires()));
 
-    final Optional<EntityID> issuerEntityId = Optional.ofNullable(trustMarkIssuerProperties.issuerEntityId());
+    final Optional<EntityID> issuerEntityId = Optional.ofNullable(trustMarkIssuerProperties.entityIdentifier());
 
     if (issuerEntityId.isEmpty()) {
       throw new ServerErrorException("Issuer must be present");
     }
 
     issuerEntityId.ifPresent(entityID -> claimsSetBuilder.issuer(entityID.getValue()));
-    claimsSetBuilder.claim("trust_mark_id", trustMarkProperties.trustMarkId().getTrustMarkId());
+    claimsSetBuilder.claim("trust_mark_id", trustMarkProperties.getTrustMarkId().getTrustMarkId());
 
-    trustMarkProperties.logoUri().ifPresent((value) -> claimsSetBuilder.claim("logo_uri", value));
+    Optional.ofNullable(trustMarkProperties.getLogoUri()).ifPresent((value) -> claimsSetBuilder.claim("logo_uri",
+      value));
 
-    trustMarkProperties.refUri().ifPresent((value) -> claimsSetBuilder.claim("ref", value));
+    Optional.ofNullable(trustMarkProperties.getRefUri()).ifPresent((value) -> claimsSetBuilder.claim("ref", value));
 
-    trustMarkProperties.delegation()
+    Optional.ofNullable(trustMarkProperties.getDelegation())
         .ifPresent((value) -> claimsSetBuilder.claim("delegation", value.getDelegation()));
 
     final JWTClaimsSet claimsSet = claimsSetBuilder.build();
-    return this.signerFactory.createSigner()
+    return this.signerFactory.createSigner(trustMarkIssuerEntity)
         .sign(TRUST_MARK_JWT_TYPE, claimsSet);
   }
 

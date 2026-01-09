@@ -33,9 +33,9 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
+import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
+import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
-import se.swedenconnect.oidf.service.resolver.ResolverFactory;
-import se.swedenconnect.oidf.service.resolver.cache.ResolverCacheRegistry;
 import se.swedenconnect.oidf.service.state.StateHashFactory;
 
 import java.util.ArrayList;
@@ -92,7 +92,7 @@ public class ExportEndpoint {
     final List<ExportStatement> selfStatements = new ArrayList<>();
     final List<ExportStatement> subordinateStatements = new ArrayList<>();
 
-    final EntityStatementTree tree = this.registry.getRegistration(properties.entityIdentifier()).get().tree();
+    final EntityStatementTree tree = this.registry.getRegistration(properties.getEntityIdentifier()).get().tree();
     tree.getAll()
         .stream()
         .map(Tree.SearchResult::getData)
@@ -108,7 +108,7 @@ public class ExportEndpoint {
     selfStatements.forEach(ss -> {
       try {
         final Map<Integer, Map<String, String>> explain = this.factory.create(properties).explain(new ResolveRequest(
-            ss.getEntityStatement().getEntityID().getValue(), properties.trustAnchor(), null, true));
+            ss.getEntityStatement().getEntityID().getValue(), properties.getTrustAnchor(), null, true));
         if (explain != null) {
           ss.withResolverExplanation(explain);
         }

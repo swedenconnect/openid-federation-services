@@ -18,17 +18,19 @@ package se.swedenconnect.oidf.resolver;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.KeyType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.oauth2.sdk.ParseException;
+import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
+import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Factory class responsible for constructing resolver responses.
@@ -39,26 +41,25 @@ public class ResolverResponseFactory {
   private final Clock clock;
   private final ResolverProperties properties;
   private final SignerFactory signerFactory;
-
-  private final Map<KeyType, JWSAlgorithm> keyTypeJWSAlgorithmMap = Map.of(
-      KeyType.EC, JWSAlgorithm.ES256,
-      KeyType.RSA, JWSAlgorithm.RS256
-  );
+  private final CompositeRecordSource compositeRecordSource;
 
   /**
    * Constructor.
    *
    * @param clock         for determining current time
    * @param properties    for response parameters
-   * @param signerFactory for finding a signer
+   * @param signerFactory for creating a signer
+   * @param compositeRecordSource for finding entity of resolver
    */
   public ResolverResponseFactory(
       final Clock clock,
       final ResolverProperties properties,
-      final SignerFactory signerFactory) {
+      final SignerFactory signerFactory,
+      final CompositeRecordSource compositeRecordSource) {
     this.clock = clock;
     this.properties = properties;
     this.signerFactory = signerFactory;
+    this.compositeRecordSource = compositeRecordSource;
   }
 
   /**
@@ -73,9 +74,10 @@ public class ResolverResponseFactory {
     final Instant now = Instant.now(this.clock);
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder(resolverResponse.entityStatement().getClaimsSet().toJWTClaimsSet())
-            .issuer(this.properties.entityIdentifier())
+            .issuer(this.properties.getEntityIdentifier())
             .issueTime(Date.from(now))
-            .expirationTime(Date.from(now.plus(this.properties.resolveResponseDuration())))
+            .expirationTime(Date.from(now.plus(Optional.ofNullable(this.properties.getResolveResponseDuration())
+                .orElse(Duration.ofDays(7)))))
             .claim("metadata", resolverResponse.metadata())
             .claim("trust_marks",
                 resolverResponse.trustMarkEntries().stream().map(trustMark -> {
@@ -87,7 +89,9 @@ public class ResolverResponseFactory {
                 resolverResponse.trustChain().stream().map(statement -> statement.getSignedStatement().serialize())
                     .toList())
             .build();
-    return this.signerFactory.createSigner()
+    return this.signerFactory.createSigner(this.compositeRecordSource.getEntity(new NodeKey(
+            this.properties.getEntityIdentifier(), this.properties.getEntityIdentifier()
+        )).get())
         .sign(new JOSEObjectType("resolve-response+jwt"), claims)
         .serialize();
   }

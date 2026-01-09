@@ -25,16 +25,17 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import se.swedenconnect.oidf.CacheFactory;
+import se.swedenconnect.oidf.FederationServiceState;
+import se.swedenconnect.oidf.resolver.ResolverCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheRepository;
 import se.swedenconnect.oidf.service.cache.managed.NoopRequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
-import se.swedenconnect.oidf.service.configuration.OpenIdFederationConfigurationProperties;
+import se.swedenconnect.oidf.service.configuration.FederationServiceProperties;
 import se.swedenconnect.oidf.service.resolver.ResolverCacheTransformer;
 import se.swedenconnect.oidf.service.resolver.cache.RedisResolverCacheFactory;
-import se.swedenconnect.oidf.service.resolver.cache.ResolverCacheFactory;
 import se.swedenconnect.oidf.service.resolver.cache.ResolverRedisOperations;
-import se.swedenconnect.oidf.service.state.FederationServiceState;
 import se.swedenconnect.oidf.service.state.RedisFederationServiceState;
 import se.swedenconnect.oidf.service.state.RedisServiceLock;
 import se.swedenconnect.oidf.service.state.ServiceLock;
@@ -48,43 +49,60 @@ import java.time.Clock;
  * @author Felix Hellman
  */
 @Configuration
-@ConditionalOnProperty(name = "openid.federation.storage", havingValue = "redis")
+@ConditionalOnProperty(name = "federation.service.storage", havingValue = "redis")
 @Import(RedisAutoConfiguration.class)
 public class RedisCacheConfiguration {
 
   @Bean
   CacheFactory redisCacheFactory(final RedisConnectionFactory factory, final Clock clock,
-                                 final OpenIdFederationConfigurationProperties properties) {
-    return new RedisCacheFactory(clock, factory, properties.getRedisKeyName());
+                                 final FederationServiceProperties properties) {
+    return new RedisCacheFactory(clock, factory, properties.getRedis().getKeyName());
   }
 
   @Bean
   ResolverRedisOperations redisOperations(
       final RedisTemplate<String, EntityStatement> template,
-      final RedisTemplate<String, String> childrenTemplate
+      final RedisConnectionFactory connectionFactory,
+      final InstanceSpecificRedisKeySerializer keySerializer
   ) {
-    return new ResolverRedisOperations(template, childrenTemplate);
+    final RedisTemplate<String, String> stringTemplate = new RedisTemplate<>();
+    stringTemplate.setConnectionFactory(connectionFactory);
+    stringTemplate.setKeySerializer(keySerializer);
+    stringTemplate.afterPropertiesSet();
+    return new ResolverRedisOperations(template, stringTemplate);
   }
 
   @Bean
-  RedisTemplate<String, EntityStatement> entityStatementRedisTemplate(final RedisConnectionFactory factory) {
+  RedisTemplate<String, EntityStatement> entityStatementRedisTemplate(
+      final RedisConnectionFactory factory,
+      final InstanceSpecificRedisKeySerializer keySerializer) {
     final RedisTemplate<String, EntityStatement> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
     template.setValueSerializer(new EntityStatementSerializer());
+    template.setKeySerializer(keySerializer);
+    template.afterPropertiesSet();
     return template;
   }
 
   @Bean
-  RedisTemplate<String, Integer> integerRedisTemplate(final RedisConnectionFactory factory) {
+  RedisTemplate<String, Integer> integerRedisTemplate(
+      final RedisConnectionFactory factory,
+      final InstanceSpecificRedisKeySerializer keySerializer
+  ) {
     final RedisTemplate<String, Integer> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
+    template.setKeySerializer(keySerializer);
     return template;
   }
 
   @Bean
-  RedisTemplate<String, RequestResponseEntry> requestResponseEntryRedisTemplate(final RedisConnectionFactory factory) {
+  RedisTemplate<String, RequestResponseEntry> requestResponseEntryRedisTemplate(
+      final RedisConnectionFactory factory,
+      final InstanceSpecificRedisKeySerializer keySerializer
+  ) {
     final RedisTemplate<String, RequestResponseEntry> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
+    template.setKeySerializer(keySerializer);
     return template;
   }
 
@@ -108,11 +126,7 @@ public class RedisCacheConfiguration {
   @Bean
   FederationServiceState redisFederationServiceState(
       final RedisConnectionFactory factory,
-      final OpenIdFederationConfigurationProperties properties) {
-
-    final InstanceSpecificRedisKeySerializer keySerializer =
-        new InstanceSpecificRedisKeySerializer(new StringRedisSerializer(),
-            properties.getRedisKeyName());
+      final InstanceSpecificRedisKeySerializer keySerializer) {
 
     final RedisTemplate<String, String> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
@@ -122,33 +136,24 @@ public class RedisCacheConfiguration {
   }
 
   @Bean
+  InstanceSpecificRedisKeySerializer instanceSpecificRedisKeySerializer(
+      final FederationServiceProperties properties) {
+        return new InstanceSpecificRedisKeySerializer(
+            new StringRedisSerializer(),
+            properties.getRedis().getKeyName()
+        );
+  }
+
+  @Bean
   ServiceLock redisServiceLock(
       final RedisConnectionFactory factory,
-      final OpenIdFederationConfigurationProperties properties) {
-    final InstanceSpecificRedisKeySerializer keySerializer = new InstanceSpecificRedisKeySerializer(
-        new StringRedisSerializer(),
-        properties.getRedisKeyName()
-    );
+      final InstanceSpecificRedisKeySerializer keySerializer) {
+
 
     final RedisTemplate<String, String> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
     template.setKeySerializer(keySerializer);
     template.afterPropertiesSet();
     return new RedisServiceLock(template);
-  }
-
-  @Bean
-  RequestResponseCacheFactory redisRequestResponseCacheFactory() {
-    return new NoopRequestResponseCacheFactory();
-  }
-
-  @Bean
-  ManagedCacheFactory managedRedisCacheFactory(final RequestResponseCacheFactory factory) {
-    return new ManagedCacheFactory(factory);
-  }
-
-  @Bean
-  ManagedCacheRepository managedRedisCacheRepository(final ManagedCacheFactory cacheFactory) {
-    return new ManagedCacheRepository(cacheFactory);
   }
 }

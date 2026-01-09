@@ -16,15 +16,22 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -35,32 +42,53 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @ToString
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class TrustAnchorProperties {
-  private final EntityID entityId;
+  @SerializedName("entity-identifier")
+  private EntityID entityIdentifier;
 
-  private final Map<EntityID, List<Issuer>> trustMarkIssuers;
+  @SerializedName("trust-mark-issuers")
+  private Map<EntityID, List<EntityID>> trustMarkIssuers;
 
-  private final Map<EntityID, TrustMarkOwner> trustMarkOwners;
+  @SerializedName("trust-mark-owners")
+  private List<TrustMarkOwner> trustMarkOwners;
 
-  private final ConstraintRecord constraintRecord;
+  @SerializedName("subordinates")
+  private List<SubordinateListingProperty> subordinates;
 
   /**
    * Constructor.
    *
-   * @param entityId of the trust anchor
+   * @param entityIdentifier of the trust anchor
    * @param trustMarkIssuers that are valid for this trust anchor
-   * @param constraintRecord for constraints
    * @param trustMarkOwners to trust
    */
   public TrustAnchorProperties(
-      final EntityID entityId,
-      final Map<EntityID, List<Issuer>> trustMarkIssuers,
-      final ConstraintRecord constraintRecord,
-      final Map<EntityID, TrustMarkOwner> trustMarkOwners) {
-    this.entityId = entityId;
+      final EntityID entityIdentifier,
+      final Map<EntityID, List<EntityID>> trustMarkIssuers,
+      final List<TrustMarkOwner> trustMarkOwners) {
+    this.entityIdentifier = entityIdentifier;
     this.trustMarkIssuers = trustMarkIssuers;
-    this.constraintRecord = constraintRecord;
     this.trustMarkOwners = trustMarkOwners;
+  }
+
+  /**
+   * @return json of trust mark owners
+   */
+  public Map<String, Object> trustMarkOwnersJson() {
+    if (Objects.isNull(this.trustMarkOwners)) {
+      return Map.of();
+    }
+    return this.getTrustMarkOwners().stream()
+        .collect(Collectors.toMap(
+            k -> k.getTrustmarkIdentifier().getValue(),
+            k -> Map.of(
+                "sub", k.getSub().getValue(),
+                "jwks", k.getJwks().toPublicJWKSet().toJSONObject()
+            )
+        ));
   }
 
   /**
@@ -71,33 +99,35 @@ public class TrustAnchorProperties {
   @Getter
   @Setter
   @ToString
+  @AllArgsConstructor
+  @NoArgsConstructor
+  @Builder
   public static class SubordinateListingProperty {
+
+    @SerializedName("crit")
+    private List<String> crit;
+    @SerializedName("metadata-policy-crit")
+    private List<String> metadataPolicyCrit;
+    @SerializedName("entity-identifier")
+    private EntityID entityIdentifier;
+    @SerializedName("override-configuration-location")
+    private String overrideConfigurationLocation;
+    @SerializedName("policy")
+    private PolicyRecord policy;
+    @SerializedName("jwks")
+    private JWKSet jwks;
+    @SerializedName("constraints")
+    private ConstraintRecord constraints;
+
     /**
-     * Constructor.
-     *
-     * @param entityIdentifier for the subordinate
-     * @param policy           for the subordinate
+     * Create SubordinateListingProperty from entityId
+     * @param entityIdentifier to create
+     * @return new subordinate listing property
      */
-    public SubordinateListingProperty(final String entityIdentifier, final String policy) {
-      this.entityIdentifier = entityIdentifier;
-      this.policy = policy;
+    public static SubordinateListingProperty fromEntityId(final EntityID entityIdentifier) {
+      final SubordinateListingProperty subordinateListingProperty = new SubordinateListingProperty();
+      subordinateListingProperty.entityIdentifier = entityIdentifier;
+      return subordinateListingProperty;
     }
-
-    private String entityIdentifier;
-    private String policy;
-  }
-
-  /**
-   * @return json of trust mark owners
-   */
-  public Map<String, Object> trustMarkOwnersJson() {
-    return this.getTrustMarkOwners().entrySet().stream()
-        .collect(Collectors.toMap(
-            k -> k.getKey().getValue(),
-            k -> Map.of(
-                "sub", k.getValue().getSub(),
-                "jwks", k.getValue().getJwks().toJSONObject()
-            )
-        ));
   }
 }

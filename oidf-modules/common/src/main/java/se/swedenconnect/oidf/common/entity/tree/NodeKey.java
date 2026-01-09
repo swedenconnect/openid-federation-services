@@ -76,8 +76,8 @@ public record NodeKey(String issuer, String subject) {
    */
   public static NodeKey fromEntityRecord(final EntityRecord record) {
     return new NodeKey(
-        record.getIssuer().getValue(),
-        record.getSubject().getValue()
+        record.getEntityIdentifier().getValue(),
+        record.getEntityIdentifier().getValue()
     );
   }
 

@@ -1,0 +1,5 @@
+se.swedenconnect.oidf.configuration.FederationBaseConfiguration
+se.swedenconnect.oidf.configuration.FederationRegistryConfiguration
+se.swedenconnect.oidf.configuration.FederationRoutingConfiguration
+se.swedenconnect.oidf.configuration.FederationBaseRouteConfiguration
+se.swedenconnect.oidf.configuration.FederationKeyConfiguration

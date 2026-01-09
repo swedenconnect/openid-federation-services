@@ -21,7 +21,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
@@ -64,14 +64,14 @@ public interface RecordSource {
    * @param issuer who has subordinates
    * @return list of subordinates
    */
-  List<EntityRecord> findSubordinates(final String issuer);
+  List<TrustAnchorProperties.SubordinateListingProperty> findSubordinates(final String issuer);
 
   /**
    * @param issuer of the trust mark
    * @param id of the trust mark
    * @return subjects
    */
-  List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id);
+  List<TrustMarkSubjectProperty> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id);
 
   /**
    * @param issuer of the trust mark
@@ -79,7 +79,7 @@ public interface RecordSource {
    * @param subject of the trust mark
    * @return a single subject if present
    */
-  Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
+  Optional<TrustMarkSubjectProperty> getTrustMarkSubject(
       final EntityID issuer,
       final TrustMarkId id,
       final EntityID subject);

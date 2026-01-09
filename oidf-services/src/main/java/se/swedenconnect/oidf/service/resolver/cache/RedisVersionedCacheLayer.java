@@ -60,44 +60,44 @@ public class RedisVersionedCacheLayer implements ResolverCache {
   @Override
   public List<Node<EntityStatement>> getChildren(final Node<EntityStatement> parent, final int version) {
     return this.resolverRedisOperations
-        .getChildren(new ResolverRedisOperations.ChildKey(parent, version, this.properties.entityIdentifier()));
+        .getChildren(new ResolverRedisOperations.ChildKey(parent, version, this.properties.getEntityIdentifier()));
   }
 
   @Override
   public void append(final Node<EntityStatement> child, final Node<EntityStatement> parent, final int version) {
     this.resolverRedisOperations
-        .append(new ResolverRedisOperations.ChildKey(parent, version, this.properties.entityIdentifier()), child);
+        .append(new ResolverRedisOperations.ChildKey(parent, version, this.properties.getEntityIdentifier()), child);
   }
 
   @Override
   public void setData(final String location, final EntityStatement data, final int version) {
     this.resolverRedisOperations.
-        setData(new ResolverRedisOperations.EntityKey(location, version, this.properties.entityIdentifier()), data);
+        setData(new ResolverRedisOperations.EntityKey(location, version, this.properties.getEntityIdentifier()), data);
   }
 
   @Override
   public EntityStatement getData(final String location, final int version) {
     return this.resolverRedisOperations
-        .getData(new ResolverRedisOperations.EntityKey(location, version, this.properties.entityIdentifier()));
+        .getData(new ResolverRedisOperations.EntityKey(location, version, this.properties.getEntityIdentifier()));
   }
 
   @Override
   public Node<EntityStatement> getRoot(final int version) {
     return this.resolverRedisOperations
-        .getRoot(new ResolverRedisOperations.RootKey(version, this.properties.entityIdentifier()));
+        .getRoot(new ResolverRedisOperations.RootKey(version, this.properties.getEntityIdentifier()));
   }
 
   @Override
   public int getCurrentVersion() {
     final BoundValueOperations<String, Integer> stringIntegerBoundValueOperations =
-        this.versionTemplate.boundValueOps("%s:tree:version".formatted(this.properties.entityIdentifier()));
+        this.versionTemplate.boundValueOps("%s:tree:version".formatted(this.properties.getEntityIdentifier()));
     return Optional.ofNullable(stringIntegerBoundValueOperations.get()).orElse(0);
   }
 
   @Override
   public void useNextVersion() {
     this.versionTemplate
-        .boundValueOps("%s:tree:version".formatted(this.properties.entityIdentifier()))
+        .boundValueOps("%s:tree:version".formatted(this.properties.getEntityIdentifier()))
         .set(this.getNextVersion());
   }
 
@@ -112,7 +112,7 @@ public class RedisVersionedCacheLayer implements ResolverCache {
     final int version = getNextVersion();
     this.resolverRedisOperations
         .setRoot(
-            new ResolverRedisOperations.RootKey(version, this.properties.entityIdentifier()), root
+            new ResolverRedisOperations.RootKey(version, this.properties.getEntityIdentifier()), root
         );
     this.setData(root.getKey().getKey(), rootData, version);
     return new CacheSnapshot<>(this, version);

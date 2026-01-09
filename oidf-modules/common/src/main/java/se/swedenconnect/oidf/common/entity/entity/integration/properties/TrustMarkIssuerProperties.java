@@ -16,12 +16,14 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.PostConstruct;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
+import java.io.Serial;
 import java.time.Duration;
 import java.util.List;
 
@@ -29,14 +31,16 @@ import java.util.List;
  * Properties for TrustMarkIssuer
  *
  * @param trustMarkValidityDuration The validity duration of issued Trust Marks
- * @param issuerEntityId            IssuerEntityId
+ * @param entityIdentifier            IssuerEntityId
  * @param trustMarks                TrustMark Issuer
  * @author Per Fredrik Plars
  */
 @Builder
 @Slf4j
-public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, EntityID issuerEntityId,
-                                        List<TrustMarkProperties> trustMarks) {
+public record TrustMarkIssuerProperties(
+    @SerializedName("trust-mark-validity-duration") Duration trustMarkValidityDuration,
+    @SerializedName("entity-identifier") EntityID entityIdentifier,
+    @SerializedName("trust-marks") List<TrustMarkProperties> trustMarks) {
 
   /**
    * Validate content of configuration.
@@ -44,9 +48,9 @@ public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, Enti
    * @throws IllegalArgumentException is thrown when configuration is missing
    */
   @PostConstruct
-  public void validate () throws IllegalArgumentException {
+  public void validate() throws IllegalArgumentException {
     FederationAssert.assertNotEmpty(this.trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
-    FederationAssert.assertNotEmpty(this.issuerEntityId, "IssuerEntityId is expected");
+    FederationAssert.assertNotEmpty(this.entityIdentifier, "IssuerEntityId is expected");
     FederationAssert.assertNotEmpty(this.trustMarks, "TrustMarks is expected");
     FederationAssert.assertTrue(this.trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
         "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'%s'"

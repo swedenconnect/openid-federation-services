@@ -16,28 +16,64 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
-import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.Objects;
 
 /**
  * Properties for the resolver.
  *
- * @param trustAnchor The trust anchor used by this resolve entity
- * @param resolveResponseDuration The validity duration of issued resolve responses
- * @param trustedKeys Keys trusted by this resolver to validate Entity Statement chains
- * @param entityIdentifier for the resolver
- * @param stepRetryTime time to wait before retrying a step that has failed
- * @param useCachedValue threshold for error context
  * @author Felix Hellman
  */
-public record ResolverProperties(
-    String trustAnchor,
-    Duration resolveResponseDuration,
-    List<JWK> trustedKeys,
-    String entityIdentifier,
-    Duration stepRetryTime,
-    int useCachedValue) {
+@Getter
+@Setter
+@ToString
+@Builder
+@NoArgsConstructor
+public final class ResolverProperties {
+  @SerializedName("trust-anchor")
+  private String trustAnchor;
+  @SerializedName("resolver-response-duration")
+  private Duration resolveResponseDuration;
+  @SerializedName("trusted-keys")
+  private JWKSet trustedKeys;
+  @SerializedName("entity-identifier")
+  private String entityIdentifier;
+  @SerializedName("step-retry-time")
+  private Duration stepRetryTime;
+  @SerializedName("use-cached-value")
+  private int useCachedValue;
+
+  /**
+   * @param trustAnchor The trust anchor used by this resolve entity
+   * @param resolveResponseDuration The validity duration of issued resolve responses
+   * @param trustedKeys Keys trusted by this resolver to validate Entity Statement chains
+   * @param entityIdentifier for the resolver
+   * @param stepRetryTime time to wait before retrying a step that has failed
+   * @param useCachedValue threshold for error context
+   *
+   */
+  public ResolverProperties(
+      final String trustAnchor,
+      final Duration resolveResponseDuration,
+      final JWKSet trustedKeys,
+      final String entityIdentifier,
+      final Duration stepRetryTime,
+      final int useCachedValue) {
+    this.trustAnchor = trustAnchor;
+    this.resolveResponseDuration = resolveResponseDuration;
+    this.trustedKeys = trustedKeys;
+    this.entityIdentifier = entityIdentifier;
+    this.stepRetryTime = stepRetryTime;
+    this.useCachedValue = useCachedValue;
+  }
 }
 

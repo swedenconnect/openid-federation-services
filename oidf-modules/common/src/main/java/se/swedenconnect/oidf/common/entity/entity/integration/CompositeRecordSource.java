@@ -21,7 +21,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
@@ -86,21 +86,21 @@ public class CompositeRecordSource implements RecordSource {
   }
 
   @Override
-  public List<EntityRecord> findSubordinates(final String issuer) {
+  public List<TrustAnchorProperties.SubordinateListingProperty> findSubordinates(final String issuer) {
     return this.recordSources.stream()
         .flatMap(r -> r.findSubordinates(issuer).stream())
         .toList();
   }
 
   @Override
-  public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
+  public List<TrustMarkSubjectProperty> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
     return this.recordSources.stream()
         .flatMap(r -> r.getTrustMarkSubjects(issuer, id).stream())
         .toList();
   }
 
   @Override
-  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
+  public Optional<TrustMarkSubjectProperty> getTrustMarkSubject(
       final EntityID issuer,
       final TrustMarkId id,
       final EntityID subject) {

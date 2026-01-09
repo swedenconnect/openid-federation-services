@@ -21,7 +21,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
-import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
@@ -38,17 +37,14 @@ import java.util.Optional;
  */
 public class SubordinateStatementFactory {
 
-  private final SignerFactory factory;
   private final TrustAnchorProperties properties;
 
   /**
    * Constructor.
    *
-   * @param factory for signing hosted records
    * @param properties for reading additional properties from
    */
-  public SubordinateStatementFactory(final SignerFactory factory, final TrustAnchorProperties properties) {
-    this.factory = factory;
+  public SubordinateStatementFactory(final TrustAnchorProperties properties) {
     this.properties = properties;
   }
 
@@ -56,50 +52,52 @@ public class SubordinateStatementFactory {
    * Creates a signed entity statement from the issuer.
    *
    * @param issuer  to create the statement from
-   * @param subject to create thte statement for
+   * @param subordinate to create statement for
    * @return a signed entity statement
    */
-  public SignedJWT createEntityStatement(final EntityRecord issuer, final EntityRecord subject) {
+  public SignedJWT createEntityStatement(final EntityRecord issuer,
+                                         final TrustAnchorProperties.SubordinateListingProperty subordinate) {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-      Optional.ofNullable(this.properties.getConstraintRecord())
+      Optional.ofNullable(subordinate.getConstraints())
               .ifPresent(constraint -> {
                 builder.claim("constraints", constraint.toJson());
               });
 
-      Optional.ofNullable(subject.getCrit()).ifPresent(
+      Optional.ofNullable(subordinate.getCrit()).ifPresent(
           crit -> builder.claim("crit", crit)
       );
 
-      Optional.ofNullable(subject.getOverrideConfigurationLocation()).ifPresent(
+      Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(
+          metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
+      );
+
+      Optional.ofNullable(subordinate.getOverrideConfigurationLocation()).ifPresent(
           location -> {
             builder.claim("subject_entity_configuration_location", location);
           }
       );
 
-      Optional.ofNullable(subject.getMetadataPolicyCrit()).ifPresent(
+      Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(
           metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
       );
 
-      Optional.ofNullable(subject.getPolicyRecord()).ifPresent(policyRecord -> builder.claim("metadata_policy",
-          policyRecord.getPolicy()));
+      Optional.ofNullable(subordinate.getPolicy())
+          .flatMap(policy -> Optional.ofNullable(policy.getPolicy()))
+          .ifPresent(policyRecord -> builder.claim("metadata_policy", policyRecord));
 
-      Optional.ofNullable(subject.getJwks()).map(JWKSet::toJSONObject)
-          .ifPresentOrElse(jwks -> builder.claim("jwks", jwks)
-              , () -> {
-                builder.claim("jwks", issuer.getJwks().toJSONObject());
-              });
+      builder.claim("jwks", subordinate.getJwks().toJSONObject(true));
 
       final JWTClaimsSet jwtClaimsSet = builder
           .issueTime(Date.from(Instant.now()))
           .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
-          .issuer(issuer.getSubject().getValue())
-          .subject(subject.getSubject().getValue())
+          .issuer(issuer.getEntityIdentifier().getValue())
+          .subject(subordinate.getEntityIdentifier().getValue())
           .build();
 
       final EntityStatement entityStatement =
-          EntityStatement.sign(new EntityStatementClaimsSet(jwtClaimsSet), this.factory.getSignKey());
+          EntityStatement.sign(new EntityStatementClaimsSet(jwtClaimsSet), issuer.getJwks().getKeys().getFirst());
       return entityStatement.getSignedStatement();
     } catch (final Exception e) {
       throw new EntityStatementSignException("Failed to sign entity statement", e);

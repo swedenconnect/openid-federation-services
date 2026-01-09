@@ -25,10 +25,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMa
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
+import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -86,7 +87,7 @@ public class TrustMarkIssuer {
       throw new InvalidRequestException("Trust mark id can not be null");
     }
     final TrustMarkId id = TrustMarkId.validate(request.trustMarkId(), InvalidRequestException::new);
-    final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.issuerEntityId(), id)
+    final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.entityIdentifier(), id)
         .stream()
         .filter(tms -> {
           if (Objects.nonNull(tms.expires())) {
@@ -94,7 +95,7 @@ public class TrustMarkIssuer {
           }
           return true;
         })
-        .map(TrustMarkSubjectRecord::sub)
+        .map(TrustMarkSubjectProperty::sub)
         .toList();
     if (result.isEmpty()) {
       throw new NotFoundException("Could not find any subjects.");
@@ -120,14 +121,14 @@ public class TrustMarkIssuer {
     final TrustMarkId id = TrustMarkId.create(request.trustMarkId());
     final boolean exists = this.trustMarkIssuerProperties.trustMarks()
         .stream()
-        .anyMatch(tm -> tm.trustMarkId().equals(id));
+        .anyMatch(tm -> tm.getTrustMarkId().equals(id));
 
     if (!exists) {
       throw new NotFoundException("Could not find any trust mark with id %s".formatted(request.trustMarkId()));
     }
 
-    final Optional<TrustMarkSubjectRecord> subject =
-        this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.issuerEntityId(), id,
+    final Optional<TrustMarkSubjectProperty> subject =
+        this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.entityIdentifier(), id,
             new EntityID(request.subject()));
     return subject.isPresent()
         && !subject.get().revoked()
@@ -144,20 +145,23 @@ public class TrustMarkIssuer {
 
     final TrustMarkProperties properties =
         this.trustMarkIssuerProperties.trustMarks().stream()
-        .filter(tm -> request.trustMarkId().equals(tm.trustMarkId().getTrustMarkId()))
+        .filter(tm -> request.trustMarkId().equals(tm.getTrustMarkId().getTrustMarkId()))
         .findFirst()
         .get();
 
-    final Optional<TrustMarkSubjectRecord> subject = properties.trustMarkSubjectRecords()
+    final Optional<TrustMarkSubjectProperty> subject = properties.getTrustMarkSubjects()
         .stream()
         .filter(trustMarkSubjectRecord -> trustMarkSubjectRecord.sub().equals(request.subject()))
         .findFirst();
     if (subject.isEmpty()) {
       throw new NotFoundException("Could not find subject");
     }
-    final TrustMarkSubjectRecord trustMarkSubjectRecord = subject.get();
+    final TrustMarkSubjectProperty trustMarkSubjectProperty = subject.get();
     try {
-      return this.signer.sign(this.trustMarkIssuerProperties, properties, trustMarkSubjectRecord).serialize();
+      final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
+      return this.signer.sign(this.source.getEntity(new NodeKey(entityIdentifier, entityIdentifier)).get(),
+          this.trustMarkIssuerProperties, properties,
+          trustMarkSubjectProperty).serialize();
     } catch (final ParseException | JOSEException e) {
       throw new ServerErrorException("Failed to sign trust mark", e);
     }
@@ -168,6 +172,6 @@ public class TrustMarkIssuer {
    * @return entity id of this trust mark issuer.
    */
   public EntityID getEntityId() {
-    return this.trustMarkIssuerProperties.issuerEntityId();
+    return this.trustMarkIssuerProperties.entityIdentifier();
   }
 }

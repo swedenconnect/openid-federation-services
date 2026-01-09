@@ -1,0 +1,271 @@
+[
+  {
+    "entity-identifier": "http://localhost:11111/naming/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/naming/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/naming/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/trust_mark_owner/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/trust_mark_owner/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/trust_mark_owner/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/crit/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/crit/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/crit/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/metadata_policy_crit/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/metadata_policy_crit/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/metadata_policy_crit/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/policy/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/policy/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/policy/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/trust_mark_issuer/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/trust_mark_issuer/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/trust_mark_issuer/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/path/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/path/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/path/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/anarchy/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/anarchy/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/anarchy/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/im",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "override-configuration-location": "http://localhost:11111/im/banan",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/im/fetch",
+        "federation_list_endpoint": "http://localhost:11111/im/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/im/im",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/im/im/fetch",
+        "federation_list_endpoint": "http://localhost:11111/im/im/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/entity_type/ta",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_fetch_endpoint": "http://localhost:11111/entity_type/ta/fetch",
+        "federation_list_endpoint": "http://localhost:11111/entity_type/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/im/op",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "trust-mark-source": [
+      {
+        "issuer": "http://localhost:11111/im/tmi",
+        "trust-mark-id": "http://localhost:11111/im/tmi/certified"
+      },
+      {
+        "issuer": "http://localhost:11111/im/tmi",
+        "trust-mark-id": "http://localhost:11111/im/tmi/accepted"
+      }
+    ],
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      },
+      "openid_provider": {
+        "logo_uri": "http://test.test",
+        "id_token_signing_alg_values_supported": ["RS256", "ES256"]
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/im/im/op",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      },
+      "openid_provider": {
+        "logo_uri": "http://test.test"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/im/im/rp",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      },
+      "relying_party": {
+        "logo_uri": "http://test.test"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/policy/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/entity_type/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/path/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/trust_mark_owner/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/crit/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/metadata_policy_crit/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/trust_mark_issuer/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/anarchy/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/naming/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/naming/resolver",
+    "jwks": "kid:359433581122628090150675142465804663870388233428",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/im/tmi",
+    "jwks": "kid:invalidkid",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Authorization",
+        "federation_trust_mark_endpoint": "http://localhost:11111/im/tmi/trust_mark"
+      }
+    }
+  }
+]

@@ -20,6 +20,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKMatcher;
 import com.nimbusds.jose.jwk.JWKSelector;
 import com.nimbusds.jose.jwk.JWKSet;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 /**
  * Factory class for creating signer.
@@ -27,35 +28,19 @@ import com.nimbusds.jose.jwk.JWKSet;
  * @author Felix Hellman
  */
 public class JWKSetSignerFactory implements SignerFactory {
-  private final JWKSet jwkSet;
-
   /**
+   * @param entityRecord to sign for
    * @return new signer
    */
-  public FederationSigner createSigner() {
-    return new JWKFederationSigner(this.getSignKey());
-  }
-
-  /**
-   * @return current sign key
-   */
-  public JWK getSignKey() {
-    return new JWKSelector(new JWKMatcher.Builder().build()).select(this.jwkSet).getFirst();
-  }
-
-  /**
-   * @return all current keys
-   */
-  public JWKSet getSignKeys() {
-    return this.jwkSet;
+  public FederationSigner createSigner(final EntityRecord entityRecord) {
+    return new JWKFederationSigner(entityRecord.getJwks().getKeys().getFirst());
   }
 
   /**
    * Constructor.
    *
-   * @param jwkSet to use
    */
-  public JWKSetSignerFactory(final JWKSet jwkSet) {
-    this.jwkSet = jwkSet;
+  public JWKSetSignerFactory() {
+
   }
 }

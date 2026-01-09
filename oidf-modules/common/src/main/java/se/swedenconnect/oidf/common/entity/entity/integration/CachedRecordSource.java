@@ -23,15 +23,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMa
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ResolverModuleRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustAnchorModuleRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkIssuerModuleRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Cache backed implementation of {@link RecordSource}.
@@ -68,9 +64,6 @@ public class CachedRecordSource implements RecordSource {
             .getModuleRecord()
             .getValue()
             .getTrustMarkIssuers()
-            .stream()
-            .map(TrustMarkIssuerModuleRecord::toProperties)
-            .toList()
         ).orElse(List.of());
   }
 
@@ -81,9 +74,6 @@ public class CachedRecordSource implements RecordSource {
             .getModuleRecord()
             .getValue()
             .getTrustAnchors()
-            .stream()
-            .map(TrustAnchorModuleRecord::toProperties)
-            .toList()
         ).orElse(List.of());
   }
 
@@ -94,9 +84,6 @@ public class CachedRecordSource implements RecordSource {
             .getModuleRecord()
             .getValue()
             .getResolvers()
-            .stream()
-            .map(ResolverModuleRecord::toProperty)
-            .toList()
         ).orElse(List.of());
   }
 
@@ -104,8 +91,7 @@ public class CachedRecordSource implements RecordSource {
   public Optional<EntityRecord> getEntity(final NodeKey key) {
     return this.getRecord()
         .flatMap(r -> r.getEntityRecords().getValue().stream()
-            .filter(er -> er.getIssuer().getValue().equals(key.issuer()))
-            .filter(er -> er.getSubject().getValue().equals(key.subject()))
+            .filter(er -> er.getEntityIdentifier().getValue().equals(key.issuer()))
             .findFirst());
   }
 
@@ -118,32 +104,28 @@ public class CachedRecordSource implements RecordSource {
   }
 
   @Override
-  public List<EntityRecord> findSubordinates(final String issuer) {
-    return this.getRecord()
-        .map(r -> r.getEntityRecords().getValue().stream()
-            .filter(record -> !record.getSubject().getValue().equals(issuer))
-            .filter(record -> record.getIssuer().getValue().equals(issuer))
-            .toList()
-        ).orElse(List.of());
+  public List<TrustAnchorProperties.SubordinateListingProperty> findSubordinates(final String issuer) {
+    return this.getTrustAnchorProperties().stream()
+        .filter(ta -> ta.getEntityIdentifier().getValue().equals(issuer))
+        .flatMap(ta -> ta.getSubordinates().stream())
+        .toList();
   }
 
   @Override
-  public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
-    return this.getRecord()
-        .map(r ->
-                r.getModuleRecord().getValue().getTrustMarkIssuers().stream()
-                    .flatMap(
-                        tmr -> tmr.getTrustMarks()
-                            .stream()
-                            .flatMap(tmi -> tmi.getSubjects().stream())
-                    )
-            .toList()
-        ).orElse(List.of());
-
+  public List<TrustMarkSubjectProperty> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
+    return this.getTrustMarkIssuerProperties().stream()
+        .filter(tmi -> tmi.entityIdentifier().equals(issuer))
+        .flatMap((tmi -> {
+          return tmi.trustMarks()
+              .stream()
+              .filter(tm -> tm.getTrustMarkId().equals(id));
+        }))
+        .flatMap(tm -> tm.getTrustMarkSubjects().stream())
+        .toList();
   }
 
   @Override
-  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
+  public Optional<TrustMarkSubjectProperty> getTrustMarkSubject(
       final EntityID issuer,
       final TrustMarkId id,
       final EntityID subject) {

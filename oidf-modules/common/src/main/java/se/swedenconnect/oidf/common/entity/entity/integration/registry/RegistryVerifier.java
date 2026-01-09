@@ -21,7 +21,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.M
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.NotificationRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkProperty;
 
 import java.util.List;
 
@@ -38,22 +38,10 @@ public interface RegistryVerifier {
   Expirable<List<EntityRecord>> verifyEntityRecords(final String jwt);
 
   /**
-   * @param jwt with policy record
-   * @return policy record
-   */
-  Expirable<PolicyRecord> verifyPolicyRecord(final String jwt);
-
-  /**
    * @param jwt with modules
    * @return modules
    */
   Expirable<ModuleRecord> verifyModuleResponse(final String jwt);
-
-  /**
-   * @param jwt with trust mark subjects
-   * @return list of trust mark subjects
-   */
-  Expirable<List<TrustMarkRecord>> verifyTrustMark(final String jwt);
 
   /**
    * @param jwt with notification

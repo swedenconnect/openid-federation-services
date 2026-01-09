@@ -104,26 +104,6 @@ public class ResolverConfigurationProperties {
     private Integer useCachedValue = 3;
 
     /**
-     * @param registry to load keys from
-     * @return properties
-     */
-    public ResolverProperties toResolverProperties(final KeyRegistry registry) {
-      final List<JWK> list = this.trustedKeys.stream()
-          .map(registry::getKey)
-          .map(Optional::orElseThrow)
-          .toList();
-
-      return new ResolverProperties(
-          this.trustAnchor,
-          this.duration,
-          list,
-          this.entityIdentifier,
-          Duration.ofSeconds(10),
-          this.useCachedValue
-      );
-    }
-
-    /**
      * Validate configuration data
      */
     public void validate() {

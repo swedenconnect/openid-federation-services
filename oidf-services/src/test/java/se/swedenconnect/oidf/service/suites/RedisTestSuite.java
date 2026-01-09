@@ -60,7 +60,7 @@ import java.util.Random;
 })
 public class RedisTestSuite {
 
-  private static final RedisContainer redis = new RedisContainer(DockerImageName.parse("redis:6.2.6"));
+  private static final RedisContainer redis = new RedisContainer(DockerImageName.parse("redis/redis-stack:latest"));
 
 
   private static ConfigurableApplicationContext configurableApplicationContext;
@@ -86,7 +86,7 @@ public class RedisTestSuite {
             .withProperty("server.port", "11111")
             .withProperty("management.server.port", "6001")
             .withProperty("spring.data.redis.url", redis.getRedisURI())
-            .withProperty("openid.federation.registry.integration.endpoints.base-path",
+            .withProperty("federation.registry.integration.endpoints.base-path",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                     "/federationservice")
         )
