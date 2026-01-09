@@ -34,7 +34,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationLoadingCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.JWSRegistryVerifier;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.LocalRegistryProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryRefreshAheadCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
@@ -106,14 +106,14 @@ public class OpenIdFederationConfiguration {
   }
 
   @Bean
-  RegistryProperties registryProperties(
+  LocalRegistryProperties registryProperties(
       final OpenIdFederationConfigurationProperties properties,
       final KeyRegistry registry,
       final FederationKeys keys
   ) {
     final OpenIdFederationConfigurationProperties.Modules modules =
         Optional.ofNullable(properties.getModules()).orElse(new OpenIdFederationConfigurationProperties.Modules());
-    return new RegistryProperties(
+    return new LocalRegistryProperties(
         properties.getRedisKeyName(),
         properties.getRegistry().getIntegration().getEnabled(),
         Optional.ofNullable(modules.getTrustMarkIssuers())
@@ -176,7 +176,7 @@ public class OpenIdFederationConfiguration {
   }
 
   @Bean
-  LocalRecordSource propertyRecordSource(final RegistryProperties properties) {
+  LocalRecordSource propertyRecordSource(final LocalRegistryProperties properties) {
     return new LocalRecordSource(properties);
   }
 }

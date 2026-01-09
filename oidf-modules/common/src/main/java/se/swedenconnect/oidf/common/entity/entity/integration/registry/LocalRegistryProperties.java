@@ -42,7 +42,7 @@ import java.util.UUID;
  * @author Felix Hellman
  */
 @Builder
-public record RegistryProperties(
+public record LocalRegistryProperties(
     UUID instanceId,
     Boolean enabled,
     List<TrustMarkIssuerProperties> trustMarkIssuerProperties,

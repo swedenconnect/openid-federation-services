@@ -17,7 +17,7 @@
 package se.swedenconnect.oidf.common.entity.entity.integration;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.LocalRegistryProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
@@ -36,13 +36,13 @@ import java.util.Optional;
  */
 public class LocalRecordSource implements RecordSource {
 
-  private final RegistryProperties properties;
+  private final LocalRegistryProperties properties;
 
   /**
    * Constructor.
    * @param properties to get records from
    */
-  public LocalRecordSource(final RegistryProperties properties) {
+  public LocalRecordSource(final LocalRegistryProperties properties) {
     this.properties = properties;
   }
 
