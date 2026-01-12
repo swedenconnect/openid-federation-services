@@ -24,6 +24,11 @@ import se.swedenconnect.oidf.trustmarkissuer.TrustMarkSigner;
 
 import java.time.Clock;
 
+/**
+ * Trust Mark Issuer configuration class.
+ *
+ * @author Felix Hellman
+ */
 @Configuration
 public class TrustMarkIssuerConfiguration {
   @Bean

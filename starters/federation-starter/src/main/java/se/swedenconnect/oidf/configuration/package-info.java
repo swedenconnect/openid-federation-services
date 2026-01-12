@@ -14,21 +14,9 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.service.resolver.cache;
-
-import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
-import se.swedenconnect.oidf.common.entity.tree.ResolverCache;
-import se.swedenconnect.oidf.common.entity.tree.VersionedInMemoryCache;
-
 /**
- * Resolver cache factory for in memory caches.
+ * Configuration package for federation starter.
  *
  * @author Felix Hellman
  */
-public class InMemoryResolverCacheFactory implements ResolverCacheFactory {
-
-  @Override
-  public ResolverCache create(final ResolverProperties properties) {
-    return new VersionedInMemoryCache();
-  }
-}
+package se.swedenconnect.oidf.configuration;

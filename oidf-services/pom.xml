@@ -110,17 +110,17 @@
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
-            <artifactId>resolver</artifactId>
+            <artifactId>resolver-starter</artifactId>
             <version>${service-revision}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
-            <artifactId>trustanchor</artifactId>
+            <artifactId>trustanchor-starter</artifactId>
             <version>${service-revision}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
-            <artifactId>trustmarkissuer</artifactId>
+            <artifactId>trustmarkissuer-starter</artifactId>
             <version>${service-revision}</version>
         </dependency>
         <dependency>

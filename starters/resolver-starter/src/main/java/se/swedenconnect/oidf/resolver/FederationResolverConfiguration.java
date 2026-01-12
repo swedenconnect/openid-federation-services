@@ -23,19 +23,21 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import se.swedenconnect.oidf.InMemoryCacheFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.metadata.OIDFPolicyOperationFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.DFSExecution;
-import se.swedenconnect.oidf.resolver.tree.resolution.DefaultErrorContextFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 
-import java.time.Clock;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * Configuration for Resolver.
+ *
+ * @author Felix Hellman
+ */
 @Configuration
 public class FederationResolverConfiguration {
 

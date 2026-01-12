@@ -14,12 +14,9 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.service.resolver;
-
 /**
- * @param entityId that has been updated
+ * Routing package for starter.
  *
  * @author Felix Hellman
  */
-public record TreeUpdatedEvent(String entityId) {
-}
+package se.swedenconnect.oidf.routing;

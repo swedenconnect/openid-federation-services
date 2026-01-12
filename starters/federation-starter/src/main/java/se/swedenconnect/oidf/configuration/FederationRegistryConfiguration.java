@@ -39,6 +39,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.C
 import java.time.Clock;
 import java.time.ZoneId;
 
+/**
+ * Registry Configuration.
+ *
+ * @author Felix Hellman
+ */
 @Configuration
 public class FederationRegistryConfiguration {
   @Bean

@@ -22,6 +22,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
+/**
+ * Configuration class for TrustAnchor.
+ *
+ * @author Felix Hellman
+ */
 @Configuration
 public class TrustAnchorConfiguration {
   @Bean

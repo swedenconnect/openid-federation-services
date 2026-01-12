@@ -41,6 +41,11 @@ import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Base Configuration for OpenId Federation.
+ *
+ * @author Felix Hellman
+ */
 @Configuration
 @EnableConfigurationProperties(OpenIdFederationProperties.class)
 public class FederationBaseConfiguration {

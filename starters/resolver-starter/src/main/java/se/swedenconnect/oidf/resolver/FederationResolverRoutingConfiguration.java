@@ -22,6 +22,11 @@ import se.swedenconnect.oidf.resolver.routing.ResolverRouter;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
 
+/**
+ * Routing Configuration for resolver.
+ *
+ * @author Felix Hellman
+ */
 @Configuration
 public class FederationResolverRoutingConfiguration {
   @Bean

@@ -28,6 +28,11 @@ import se.swedenconnect.oidf.routing.RouterProperties;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Properties for OpenId Federation.
+ *
+ * @author Felix Hellman
+ */
 @Getter
 @Setter
 @AllArgsConstructor

@@ -16,8 +16,23 @@
  */
 package se.swedenconnect.oidf.trustanchor;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.swedenconnect.oidf.routing.RouteFactory;
+import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
+import se.swedenconnect.oidf.trustanchor.routing.TrustAnchorRouter;
 
+/**
+ * Routing configuration for trust anchor.
+ *
+ * @author Felix Hellman
+ */
 @Configuration
 public class TrustAnchorRoutingConfiguration {
+  @Bean
+  TrustAnchorRouter trustAnchorRouter(final TrustAnchorFactory trustAnchorFactory,
+                                      final RouteFactory routeFactory,
+                                      final ServerResponseErrorHandler errorHandler) {
+    return new TrustAnchorRouter(trustAnchorFactory, routeFactory, errorHandler);
+  }
 }
