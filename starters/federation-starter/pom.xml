@@ -5,6 +5,7 @@
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>starters</artifactId>
         <version>${service-revision}</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>federation-starter</artifactId>
