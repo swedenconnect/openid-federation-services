@@ -16,9 +16,6 @@
  */
 package se.swedenconnect.oidf.service.configuration;
 
-import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -26,18 +23,9 @@ import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
-import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
-import se.swedenconnect.oidf.common.entity.entity.integration.CachedRecordSource;
-import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
-import se.swedenconnect.oidf.common.entity.entity.integration.LocalRecordSource;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationLoadingCache;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.JWSRegistryVerifier;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
+import se.swedenconnect.oidf.FederationKeys;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.LocalRegistryProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryRefreshAheadCache;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
@@ -45,8 +33,6 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.T
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.service.cache.CacheFactory;
 import se.swedenconnect.oidf.service.entity.PolicyConfigurationProperties;
-import se.swedenconnect.oidf.service.entity.RestClientFederationClient;
-import se.swedenconnect.oidf.service.keys.FederationKeys;
 import se.swedenconnect.oidf.service.rest.RestClientFactory;
 import se.swedenconnect.oidf.service.rest.RestClientProperties;
 import se.swedenconnect.oidf.service.trustanchor.TrustAnchorModuleProperties;
@@ -65,25 +51,6 @@ import java.util.Optional;
 @EnableConfigurationProperties(OpenIdFederationConfigurationProperties.class)
 public class OpenIdFederationConfiguration {
 
-  @Bean
-  FederationClient federationClient(
-      @Qualifier("module-client") final RestClient client,
-      final CacheFactory factory,
-      final MeterRegistry registry) {
-    return new FederationLoadingCache(new RestClientFederationClient(client, registry),
-        factory.create(EntityStatement.class),
-        factory.create(EntityStatement.class),
-        factory.createListValueCache(String.class),
-        factory.create(SignedJWT.class),
-        factory.create(SignedJWT.class),
-        factory.createListValueCache(String.class)
-    );
-  }
-
-  @Bean
-  RegistryVerifier registryVerifier(final FederationKeys keys) {
-    return new JWSRegistryVerifier(keys.validationKeys());
-  }
 
   @Bean
   @Qualifier("module-client")
@@ -138,45 +105,5 @@ public class OpenIdFederationConfiguration {
             .orElse(List.of()).stream()
             .map(TrustMarkSubjectProperties::toSubject).toList()
     );
-  }
-
-  @Bean
-  RestClientFactory restClientFactory(final SslBundles bundles, final ObservationRegistry registry) {
-    return new RestClientFactory(bundles, registry);
-  }
-
-  @Bean
-  CompositeRecordSource compositeRecordSource(
-      final LocalRecordSource localRecordSource,
-      final CachedRecordSource cachedRecordSource) {
-    return new CompositeRecordSource(
-        List.of(
-            localRecordSource,
-            cachedRecordSource
-        )
-    );
-  }
-
-  @Bean
-  CachedRecordSource cachedRecordSource(final CacheFactory factory) {
-    return new CachedRecordSource(factory.create(CompositeRecord.class));
-  }
-
-  @Bean
-  CacheRecordPopulator cacheRecordPopulator(
-      final CachedRecordSource cachedRecordSource,
-      final RecordRegistryIntegration recordRegistryIntegration,
-      final OpenIdFederationConfigurationProperties properties
-  ) {
-    return new CacheRecordPopulator(
-        cachedRecordSource,
-        recordRegistryIntegration,
-        properties.getRedisKeyName()
-    );
-  }
-
-  @Bean
-  LocalRecordSource propertyRecordSource(final LocalRegistryProperties properties) {
-    return new LocalRecordSource(properties);
   }
 }

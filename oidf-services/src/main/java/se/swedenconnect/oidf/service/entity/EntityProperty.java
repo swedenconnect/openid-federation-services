@@ -23,13 +23,13 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.util.Assert;
+import se.swedenconnect.oidf.FederationKeys;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.HostedRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSourceRecord;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.service.JsonObjectProperty;
-import se.swedenconnect.oidf.service.keys.FederationKeys;
 
 import java.util.List;
 import java.util.Map;

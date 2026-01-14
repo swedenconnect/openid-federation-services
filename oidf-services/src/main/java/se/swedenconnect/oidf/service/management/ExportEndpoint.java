@@ -33,9 +33,9 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
+import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
+import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
-import se.swedenconnect.oidf.service.resolver.ResolverFactory;
-import se.swedenconnect.oidf.service.resolver.cache.ResolverCacheRegistry;
 import se.swedenconnect.oidf.service.state.StateHashFactory;
 
 import java.util.ArrayList;

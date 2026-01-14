@@ -23,8 +23,6 @@ import se.swedenconnect.oidf.service.cache.managed.NoopRequestResponseCacheFacto
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheRepository;
 import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
-import se.swedenconnect.oidf.service.resolver.cache.InMemoryResolverCacheFactory;
-import se.swedenconnect.oidf.service.resolver.cache.ResolverCacheFactory;
 import se.swedenconnect.oidf.service.state.FederationServiceState;
 import se.swedenconnect.oidf.service.state.InMemoryFederationServiceState;
 import se.swedenconnect.oidf.service.state.NoOperationServiceLock;
@@ -40,16 +38,6 @@ import java.time.Clock;
 @Configuration
 @ConditionalOnProperty(name = "openid.federation.storage", havingValue = "memory")
 public class InMemoryCacheConfiguration {
-
-  @Bean
-  CacheFactory inMemoryCacheFactory(final Clock clock) {
-    return new InMemoryCacheFactory(clock);
-  }
-
-  @Bean
-  ResolverCacheFactory inMemoryResolverCacheFactory() {
-    return new InMemoryResolverCacheFactory();
-  }
 
   @Bean
   FederationServiceState inMemoryFederationServiceState() {

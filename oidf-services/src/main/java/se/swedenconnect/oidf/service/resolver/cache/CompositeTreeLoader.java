@@ -17,7 +17,8 @@
 package se.swedenconnect.oidf.service.resolver.cache;
 
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
-import se.swedenconnect.oidf.service.resolver.ResolverFactory;
+import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
+import se.swedenconnect.oidf.resolver.ResolverFactory;
 
 /**
  * Manages loading of multiple resolver trees.
