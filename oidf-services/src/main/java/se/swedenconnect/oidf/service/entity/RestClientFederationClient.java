@@ -19,6 +19,8 @@ package se.swedenconnect.oidf.service.entity;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Tag;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryResponseException;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
@@ -40,20 +42,23 @@ import java.util.Optional;
  */
 public class RestClientFederationClient implements FederationClient {
   private final RestClient client;
+  private final MeterRegistry registry;
 
   /**
    * @param client to use for requests
+   * @param registry for metrics
    */
-  public RestClientFederationClient(final RestClient client) {
+  public RestClientFederationClient(
+      final RestClient client,
+      final MeterRegistry registry
+  ) {
     this.client = client;
+    this.registry = registry;
   }
 
   @Override
   public EntityStatement entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
-    final String jwt = Optional.ofNullable(request.federationEntityMetadata()
-            .get("subject_entity_configuration_location"))
-        .filter(l -> l instanceof String)
-        .map(String.class::cast)
+    final String jwt = Optional.ofNullable(request.parameters().ecLocation())
         .map(location -> {
           if (location.startsWith("data:application/entity-statement+jwt,")) {
             return location.split(",")[1];
@@ -74,9 +79,23 @@ public class RestClientFederationClient implements FederationClient {
                 .body(String.class)
         );
     try {
+      this.registry.counter("GET_entity_configuration", List.of(
+          Tag.of("entityId", request.parameters().entityID().getValue()),
+          Tag.of("outcome", "success")
+      )).increment();
       return EntityStatement.parse(jwt);
     } catch (final ParseException e) {
+      this.registry.counter("GET_entity_configuration", List.of(
+          Tag.of("entityId", request.parameters().entityID().getValue()),
+          Tag.of("outcome", "failure")
+      )).increment();
       throw new RuntimeException(e);
+    } catch (final Exception e) {
+      this.registry.counter("GET_entity_configuration", List.of(
+          Tag.of("entityId", request.parameters().entityID().getValue()),
+          Tag.of("outcome", "failure")
+      )).increment();
+      throw e;
     }
   }
 

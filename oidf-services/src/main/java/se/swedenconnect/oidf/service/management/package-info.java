@@ -14,18 +14,9 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.entity.integration.federation;
-
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-
-import java.io.Serializable;
-
 /**
- * Request class for fetching entity configuration.
- * @param entityID to fetch
- * @param ecLocation alternate location
+ * Management package for oidf-service
  *
  * @author Felix Hellman
  */
-public record EntityConfigurationRequest(EntityID entityID, String ecLocation) implements Serializable {
-}
+package se.swedenconnect.oidf.service.management;

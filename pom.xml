@@ -31,7 +31,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <credentials-support.version>2.0.7</credentials-support.version>
-        <service-revision>0.6.1-SNAPSHOT</service-revision>
+        <service-revision>0.8.23-SNAPSHOT</service-revision>
     </properties>
 
     <modules>

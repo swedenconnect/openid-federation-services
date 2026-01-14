@@ -150,7 +150,7 @@ public class EntityStatementTreeLoader {
     try {
       final Node<EntityStatement> root = new Node<>(nodeKey);
       final EntityConfigurationRequest entityConfigurationRequest =
-          new EntityConfigurationRequest(new EntityID(nodeKey.issuer()));
+          new EntityConfigurationRequest(new EntityID(nodeKey.issuer()), null);
       final EntityStatement entityStatement =
           this.client.entityConfiguration(new FederationRequest<>(
               entityConfigurationRequest,
@@ -250,7 +250,12 @@ public class EntityStatementTreeLoader {
       final JSONObject subordinateMetadata = Optional.ofNullable(
           subordinateStatement.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY))
           .orElse(new JSONObject());
-      final EntityConfigurationRequest entityConfigurationRequest = new EntityConfigurationRequest(subjectEntityID);
+      final EntityConfigurationRequest entityConfigurationRequest = new EntityConfigurationRequest(subjectEntityID,
+          Optional.ofNullable(subordinateStatement
+              .getClaimsSet()
+              .getClaim("subject_entity_configuration_location"))
+              .map(String.class::cast)
+              .orElse(null));
       final EntityStatement entityConfiguration =
           this.client.entityConfiguration(new FederationRequest<>(entityConfigurationRequest,
               subordinateMetadata, this.useCachedValue(context)));

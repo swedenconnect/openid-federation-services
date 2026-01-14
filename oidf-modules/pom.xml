@@ -34,7 +34,6 @@
         <module>resolver</module>
         <module>trustmarkissuer</module>
         <module>trustanchor</module>
-        <module>test</module>
     </modules>
 
     <dependencies>

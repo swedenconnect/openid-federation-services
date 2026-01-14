@@ -20,10 +20,6 @@ import com.redis.testcontainers.RedisContainer;
 import org.slf4j.Logger;
 import org.testcontainers.Testcontainers;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy;
-import se.swedenconnect.oidf.test.testcontainer.RelyingPartyContainer;
-
-import java.util.List;
 
 public class EnvironmentConfigurators {
   public static void configureRedis(final RedisContainer redis, final Logger log) {
@@ -33,23 +29,5 @@ public class EnvironmentConfigurators {
   public static void configureTestContainers() {
     Testcontainers.exposeHostPorts(6000);
     Testcontainers.exposeHostPorts(11000);
-  }
-
-  public static void configureRelyingParty(final RelyingPartyContainer relyingParty, final Logger log) {
-    relyingParty.withLogConsumer(new Slf4jLogConsumer(log));
-    relyingParty.withExposedPorts(11000);
-    relyingParty.setPortBindings(List.of("11000:11000"));
-    relyingParty.setWaitStrategy(new HostPortWaitStrategy().forPorts(11000));
-  }
-
-  /**
-   * Configures Testcontainer openings and relying party container
-   */
-  public static void configureDefaultEnvironment(
-      final RelyingPartyContainer relyingPartyContainer,
-      final Logger log
-  ) {
-    configureRelyingParty(relyingPartyContainer, log);
-    configureTestContainers();
   }
 }
