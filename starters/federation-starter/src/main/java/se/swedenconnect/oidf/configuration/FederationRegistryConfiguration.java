@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.configuration;
 
 import io.micrometer.observation.ObservationRegistry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
@@ -81,7 +82,7 @@ public class FederationRegistryConfiguration {
   @Bean
   RecordRegistryIntegration recordRegistryIntegration(
       final RegistryVerifier verifier,
-      final RestClient restClient) {
+      @Qualifier("registryRestClient") final RestClient restClient) {
 
     return new RestClientRecordIntegration(verifier, restClient);
   }
