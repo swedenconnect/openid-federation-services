@@ -14,33 +14,28 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.service.cache;
+package se.swedenconnect.oidf.service.configuration;
 
-import se.swedenconnect.oidf.common.entity.entity.integration.Cache;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.List;
+import java.util.UUID;
 
 /**
- * Factory class for creating caches.
+ * Properties for openid federation service.
  *
  * @author Felix Hellman
  */
-public interface CacheFactory {
-  /**
-   * Creates a single value cache.
-   *
-   * @param v   value class
-   * @param <V> value class
-   * @return cache for given key/value
-   */
-  <V> Cache<String, V> create(final Class<V> v);
-
-  /**
-   * Creates a single value cache. (where the value is a list)
-   *
-   * @param v   value class
-   * @param <V> value class
-   * @return cache for list value
-   */
-  <V> Cache<String, List<V>> createListValueCache(final Class<V> v);
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@ConfigurationProperties("federation.service")
+public class OpenIdFederationServiceProperties {
+  @NotNull
+  private UUID redisKeyName;
 }

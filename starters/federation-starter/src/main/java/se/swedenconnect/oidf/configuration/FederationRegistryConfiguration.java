@@ -76,7 +76,7 @@ public class FederationRegistryConfiguration {
   @Bean
   RestClient registryRestClient(final RestClientFactory restClientFactory,
                                 final OpenIdFederationProperties properties) {
-    return restClientFactory.create(properties.getRegistry().getIntegration().getClientProperties());
+    return restClientFactory.create(properties.getRegistry().getIntegration().getClient());
   }
 
   @Bean

@@ -49,7 +49,7 @@ public class FederationResolverConfiguration {
       final ResolverCacheRegistry resolverCacheRegistry,
       final SignerFactory signerFactory,
       final List<Function<Resolver, Resolver>> transformers
-      ) {
+  ) {
     return new ResolverFactory(
         cacheFactory,
         processor,
@@ -73,7 +73,7 @@ public class FederationResolverConfiguration {
   @Bean
   MetadataProcessor metadataProcessor(final PolicyOperationFactory policyOperationFactory,
                                       final PolicyOperationCombinationValidator policyOperationCombinationValidator
-                                      ) {
+  ) {
     return new MetadataProcessor(policyOperationFactory, policyOperationCombinationValidator);
   }
 

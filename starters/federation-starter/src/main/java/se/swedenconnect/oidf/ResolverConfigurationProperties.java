@@ -14,23 +14,33 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.service.configuration;
+package se.swedenconnect.oidf;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.util.Assert;
 
 /**
- * Configuration Properties for caching.
+ * Configuration properties for resolver.
  *
  * @author Felix Hellman
  */
 @Getter
 @Setter
-public class CacheConfigurationProperties {
+@AllArgsConstructor
+@NoArgsConstructor
+public class ResolverConfigurationProperties {
+
+  private RestClientProperty client;
 
   /**
-   * Threshold of how many times a requests needs to be
-   * queried before being internally re-evaluated.
+   * Validate resolver properties.
+   * @param propertyKey
    */
-  private final Integer requestThreshold = 1;
+  public void validate(final String propertyKey) {
+    Assert.notNull(this.client, "%s.%s can not be null".formatted(propertyKey, "client"));
+    Assert.isNull(this.client.getBaseUri(), "%s.%s can not be set".formatted(propertyKey, "client.base-uri"));
+  }
 }

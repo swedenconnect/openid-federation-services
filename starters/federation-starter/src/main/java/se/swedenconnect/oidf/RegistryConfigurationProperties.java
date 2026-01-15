@@ -45,7 +45,7 @@ public class RegistryConfigurationProperties {
   @Setter
   @Getter
   public static final class Integration {
-    private RestClientProperty clientProperties;
+    private RestClientProperty client;
     private UUID instanceId;
     private Boolean enabled;
     private List<String> validationKeys;
@@ -61,7 +61,7 @@ public class RegistryConfigurationProperties {
       Assert.notNull(this.instanceId, basePropName + "instance-id must be configured");
       Assert.notNull(this.validationKeys, basePropName + "validationKeys must be configured");
       Assert.isTrue(!this.validationKeys.isEmpty(), basePropName + "validationKeys must be configured");
-      Assert.notNull(this.clientProperties, "Rest client properties can not be null");
+      Assert.notNull(this.client, "Rest client properties can not be null");
     }
   }
 }

@@ -25,31 +25,26 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.P
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
  * Properties for registry integration.
  *
- * @param instanceId for this instance
  * @param trustMarkIssuerProperties for locally configured trust marks
  * @param trustAnchorProperties for locally configured trust anchors
  * @param resolverProperties for locally configures resolvers
  * @param entityRecords for locally configured entity records
  * @param policyRecords for locally configured policy records
- * @param enabled true if registry integration is enabled or not
- * @param trustMarkSubjectRecords for locally configured trust mark subjects
  *
  * @author Felix Hellman
  */
 @Builder
 public record LocalRegistryProperties(
-    UUID instanceId,
-    Boolean enabled,
     List<TrustMarkIssuerProperties> trustMarkIssuerProperties,
     List<TrustAnchorProperties> trustAnchorProperties,
     List<ResolverProperties> resolverProperties,
     List<EntityRecord> entityRecords,
-    List<PolicyRecord> policyRecords,
-    List<TrustMarkSubjectRecord> trustMarkSubjectRecords
+    List<PolicyRecord> policyRecords
 ) {
 }

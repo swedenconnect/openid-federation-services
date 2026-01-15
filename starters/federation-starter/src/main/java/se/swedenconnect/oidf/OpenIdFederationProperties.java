@@ -16,16 +16,21 @@
  */
 package se.swedenconnect.oidf;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.util.Assert;
+import org.springframework.validation.annotation.Validated;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.LocalRegistryProperties;
 import se.swedenconnect.oidf.routing.RouterProperties;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -37,8 +42,18 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ConfigurationProperties("federation")
+@Validated
+@ConfigurationProperties(OpenIdFederationProperties.PROPERTY_KEY)
 public class OpenIdFederationProperties {
+
+
+  private ResolverConfigurationProperties resolver;
+
+  /**
+   * Property key for this configuration property.
+   */
+  public static final String PROPERTY_KEY = "federation";
+
   /**
    * Additional Keys
    */
@@ -78,8 +93,22 @@ public class OpenIdFederationProperties {
   /**
    * Local registry settings.
    */
-  private LocalRegistryProperties localRegistry;
+  private PropertyRegistry localRegistry;
 
+  @Nonnull
   @NestedConfigurationProperty
   private RouterProperties routing;
+
+  @PostConstruct
+  void validate() {
+    Assert.notNull(this.resolver, "%s.%s can not be empty".formatted(PROPERTY_KEY, "resolver"));
+    this.resolver.validate("%s.%s".formatted(PROPERTY_KEY, "resolver"));
+    Assert.notNull(this.localRegistry, "%s.%s can not be empty".formatted(PROPERTY_KEY, "local-registry"));
+    this.localRegistry.validate("%s.%s".formatted(PROPERTY_KEY, "local-registry"));
+    Assert.notNull(this.routing, "%s.%s cant not be empty".formatted(PROPERTY_KEY, "routing"));
+    this.routing.validate("%s.%s".formatted(PROPERTY_KEY, "routing"));
+    Assert.notNull(this.sign, "%s.%s can not be null".formatted(PROPERTY_KEY, "sign"));
+    Assert.notEmpty(this.sign, "%s.%s can not be empty".formatted(PROPERTY_KEY, "sign"));
+
+  }
 }

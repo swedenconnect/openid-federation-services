@@ -25,11 +25,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import se.swedenconnect.oidf.CacheFactory;
+import se.swedenconnect.oidf.OpenIdFederationProperties;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheRepository;
 import se.swedenconnect.oidf.service.cache.managed.NoopRequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
-import se.swedenconnect.oidf.service.configuration.OpenIdFederationConfigurationProperties;
+import se.swedenconnect.oidf.service.configuration.OpenIdFederationServiceProperties;
 import se.swedenconnect.oidf.service.resolver.ResolverCacheTransformer;
 import se.swedenconnect.oidf.service.resolver.cache.RedisResolverCacheFactory;
 import se.swedenconnect.oidf.service.resolver.cache.ResolverCacheFactory;
@@ -54,7 +56,7 @@ public class RedisCacheConfiguration {
 
   @Bean
   CacheFactory redisCacheFactory(final RedisConnectionFactory factory, final Clock clock,
-                                 final OpenIdFederationConfigurationProperties properties) {
+                                 final OpenIdFederationServiceProperties properties) {
     return new RedisCacheFactory(clock, factory, properties.getRedisKeyName());
   }
 
@@ -108,7 +110,7 @@ public class RedisCacheConfiguration {
   @Bean
   FederationServiceState redisFederationServiceState(
       final RedisConnectionFactory factory,
-      final OpenIdFederationConfigurationProperties properties) {
+      final OpenIdFederationServiceProperties properties) {
 
     final InstanceSpecificRedisKeySerializer keySerializer =
         new InstanceSpecificRedisKeySerializer(new StringRedisSerializer(),
@@ -124,7 +126,7 @@ public class RedisCacheConfiguration {
   @Bean
   ServiceLock redisServiceLock(
       final RedisConnectionFactory factory,
-      final OpenIdFederationConfigurationProperties properties) {
+      final OpenIdFederationServiceProperties properties) {
     final InstanceSpecificRedisKeySerializer keySerializer = new InstanceSpecificRedisKeySerializer(
         new StringRedisSerializer(),
         properties.getRedisKeyName()

@@ -16,14 +16,13 @@
  */
 package se.swedenconnect.oidf.service.configuration;
 
-import io.micrometer.observation.ObservationRegistry;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestClient;
+import se.swedenconnect.oidf.CacheFactory;
 import se.swedenconnect.oidf.FederationKeys;
+import se.swedenconnect.oidf.OpenIdFederationProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.LocalRegistryProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryRefreshAheadCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
@@ -31,10 +30,10 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.M
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
-import se.swedenconnect.oidf.service.cache.CacheFactory;
+import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
+import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.service.entity.PolicyConfigurationProperties;
-import se.swedenconnect.oidf.service.rest.RestClientFactory;
-import se.swedenconnect.oidf.service.rest.RestClientProperties;
+import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 import se.swedenconnect.oidf.service.trustanchor.TrustAnchorModuleProperties;
 import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkIssuerModuleConfigurationProperties;
 import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkSubjectProperties;
@@ -48,19 +47,8 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 @Configuration
-@EnableConfigurationProperties(OpenIdFederationConfigurationProperties.class)
+@EnableConfigurationProperties(OpenIdFederationServiceProperties.class)
 public class OpenIdFederationConfiguration {
-
-
-  @Bean
-  @Qualifier("module-client")
-  RestClient resolverClient(final RestClientFactory factory, final OpenIdFederationConfigurationProperties properties) {
-    final RestClientProperties.RestClientProperty property = new RestClientProperties.RestClientProperty();
-    Optional.ofNullable(properties.getTrustStoreName())
-        .ifPresent(property::setTrustStoreBundleName);
-    property.setName("module-client");
-    return factory.create(property);
-  }
 
   @Bean
   RegistryRefreshAheadCache refreshAheadCache(final CacheFactory factory) {
@@ -73,37 +61,9 @@ public class OpenIdFederationConfiguration {
   }
 
   @Bean
-  LocalRegistryProperties registryProperties(
-      final OpenIdFederationConfigurationProperties properties,
-      final KeyRegistry registry,
-      final FederationKeys keys
-  ) {
-    final OpenIdFederationConfigurationProperties.Modules modules =
-        Optional.ofNullable(properties.getModules()).orElse(new OpenIdFederationConfigurationProperties.Modules());
-    return new LocalRegistryProperties(
-        properties.getRedisKeyName(),
-        properties.getRegistry().getIntegration().getEnabled(),
-        Optional.ofNullable(modules.getTrustMarkIssuers())
-            .orElse(List.of()).stream()
-            .map(TrustMarkIssuerModuleConfigurationProperties.TrustMarkIssuerSubModuleProperty::toProperties)
-            .toList(),
-        Optional.ofNullable(modules.getTrustAnchors())
-            .orElse(List.of()).stream()
-            .map(TrustAnchorModuleProperties.TrustAnchorSubModuleProperties::toTrustAnchorProperties)
-            .toList(),
-        Optional.ofNullable(modules.getResolvers())
-            .orElse(List.of()).stream()
-            .map(r -> r.toResolverProperties(registry)).toList(),
-        Optional.ofNullable(properties.getEntities())
-            .orElse(List.of()).stream()
-            .map(e -> e.toEntityRecord(registry, keys)).toList(),
-        Optional.ofNullable(properties.getPolicies())
-            .orElse(List.of())
-            .stream().map(PolicyConfigurationProperties.PolicyRecordProperty::toRecord).toList()
-        ,
-        Optional.ofNullable(properties.getTrustMarkSubjects())
-            .orElse(List.of()).stream()
-            .map(TrustMarkSubjectProperties::toSubject).toList()
-    );
+  CompositeTreeLoader compositeTreeLoader(final ResolverCacheRegistry resolverCacheRegistry,
+                                          final ResolverFactory resolverFactory,
+                                          final CompositeRecordSource recordSource) {
+    return new CompositeTreeLoader(resolverCacheRegistry, resolverFactory, recordSource);
   }
 }

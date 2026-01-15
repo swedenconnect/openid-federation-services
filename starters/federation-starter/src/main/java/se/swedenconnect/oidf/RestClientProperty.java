@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.util.Assert;
 
 /**
  * Common properties for rest-clients
@@ -34,4 +35,9 @@ public class RestClientProperty {
   private String baseUri;
   private String trustStoreBundleName;
   private String name;
+
+  public void validate(final String key) {
+    Assert.notNull(this.trustStoreBundleName, "%s.%s can not be empty".formatted(key,"trust-store-bundle-name"));
+    Assert.notNull(this.name, "%s.%s can not be empty".formatted(key,"name"));
+  }
 }

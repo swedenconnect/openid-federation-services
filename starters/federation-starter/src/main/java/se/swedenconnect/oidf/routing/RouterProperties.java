@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.routing;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.util.Assert;
 
 import java.net.URI;
 import java.util.List;
@@ -34,7 +35,7 @@ public class RouterProperties {
    * Set to true to enable routing.
    * Disable this if you want to implement custom routing.
    */
-  private boolean enabled;
+  private Boolean enabled;
   /**
    * Mode to use when evaluating routes.
    */
@@ -57,4 +58,19 @@ public class RouterProperties {
 
   private DomainEvaluationMode mode;
   private List<URI> allowedDomains;
+
+  /**
+   * Validate properties.
+   * @param key
+   */
+  public void validate(final String key) {
+    if (this.enabled) {
+      Assert.notNull(this.mode, "%s.%s can not be null, set to either of following %s"
+          .formatted(key, "mode", DomainEvaluationMode.values()));
+      if (DomainEvaluationMode.STRICT.equals(this.mode)) {
+        Assert.notNull(this.allowedDomains, "%s.%s can not be null when domain evaluation mode is strict");
+        Assert.notEmpty(this.allowedDomains, "%s.%s can not be empty when domain evaluation mode is strict");
+      }
+    }
+  }
 }

@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.service.cache;
 
+import se.swedenconnect.oidf.CacheFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.Cache;
 import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryCache;
 

@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.configuration;
 
 import com.nimbusds.jose.jwk.JWK;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.servlet.ServletContext;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +35,9 @@ import se.swedenconnect.oidf.common.entity.jwt.JWKSetSignerFactory;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.common.entity.keys.KeyProperty;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
+import se.swedenconnect.oidf.routing.ErrorHandler;
+import se.swedenconnect.oidf.routing.RouteFactory;
+import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
@@ -104,8 +108,12 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
-  RecordSource propertyRecordSource(final OpenIdFederationProperties properties) {
-    return new LocalRecordSource(properties.getLocalRegistry());
+  RecordSource propertyRecordSource(
+      final OpenIdFederationProperties properties,
+      final FederationKeys keys,
+      final KeyRegistry registry
+  ) {
+    return new LocalRecordSource(properties.getLocalRegistry().toProperty(registry, keys));
   }
 
   @Bean
@@ -121,5 +129,16 @@ public class FederationBaseConfiguration {
   @Bean
   SignerFactory signerFactory(final FederationKeys keys) {
     return new JWKSetSignerFactory(keys.signKeys());
+  }
+
+  @Bean
+  RouteFactory routeFactory(final ServletContext context,
+                            final OpenIdFederationProperties properties) {
+    return new RouteFactory(context, properties);
+  }
+
+  @Bean
+  ServerResponseErrorHandler serverResponseErrorHandler() {
+    return new ServerResponseErrorHandler(new ErrorHandler());
   }
 }
