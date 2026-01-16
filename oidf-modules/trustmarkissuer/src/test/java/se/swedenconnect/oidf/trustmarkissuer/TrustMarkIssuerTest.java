@@ -111,7 +111,7 @@ class TrustMarkIssuerTest {
             .granted(Instant.now())
             .build();
 
-    Mockito.when(source.getTrustMarkSubjects(trustMarkIssuerProperties.issuerEntityId(),
+    Mockito.when(source.getTrustMarkSubjects(trustMarkIssuerProperties.entityIdentifier(),
             TrustMarkId.create("http://tm1.digg.se")))
         .thenReturn(List.of(sub1, sub2, sub3));
 
@@ -183,7 +183,7 @@ class TrustMarkIssuerTest {
 
     Mockito.when(
             source.getTrustMarkSubject(
-                trustMarkIssuerProperties.issuerEntityId(),
+                trustMarkIssuerProperties.entityIdentifier(),
                 trustMarkId,
                 new EntityID(sub1.sub())
             )
@@ -248,7 +248,7 @@ class TrustMarkIssuerTest {
         .build());
 
     Mockito.when(source.getTrustMarkSubject(
-        this.trustMarkIssuerProperties.issuerEntityId(),
+        this.trustMarkIssuerProperties.entityIdentifier(),
         TrustMarkId.create("http://tm1.digg.se"),
         new EntityID(sub1.sub())
     )).thenReturn(Optional.of(sub1));
@@ -266,7 +266,7 @@ class TrustMarkIssuerTest {
 
 
     Mockito.when(source.getTrustMarkSubject(
-        this.trustMarkIssuerProperties.issuerEntityId(),
+        this.trustMarkIssuerProperties.entityIdentifier(),
         TrustMarkId.create("http://tm1.digg.se"),
         new EntityID(expired.sub())
     )).thenReturn(Optional.of(expired));

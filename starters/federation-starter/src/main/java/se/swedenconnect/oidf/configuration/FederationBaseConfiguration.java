@@ -19,9 +19,13 @@ package se.swedenconnect.oidf.configuration;
 import com.nimbusds.jose.jwk.JWK;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.ServletContext;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.FederationKeys;
 import se.swedenconnect.oidf.OpenIdFederationProperties;
@@ -50,15 +54,16 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
+@Order(Integer.MAX_VALUE)
 @Configuration
 @EnableConfigurationProperties(OpenIdFederationProperties.class)
 public class FederationBaseConfiguration {
   @Bean
-  KeyRegistry keyRegistry(final CredentialBundles bundles,
-                          final OpenIdFederationProperties properties) {
+  @Order(1)
+  KeyRegistry keyRegistry(final CredentialBundles bundles) {
     final KeyRegistry keyRegistry = new KeyRegistry();
 
-    final JwkTransformerFunction jwkTransformerFunction = getTransformer(properties);
+    final JwkTransformerFunction jwkTransformerFunction = new JwkTransformerFunction();//getTransformer(properties);
 
     jwkTransformerFunction
         .withRsaCustomizer(rsa -> rsa.x509CertChain(null))
@@ -73,14 +78,14 @@ public class FederationBaseConfiguration {
       property.setAlias(key);
       keyRegistry.register(property);
     });
-    properties.getAdditionalKeys()
+    /*properties.getAdditionalKeys()
         .forEach(key -> {
           final JWK parsed = key.getKey();
           final KeyProperty property = new KeyProperty();
           property.setKey(parsed);
           property.setAlias(key.name());
           keyRegistry.register(property);
-        });
+        });*/
 
     return keyRegistry;
   }
@@ -140,5 +145,11 @@ public class FederationBaseConfiguration {
   @Bean
   ServerResponseErrorHandler serverResponseErrorHandler() {
     return new ServerResponseErrorHandler(new ErrorHandler());
+  }
+
+  @Bean
+  @ConfigurationPropertiesBinding
+  JWKPropertyLoader jwkPropertyLoader(final ObjectProvider<KeyRegistry> registry) {
+    return new JWKPropertyLoader(registry);
   }
 }

@@ -29,13 +29,13 @@ import java.util.List;
  * Properties for TrustMarkIssuer
  *
  * @param trustMarkValidityDuration The validity duration of issued Trust Marks
- * @param issuerEntityId            IssuerEntityId
+ * @param entityIdentifier            IssuerEntityId
  * @param trustMarks                TrustMark Issuer
  * @author Per Fredrik Plars
  */
 @Builder
 @Slf4j
-public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, EntityID issuerEntityId,
+public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, EntityID entityIdentifier,
                                         List<TrustMarkProperties> trustMarks) {
 
   /**
@@ -44,9 +44,9 @@ public record TrustMarkIssuerProperties(Duration trustMarkValidityDuration, Enti
    * @throws IllegalArgumentException is thrown when configuration is missing
    */
   @PostConstruct
-  public void validate () throws IllegalArgumentException {
+  public void validate() throws IllegalArgumentException {
     FederationAssert.assertNotEmpty(this.trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
-    FederationAssert.assertNotEmpty(this.issuerEntityId, "IssuerEntityId is expected");
+    FederationAssert.assertNotEmpty(this.entityIdentifier, "IssuerEntityId is expected");
     FederationAssert.assertNotEmpty(this.trustMarks, "TrustMarks is expected");
     FederationAssert.assertTrue(this.trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
         "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'%s'"

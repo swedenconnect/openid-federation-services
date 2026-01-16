@@ -57,7 +57,7 @@ public class TestDataSetup {
 
     final TrustMarkIssuerProperties trustMarkIssuerProperties = TrustMarkIssuerProperties.builder()
         .trustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES))
-        .issuerEntityId(new EntityID("https://tmissuer.digg.se"))
+        .entityIdentifier(new EntityID("https://tmissuer.digg.se"))
         .trustMarks(new ArrayList<>())
         .build();
 

@@ -21,7 +21,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
-import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
@@ -63,7 +62,7 @@ public class SubordinateStatementFactory {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
 
-      Optional.ofNullable(this.properties.getConstraintRecord())
+      Optional.ofNullable(this.properties.getConstraints())
               .ifPresent(constraint -> {
                 builder.claim("constraints", constraint.toJson());
               });

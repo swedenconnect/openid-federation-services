@@ -85,7 +85,7 @@ public class LocalRecordSource implements RecordSource {
   @Override
   public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
     return this.properties
-        .trustMarkIssuerProperties().stream().filter(tmi -> tmi.issuerEntityId().equals(issuer))
+        .trustMarkIssuerProperties().stream().filter(tmi -> tmi.entityIdentifier().equals(issuer))
         .flatMap(tmi -> tmi.trustMarks().stream())
         .filter(tm -> tm.trustMarkId().equals(id))
         .flatMap(tm -> tm.trustMarkSubjectRecords().stream())

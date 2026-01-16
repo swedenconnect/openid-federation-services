@@ -109,7 +109,7 @@ public class TrustAnchorRouter implements Router {
   private RequestPredicate getRequestPredicate(final CompositeRecordSource source, final String endpoint) {
     return request -> {
       return source.getTrustAnchorProperties().stream()
-          .map(prop -> this.routeFactory.createRoute(prop.getEntityId(), endpoint))
+          .map(prop -> this.routeFactory.createRoute(prop.getEntityIdentifier(), endpoint))
           .reduce(p -> false, RequestPredicate::or)
           .test(request);
     };
@@ -120,7 +120,7 @@ public class TrustAnchorRouter implements Router {
       final ServerRequest request,
       final String endpoint) {
     return source.getTrustAnchorProperties().stream()
-        .filter(prop -> this.routeFactory.createRoute(prop.getEntityId(), endpoint).test(request))
+        .filter(prop -> this.routeFactory.createRoute(prop.getEntityIdentifier(), endpoint).test(request))
         .findFirst()
         .get();
   }

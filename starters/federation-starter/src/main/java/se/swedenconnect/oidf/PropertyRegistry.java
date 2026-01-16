@@ -60,11 +60,11 @@ public class PropertyRegistry {
    */
   public LocalRegistryProperties toProperty(final KeyRegistry keyRegistry, final FederationKeys keys) {
     return new LocalRegistryProperties(
-        trustMarkIssuers,
-        trustAnchors,
-        resolvers,
-        entities.stream().map(e -> e.toEntityRecord(keyRegistry, keys)).toList(),
-        policies
+        this.trustMarkIssuers,
+        this.trustAnchors,
+        this.resolvers,
+        this.entities.stream().map(e -> e.toEntityRecord(keyRegistry, keys)).toList(),
+        this.policies
     );
   }
 
@@ -85,7 +85,7 @@ public class PropertyRegistry {
       }
     });
     this.trustAnchors.forEach(r -> {
-      final String entityIdentifier = r.getEntityId().getValue();
+      final String entityIdentifier = r.getEntityIdentifier().getValue();
       if (!this.entityExists(entityIdentifier)) {
         throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
             .formatted(
@@ -96,7 +96,7 @@ public class PropertyRegistry {
       }
     });
     this.trustMarkIssuers.forEach(r -> {
-      final String entityIdentifier = r.issuerEntityId().getValue();
+      final String entityIdentifier = r.entityIdentifier().getValue();
       if (!this.entityExists(entityIdentifier)) {
         throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
             .formatted(
@@ -112,6 +112,6 @@ public class PropertyRegistry {
     if (Objects.isNull(this.entities) || this.entities.isEmpty()) {
       return false;
     }
-    return this.entities.stream().anyMatch(e -> e.getIssuer().equals(entityId) && e.getSubject().equals(entityId));
+    return this.entities.stream().anyMatch(e -> e.getSubject().equals(entityId));
   }
 }

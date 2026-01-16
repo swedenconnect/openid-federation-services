@@ -45,7 +45,7 @@ public class TrustAnchorEntityCustomizer implements EntityConfigurationClaimCust
       final JWTClaimsSet.Builder builder) {
 
     this.source.getTrustAnchorProperties().stream()
-        .filter(ta -> ta.getEntityId().equals(record.getSubject()))
+        .filter(ta -> ta.getEntityIdentifier().equals(record.getSubject()))
         .findFirst()
         .ifPresent(ta -> {
           builder.claim("trust_mark_issuers", ta.getTrustMarkIssuers());

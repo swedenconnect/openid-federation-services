@@ -36,6 +36,10 @@ public class RestClientProperty {
   private String trustStoreBundleName;
   private String name;
 
+  /**
+   * Validate property.
+   * @param key of parent
+   */
   public void validate(final String key) {
     Assert.notNull(this.trustStoreBundleName, "%s.%s can not be empty".formatted(key,"trust-store-bundle-name"));
     Assert.notNull(this.name, "%s.%s can not be empty".formatted(key,"name"));

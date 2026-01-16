@@ -90,7 +90,7 @@ public class TrustMarkSigner {
     claimsSetBuilder.expirationTime(
         this.calculateExp(trustMarkIssuerProperties.trustMarkValidityDuration(), trustMarkSubjectRecord.expires()));
 
-    final Optional<EntityID> issuerEntityId = Optional.ofNullable(trustMarkIssuerProperties.issuerEntityId());
+    final Optional<EntityID> issuerEntityId = Optional.ofNullable(trustMarkIssuerProperties.entityIdentifier());
 
     if (issuerEntityId.isEmpty()) {
       throw new ServerErrorException("Issuer must be present");

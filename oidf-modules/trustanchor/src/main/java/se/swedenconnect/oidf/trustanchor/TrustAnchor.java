@@ -31,13 +31,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.HostedRecord;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
-import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -89,15 +87,17 @@ public class TrustAnchor {
     this.debugLogRequest(request);
     final EntityRecord issuer = this.source.getEntity(
             new NodeKey(
-                this.properties.getEntityId().getValue(),
-                this.properties.getEntityId().getValue()
+                this.properties.getEntityIdentifier().getValue(),
+                this.properties.getEntityIdentifier().getValue()
             )
         )
         .orElseThrow(
-            () -> new InvalidIssuerException("Entity not found for:'%s'".formatted(this.properties.getEntityId()))
+            () -> new InvalidIssuerException(
+                "Entity not found for:'%s'".formatted(this.properties.getEntityIdentifier())
+            )
         );
     final EntityRecord subject = this.source.getEntity(new NodeKey(
-            this.properties.getEntityId().getValue(),
+            this.properties.getEntityIdentifier().getValue(),
             request.subject()
         ))
         .orElseThrow(
@@ -126,8 +126,8 @@ public class TrustAnchor {
   public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
     this.debugLogRequest(request);
     final List<EntityRecord> subordinates = this.source
-        .findSubordinates(this.properties.getEntityId().getValue()).stream()
-        .filter(er -> !er.getSubject().equals(this.properties.getEntityId()))
+        .findSubordinates(this.properties.getEntityIdentifier().getValue()).stream()
+        .filter(er -> !er.getSubject().equals(this.properties.getEntityIdentifier()))
         .toList();
 
     if (!request.requiresFiltering()) {
@@ -160,6 +160,6 @@ public class TrustAnchor {
    * @return entity id of this trust anchor
    */
   public EntityID getEntityId() {
-    return this.properties.getEntityId();
+    return this.properties.getEntityIdentifier();
   }
 }

@@ -105,7 +105,7 @@ public class OpenIdFederationProperties {
     this.resolver.validate("%s.%s".formatted(PROPERTY_KEY, "resolver"));
     Assert.notNull(this.localRegistry, "%s.%s can not be empty".formatted(PROPERTY_KEY, "local-registry"));
     this.localRegistry.validate("%s.%s".formatted(PROPERTY_KEY, "local-registry"));
-    Assert.notNull(this.routing, "%s.%s cant not be empty".formatted(PROPERTY_KEY, "routing"));
+    Assert.notNull(this.routing, "%s.%s can not be empty".formatted(PROPERTY_KEY, "routing"));
     this.routing.validate("%s.%s".formatted(PROPERTY_KEY, "routing"));
     Assert.notNull(this.sign, "%s.%s can not be null".formatted(PROPERTY_KEY, "sign"));
     Assert.notEmpty(this.sign, "%s.%s can not be empty".formatted(PROPERTY_KEY, "sign"));

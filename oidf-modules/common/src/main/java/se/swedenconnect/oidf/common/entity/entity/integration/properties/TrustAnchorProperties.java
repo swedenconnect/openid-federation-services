@@ -18,7 +18,9 @@ package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
@@ -35,31 +37,33 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @ToString
+@AllArgsConstructor
+@NoArgsConstructor
 public class TrustAnchorProperties {
-  private final EntityID entityId;
+  private EntityID entityIdentifier;
 
-  private final Map<EntityID, List<Issuer>> trustMarkIssuers;
+  private Map<EntityID, List<Issuer>> trustMarkIssuers;
 
-  private final Map<EntityID, TrustMarkOwner> trustMarkOwners;
+  private Map<EntityID, TrustMarkOwner> trustMarkOwners;
 
-  private final ConstraintRecord constraintRecord;
+  private ConstraintRecord constraints;
 
   /**
    * Constructor.
    *
-   * @param entityId of the trust anchor
+   * @param entityIdentifier of the trust anchor
    * @param trustMarkIssuers that are valid for this trust anchor
-   * @param constraintRecord for constraints
+   * @param constraints for constraints
    * @param trustMarkOwners to trust
    */
   public TrustAnchorProperties(
-      final EntityID entityId,
+      final EntityID entityIdentifier,
       final Map<EntityID, List<Issuer>> trustMarkIssuers,
-      final ConstraintRecord constraintRecord,
+      final ConstraintRecord constraints,
       final Map<EntityID, TrustMarkOwner> trustMarkOwners) {
-    this.entityId = entityId;
+    this.entityIdentifier = entityIdentifier;
     this.trustMarkIssuers = trustMarkIssuers;
-    this.constraintRecord = constraintRecord;
+    this.constraints = constraints;
     this.trustMarkOwners = trustMarkOwners;
   }
 

@@ -128,7 +128,7 @@ public class TrustMarkIssuerRouter implements Router {
   private RequestPredicate getRequestPredicate(final CompositeRecordSource source, final String endpoint) {
     return request -> {
       return source.getTrustMarkIssuerProperties().stream()
-          .map(prop -> this.routeFactory.createRoute(prop.issuerEntityId(), endpoint))
+          .map(prop -> this.routeFactory.createRoute(prop.entityIdentifier(), endpoint))
           .reduce(p -> false, RequestPredicate::or)
           .test(request);
     };
@@ -138,7 +138,7 @@ public class TrustMarkIssuerRouter implements Router {
                                                          final ServerRequest request,
                                                          final String endpoint) {
     return source.getTrustMarkIssuerProperties().stream()
-        .filter(prop -> this.routeFactory.createRoute(prop.issuerEntityId(), endpoint).test(request))
+        .filter(prop -> this.routeFactory.createRoute(prop.entityIdentifier(), endpoint).test(request))
         .findFirst()
         .get();
   }

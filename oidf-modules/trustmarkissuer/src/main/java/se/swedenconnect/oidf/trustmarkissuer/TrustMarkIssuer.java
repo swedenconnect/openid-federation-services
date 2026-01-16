@@ -86,7 +86,7 @@ public class TrustMarkIssuer {
       throw new InvalidRequestException("Trust mark id can not be null");
     }
     final TrustMarkId id = TrustMarkId.validate(request.trustMarkId(), InvalidRequestException::new);
-    final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.issuerEntityId(), id)
+    final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.entityIdentifier(), id)
         .stream()
         .filter(tms -> {
           if (Objects.nonNull(tms.expires())) {
@@ -127,7 +127,7 @@ public class TrustMarkIssuer {
     }
 
     final Optional<TrustMarkSubjectRecord> subject =
-        this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.issuerEntityId(), id,
+        this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.entityIdentifier(), id,
             new EntityID(request.subject()));
     return subject.isPresent()
         && !subject.get().revoked()
@@ -168,6 +168,6 @@ public class TrustMarkIssuer {
    * @return entity id of this trust mark issuer.
    */
   public EntityID getEntityId() {
-    return this.trustMarkIssuerProperties.issuerEntityId();
+    return this.trustMarkIssuerProperties.entityIdentifier();
   }
 }

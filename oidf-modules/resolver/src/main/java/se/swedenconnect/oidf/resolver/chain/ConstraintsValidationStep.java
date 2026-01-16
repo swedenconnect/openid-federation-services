@@ -120,7 +120,7 @@ public class ConstraintsValidationStep implements ChainValidationStep {
         .map(Identifier::getValue)
         .toList();
 
-    if (Objects.nonNull(constraints.getNamingConstraints())) {
+    if (Objects.nonNull(constraints.getNaming())) {
       checkNamingConstraints(constraints, subjectEntityIdentifiers);
     }
   }
@@ -130,11 +130,11 @@ public class ConstraintsValidationStep implements ChainValidationStep {
       final List<String> subjectEntityIdentifiers) {
 
     final List<String> excluded =
-        constraints.getNamingConstraints().getExcluded()
+        constraints.getNaming().getExcluded()
             .stream()
             .toList();
     final List<String> permitted =
-        constraints.getNamingConstraints().getPermitted()
+        constraints.getNaming().getPermitted()
             .stream()
             .toList();
     if (!excluded.isEmpty()) {
