@@ -14,30 +14,26 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.service.state;
-
-import java.util.Objects;
+package se.swedenconnect.oidf;
 
 /**
- * In Memory implementation of {@link FederationServiceState}.
+ * Handles service state between multiple components and instances.
  *
  * @author Felix Hellman
  */
-public class InMemoryFederationServiceState implements FederationServiceState {
-  private String registryState = "";
+public interface FederationServiceState {
+  /**
+   * @return true if no state has been initialized.
+   */
+  Boolean isStateMissing();
 
-  @Override
-  public void updateRegistryState(final String stateHash) {
-    this.registryState = stateHash;
-  }
+  /**
+   * @param stateHash to set
+   */
+  void updateRegistryState(final String stateHash);
 
-  @Override
-  public Boolean isStateMissing() {
-    return Objects.isNull(this.registryState) || this.registryState.isBlank();
-  }
-
-  @Override
-  public String getRegistryState() {
-    return this.registryState;
-  }
+  /**
+   * @return current state
+   */
+  String getRegistryState();
 }

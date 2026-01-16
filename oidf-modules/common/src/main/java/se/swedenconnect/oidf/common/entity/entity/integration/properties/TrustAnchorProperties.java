@@ -27,6 +27,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.C
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -95,6 +96,9 @@ public class TrustAnchorProperties {
    * @return json of trust mark owners
    */
   public Map<String, Object> trustMarkOwnersJson() {
+    if (Objects.isNull(this.trustMarkOwners)) {
+      return Map.of();
+    }
     return this.getTrustMarkOwners().entrySet().stream()
         .collect(Collectors.toMap(
             k -> k.getKey().getValue(),

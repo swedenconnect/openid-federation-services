@@ -87,8 +87,8 @@ public class LocalRecordSource implements RecordSource {
     return this.properties
         .trustMarkIssuerProperties().stream().filter(tmi -> tmi.entityIdentifier().equals(issuer))
         .flatMap(tmi -> tmi.trustMarks().stream())
-        .filter(tm -> tm.trustMarkId().equals(id))
-        .flatMap(tm -> tm.trustMarkSubjectRecords().stream())
+        .filter(tm -> tm.getTrustMarkId().equals(id))
+        .flatMap(tm -> tm.getTrustMarkSubjects().stream())
         .toList();
   }
 

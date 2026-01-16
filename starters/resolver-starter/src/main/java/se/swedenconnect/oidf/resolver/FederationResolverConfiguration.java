@@ -99,4 +99,9 @@ public class FederationResolverConfiguration {
   ErrorContextFactory errorContextFactory(final MeterRegistry registry) {
     return new ObservableErrorContextFactory(registry);
   }
+
+  @Bean
+  CacheEventListener cacheEventListener(final ResolverCacheRegistry registry) {
+    return new CacheEventListener(registry);
+  }
 }

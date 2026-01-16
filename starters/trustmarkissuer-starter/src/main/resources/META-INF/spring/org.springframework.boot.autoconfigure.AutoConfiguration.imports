@@ -14,3 +14,5 @@
 # limitations under the License.
 #
 #
+se.swedenconnect.oidf.trustmarkissuer.starter.TrustMarkIssuerConfiguration
+se.swedenconnect.oidf.trustmarkissuer.starter.TrustMarkIssuerRoutingConfiguration

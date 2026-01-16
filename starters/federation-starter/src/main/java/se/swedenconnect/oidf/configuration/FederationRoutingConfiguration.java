@@ -26,7 +26,9 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.OpenIdFederationProperties;
+import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.routing.EntityRouter;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.Router;
 
@@ -40,8 +42,8 @@ import static org.springframework.web.servlet.function.RouterFunctions.route;
  *
  * @author Felix Hellman
  */
-@Configuration
 @Slf4j
+@Configuration
 public class FederationRoutingConfiguration {
 
   private final CompositeRecordSource source;

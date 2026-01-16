@@ -71,9 +71,9 @@ public class TestDataSetup {
     trustMarkIssuerProperties.trustMarks()
         .add(TrustMarkProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm.digg.se/default"))
-            .logoUri(Optional.empty())
-            .refUri(Optional.empty())
-            .delegation(Optional.empty())
+            .logoUri(null)
+            .refUri(null)
+            .delegation(null)
             .build());
 
     return trustMarkIssuerProperties;

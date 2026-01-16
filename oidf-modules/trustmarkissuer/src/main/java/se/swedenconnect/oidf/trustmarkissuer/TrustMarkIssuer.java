@@ -120,7 +120,7 @@ public class TrustMarkIssuer {
     final TrustMarkId id = TrustMarkId.create(request.trustMarkId());
     final boolean exists = this.trustMarkIssuerProperties.trustMarks()
         .stream()
-        .anyMatch(tm -> tm.trustMarkId().equals(id));
+        .anyMatch(tm -> tm.getTrustMarkId().equals(id));
 
     if (!exists) {
       throw new NotFoundException("Could not find any trust mark with id %s".formatted(request.trustMarkId()));
@@ -144,11 +144,11 @@ public class TrustMarkIssuer {
 
     final TrustMarkProperties properties =
         this.trustMarkIssuerProperties.trustMarks().stream()
-        .filter(tm -> request.trustMarkId().equals(tm.trustMarkId().getTrustMarkId()))
+        .filter(tm -> request.trustMarkId().equals(tm.getTrustMarkId().getTrustMarkId()))
         .findFirst()
         .get();
 
-    final Optional<TrustMarkSubjectRecord> subject = properties.trustMarkSubjectRecords()
+    final Optional<TrustMarkSubjectRecord> subject = properties.getTrustMarkSubjects()
         .stream()
         .filter(trustMarkSubjectRecord -> trustMarkSubjectRecord.sub().equals(request.subject()))
         .findFirst();

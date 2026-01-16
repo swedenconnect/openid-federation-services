@@ -14,7 +14,29 @@
  * limitations under the License.
  *
  */
+package se.swedenconnect.oidf.resolver;
+
+import org.springframework.context.event.EventListener;
+
 /**
- * Package for service module trust-anchor.
+ * Event listener for cache operations.
+ *
+ * @author Felix Hellman
  */
-package se.swedenconnect.oidf.service.trustanchor;
+public class CacheEventListener {
+
+  private final ResolverCacheRegistry registry;
+
+  /**
+   * Constructor.
+   * @param registry to perform actions upon
+   */
+  public CacheEventListener(final ResolverCacheRegistry registry) {
+    this.registry = registry;
+  }
+
+  @EventListener
+  void handle(final TreeUpdatedEvent event) {
+    this.registry.updateVersion(event.entityId());
+  }
+}

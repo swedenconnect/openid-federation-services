@@ -34,7 +34,6 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 @Slf4j
-@Component
 public class EntityRouter implements Router {
 
   private final EntityConfigurationFactory factory;

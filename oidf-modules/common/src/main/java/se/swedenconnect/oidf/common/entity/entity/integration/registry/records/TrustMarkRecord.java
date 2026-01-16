@@ -109,9 +109,9 @@ public class TrustMarkRecord implements Serializable {
   public TrustMarkProperties toProperty() {
     return new TrustMarkProperties(
         new TrustMarkId(this.trustMarkId),
-        Optional.ofNullable(this.logoUri),
-        Optional.ofNullable(this.ref),
-        Optional.ofNullable(this.delegation).map(TrustMarkDelegation::new),
+        this.logoUri,
+        this.ref,
+        Optional.ofNullable(this.delegation).map(TrustMarkDelegation::new).orElse(null),
         this.getSubjects()
     );
   }

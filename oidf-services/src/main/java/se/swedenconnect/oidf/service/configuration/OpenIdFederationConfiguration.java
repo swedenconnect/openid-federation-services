@@ -20,26 +20,15 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.CacheFactory;
-import se.swedenconnect.oidf.FederationKeys;
-import se.swedenconnect.oidf.OpenIdFederationProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.LocalRegistryProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryRefreshAheadCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
-import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
-import se.swedenconnect.oidf.service.entity.PolicyConfigurationProperties;
 import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
-import se.swedenconnect.oidf.service.trustanchor.TrustAnchorModuleProperties;
-import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkIssuerModuleConfigurationProperties;
-import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkSubjectProperties;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Configuration class for openid federation.

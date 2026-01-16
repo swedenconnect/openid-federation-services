@@ -14,7 +14,30 @@
  * limitations under the License.
  *
  */
+package se.swedenconnect.oidf;
+
+import java.util.Objects;
+
 /**
- * Package for service module trust-mark-issuer.
+ * In Memory implementation of {@link FederationServiceState}.
+ *
+ * @author Felix Hellman
  */
-package se.swedenconnect.oidf.service.trustmarkissuer;
+public class InMemoryFederationServiceState implements FederationServiceState {
+  private String registryState = "";
+
+  @Override
+  public void updateRegistryState(final String stateHash) {
+    this.registryState = stateHash;
+  }
+
+  @Override
+  public Boolean isStateMissing() {
+    return Objects.isNull(this.registryState) || this.registryState.isBlank();
+  }
+
+  @Override
+  public String getRegistryState() {
+    return this.registryState;
+  }
+}

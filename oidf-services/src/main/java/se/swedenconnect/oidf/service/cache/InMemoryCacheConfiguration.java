@@ -19,16 +19,14 @@ package se.swedenconnect.oidf.service.cache;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.swedenconnect.oidf.FederationServiceState;
+import se.swedenconnect.oidf.InMemoryFederationServiceState;
 import se.swedenconnect.oidf.service.cache.managed.NoopRequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheRepository;
 import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
-import se.swedenconnect.oidf.service.state.FederationServiceState;
-import se.swedenconnect.oidf.service.state.InMemoryFederationServiceState;
 import se.swedenconnect.oidf.service.state.NoOperationServiceLock;
 import se.swedenconnect.oidf.service.state.ServiceLock;
-
-import java.time.Clock;
 
 /**
  * Configuration class for cache.
@@ -36,7 +34,7 @@ import java.time.Clock;
  * @author Felix Hellman
  */
 @Configuration
-@ConditionalOnProperty(name = "openid.federation.storage", havingValue = "memory")
+@ConditionalOnProperty(name = "federation.storage", havingValue = "memory")
 public class InMemoryCacheConfiguration {
 
   @Bean

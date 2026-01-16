@@ -93,7 +93,7 @@ public class FederationRegistryConfiguration {
       final RecordRegistryIntegration integration,
       final OpenIdFederationProperties properties
   ) {
-    return new CacheRecordPopulator(source, integration, properties.getInstanceId());
+    return new CacheRecordPopulator(source, integration, properties.getRegistry().getIntegration().getInstanceId());
   }
 
   @Bean

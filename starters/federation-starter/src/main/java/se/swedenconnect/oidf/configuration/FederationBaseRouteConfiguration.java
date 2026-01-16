@@ -14,21 +14,23 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.service.trustanchor;
+package se.swedenconnect.oidf.configuration;
 
-import lombok.Getter;
-import lombok.Setter;
-import se.swedenconnect.oidf.service.JsonObjectProperty;
-
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
+import se.swedenconnect.oidf.routing.EntityRouter;
+import se.swedenconnect.oidf.routing.RouteFactory;
 
 /**
- * Property class for trust mark owner.
+ * Configuration for adding default routers.
  *
  * @author Felix Hellman
  */
-@Getter
-@Setter
-public class TrustMarkOwnerProperty {
-  private String sub;
-  private JsonObjectProperty jwks;
+@Configuration
+public class FederationBaseRouteConfiguration {
+  @Bean
+  EntityRouter entityRouter(final EntityConfigurationFactory entityConfigurationFactory, final RouteFactory factory) {
+    return new EntityRouter(entityConfigurationFactory, factory);
+  }
 }

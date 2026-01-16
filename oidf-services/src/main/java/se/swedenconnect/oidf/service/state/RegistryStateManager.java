@@ -22,10 +22,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import se.swedenconnect.oidf.FederationServiceState;
 import se.swedenconnect.oidf.OpenIdFederationProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
-import se.swedenconnect.oidf.service.configuration.OpenIdFederationServiceProperties;
 import se.swedenconnect.oidf.service.health.ReadyStateComponent;
 
 import java.util.concurrent.TimeUnit;

@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 import java.util.HashMap;
+import java.util.Optional;
 
 /**
  * EntityConfigurationClaimCustomizer for Trust Anchors additional claims.
@@ -48,7 +49,10 @@ public class TrustAnchorEntityCustomizer implements EntityConfigurationClaimCust
         .filter(ta -> ta.getEntityIdentifier().equals(record.getSubject()))
         .findFirst()
         .ifPresent(ta -> {
-          builder.claim("trust_mark_issuers", ta.getTrustMarkIssuers());
+          Optional.ofNullable(ta.getTrustMarkIssuers()).ifPresent(issuers -> {
+            builder.claim("trust_mark_issuers", ta.getTrustMarkIssuers());
+          });
+
           builder.claim("trust_mark_owners", new HashMap<>(ta.trustMarkOwnersJson()));
         });
     return builder;

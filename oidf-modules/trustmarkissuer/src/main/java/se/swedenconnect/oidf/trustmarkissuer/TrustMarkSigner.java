@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.T
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
+import javax.swing.text.html.Option;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.time.Clock;
@@ -97,13 +98,14 @@ public class TrustMarkSigner {
     }
 
     issuerEntityId.ifPresent(entityID -> claimsSetBuilder.issuer(entityID.getValue()));
-    claimsSetBuilder.claim("trust_mark_id", trustMarkProperties.trustMarkId().getTrustMarkId());
+    claimsSetBuilder.claim("trust_mark_id", trustMarkProperties.getTrustMarkId().getTrustMarkId());
 
-    trustMarkProperties.logoUri().ifPresent((value) -> claimsSetBuilder.claim("logo_uri", value));
+    Optional.ofNullable(trustMarkProperties.getLogoUri()).ifPresent((value) -> claimsSetBuilder.claim("logo_uri",
+      value));
 
-    trustMarkProperties.refUri().ifPresent((value) -> claimsSetBuilder.claim("ref", value));
+    Optional.ofNullable(trustMarkProperties.getRefUri()).ifPresent((value) -> claimsSetBuilder.claim("ref", value));
 
-    trustMarkProperties.delegation()
+    Optional.ofNullable(trustMarkProperties.getDelegation())
         .ifPresent((value) -> claimsSetBuilder.claim("delegation", value.getDelegation()));
 
     final JWTClaimsSet claimsSet = claimsSetBuilder.build();

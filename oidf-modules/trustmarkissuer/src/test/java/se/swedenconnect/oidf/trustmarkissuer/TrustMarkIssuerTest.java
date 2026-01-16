@@ -119,9 +119,9 @@ class TrustMarkIssuerTest {
     this.trustMarkIssuerProperties.trustMarks()
         .add(TrustMarkProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
-            .delegation(Optional.empty())
-            .logoUri(Optional.empty())
-            .refUri(Optional.empty())
+            .delegation(null)
+            .logoUri(null)
+            .refUri(null)
             .build());
 
     final Clock fixed = Clock.fixed(Instant.now().plus(2, ChronoUnit.DAYS), ZoneId.systemDefault());
@@ -172,10 +172,10 @@ class TrustMarkIssuerTest {
 
     final TrustMarkProperties trustMark = TrustMarkProperties.builder()
         .trustMarkId(trustMarkId)
-        .refUri(Optional.of("http://digg.se/tm1/doc"))
-        .logoUri(Optional.of("http://digg.se/tm1/logo.png"))
-        .delegation(Optional.empty())
-        .trustMarkSubjectRecords(List.of(sub1))
+        .refUri("http://digg.se/tm1/doc")
+        .logoUri("http://digg.se/tm1/logo.png")
+        .delegation(null)
+        .trustMarkSubjects(List.of(sub1))
         .build();
     this.trustMarkIssuerProperties.trustMarks().add(trustMark);
 
@@ -242,9 +242,9 @@ class TrustMarkIssuerTest {
 
     this.trustMarkIssuerProperties.trustMarks().add(TrustMarkProperties.builder()
         .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
-        .delegation(Optional.empty())
-        .logoUri(Optional.empty())
-        .refUri(Optional.empty())
+        .delegation(null)
+        .logoUri(null)
+        .refUri(null)
         .build());
 
     Mockito.when(source.getTrustMarkSubject(
