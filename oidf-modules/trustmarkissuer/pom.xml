@@ -27,6 +27,11 @@
         <artifactId>oidf-modules</artifactId>
         <version>${service-revision}</version>
     </parent>
+
+    <properties>
+        <service-revision>0.8.23-SNAPSHOT</service-revision>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
