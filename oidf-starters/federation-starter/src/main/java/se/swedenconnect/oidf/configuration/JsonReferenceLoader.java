@@ -64,7 +64,7 @@ public class JsonReferenceLoader {
    * Load json from reference
    * @param source to load from
    * @param typeToken to load
-   * @return object <T>
+   * @return object
    * @param <T> type
    */
   public <T> T loadJson(final String source, final TypeToken<T> typeToken) {
