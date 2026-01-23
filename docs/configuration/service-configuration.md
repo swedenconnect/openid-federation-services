@@ -11,118 +11,192 @@ The openid-federation service is configured in two layers
     - Submodules can be configured either via application properties (needs restart) or
       via [REST-API](https://github.com/swedenconnect/oidf-entity-registry) registry.
 
-**Important:** Each configured submodule needs to be referenced to an entity to function properly. These can either
-be loaded from the registry or configured with properties.
+---
 
-## Configuration properties
+## Federation Configuration
 
-`openid.federation.*`
+Some properties can be configured by object or reference.
 
-| Property        | Description                                                              | Type           | Default value |
-|:----------------|:-------------------------------------------------------------------------|:---------------|:--------------|
-| `storage`       | Storage module to use, either memory (in memory) or redis                | String         | memory        |
-| `sign`          | List of credential names used for signing jwts that the service produces | List\<String\> | Empty List    |
-| `kid-algorithm` | key id algorithm, thumbprint or serial                                   | String         | thumbprint    |
-    
-`openid.federation.additional-keys*`
+See the section about reference configuration later on.
 
-| Property                    | Description                        | Type   | Default value |
-|:----------------------------|:-----------------------------------|:-------|:--------------|
-| `name`                      | Name of key that can be referenced | String | null          |
-| `base64-encoded-public-jwk` | base64 encoded JWK key             | String | null          |
-| `certificate`               | Pem public key or certificate      | String | null          |
+```
+federation.*
+```
 
+Each configured federation component must be referenced an **entitiy** to function correctly.
 
+---
 
-### Registry configuration
+## 2.1 Federation Keys
 
-`openid.federation.registry.integration.*`
+`federation.keys.*`
 
-| Property                  | Description                                                                  | Type           | Default value |
-|:--------------------------|:-----------------------------------------------------------------------------|:---------------|:--------------|
-| `enabled`                 | Set this to true to enable registry integration                              | Boolean        | false         |
-| `instance-id`             | Instance id for node group                                                   | UUID           | null          |
-| `endpoints-base-path`     | Base path for registry.                                                      | String         | null          |
-| `trust-store-bundle-name` | Name of trust bundle to use for this integration if needed.                  | String         | null          |
-| `validation-keys`         | List of credential names used for validating jwts that the registry produces | List\<String\> | Empty List    |
+| Property          | Description                                           | Type   | Default    |
+|-------------------|-------------------------------------------------------|--------|------------|
+| `kid-algorithm`   | Key ID algorithm (`thumbprint` or `serial`)           | String | thumbprint |
+| `additional-keys` | List of additional public keys that can be referenced | List   | –          |
 
-### Module and submodule configuration
+`federation.keys.additional-keys[*]`
 
-`openid.federation.modules.resolvers.*`
+| Property                    | Description                           | Type   |
+|-----------------------------|---------------------------------------|--------|
+| `name`                      | Logical name of the key               | String |
+| `base64-encoded-public-jwk` | Base64‑encoded JWK                    | String |
+| `certificate`               | PEM encoded certificate or public key | String |
 
-| Property            | Description                                                                                                   | Type           | Default value |
-|:--------------------|:--------------------------------------------------------------------------------------------------------------|:---------------|:--------------|
-| `validation-keys`   | List of credential names used for validating entity configurations that the resolver consumes                 | List\<String\> | Empty List    |
-| `entity-identifier` | Entity Identifier for this resolver, this entity needs to be referenced locally, see [Entity Configuration]() | String         | Empty List    |
-| `trust-anchor`      | Entity Identifier for trust-anchor for this resolver to resolve from                                          | List\<String\> | Empty List    |
+---
 
-`openid.federation.modules.trust-anchors.*`
+## 2.2 Federation Service
 
-| Property            | Description                                                                                                       | Type   | Default value |
-|:--------------------|:------------------------------------------------------------------------------------------------------------------|:-------|:--------------|
-| `entity-identifier` | Entity Identifier for this trust-anchor, this entity needs to be referenced locally, see [Entity Configuration]() | String | Empty List    |
+`federation.service.*`
 
-`openid.federation.modules.trust-mark-issuers.*`
+| Property         | Description                           | Type   | Default |
+|------------------|---------------------------------------|--------|---------|
+| `storage`        | Storage backend (`memory` or `redis`) | String | memory  |
+| `redis.key-name` | Redis namespace / key                 | String | –       |
 
-| Property                       | Description                                                                                                    | Type     | Default value |
-|:-------------------------------|:---------------------------------------------------------------------------------------------------------------|:---------|:--------------|
-| `entity-identifier`            | The entity ID of the trust mark issuer, identifying the issuing organization.                                  | String   |               |
-| `trust-mark-validity-duration` | Duration for which the trust mark JWT is valid, represented in ISO 8601 format (e.g., `PT30M` for 30  minutes) | Duration | PT30M         |
-| `trust-marks`                  | Array of trust marks issued by the trust mark issuer.                                                          | String   |               |
-| `trust-marks[].trust-mark-id`  | Unique identifier for each trust mark, typically a URL associated with the mark.                               | String   |               |
-| `trust-marks[].logo-uri`       | URI pointing to the logo image associated with the trust mark.                                                 | String   | optional      |
-| `trust-marks[].delegation`     | TrustMarkDelegation JWT. See openid federation 7.2.1,                                                          | String   | optional      |
-| `trust-marks[].ref-uri`        | Reference URI for documentation or details about the trust mark.                                               | String   | optional      |
+---
 
-### Trust Mark Subjects
+## 2.3 Routing
 
-`openid.federation.modules.trust-mark-issuers[*].trust-marks[*].trust-mark-subjects[*]`
+`federation.routing.*`
 
-| `sub`     | Subject (entity) identifier, typically a URL indicating the specific entity granted the trust mark. | String | |
-| `granted` | Timestamp of when the trust mark was granted to the subject, in ISO 8601 format (UTC). | Instant | |
-| `expires` | Expiry date for the subject’s trust mark, in ISO 8601 format (UTC). | Instant | |
-| `revoked` | Indicates whether the trust mark for this subject has been revoked (`true`) or remains valid (`false`). | Boolean | false |
+| Property  | Description                     | Type    | Default |
+|-----------|---------------------------------|---------|---------|
+| `enabled` | Enable internal routing support | Boolean | false   |
+| `mode`    | Routing mode                    | String  | –       |
 
-### Entity configuration
+---
 
-`openid.federation.entities.*`
+## 2.4 Registry Integration
 
-| Property        | Description                                                                                                     | Type                 | Default value |
-|:----------------|:----------------------------------------------------------------------------------------------------------------|:---------------------|:--------------|
-| `subject`       | The entity ID of the subject                                                                                    | String               |               |
-| `issuer`        | The entity ID of the issuer                                                                                     | String               |               |
-| `hosted-record` | Provides additional information for this record when it is hosted by this service node                          | HostedRecordProperty | null          |
-| `public-keys`   | List of credential names used for public-keys in federation metadata, will be ignored if `hosted-record` is set | List\<String\>       | Empty List    |
+`federation.registry.integration.*`
 
-`openid.federation.entities[*].hosted-record`
+| Property          | Description                         | Type         | Default |
+|-------------------|-------------------------------------|--------------|---------|
+| `enabled`         | Enable registry integration         | Boolean      | false   |
+| `instance-id`     | Instance identifier for node groups | UUID         | –       |
+| `validation-keys` | Keys used to validate registry JWTs | List<String> | Empty   |
 
-| Property             | Description                        | Type                            | Default value |
-|:---------------------|:-----------------------------------|:--------------------------------|:--------------|
-| `metadata`           | Metadata for this entity           | JsonObjectProperty              | null          |
-| `trust-mark-sources` | Trust mark sources for this entity | List\<TrustMarkSourceProperty\> | null          |
-| `authority-hints`    | List of authority-hints            | List\<String\>                  | null          |
+`federation.registry.integration.client.*`
 
-`openid.federation.entities[*].hosted-record[*].trust-mark-sources`
+| Property                  | Description                     | Type   |
+|---------------------------|---------------------------------|--------|
+| `base-uri`                | Base URI of the registry        | String |
+| `trust-store-bundle-name` | Trust store bundle used for TLS | String |
+| `name`                    | Logical name of the client      | String |
 
-| Property        | Description               | Type   | Default value |
-|:----------------|:--------------------------|:-------|:--------------|
-| `issuer`        | Issuer of this trust-mark | String | null          |
-| `trust-mark-id` | Id for this trust-mark    | String | null          |
+---
 
-### Policy configuration
+## 2.5 Local Registry (Federation components)
 
-`openid.federation.policies[*].*`
+```
+federation.local-registry.*
+```
 
-| Property | Description                   | Type               | Default value |
-|:---------|:------------------------------|:-------------------|:--------------|
-| `id`     | Id of this policy             | String             | null          |
-| `policy` | Json defintion of this policy | JsonObjectProperty | null          |
+### 2.5.1 Resolvers
 
-#### JsonObjectProperty
+`federation.local-registry.resolvers[*]`
 
-Any JsonObjectProperty property can be configured with either inline json or a resource file.
+| Property                    | Description                              | Type     |
+|-----------------------------|------------------------------------------|----------|
+| `entity-identifier`         | Entity ID of the resolver                | String   |
+| `trusted-keys`              | Keys used to validate fetched statements | List     |
+| `trust-anchor`              | Trust anchor entity ID                   | String   |
+| `resolve-response-duration` | Cache duration for resolve responses     | Duration |
 
-| Property   | Description     | Type     | Default value |
-|:-----------|:----------------|:---------|:--------------|
-| `json`     | Inline json     | String   | null          |
-| `resource` | Spring Resource | Resource | null          |
+---
+
+### 2.5.2 Trust Anchors
+
+`federation.local-registry.trust-anchors[*]`
+
+| Property             | Description                                  | Type   |
+|----------------------|----------------------------------------------|--------|
+| `entity-identifier`  | Entity ID of the trust anchor                | String |
+| `subordinates`       | Subordinate entities and constraints         | List   |
+| `trust-mark-issuers` | Mapping of trust mark IDs to allowed issuers | Map    |
+| `trust-mark-owners`  | Trust mark ownership configuration           | List   |
+
+Subordinates may define:
+
+* `jwks`
+* `constraints` (naming, path length, entity types, etc.)
+* `policy`
+* `crit` and override configuration locations
+
+---
+
+### 2.5.3 Trust Mark Issuers
+
+`federation.local-registry.trust-mark-issuers[*]`
+
+| Property                       | Description                               | Type     | Default |
+|--------------------------------|-------------------------------------------|----------|---------|
+| `entity-identifier`            | Entity ID of the trust mark issuer        | String   | –       |
+| `trust-mark-validity-duration` | Validity of issued trust marks (ISO‑8601) | Duration | PT30M   |
+| `trust-marks`                  | List of trust marks                       | List     | –       |
+
+`federation.local-registry.trust-mark-issuers[*].trust-marks[*]`
+
+| Property              | Description                         | Type   |
+|-----------------------|-------------------------------------|--------|
+| `trust-mark-id`       | Unique identifier of the trust mark | String |
+| `logo-uri`            | Logo URI                            | String |
+| `ref-uri`             | Reference URI                       | String |
+| `delegation`          | TrustMarkDelegation JWT             | String |
+| `trust-mark-subjects` | Subjects granted this trust mark    | List   |
+
+`federation.local-registry.trust-mark-issuers[*].trust-mark-subjects[*]`
+
+| Property  | Description                 | Type    |
+|-----------|-----------------------------|---------|
+| `sub`     | Subject entity ID           | String  |
+| `granted` | Grant time (UTC, ISO‑8601)  | Instant |
+| `expires` | Expiry time (UTC, ISO‑8601) | Instant |
+| `revoked` | Revocation flag             | Boolean |
+
+---
+
+### 2.5.4 Entities
+
+`federation.local-registry.entities[*]`
+
+| Property                          | Description                             | Type                |
+|-----------------------------------|-----------------------------------------|---------------------|
+| `entity-identifier`               | Entity ID                               | String              |
+| `jwks`                            | Key reference                           | Object or reference |
+| `metadata`                        | Federation / OIDC metadata              | Object or reference |
+| `trust-mark-source`               | External trust mark references          | List                |
+| `override-configuration-location` | Overrides entity configuration location | String              |
+
+Entities define federation metadata, trust mark sources, and may represent trust anchors, resolvers, OPs, RPs, or trust mark issuers.
+
+---
+
+## Reference Configuration
+
+Some properties can be configured by reference, this means that we can optionally substitute the object structure with something else. E.g. A file, or
+another property loaded elsewhere (for keys).
+
+E.g.
+
+```yaml
+federation:
+  local-registry:
+    entities:
+      - entity-identifier: https://myidentifier1.test
+        policy:
+          id: my-id
+          policy: ... policy object ....
+      - entity-identifier: https://myidentifier2.test
+        policy: file:/path/to/policy
+```
+
+### Reference formats supported
+
+| Format     | Type                                                  |
+|------------|-------------------------------------------------------|
+| classpath: | Load file from classpath                              |
+| file:      | Load file from system                                 |
+| alias:     | Load key from all loaded keys by name (JWK,JWKS only) |
