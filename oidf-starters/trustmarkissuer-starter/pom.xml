@@ -5,7 +5,6 @@
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-starters</artifactId>
         <version>${service-revision}</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>trustmarkissuer-starter</artifactId>
