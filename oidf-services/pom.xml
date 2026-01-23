@@ -38,6 +38,11 @@
             <id>central</id>
             <url>https://repo1.maven.org/maven2</url>
         </repository>
+        <repository>
+            <id>github</id>
+            <name>GitHub Sweden Connect Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/swedenconnect/*</url>
+        </repository>
     </repositories>
 
     <distributionManagement>
