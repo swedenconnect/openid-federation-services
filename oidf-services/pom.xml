@@ -44,7 +44,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Sweden Connect Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/swedenconnect/openid-federation-service</url>
+            <url>https://maven.pkg.github.com/swedenconnect/*</url>
         </repository>
     </distributionManagement>
 
