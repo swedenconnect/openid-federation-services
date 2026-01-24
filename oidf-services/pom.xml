@@ -23,13 +23,10 @@
     <artifactId>oidf-services</artifactId>
     <name>OpenID Federation :: Service</name>
 
-    <version>${service-revision}</version>
-
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
-        <artifactId>openid-federation-parent</artifactId>
-        <version>0.5.14</version>
-        <relativePath/>
+        <artifactId>oidf-parent</artifactId>
+        <version>${service-revision}</version>
     </parent>
 
 
@@ -187,50 +184,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>5.12.0</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains</groupId>
-                <artifactId>annotations</artifactId>
-                <version>17.0.0</version>
-            </dependency>
-            <dependency>
-                <groupId>io.opentelemetry</groupId>
-                <artifactId>opentelemetry-api-incubator</artifactId>
-                <version>1.38.0-alpha</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <type>pom</type>
-                <version>${spring.boot.version}</version>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>se.swedenconnect.security</groupId>
-                <artifactId>credentials-support-spring-boot-starter</artifactId>
-                <version>2.0.5</version>
-            </dependency>
-            <dependency>
-                <groupId>se.swedenconnect.security</groupId>
-                <artifactId>credentials-support-nimbus</artifactId>
-                <version>2.0.5</version>
-            </dependency>
-            <dependency>
-                <groupId>org.bouncycastle</groupId>
-                <artifactId>bcprov-jdk18on</artifactId>
-                <version>1.80</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <resources>

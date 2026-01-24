@@ -20,20 +20,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <service-revision>0.8.23-SNAPSHOT</service-revision>
         <maven.deploy.skip>true</maven.deploy.skip>
-        <spring.boot.version>3.5.7</spring.boot.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <type>pom</type>
-                <version>${spring.boot.version}</version>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <artifactId>oidf-starters</artifactId>
     <packaging>pom</packaging>
