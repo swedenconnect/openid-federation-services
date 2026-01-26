@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf;
 
-import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
@@ -28,9 +27,6 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import se.swedenconnect.oidf.routing.RouterProperties;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Properties for OpenId Federation.

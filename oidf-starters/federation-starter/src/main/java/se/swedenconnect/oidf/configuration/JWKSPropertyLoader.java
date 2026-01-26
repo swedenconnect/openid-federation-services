@@ -22,7 +22,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.Nullable;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Property loader for loading multiple jwks.

@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,7 +25,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.Duration;
-import java.util.Objects;
 
 /**
  * Properties for the resolver.

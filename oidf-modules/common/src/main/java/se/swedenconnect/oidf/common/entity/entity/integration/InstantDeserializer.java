@@ -19,14 +19,12 @@ package se.swedenconnect.oidf.common.entity.entity.integration;
 import com.nimbusds.jose.shaded.gson.JsonDeserializationContext;
 import com.nimbusds.jose.shaded.gson.JsonDeserializer;
 import com.nimbusds.jose.shaded.gson.JsonElement;
-import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jose.shaded.gson.JsonParseException;
 import com.nimbusds.jose.shaded.gson.JsonPrimitive;
 import com.nimbusds.jose.shaded.gson.JsonSerializationContext;
 import com.nimbusds.jose.shaded.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
-import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -37,7 +35,7 @@ import java.time.Instant;
 public class InstantDeserializer implements JsonDeserializer<Instant>, JsonSerializer<Instant> {
   @Override
   public Instant deserialize(final JsonElement jsonElement, final Type type,
-                       final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+                             final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
     return Instant.parse(jsonElement.getAsString());
   }
 

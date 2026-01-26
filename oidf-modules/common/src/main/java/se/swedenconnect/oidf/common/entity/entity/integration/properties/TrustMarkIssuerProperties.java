@@ -23,7 +23,6 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
-import java.io.Serial;
 import java.time.Duration;
 import java.util.List;
 

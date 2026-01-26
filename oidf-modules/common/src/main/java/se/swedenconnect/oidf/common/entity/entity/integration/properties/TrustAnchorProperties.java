@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
-import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

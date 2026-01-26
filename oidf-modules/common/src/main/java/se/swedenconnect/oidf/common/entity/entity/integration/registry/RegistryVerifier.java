@@ -16,12 +16,10 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.registry;
 
+import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.NotificationRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkProperty;
 
 import java.util.List;
 

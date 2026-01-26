@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.resolver;
 
-import com.nimbusds.jose.jwk.JWKSet;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;

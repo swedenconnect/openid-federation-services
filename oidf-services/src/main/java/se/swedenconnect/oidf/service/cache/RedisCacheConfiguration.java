@@ -28,10 +28,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import se.swedenconnect.oidf.CacheFactory;
 import se.swedenconnect.oidf.FederationServiceState;
 import se.swedenconnect.oidf.resolver.ResolverCacheFactory;
-import se.swedenconnect.oidf.service.cache.managed.ManagedCacheFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheRepository;
-import se.swedenconnect.oidf.service.cache.managed.NoopRequestResponseCacheFactory;
-import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.configuration.FederationServiceProperties;
 import se.swedenconnect.oidf.service.resolver.ResolverCacheTransformer;
 import se.swedenconnect.oidf.service.resolver.cache.RedisResolverCacheFactory;
@@ -138,10 +135,10 @@ public class RedisCacheConfiguration {
   @Bean
   InstanceSpecificRedisKeySerializer instanceSpecificRedisKeySerializer(
       final FederationServiceProperties properties) {
-        return new InstanceSpecificRedisKeySerializer(
-            new StringRedisSerializer(),
-            properties.getRedis().getKeyName()
-        );
+    return new InstanceSpecificRedisKeySerializer(
+        new StringRedisSerializer(),
+        properties.getRedis().getKeyName()
+    );
   }
 
   @Bean

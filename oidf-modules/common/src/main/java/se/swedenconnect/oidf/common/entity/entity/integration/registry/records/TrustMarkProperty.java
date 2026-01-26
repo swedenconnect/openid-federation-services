@@ -19,15 +19,9 @@ package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkDelegation;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Record class for trust mark.

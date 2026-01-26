@@ -19,8 +19,6 @@ package se.swedenconnect.oidf.common.entity.tree;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
-import java.util.function.Predicate;
-
 /**
  * Class for representing a single node (key) in the resolver tree.
  *
@@ -89,6 +87,6 @@ public record NodeKey(String issuer, String subject) {
     final NodeKey key = NodeKey.fromEntityRecord(record);
 
     return this.issuer.equals(key.issuer)
-        && this.subject.equals(key.subject);
+           && this.subject.equals(key.subject);
   }
 }

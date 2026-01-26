@@ -20,7 +20,6 @@ import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.Nullable;
-import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 
 import java.util.List;
@@ -33,9 +32,11 @@ import java.util.List;
 @AllArgsConstructor
 public class TrustAnchorPropertyLoader implements Converter<String, List<TrustAnchorProperties>> {
   private final JsonReferenceLoader jsonReferenceLoader;
+
   @Nullable
   @Override
   public List<TrustAnchorProperties> convert(final String source) {
-    return this.jsonReferenceLoader.loadJson(source, new TypeToken<>() {});
+    return this.jsonReferenceLoader.loadJson(source, new TypeToken<>() {
+    });
   }
 }

@@ -20,7 +20,6 @@ import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
@@ -28,11 +27,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAn
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Data response from registry to configure runtime modules from.

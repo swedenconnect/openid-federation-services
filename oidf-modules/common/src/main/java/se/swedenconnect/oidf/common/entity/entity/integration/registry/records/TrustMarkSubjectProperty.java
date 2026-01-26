@@ -24,10 +24,7 @@ import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
 import java.io.Serializable;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Subject of an TrustMark

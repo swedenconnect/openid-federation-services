@@ -16,19 +16,15 @@
  */
 package se.swedenconnect.oidf.service.resolver;
 
-import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
-import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
-import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Configuration properties for Resolver.

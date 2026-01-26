@@ -21,7 +21,6 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 
 import java.util.List;
 

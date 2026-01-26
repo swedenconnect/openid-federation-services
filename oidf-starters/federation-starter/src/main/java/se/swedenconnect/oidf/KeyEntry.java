@@ -19,12 +19,10 @@ package se.swedenconnect.oidf;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
-import jakarta.annotation.PostConstruct;
 import org.bouncycastle.util.encoders.Base64;
 import org.springframework.util.Assert;
 
 import java.nio.charset.Charset;
-import java.security.PublicKey;
 
 /**
  * @param name Name of key
@@ -43,12 +41,11 @@ public record KeyEntry(String name, String base64EncodedPublicJwk, String certif
 
         final JWK jwk = JWK.parseFromPEMEncodedObjects(this.certificate);
         return switch (jwk.getKeyType().getValue()) {
-          case "RSA" ->
-              new RSAKey.Builder(((RSAKey) jwk).toRSAPublicKey())
-                  .keyUse(jwk.getKeyUse())
-                  .algorithm(jwk.getAlgorithm())
-                  .keyIDFromThumbprint()
-                  .build();
+          case "RSA" -> new RSAKey.Builder(((RSAKey) jwk).toRSAPublicKey())
+              .keyUse(jwk.getKeyUse())
+              .algorithm(jwk.getAlgorithm())
+              .keyIDFromThumbprint()
+              .build();
           case "EC" -> new ECKey.Builder(jwk.toECKey())
               .keyUse(jwk.getKeyUse())
               .algorithm(jwk.getAlgorithm())
@@ -58,8 +55,7 @@ public record KeyEntry(String name, String base64EncodedPublicJwk, String certif
         };
       }
       return JWK.parse(new String(Base64.decode(this.base64EncodedPublicJwk), Charset.defaultCharset()));
-    }
-    catch (final Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException("Failed to load additional key", e);
     }
   }

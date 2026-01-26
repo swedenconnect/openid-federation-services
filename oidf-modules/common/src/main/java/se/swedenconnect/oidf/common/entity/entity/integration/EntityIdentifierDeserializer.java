@@ -19,7 +19,6 @@ package se.swedenconnect.oidf.common.entity.entity.integration;
 import com.nimbusds.jose.shaded.gson.JsonDeserializationContext;
 import com.nimbusds.jose.shaded.gson.JsonDeserializer;
 import com.nimbusds.jose.shaded.gson.JsonElement;
-import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jose.shaded.gson.JsonParseException;
 import com.nimbusds.jose.shaded.gson.JsonPrimitive;
 import com.nimbusds.jose.shaded.gson.JsonSerializationContext;
@@ -36,7 +35,7 @@ import java.lang.reflect.Type;
 public class EntityIdentifierDeserializer implements JsonDeserializer<EntityID>, JsonSerializer<EntityID> {
   @Override
   public EntityID deserialize(final JsonElement jsonElement, final Type type,
-                       final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+                              final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
     return new EntityID(jsonElement.getAsString());
   }
 

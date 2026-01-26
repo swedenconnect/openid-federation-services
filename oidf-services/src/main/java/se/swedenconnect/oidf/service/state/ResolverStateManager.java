@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import se.swedenconnect.oidf.service.error.ErrorHandler;
 import se.swedenconnect.oidf.service.health.ReadyStateComponent;
 import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 

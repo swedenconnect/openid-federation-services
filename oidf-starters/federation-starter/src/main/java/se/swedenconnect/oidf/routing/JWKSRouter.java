@@ -23,7 +23,6 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.jwt.JWKFederationSigner;
-import se.swedenconnect.oidf.common.entity.jwt.JWKSetSignerFactory;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
 import java.util.Map;

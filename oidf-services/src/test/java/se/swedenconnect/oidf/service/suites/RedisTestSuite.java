@@ -23,12 +23,9 @@ import org.junit.platform.suite.api.BeforeSuite;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
-import org.springframework.beans.factory.config.YamlMapFactoryBean;
-import org.springframework.beans.factory.config.YamlProcessor;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.env.MockEnvironment;
 import org.testcontainers.utility.DockerImageName;
 import se.swedenconnect.oidf.service.Application;
@@ -88,7 +85,7 @@ public class RedisTestSuite {
             .withProperty("spring.data.redis.url", redis.getRedisURI())
             .withProperty("federation.registry.integration.endpoints.base-path",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
-                    "/federationservice")
+                "/federationservice")
         )
         .profiles("integration-test")
         .run();

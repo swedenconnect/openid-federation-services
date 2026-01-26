@@ -32,7 +32,6 @@ import org.testcontainers.shaded.com.google.common.collect.Maps;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,6 +133,7 @@ public class ResolverDifferentiator {
       IGNORED_FIELDS.forEach(result::remove);
       return result;
     }
+
     public Map<String, MapDifference.ValueDifference<Object>> getTrustChainEntryDifference(final int index) throws ParseException {
       final SignedJWT responseJwt = SignedJWT.parse(this.response.body);
       final SignedJWT referenceJwt = SignedJWT.parse(this.reference.body);

@@ -16,10 +16,6 @@
  */
 package se.swedenconnect.oidf.common.entity.jwt;
 
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKMatcher;
-import com.nimbusds.jose.jwk.JWKSelector;
-import com.nimbusds.jose.jwk.JWKSet;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 /**
