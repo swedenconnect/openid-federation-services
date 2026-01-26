@@ -30,56 +30,56 @@ import java.util.regex.Pattern;
  * @author Per Fredrik Plars
  */
 @EqualsAndHashCode
-public class TrustMarkId implements Serializable {
+public class TrustMarkType implements Serializable {
 
   private final static Pattern pattern = Pattern.compile("^(https?):\\/\\/[^\\s\\/:]+(:\\d+)?(\\/[^\\s]*)?$");
   @Getter
-  final String trustMarkId;
+  final String trustMarkType;
 
   /**
-   * Throws if trustMarkId does not follow regexp "^(https?):\\/\\/[^\\s\\/:]+(:\\d+)?(\\/[^\\s]*)?$"
-   * @param trustMarkId trustMarkId
+   * Throws if trustMarkType does not follow regexp "^(https?):\\/\\/[^\\s\\/:]+(:\\d+)?(\\/[^\\s]*)?$"
+   * @param trustMarkType trustMarkType
    */
-  public TrustMarkId(final String trustMarkId) {
-    this.trustMarkId = validateInternal(trustMarkId, IllegalArgumentException::new);
+  public TrustMarkType(final String trustMarkType) {
+    this.trustMarkType = validateInternal(trustMarkType, IllegalArgumentException::new);
   }
 
   /**
    * Static method to create TrustMark
-   * @param trustMarkId trustMarkId
+   * @param trustMarkType trustMarkType
    * @return TrustMarkId
    */
-  public static TrustMarkId create(final String trustMarkId) {
-    return new TrustMarkId(trustMarkId);
+  public static TrustMarkType create(final String trustMarkType) {
+    return new TrustMarkType(trustMarkType);
   }
 
   @Override
   public String toString() {
-    return this.trustMarkId;
+    return this.trustMarkType;
   }
 
   private static <EX extends Exception> String validateInternal(
-      final String trustMarkId, final Function<String,EX> ex) throws EX{
-    if(trustMarkId == null){
+      final String trustMarkType, final Function<String,EX> ex) throws EX{
+    if(trustMarkType == null){
       throw ex.apply("Unable to create TrustMarkId since input is null.");
     }
-    if (!pattern.matcher(trustMarkId).matches()) {
-      throw ex.apply("Unable to create TrustMarkId. For input: '" + trustMarkId + "'");
+    if (!pattern.matcher(trustMarkType).matches()) {
+      throw ex.apply("Unable to create TrustMarkId. For input: '" + trustMarkType + "'");
     }
-   return trustMarkId;
+   return trustMarkType;
   }
 
   /**
    * Validated TrustMark, if it failes then exception is thrown according to ex
-   * @param trustMarkId TrustMarkID
+   * @param trustMarkType TrustMarkID
    * @param ex Function called to get an exception. A error string is supplied with the problem.
    * @return TrustMarkId
    * @param <EX> Exception
    * @throws EX  Exception thrown if trustmark is not validated
    */
-  public static <EX extends Exception> TrustMarkId validate(
-      final String trustMarkId, final Function<String,EX> ex) throws EX{
-   return new TrustMarkId(validateInternal(trustMarkId,ex));
+  public static <EX extends Exception> TrustMarkType validate(
+      final String trustMarkType, final Function<String,EX> ex) throws EX{
+   return new TrustMarkType(validateInternal(trustMarkType,ex));
   }
 
 }

@@ -17,14 +17,17 @@
 package se.swedenconnect.oidf.trustmarkissuer;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
@@ -33,6 +36,7 @@ import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -83,10 +87,10 @@ public class TrustMarkIssuer {
     if (Objects.isNull(request)) {
       throw new InvalidRequestException("Request can not be null");
     }
-    if (Objects.isNull(request.trustMarkId())) {
+    if (Objects.isNull(request.trustMarkType())) {
       throw new InvalidRequestException("Trust mark id can not be null");
     }
-    final TrustMarkId id = TrustMarkId.validate(request.trustMarkId(), InvalidRequestException::new);
+    final TrustMarkType id = TrustMarkType.validate(request.trustMarkType(), InvalidRequestException::new);
     final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.entityIdentifier(), id)
         .stream()
         .filter(tms -> {
@@ -113,26 +117,55 @@ public class TrustMarkIssuer {
    * @param request For a TrustMark status check
    * @return True if trust mark is active
    */
-  public Boolean trustMarkStatus(final TrustMarkStatusRequest request)
+  public String trustMarkStatus(final TrustMarkStatusRequest request)
       throws NotFoundException, InvalidRequestException {
-    if (request.issueTime() != null) {
-      throw new InvalidRequestException("IssueTime parameter is not supported");
-    }
-    final TrustMarkId id = TrustMarkId.create(request.trustMarkId());
-    final boolean exists = this.trustMarkIssuerProperties.trustMarks()
-        .stream()
-        .anyMatch(tm -> tm.getTrustMarkId().equals(id));
 
-    if (!exists) {
-      throw new NotFoundException("Could not find any trust mark with id %s".formatted(request.trustMarkId()));
-    }
+    try {
+      final SignedJWT parse = SignedJWT.parse(request.trustMark());
 
-    final Optional<TrustMarkSubjectProperty> subject =
-        this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.entityIdentifier(), id,
-            new EntityID(request.subject()));
-    return subject.isPresent()
-        && !subject.get().revoked()
-        && Optional.ofNullable(subject.get().expires()).map(e -> e.isAfter(Instant.now(this.clock))).orElse(true);
+      final JWTClaimsSet trustMarkClaims = parse.getJWTClaimsSet();
+      final String trustMarkType = trustMarkClaims.getStringClaim("trust_mark_type");
+      final String sub = trustMarkClaims.getStringClaim("sub");
+
+      final boolean exists = this.trustMarkIssuerProperties.trustMarks()
+          .stream()
+          .anyMatch(tmi -> tmi.getTrustMarkType().getTrustMarkType().equals(trustMarkType));
+
+      if (!exists) {
+        throw new NotFoundException("Could not find any trust mark with type %s".formatted(trustMarkType));
+      }
+
+      String status = "active";
+      final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
+      final Optional<EntityRecord> entity = this.source.getEntity(new NodeKey(entityIdentifier, entityIdentifier));
+      if (!this.signer.verify(entity.get(), request.trustMark())) {
+        status = "invalid";
+      }
+
+      final Optional<TrustMarkSubjectProperty> subject =
+          this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.entityIdentifier(),
+              new TrustMarkType(trustMarkType),
+              new EntityID(sub));
+
+      if (subject.isPresent()) {
+        if (subject.get().revoked()) {
+          status = "revoked";
+        }
+        final Optional<Date> expirationTime = Optional.ofNullable(trustMarkClaims.getExpirationTime());
+        if (expirationTime.isPresent()) {
+          if (Instant.now().isAfter(expirationTime.get().toInstant())) {
+            status = "expired";
+          }
+        }
+      }
+
+      return this.signer.signStatus(
+          entity.get(),
+          request.trustMark(),
+          status).serialize();
+    } catch (final java.text.ParseException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -145,9 +178,9 @@ public class TrustMarkIssuer {
 
     final TrustMarkProperties properties =
         this.trustMarkIssuerProperties.trustMarks().stream()
-        .filter(tm -> request.trustMarkId().equals(tm.getTrustMarkId().getTrustMarkId()))
-        .findFirst()
-        .get();
+            .filter(tm -> request.trustMarkType().equals(tm.getTrustMarkType().getTrustMarkType()))
+            .findFirst()
+            .get();
 
     final Optional<TrustMarkSubjectProperty> subject = properties.getTrustMarkSubjects()
         .stream()

@@ -40,7 +40,7 @@ public class TrustAnchorClient {
     return client.mutate().baseUrl(trustAnchor.getValue()).build().get()
         .uri(uriBuilder -> uriBuilder.path("/subordinate_listing")
             .queryParamIfPresent("trust_marked", Optional.ofNullable(request.trustMarked()))
-            .queryParamIfPresent("trust_mark_id", Optional.ofNullable(request.trustMarkId()))
+            .queryParamIfPresent("trust_mark_type", Optional.ofNullable(request.trustMarkType()))
             .queryParamIfPresent("intermediate", Optional.ofNullable(request.intermediate()))
             .queryParamIfPresent("entity_type", Optional.ofNullable(request.entityType()))
             .build()

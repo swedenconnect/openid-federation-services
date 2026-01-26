@@ -30,7 +30,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.EntityIdentifierDe
 import se.swedenconnect.oidf.common.entity.entity.integration.InstantDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JWKSSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.JWKSerializer;
 
 import java.io.IOException;
@@ -83,7 +83,7 @@ public class JsonReferenceLoader {
             .registerTypeAdapter(Duration.class, new DurationDeserializer())
             .registerTypeAdapter(Instant.class, new InstantDeserializer())
             .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
-            .registerTypeAdapter(TrustMarkId.class, new TrustMarkIdentifierDeserializer())
+            .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
             .addSerializationExclusionStrategy(EXCLUSION_STRATEGY)
             .addDeserializationExclusionStrategy(EXCLUSION_STRATEGY)
             .create()

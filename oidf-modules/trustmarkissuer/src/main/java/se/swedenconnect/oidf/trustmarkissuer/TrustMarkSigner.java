@@ -101,10 +101,10 @@ public class TrustMarkSigner {
     }
 
     issuerEntityId.ifPresent(entityID -> claimsSetBuilder.issuer(entityID.getValue()));
-    claimsSetBuilder.claim("trust_mark_id", trustMarkProperties.getTrustMarkId().getTrustMarkId());
+    claimsSetBuilder.claim("trust_mark_type", trustMarkProperties.getTrustMarkType().getTrustMarkType());
 
     Optional.ofNullable(trustMarkProperties.getLogoUri()).ifPresent((value) -> claimsSetBuilder.claim("logo_uri",
-      value));
+        value));
 
     Optional.ofNullable(trustMarkProperties.getRefUri()).ifPresent((value) -> claimsSetBuilder.claim("ref", value));
 
@@ -124,5 +124,37 @@ public class TrustMarkSigner {
       return new Date(subTimeToLive.get().toEpochMilli());
     }
     return new Date(calculatedTrustMarkTTL.toEpochMilli());
+  }
+
+  /**
+   * Verifies jwt for issuer.
+   * @param iss who will verify
+   * @param jwt to verify
+   * @return true if valid
+   */
+  public boolean verify(final EntityRecord iss, final String jwt) {
+    return this.signerFactory.createSigner(iss).verify(jwt);
+  }
+
+  /**
+   * Signs a status response
+   * @param entity
+   * @param trustMark
+   * @param status
+   * @return signed status response
+   */
+  public SignedJWT signStatus(final EntityRecord entity, final String trustMark, final String status) {
+    final JWTClaimsSet.Builder claimsSetBuilder = new JWTClaimsSet.Builder()
+        .claim("trust_mark", trustMark)
+        .issueTime(new Date(Instant.now(this.clock).toEpochMilli()))
+        .issuer(entity.getEntityIdentifier().getValue())
+        .claim("status", status);
+
+    try {
+      return this.signerFactory.createSigner(entity)
+          .sign(new JOSEObjectType("trust-mark-status-response+jwt"), claimsSetBuilder.build());
+    } catch (final JOSEException | ParseException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

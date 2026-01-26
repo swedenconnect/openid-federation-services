@@ -21,9 +21,9 @@ import java.io.Serializable;
 /**
  * TrustMark listing request
  *
- * @param trustMarkId TrustMarkId
+ * @param trustMarkType TrustMarkId
  * @param subject     Subject
  * @author Felix Hellman
  */
-public record TrustMarkListingRequest(String trustMarkId, String subject) implements Serializable {
+public record TrustMarkListingRequest(String trustMarkType, String subject) implements Serializable {
 }

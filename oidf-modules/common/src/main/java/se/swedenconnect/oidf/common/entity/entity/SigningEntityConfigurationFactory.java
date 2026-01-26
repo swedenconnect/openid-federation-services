@@ -75,11 +75,11 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
       final List<TrustMarkSourceProperty> trustMarkSourceProperties = record.getTrustMarkSource();
       if (Objects.nonNull(trustMarkSourceProperties)) {
         final List<TrustMarkEntry> trustMarks = trustMarkSourceProperties.stream()
-            .map(s -> new TrustMarkRequest(record.getEntityIdentifier(), s.issuer(), new EntityID(s.trustMarkId())))
+            .map(s -> new TrustMarkRequest(record.getEntityIdentifier(), s.issuer(), new EntityID(s.trustMarkType())))
             .map(request -> {
               final SignedJWT signedJWT =
                   this.federationClient.trustMark(new FederationRequest<>(request, Map.of(), true));
-              return new TrustMarkEntry(request.trustMarkId(), signedJWT);
+              return new TrustMarkEntry(request.trustMarkType(), signedJWT);
             })
             .toList();
         builder.claim("trust_marks", trustMarks.stream().map(TrustMarkEntry::toJSONObject).toList());

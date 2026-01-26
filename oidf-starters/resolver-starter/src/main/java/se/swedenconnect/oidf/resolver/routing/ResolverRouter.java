@@ -119,7 +119,7 @@ public class ResolverRouter implements Router {
             return ServerResponse.ok().body(resolver.discovery(new DiscoveryRequest(
                 params.getFirst("trust_anchor"),
                 params.get("entity_type"),
-                params.get("trust_mark_id")
+                params.get("trust_mark_type")
             )).supportedEntities());
           } catch (final FederationException e) {
             return this.errorHandler.handle(e);

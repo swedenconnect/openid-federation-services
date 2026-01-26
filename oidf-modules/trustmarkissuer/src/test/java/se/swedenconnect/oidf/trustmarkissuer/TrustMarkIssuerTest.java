@@ -28,7 +28,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
@@ -105,13 +105,13 @@ class TrustMarkIssuerTest {
             .build();
 
     Mockito.when(source.getTrustMarkSubjects(trustMarkIssuerProperties.entityIdentifier(),
-            TrustMarkId.create("http://tm1.digg.se")))
+            TrustMarkType.create("http://tm1.digg.se")))
         .thenReturn(List.of(sub1, sub2, sub3));
 
 
     this.trustMarkIssuerProperties.trustMarks()
         .add(TrustMarkProperties.builder()
-            .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
+            .trustMarkType(TrustMarkType.create("http://tm1.digg.se"))
             .delegation(null)
             .logoUri(null)
             .refUri(null)
@@ -169,7 +169,7 @@ class TrustMarkIssuerTest {
             .build();
 
     this.trustMarkIssuerProperties.trustMarks().add(TrustMarkProperties.builder()
-        .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
+        .trustMarkType(TrustMarkType.create("http://tm1.digg.se"))
         .delegation(null)
         .logoUri(null)
         .refUri(null)
@@ -177,7 +177,7 @@ class TrustMarkIssuerTest {
 
     Mockito.when(source.getTrustMarkSubject(
         this.trustMarkIssuerProperties.entityIdentifier(),
-        TrustMarkId.create("http://tm1.digg.se"),
+        TrustMarkType.create("http://tm1.digg.se"),
         new EntityID(sub1.sub())
     )).thenReturn(Optional.of(sub1));
 
@@ -195,7 +195,7 @@ class TrustMarkIssuerTest {
 
     Mockito.when(source.getTrustMarkSubject(
         this.trustMarkIssuerProperties.entityIdentifier(),
-        TrustMarkId.create("http://tm1.digg.se"),
+        TrustMarkType.create("http://tm1.digg.se"),
         new EntityID(expired.sub())
     )).thenReturn(Optional.of(expired));
 

@@ -24,7 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkDelegation;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
@@ -39,8 +39,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public final class TrustMarkProperties {
-  @SerializedName("trust-mark-id")
-  private TrustMarkId trustMarkId;
+  @SerializedName("trust-mark-type")
+  private TrustMarkType trustMarkType;
   @SerializedName("logo-uri")
   private String logoUri;
   @SerializedName("ref-uri")
@@ -57,6 +57,6 @@ public final class TrustMarkProperties {
    */
   @PostConstruct
   public void validate() throws IllegalArgumentException {
-    FederationAssert.assertNotEmpty(this.trustMarkId, "TrustMarkId is expected");
+    FederationAssert.assertNotEmpty(this.trustMarkType, "TrustMarkId is expected");
   }
 }

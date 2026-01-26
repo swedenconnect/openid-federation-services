@@ -27,7 +27,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAn
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkOwner;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
@@ -49,7 +49,7 @@ public class RegistryJsonSerDer {
         )
         .trustMarkIssuers(List.of(TrustMarkIssuerProperties.builder().entityIdentifier(new EntityID("http://tmi.test")).trustMarks(
             List.of(
-                TrustMarkProperties.builder().trustMarkId(new TrustMarkId("http://tmi.test/tm"))
+                TrustMarkProperties.builder().trustMarkType(new TrustMarkType("http://tmi.test/tm"))
                     .trustMarkSubjects(List.of(TrustMarkSubjectProperty.builder().sub("http://first.test").build())).build())).build())
         )
         .trustAnchors(List.of(TrustAnchorProperties.builder()

@@ -84,7 +84,7 @@ public class GeneralErrorHandlingTestCases {
         .then().log().all()
         .statusCode(HttpStatus.BAD_REQUEST.value())
         .body("error", Matchers.equalTo("invalid_request"))
-        .body("error_description", Matchers.equalTo("Required request parameter [trust_mark_id] was missing."))
+        .body("error_description", Matchers.equalTo("Required request parameter [trust_mark_type] was missing."))
         .contentType(ContentType.JSON);
   }
 

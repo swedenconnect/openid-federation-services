@@ -18,7 +18,7 @@
 package se.swedenconnect.oidf.trustmarkissuer.dvo;
 
 import org.junit.jupiter.api.Test;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -35,11 +35,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  *
  * @author Per Fredrik Plars
  */
-class TrustMarkIdTest {
+class TrustMarkTypeTest {
 
   @Test
   void testJavaSerDes() throws IOException, ClassNotFoundException {
-    final TrustMarkId trId1 = new TrustMarkId("http://www.tm.se/1");
+    final TrustMarkType trId1 = new TrustMarkType("http://www.tm.se/1");
 
     final ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
     final ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteOut);
@@ -49,7 +49,7 @@ class TrustMarkIdTest {
 
     final ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
     final ObjectInputStream objectInputStream = new ObjectInputStream(byteIn);
-    final TrustMarkId tm = (TrustMarkId) objectInputStream.readObject();
+    final TrustMarkType tm = (TrustMarkType) objectInputStream.readObject();
     objectInputStream.close();
 
     assertEquals(trId1, tm);
@@ -58,36 +58,36 @@ class TrustMarkIdTest {
 
   @Test
   void testToString() {
-    final TrustMarkId trId1 = new TrustMarkId("http://www.tm.se/1");
+    final TrustMarkType trId1 = new TrustMarkType("http://www.tm.se/1");
     assertEquals("http://www.tm.se/1", trId1.toString());
   }
 
   @Test
   void testNull() {
-    assertThrows(IllegalArgumentException.class,() -> TrustMarkId.create(null));
+    assertThrows(IllegalArgumentException.class,() -> TrustMarkType.create(null));
 
   }
 
   @Test
   void testEquals() {
-    final TrustMarkId trId1 = new TrustMarkId("http://www.tm.se/1");
-    final TrustMarkId trId2 = new TrustMarkId("http://www.tm.se/2");
+    final TrustMarkType trId1 = new TrustMarkType("http://www.tm.se/1");
+    final TrustMarkType trId2 = new TrustMarkType("http://www.tm.se/2");
     assertNotEquals(trId1, trId2);
     assertEquals(trId1, trId1);
   }
 
   @Test
   void testHashCode() {
-    final TrustMarkId trId1 = new TrustMarkId("http://www.tm.se/1");
-    final TrustMarkId trId2 = new TrustMarkId("http://www.tm.se/2");
+    final TrustMarkType trId1 = new TrustMarkType("http://www.tm.se/1");
+    final TrustMarkType trId2 = new TrustMarkType("http://www.tm.se/2");
     assertNotEquals(trId1.hashCode(), trId2.hashCode());
     assertEquals(trId1.hashCode(), trId1.hashCode());
   }
 
   @Test
   void getId() {
-    final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> new TrustMarkId("Gurka"));
+    final IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> new TrustMarkType("Gurka"));
     assertEquals("Unable to create TrustMarkId. For input: 'Gurka'", ex.getMessage());
-    new TrustMarkId("http://www.gurka.se");
+    new TrustMarkType("http://www.gurka.se");
   }
 }

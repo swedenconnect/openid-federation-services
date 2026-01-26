@@ -14,19 +14,19 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.entity.integration.federation;
+package se.swedenconnect.oidf.service;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import se.swedenconnect.oidf.service.time.TestClock;
 
-import java.io.Serializable;
+import java.time.Clock;
 
-/**
- * @param subject         of the trust mark
- * @param trustMarkIssuer issuer
- * @param trustMarkType     id
- * @author Felix Hellman
- */
-public record TrustMarkRequest(EntityID subject, EntityID trustMarkIssuer,
-                               EntityID trustMarkType) implements Serializable {
-
+@org.springframework.boot.test.context.TestConfiguration
+public class TestConfiguration {
+  @Bean
+  @Primary
+  Clock clock() {
+    return new TestClock(Clock.systemDefaultZone(), null);
+  }
 }
