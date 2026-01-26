@@ -34,10 +34,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 
 /**
@@ -76,11 +74,11 @@ public class StateHashFactory {
   public static class JWKSetDeserializer extends JsonDeserializer<JWKSet> {
     @Override
     public JWKSet deserialize(final JsonParser p, final DeserializationContext ctxt) throws IOException {
-      final Map<String, Object> jwkMap = p.readValueAs(new TypeReference<>() {});
+      final Map<String, Object> jwkMap = p.readValueAs(new TypeReference<>() {
+      });
       try {
         return JWKSet.parse(jwkMap);
-      }
-      catch (final Exception e) {
+      } catch (final Exception e) {
         throw new IOException("Failed to parse JWKSet", e);
       }
     }
@@ -101,22 +99,21 @@ public class StateHashFactory {
           treeMap.put(key, value);
         }
         return treeMap;
-      }else if (obj instanceof List<?> list) {
+      } else if (obj instanceof List<?> list) {
         final List<Object> newList = new ArrayList<>();
         for (Object item : list) {
           newList.add(this.preserveOrderRecursive(item));
         }
         return newList;
-      }
-      else {
+      } else {
         return obj;
       }
     }
 
     @Override
     public void serialize(final JWKSet value,
-        final JsonGenerator gen,
-        final SerializerProvider serializers) throws IOException {
+                          final JsonGenerator gen,
+                          final SerializerProvider serializers) throws IOException {
 
       if (value == null) {
         gen.writeNull();

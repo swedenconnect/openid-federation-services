@@ -26,9 +26,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.ApplicationContext;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
-import se.swedenconnect.oidf.service.router.responses.TrustMarkStatusReply;
 import se.swedenconnect.oidf.service.service.testclient.FederationClients;
 import se.swedenconnect.oidf.service.service.testclient.TestFederationClientParameterResolver;
+import se.swedenconnect.oidf.service.service.testclient.TrustMarkStatusReply;
 import se.swedenconnect.oidf.service.suites.Context;
 
 import java.text.ParseException;

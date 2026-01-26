@@ -17,8 +17,12 @@
 package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -28,18 +32,15 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class TrustMarkOwner {
 
-  /**
-   * Constructor.
-   * @param sub
-   * @param jwks
-   */
-  public TrustMarkOwner(final EntityID sub, final JWKSet jwks) {
-    this.sub = sub;
-    this.jwks = jwks;
-  }
-
+  @SerializedName("sub")
   private EntityID sub;
+  @SerializedName("jwks")
   private JWKSet jwks;
+  @SerializedName("trustmark-identifier")
+  private EntityID trustmarkIdentifier;
 }

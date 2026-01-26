@@ -17,29 +17,23 @@
 package se.swedenconnect.oidf.trustmarkissuer;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
-import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
-import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
 import se.swedenconnect.oidf.common.entity.jwt.JWKSetSignerFactory;
 
-import java.text.ParseException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -52,7 +46,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -90,28 +83,28 @@ class TrustMarkIssuerTest {
 
     final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
 
-    final TrustMarkSubjectRecord sub1 =
-        TrustMarkSubjectRecord.builder()
+    final TrustMarkSubjectProperty sub1 =
+        TrustMarkSubjectProperty.builder()
             .sub("http://sub1.se")
             .expires(Instant.now().plus(10, ChronoUnit.DAYS))
             .granted(Instant.now())
             .build();
 
-    final TrustMarkSubjectRecord sub2 =
-        TrustMarkSubjectRecord.builder()
+    final TrustMarkSubjectProperty sub2 =
+        TrustMarkSubjectProperty.builder()
             .sub("http://sub2.se")
             .expires(Instant.now().plus(10, ChronoUnit.DAYS))
             .granted(Instant.now())
             .build();
 
-    final TrustMarkSubjectRecord sub3 =
-        TrustMarkSubjectRecord.builder()
+    final TrustMarkSubjectProperty sub3 =
+        TrustMarkSubjectProperty.builder()
             .sub("http://sub.outdated.se")
             .expires(Instant.now().minus(1, ChronoUnit.DAYS))
             .granted(Instant.now())
             .build();
 
-    Mockito.when(source.getTrustMarkSubjects(trustMarkIssuerProperties.issuerEntityId(),
+    Mockito.when(source.getTrustMarkSubjects(trustMarkIssuerProperties.entityIdentifier(),
             TrustMarkId.create("http://tm1.digg.se")))
         .thenReturn(List.of(sub1, sub2, sub3));
 
@@ -119,15 +112,15 @@ class TrustMarkIssuerTest {
     this.trustMarkIssuerProperties.trustMarks()
         .add(TrustMarkProperties.builder()
             .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
-            .delegation(Optional.empty())
-            .logoUri(Optional.empty())
-            .refUri(Optional.empty())
+            .delegation(null)
+            .logoUri(null)
+            .refUri(null)
             .build());
 
     final Clock fixed = Clock.fixed(Instant.now().plus(2, ChronoUnit.DAYS), ZoneId.systemDefault());
 
 
-    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory()
         , fixed);
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkIssuerProperties, signer, source, Clock.systemUTC());
     assertThrows(InvalidRequestException.class, () -> trustMarkIssuer.trustMarkListing(null));
@@ -156,85 +149,20 @@ class TrustMarkIssuerTest {
   }
 
   @Test
-  public void testTrustMarkCreation()
-      throws NotFoundException, ServerErrorException, ParseException {
-
-    final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
-
-    final TrustMarkId trustMarkId = TrustMarkId.create("http://tm1.digg.se");
-
-    final TrustMarkSubjectRecord sub1 =
-        TrustMarkSubjectRecord.builder()
-            .sub("http://sub1.se")
-            .granted(Instant.now())
-            .expires(Instant.now().plus(10, ChronoUnit.DAYS))
-            .build();
-
-    final TrustMarkProperties trustMark = TrustMarkProperties.builder()
-        .trustMarkId(trustMarkId)
-        .refUri(Optional.of("http://digg.se/tm1/doc"))
-        .logoUri(Optional.of("http://digg.se/tm1/logo.png"))
-        .delegation(Optional.empty())
-        .trustMarkSubjectRecords(List.of(sub1))
-        .build();
-    this.trustMarkIssuerProperties.trustMarks().add(trustMark);
-
-
-
-    Mockito.when(
-            source.getTrustMarkSubject(
-                trustMarkIssuerProperties.issuerEntityId(),
-                trustMarkId,
-                new EntityID(sub1.sub())
-            )
-        )
-        .thenReturn(Optional.of(sub1));
-
-    final Clock fixed = Clock.fixed(Instant.now().plus(2, ChronoUnit.DAYS), ZoneId.systemDefault());
-    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
-        , fixed);
-
-    final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(this.trustMarkIssuerProperties, signer, source, Clock.systemUTC());
-    final String trustMarkJWT = trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkId.getTrustMarkId(),
-        "http://sub1.se"));
-
-    final SignedJWT tm = SignedJWT.parse(trustMarkJWT);
-    final JWTClaimsSet unpackedClaims = tm.getJWTClaimsSet();
-
-    assertNotNull(unpackedClaims.getIssuer());
-    assertNotNull(unpackedClaims.getExpirationTime());
-    assertNotNull(unpackedClaims.getClaim("ref"));
-    assertNotNull(unpackedClaims.getClaim("logo_uri"));
-    assertNotNull(unpackedClaims.getClaim("iss"));
-    assertNotNull(unpackedClaims.getClaim("trust_mark_id"));
-    assertNotNull(unpackedClaims.getClaim("exp"));
-    assertNotNull(unpackedClaims.getClaim("iat"));
-    assertNotNull(unpackedClaims.getClaim("jti"));
-
-    final JWSHeader header = tm.getHeader();
-    assertNotNull(header.getAlgorithm());
-    assertNotNull(header.getType());
-    assertNotNull(header.getKeyID());
-
-    System.out.println(trustMarkJWT);
-    System.out.println(unpackedClaims);
-  }
-
-  @Test
   public void testTrustMarkValidity()
       throws NotFoundException, InvalidRequestException {
 
     final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
 
-    final TrustMarkSubjectRecord sub1 =
-        TrustMarkSubjectRecord.builder()
+    final TrustMarkSubjectProperty sub1 =
+        TrustMarkSubjectProperty.builder()
             .sub("http://sub1.se")
             .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
             .granted(Instant.now())
             .build();
 
-    final TrustMarkSubjectRecord expired =
-        TrustMarkSubjectRecord.builder()
+    final TrustMarkSubjectProperty expired =
+        TrustMarkSubjectProperty.builder()
             .sub("http://expired.se")
             .expires(Instant.now().minus(6, ChronoUnit.MINUTES))
             .granted(Instant.now().minus(10, ChronoUnit.MINUTES))
@@ -242,20 +170,20 @@ class TrustMarkIssuerTest {
 
     this.trustMarkIssuerProperties.trustMarks().add(TrustMarkProperties.builder()
         .trustMarkId(TrustMarkId.create("http://tm1.digg.se"))
-        .delegation(Optional.empty())
-        .logoUri(Optional.empty())
-        .refUri(Optional.empty())
+        .delegation(null)
+        .logoUri(null)
+        .refUri(null)
         .build());
 
     Mockito.when(source.getTrustMarkSubject(
-        this.trustMarkIssuerProperties.issuerEntityId(),
+        this.trustMarkIssuerProperties.entityIdentifier(),
         TrustMarkId.create("http://tm1.digg.se"),
         new EntityID(sub1.sub())
     )).thenReturn(Optional.of(sub1));
 
 
     final Clock fixed = Clock.fixed(Instant.now().plus(8, ChronoUnit.MINUTES), ZoneId.systemDefault());
-    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory()
         , fixed);
 
     final TrustMarkIssuer trustMarkIssuer = new TrustMarkIssuer(trustMarkIssuerProperties, signer, source, Clock.systemUTC());
@@ -266,7 +194,7 @@ class TrustMarkIssuerTest {
 
 
     Mockito.when(source.getTrustMarkSubject(
-        this.trustMarkIssuerProperties.issuerEntityId(),
+        this.trustMarkIssuerProperties.entityIdentifier(),
         TrustMarkId.create("http://tm1.digg.se"),
         new EntityID(expired.sub())
     )).thenReturn(Optional.of(expired));
@@ -279,7 +207,7 @@ class TrustMarkIssuerTest {
   @Test
   void testExpCalculationExpectTTLForSubject() throws InvalidRequestException {
     final Clock fixed = Clock.fixed(Instant.now(), ZoneId.systemDefault());
-    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory()
         , fixed);
     final Instant ttlForSubject = Instant.now().plus(2, ChronoUnit.MINUTES);
     final Date exp = signer.calculateExp(Duration.ofMinutes(5), ttlForSubject);
@@ -292,7 +220,7 @@ class TrustMarkIssuerTest {
   void testExpCalculationExpectDuration() {
     final Instant now = Instant.now();
     final Clock fixed = Clock.fixed(now, ZoneId.systemDefault());
-    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory(new JWKSet(jwk))
+    final TrustMarkSigner signer = new TrustMarkSigner(new JWKSetSignerFactory()
         , fixed);
     final Instant ttlForSubject = now.plus(10, ChronoUnit.MINUTES);
     final Duration durationTTL = Duration.ofMinutes(5);

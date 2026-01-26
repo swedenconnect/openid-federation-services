@@ -27,24 +27,29 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.JWKSKidReferenceLoader;
+import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.HostedRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkProperty;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
+import se.swedenconnect.oidf.common.entity.keys.KeyProperty;
+import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -56,21 +61,36 @@ public class RegistryMock {
   @Getter
   private final int port;
   private WireMockServer wireMockServer;
+  private JsonRegistryLoader loader;
 
   public RegistryMock(final int port) throws JOSEException, KeyStoreException, IOException, CertificateException,
-      NoSuchAlgorithmException {
+      NoSuchAlgorithmException, ParseException {
     final KeyStore keystore = KeyStore.getInstance(new ClassPathResource("signkey.p12").getFile(), "changeit".toCharArray());
-    final JWKSet set = new JWKSet(JWK.load(
+    final Map<String, Object> jsonObject = JWK.load(
         keystore,
         "1",
         "changeit".toCharArray()
-    ));
+    ).toJSONObject();
+    jsonObject.put("kid", "359433581122628090150675142465804663870388233428");
+    final JWK load = JWK.parse(jsonObject);
+    final JWKSet set = new JWKSet(load);
     this.port = port;
     this.wireMockServer = new WireMockServer(port);
 
-    this.registryRecordSigner = new RegistryRecordSigner(new RSASSASigner(set.getKeys().getFirst().toRSAKey()));
+    final KeyRegistry registry = new KeyRegistry();
+    final KeyProperty property = new KeyProperty();
+    property.setAlias("sign-key-1");
+    property.setKey(load);
+    registry.register(property);
+    final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader(new JWKSKidReferenceLoader(registry));
+    this.loader = jsonRegistryLoader;
+    this.registryRecordSigner = new RegistryRecordSigner(
+        new RSASSASigner(set.getKeys().getFirst().toRSAKey()),
+        jsonRegistryLoader
+    );
+
   }
-  
+
   public void stop() {
     this.wireMockServer.stop();
   }
@@ -80,18 +100,13 @@ public class RegistryMock {
     this.wireMockServer.start();
     WireMock.configureFor(this.port);
 
-    final RSAKey key =  new RSAKeyGenerator(2048)
+    final RSAKey key = new RSAKeyGenerator(2048)
         .keyUse(KeyUse.SIGNATURE)
         .generate();
-    final String policyId = "my-super-policy";
     final List<EntityRecord> municipalityEntities = List.of(
         EntityRecord.builder()
-            .issuer(new EntityID(TestFederationEntities.IM.INTERMEDIATE.getValue() + "/dynamic"))
-            .subject(RP_FROM_REGISTRY_ENTITY)
-            .policyRecord(new PolicyRecord(policyId, Map.of()))
-            .hostedRecord(HostedRecord.builder().metadata(Map.of("federation_entity", Map.of("organization_name",
-                "Municipality"))).build())
-            .jwks(new JWKSet(key.toPublicJWK()))
+            .entityIdentifier(new EntityID(TestFederationEntities.IM.INTERMEDIATE.getValue() + "/dynamic"))
+            .jwks(new JWKSet(key))
             .build()
     );
 
@@ -99,18 +114,40 @@ public class RegistryMock {
     this.mockModuleFor(new ModuleRecord(), instanceId);
     this.mockRecordsFor(municipalityEntities, instanceId);
 
-    final List<TrustMarkSubjectRecord> subjects = List.of(new TrustMarkSubjectRecord("https://subject.test", null, null, false));
-    final List<TrustMarkRecord> tms = List.of(new TrustMarkRecord("https://trust-mark.test", "https://trust-mark" +
-        ".test/cert", subjects, "https://logouri.test", null, null));
+    final List<TrustMarkSubjectProperty> subjects = List.of(new TrustMarkSubjectProperty("https://subject.test", null, null, false));
+    final List<TrustMarkProperty> tms = List.of(new TrustMarkProperty("https://trust-mark.test", "https://trust-mark" +
+                                                                                                 ".test/cert",
+        subjects, "https://logouri.test", null, null));
+  }
 
-    final String body = this.registryRecordSigner.signTrustMarks(tms).serialize();
-    final String endpoint = "/api/v1/federationservice/trustmarks_record?instanceid=%s".formatted(instanceId);
-    log.info("{} will respond with {}", endpoint, body);
+  public void initCustom(final String instanceId) throws Exception {
+    this.wireMockServer.start();
+    WireMock.configureFor(this.port);
+    final String moduleJson = new ClassPathResource("modules.json").getContentAsString(StandardCharsets.UTF_8);
+    final String entityJson = new ClassPathResource("testentities.json").getContentAsString(StandardCharsets.UTF_8);
+
+    final SignedJWT moduleJwt = this.registryRecordSigner.signJson("module_records", moduleJson, "module-trustMarkSubjects" +
+                                                                                         "+jwt");
+    final String entityJwt =
+        this.registryRecordSigner.signJson("entity_records", entityJson, "entity-trustMarkSubjects+jwt").serialize();
+
+
+    final String endpoint = "/api/v1/federationservice/submodules?instanceid=%s".formatted(URLEncoder.encode(instanceId,
+        Charset.defaultCharset()));
+    log.info("{} will respond with {}", endpoint, moduleJwt.serialize());
     WireMock.stubFor(
         WireMock
             .get(endpoint)
-            .willReturn(new ResponseDefinitionBuilder().withStatus(200).withResponseBody(new Body(body)))
+            .willReturn(new ResponseDefinitionBuilder().withStatus(200).withResponseBody(new Body(moduleJwt.serialize())))
     );
+    final String endpointEntity = "/api/v1/federationservice/entity_record?instanceid=%s".formatted(instanceId);
+    log.info("{} will respond with {}", endpoint, entityJwt);
+    WireMock.stubFor(
+        WireMock
+            .get(endpointEntity)
+            .willReturn(new ResponseDefinitionBuilder().withStatus(200).withResponseBody(new Body(entityJwt)))
+    );
+    System.out.println("Started mock");
   }
 
   private void mockModuleFor(final ModuleRecord moduleRecord, final String instanceId) throws JOSEException {

@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.util.Assert;
 import org.testcontainers.shaded.com.google.common.collect.MapDifference;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
@@ -28,7 +27,6 @@ import se.swedenconnect.oidf.service.service.testclient.FederationClients;
 import se.swedenconnect.oidf.service.service.testclient.TestFederationClientParameterResolver;
 
 import java.text.ParseException;
-import java.util.Objects;
 
 @Slf4j
 @ExtendWith(TestFederationClientParameterResolver.class)
@@ -38,7 +36,7 @@ public class ResolverPolicyTestCases {
     final ResolverDifferentiator.ResponseDifference difference = clients.policy().getResponseDifference(new ResolveRequest(
         TestFederationEntities.IM.OP.getValue(),
         TestFederationEntities.Policy.TRUST_ANCHOR.getValue(),
-        null,false
+        null, false
     ));
     final MapDifference.ValueDifference<Object> metadata = difference.getJsonDifference().get("metadata");
     //Verify difference in metadata

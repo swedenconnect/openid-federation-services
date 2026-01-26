@@ -16,15 +16,18 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * Data response from registry to configure runtime modules from.
@@ -33,11 +36,17 @@ import java.util.stream.Stream;
  */
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@ToString
 public class ModuleRecord implements Serializable {
 
-  private List<ResolverModuleRecord> resolvers;
-  private List<TrustAnchorModuleRecord> trustAnchors;
-  private List<TrustMarkIssuerModuleRecord> trustMarkIssuers;
+  @SerializedName("resolvers")
+  private List<ResolverProperties> resolvers;
+  @SerializedName("trust-anchors")
+  private List<TrustAnchorProperties> trustAnchors;
+  @SerializedName("trust-mark-issuers")
+  private List<TrustMarkIssuerProperties> trustMarkIssuers;
 
 
   /**
@@ -47,64 +56,5 @@ public class ModuleRecord implements Serializable {
     this.resolvers = List.of();
     this.trustAnchors = List.of();
     this.trustMarkIssuers = List.of();
-  }
-
-  /**
-   * Creates instance from json object {@link java.util.HashMap}
-   *
-   * @param json to read
-   * @return new instance
-   */
-  public static ModuleRecord fromJson(final Map<String, Object> json) {
-    final ModuleRecord response = new ModuleRecord();
-    response.resolvers = Optional.ofNullable(json.get(RecordFields.Modules.RESOLVERS)).map(resolvers -> {
-          return ((List<Map<String, Object>>) resolvers)
-              .stream()
-              .map(ResolverModuleRecord::fromJson)
-              .toList();
-        })
-        .orElse(List.of());
-    response.trustAnchors = Optional.ofNullable(json.get(RecordFields.Modules.TRUST_ANCHORS)).map(ta -> {
-      return ((List<Map<String, Object>>) ta)
-          .stream()
-          .map(TrustAnchorModuleRecord::fromJson)
-          .toList();
-    }).orElse(List.of());
-
-    response.trustMarkIssuers = Optional.ofNullable(json.get(RecordFields.Modules.TRUST_MARK_ISSUERS)).map(tmi -> {
-      return ((List<Map<String, Object>>) tmi)
-          .stream()
-          .map(TrustMarkIssuerModuleRecord::fromJson)
-          .toList();
-    }).orElse(List.of());
-    return response;
-  }
-
-  /**
-   * @return this instance as json
-   */
-  public Map<String, Object> toJson() {
-    final HashMap<String, Object> json = new HashMap<>();
-    Optional.ofNullable(this.resolvers).map(r -> json.put(RecordFields.Modules.RESOLVERS,
-        this.resolvers.stream().map(ResolverModuleRecord::toJson).toList()));
-    Optional.ofNullable(this.trustAnchors).map(t -> json.put(RecordFields.Modules.TRUST_ANCHORS,
-        this.trustAnchors.stream().map(TrustAnchorModuleRecord::toJson).toList()));
-    Optional.ofNullable(this.trustMarkIssuers).map(t -> json.put(RecordFields.Modules.TRUST_MARK_ISSUERS,
-        this.trustMarkIssuers.stream().map(TrustMarkIssuerModuleRecord::toJson).toList()));
-    return json;
-  }
-
-  /**
-   * @return list of all issuers
-   */
-  public List<String> getIssuers() {
-    return Stream.of(
-            this.resolvers.stream().map(ResolverModuleRecord::getEntityIdentifier),
-            this.trustAnchors.stream().map(TrustAnchorModuleRecord::getEntityIdentifier),
-            this.trustMarkIssuers.stream().map(TrustMarkIssuerModuleRecord::getEntityIdentifier)
-        )
-        .reduce(Stream::concat)
-        .orElseGet(Stream::empty)
-        .toList();
   }
 }

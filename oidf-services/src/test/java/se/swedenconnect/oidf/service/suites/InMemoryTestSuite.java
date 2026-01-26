@@ -73,8 +73,8 @@ public class InMemoryTestSuite {
         .environment(new MockEnvironment()
             .withProperty("server.port", "11111")
             .withProperty("management.server.port", "6001")
-            .withProperty("openid.federation.storage", "memory")
-            .withProperty("openid.federation.registry.integration.endpoints.base-path",
+            .withProperty("federation.service.storage", "memory")
+            .withProperty("federation.registry.integration.client.base-uri",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                     "/federationservice")
         )

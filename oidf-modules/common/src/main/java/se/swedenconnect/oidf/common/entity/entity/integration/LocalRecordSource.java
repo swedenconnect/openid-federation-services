@@ -17,12 +17,12 @@
 package se.swedenconnect.oidf.common.entity.entity.integration;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.LocalRegistryProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
@@ -36,13 +36,13 @@ import java.util.Optional;
  */
 public class LocalRecordSource implements RecordSource {
 
-  private final RegistryProperties properties;
+  private final LocalRegistryProperties properties;
 
   /**
    * Constructor.
    * @param properties to get records from
    */
-  public LocalRecordSource(final RegistryProperties properties) {
+  public LocalRecordSource(final LocalRegistryProperties properties) {
     this.properties = properties;
   }
 
@@ -64,8 +64,7 @@ public class LocalRecordSource implements RecordSource {
   @Override
   public Optional<EntityRecord> getEntity(final NodeKey key) {
     return this.properties.entityRecords().stream()
-        .filter(er -> er.getIssuer().getValue().equals(key.issuer()))
-        .filter(er -> er.getSubject().getValue().equals(key.subject()))
+        .filter(er -> er.getEntityIdentifier().getValue().equals(key.issuer()))
         .findFirst();
   }
 
@@ -75,25 +74,26 @@ public class LocalRecordSource implements RecordSource {
   }
 
   @Override
-  public List<EntityRecord> findSubordinates(final String issuer) {
-    return this.properties.entityRecords().stream()
-        .filter(er -> !er.getSubject().getValue().equals(issuer))
-        .filter(er -> er.getIssuer().getValue().equals(issuer))
+  public List<TrustAnchorProperties.SubordinateListingProperty> findSubordinates(final String issuer) {
+    return this.properties.trustAnchorProperties()
+        .stream()
+        .filter(ta -> ta.getEntityIdentifier().getValue().equals(issuer))
+        .flatMap(ta -> ta.getSubordinates().stream())
         .toList();
   }
 
   @Override
-  public List<TrustMarkSubjectRecord> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
+  public List<TrustMarkSubjectProperty> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
     return this.properties
-        .trustMarkIssuerProperties().stream().filter(tmi -> tmi.issuerEntityId().equals(issuer))
+        .trustMarkIssuerProperties().stream().filter(tmi -> tmi.entityIdentifier().equals(issuer))
         .flatMap(tmi -> tmi.trustMarks().stream())
-        .filter(tm -> tm.trustMarkId().equals(id))
-        .flatMap(tm -> tm.trustMarkSubjectRecords().stream())
+        .filter(tm -> tm.getTrustMarkId().equals(id))
+        .flatMap(tm -> tm.getTrustMarkSubjects().stream())
         .toList();
   }
 
   @Override
-  public Optional<TrustMarkSubjectRecord> getTrustMarkSubject(
+  public Optional<TrustMarkSubjectProperty> getTrustMarkSubject(
       final EntityID issuer,
       final TrustMarkId id,
       final EntityID subject) {

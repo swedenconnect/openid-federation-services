@@ -42,7 +42,8 @@ public class ResolverCritTestCases {
         null,false
     ));
 
-    Assertions.assertEquals(0, difference.getJsonDifference().size());
+    Assertions.assertEquals(1, difference.getJsonDifference().size());
+    Assertions.assertEquals("trust_marks", difference.getJsonDifference().keySet().stream().findFirst().get());
 
     final Map<String, MapDifference.ValueDifference<Object>> trustChainEntryDifference =
         difference.getTrustChainEntryDifference(2);
@@ -61,7 +62,8 @@ public class ResolverCritTestCases {
         null,false
     ));
 
-    Assertions.assertEquals(0, difference.getJsonDifference().size());
+    Assertions.assertEquals(1, difference.getJsonDifference().size());
+    Assertions.assertEquals("trust_marks", difference.getJsonDifference().keySet().stream().findFirst().get());
 
     final Map<String, MapDifference.ValueDifference<Object>> trustChainEntryDifference =
         difference.getTrustChainEntryDifference(2);

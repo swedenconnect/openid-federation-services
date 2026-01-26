@@ -21,7 +21,6 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.springframework.web.client.RestClient;
-import se.swedenconnect.oidf.service.router.responses.TrustMarkStatusReply;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +40,7 @@ public class TrustMarkClient {
       final StringBuilder builder = new StringBuilder("/trust_mark?");
       builder.append("sub=%s".formatted(subject.getValue()));
       builder.append("&trust_mark_id=%s".formatted(trustMarkId.getValue()));
-      final String body = client.get()
+      final String body = this.client.get()
           .uri(trustMarkIssuer.getValue() + builder)
           .retrieve()
           .body(String.class);

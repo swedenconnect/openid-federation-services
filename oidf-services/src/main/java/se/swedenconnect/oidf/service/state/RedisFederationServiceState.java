@@ -17,9 +17,9 @@
 package se.swedenconnect.oidf.service.state;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import se.swedenconnect.oidf.FederationServiceState;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Manages service state distributed via redis.

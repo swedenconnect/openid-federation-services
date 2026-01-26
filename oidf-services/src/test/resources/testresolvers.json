@@ -1,0 +1,173 @@
+[
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/trust_mark_owner/resolver",
+    "resolve-response-duration": "1H",
+    "trust-anchor": "http://localhost:11111/trust_mark_owner/ta"
+  },
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/crit/resolver",
+    "resolve-response-duration": "1H",
+    "trust-anchor": "http://localhost:11111/crit/ta"
+  },
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/metadata_policy_crit/resolver",
+    "trust-anchor": "http://localhost:11111/metadata_policy_crit/ta",
+    "resolve-response-duration": "1H"
+  },
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/naming/resolver",
+    "trust-anchor": "http://localhost:11111/naming/ta",
+    "resolve-response-duration": "1H"
+  },
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/policy/resolver",
+    "trust-anchor": "http://localhost:11111/policy/ta",
+    "resolve-response-duration": "1H"
+  },
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/path/resolver",
+    "trust-anchor": "http://localhost:11111/path/ta",
+    "resolve-response-duration": "1H"
+  },
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/anarchy/resolver",
+    "trust-anchor": "http://localhost:11111/anarchy/ta",
+    "resolve-response-duration": "1H"
+  },
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/entity_type/resolver",
+    "trust-anchor": "http://localhost:11111/entity_type/ta",
+    "resolve-response-duration": "1H"
+  },
+  {
+    "trusted-keys": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+          "nbf": 1736846580,
+          "e": "AQAB",
+          "kid": "359433581122628090150675142465804663870388233428",
+          "exp": 2052206580,
+          "iat": 1736846580,
+          "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+        }
+      ]
+    },
+    "entity-identifier": "http://localhost:11111/trust_mark_issuer/resolver",
+    "trust-anchor": "http://localhost:11111/trust_mark_issuer/ta",
+    "resolve-response-duration": "1H"
+  }
+]

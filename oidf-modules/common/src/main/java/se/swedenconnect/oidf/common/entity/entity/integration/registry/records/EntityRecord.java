@@ -17,21 +17,21 @@
 package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jose.shaded.gson.ExclusionStrategy;
+import com.nimbusds.jose.shaded.gson.FieldAttributes;
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.io.Serializable;
-import java.text.ParseException;
+import java.security.KeyStore;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-
-import static se.swedenconnect.oidf.common.entity.entity.integration.registry.records.RecordFields.Entity.CRIT;
-import static se.swedenconnect.oidf.common.entity.entity.integration.registry.records.RecordFields.Entity.METADATA_POLICY_CRIT;
 
 /**
  * Data class for entity record.
@@ -39,106 +39,36 @@ import static se.swedenconnect.oidf.common.entity.entity.integration.registry.re
  * @author Felix Hellman
  */
 @Getter
+@Setter
 @Builder
 @ToString
+@AllArgsConstructor
+@NoArgsConstructor
 public class EntityRecord implements Serializable {
-  private final EntityID issuer;
-  private final EntityID subject;
-  private final PolicyRecord policyRecord;
-  private JWKSet jwks;
+  public static final ExclusionStrategy EXCLUSION_STRATEGY = new ExclusionStrategy() {
+    @Override
+    public boolean shouldSkipField(final FieldAttributes fieldAttributes) {
+      return fieldAttributes.getDeclaringClass().equals(KeyStore.class);
+    }
+
+    @Override
+    public boolean shouldSkipClass(final Class<?> aClass) {
+      return aClass.equals(KeyStore.class);
+    }
+  };
+
+  @SerializedName("entity-identifier")
+  private EntityID entityIdentifier;
+  @SerializedName("metadata")
+  private Map<String, Object> metadata;
+  @SerializedName("trust-mark-source")
+  private List<TrustMarkSourceProperty> trustMarkSource;
+  @SerializedName("override-configuration-location")
   private String overrideConfigurationLocation;
-  private final HostedRecord hostedRecord;
-  private final List<String> crit;
-  private final List<String> metadataPolicyCrit;
-
-
-  /**
-   * Constructor.
-   *
-   * @param issuer                        of the entity
-   * @param subject                       of the entity
-   * @param policyRecord                  of the entity
-   * @param jwks                          of the entity
-   * @param overrideConfigurationLocation of the entity
-   * @param hostedRecord                  optional parameter if the record is hosted
-   * @param crit                          of the entity
-   * @param metadataPolicyCrit            of the entity
-   */
-  public EntityRecord(
-      final EntityID issuer,
-      final EntityID subject,
-      final PolicyRecord policyRecord,
-      final JWKSet jwks,
-      final String overrideConfigurationLocation,
-      final HostedRecord hostedRecord,
-      final List<String> crit,
-      final List<String> metadataPolicyCrit) {
-    this.issuer = issuer;
-    this.subject = subject;
-    this.policyRecord = policyRecord;
-    this.jwks = jwks;
-    this.overrideConfigurationLocation = overrideConfigurationLocation;
-    this.hostedRecord = hostedRecord;
-    this.crit = crit;
-    this.metadataPolicyCrit = metadataPolicyCrit;
-  }
-
-  /**
-   * @return json object
-   */
-  public Map<String, Object> toJson() {
-    final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
-
-    builder.claim(RecordFields.Entity.ISSUER, this.issuer.getValue());
-    builder.claim(RecordFields.Entity.SUBJECT, this.subject.getValue());
-    builder.claim(RecordFields.Entity.POLICY_RECORD, this.policyRecord);
-    builder.claim(CRIT, this.crit);
-    builder.claim(METADATA_POLICY_CRIT, this.metadataPolicyCrit);
-
-    Optional.ofNullable(this.jwks)
-        .ifPresent(jwkSet -> builder.claim(RecordFields.Entity.JWKS, jwkSet.toJSONObject(true)));
-    Optional.ofNullable(this.hostedRecord)
-        .ifPresent(record -> builder.claim(RecordFields.Entity.HOSTED_RECORD, record.toJson()));
-    Optional.ofNullable(this.overrideConfigurationLocation)
-        .ifPresent(location -> builder.claim(
-        RecordFields.Entity.OVERRIDE_CONFIGURATION_LOCATION, location));
-
-    final JWTClaimsSet build = builder
-        .build();
-    return build.toJSONObject();
-  }
-
-  /**
-   * @param json to create instance from
-   * @return instance of EntityRecord
-   * @throws ParseException if parse failed
-   */
-  public static EntityRecord fromJson(final Map<String, Object> json) throws ParseException {
-    final Optional<Object> hostedRecord = Optional.ofNullable(json.get(RecordFields.Entity.HOSTED_RECORD));
-    return new EntityRecord(
-        new EntityID((String) json.get(RecordFields.Entity.ISSUER)),
-        new EntityID((String) json.get(RecordFields.Entity.SUBJECT)),
-        PolicyRecord.fromJson((Map<String, Object>) json.get(RecordFields.Entity.POLICY_RECORD)),
-        Optional.ofNullable(json.get(RecordFields.Entity.JWKS)).map(jwks -> {
-          try {
-            return JWKSet.parse((Map<String, Object>) jwks);
-          } catch (final ParseException e) {
-            throw new IllegalArgumentException("JWKS claim is not json claim", e);
-          }
-        }).orElse(null),
-        Optional.ofNullable((String) json.get(RecordFields.Entity.OVERRIDE_CONFIGURATION_LOCATION))
-            .orElse(null),
-        hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr))
-            .orElse(null),
-        (List<String>) json.get(RecordFields.Entity.CRIT),
-        (List<String>) json.get(RecordFields.Entity.METADATA_POLICY_CRIT)
-    );
-  }
-
-  /**
-   * @return true if hosted record is not null
-   */
-  public boolean isHosted() {
-    return Objects.nonNull(this.getHostedRecord());
-  }
+  @SerializedName("authority-hints")
+  private List<String> authorityHints;
+  @SerializedName("jwks")
+  private JWKSet jwks;
+  @SerializedName("crit")
+  private List<String> crit;
 }

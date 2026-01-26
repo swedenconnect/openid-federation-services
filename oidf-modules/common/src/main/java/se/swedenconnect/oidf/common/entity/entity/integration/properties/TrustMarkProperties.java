@@ -16,40 +16,47 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
 import jakarta.annotation.PostConstruct;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkDelegation;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
- * @param trustMarkId             The Trust Mark ID
- * @param logoUri                 Optional logo for issued Trust Marks
- * @param refUri                  Optional URL to information about issued Trust Marks
- * @param delegation              TrustMark delegation
- * @param trustMarkSubjectRecords subjects
  * @author Felix Hellman
  */
+@Getter
+@Setter
 @Builder
-public record TrustMarkProperties(TrustMarkId trustMarkId,
-                                  Optional<String> logoUri,
-                                  Optional<String> refUri,
-                                  Optional<TrustMarkDelegation> delegation,
-                                  List<TrustMarkSubjectRecord> trustMarkSubjectRecords) {
+@AllArgsConstructor
+@NoArgsConstructor
+public final class TrustMarkProperties {
+  @SerializedName("trust-mark-id")
+  private TrustMarkId trustMarkId;
+  @SerializedName("logo-uri")
+  private String logoUri;
+  @SerializedName("ref-uri")
+  private String refUri;
+  @SerializedName("delegation")
+  private TrustMarkDelegation delegation;
+  @SerializedName("trust-mark-subjects")
+  private List<TrustMarkSubjectProperty> trustMarkSubjects;
+
   /**
    * Validate content of configuration.
    *
    * @throws IllegalArgumentException is thrown when configuration is missing
    */
   @PostConstruct
-  public void validate () throws IllegalArgumentException {
+  public void validate() throws IllegalArgumentException {
     FederationAssert.assertNotEmpty(this.trustMarkId, "TrustMarkId is expected");
-    FederationAssert.assertNotEmpty(this.delegation, "Delegation can not be null");
-    FederationAssert.assertNotEmpty(this.logoUri, "LogoUri can not be null");
-    FederationAssert.assertNotEmpty(this.refUri, "RefUri can not be null");
   }
 }

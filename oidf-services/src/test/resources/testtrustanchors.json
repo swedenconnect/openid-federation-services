@@ -1,0 +1,195 @@
+[
+  {
+    "entity-identifier": "http://localhost:11111/naming/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1",
+        "constraints": {
+          "naming": {
+            "permitted": [
+              "http://localhost:11111/im/im"
+            ],
+            "excluded": [
+              "http://localhost:11111/im/im/rp"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/trust_mark_issuer/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/trust_mark_issuer/resolver",
+        "jwks": "alias:sign-key-1"
+      }
+    ],
+    "trust-mark-issuers": {
+      "http://localhost:11111/im/tmi/certified": [
+        "http://localhost:11111/im/tmi"
+      ]
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:11111/anarchy/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/anarchy/resolver",
+        "jwks": "alias:sign-key-1"
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/path/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1",
+        "constraints": {
+          "max-path-length": 1
+        }
+      },
+      {
+        "entity-identifier": "http://localhost:11111/path/resolver",
+        "jwks": "alias:sign-key-1"
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/entity_type/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1",
+        "constraints": {
+          "allowed-entity-types": [
+            "RELYING_PARTY"
+          ]
+        }
+      },
+      {
+        "entity-identifier": "http://localhost:11111/entity_type/resolver",
+        "jwks": "alias:sign-key-1"
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/im",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/im/im",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/im/op",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/im/tmi",
+        "jwks": "alias:sign-key-1"
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/im/im",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/im/im/op",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/im/im/rp",
+        "jwks": "alias:sign-key-1"
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/policy/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/policy/resolver",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1",
+        "policy": {
+          "id": "policy-1",
+          "policy": {
+            "openid_provider": {
+              "id_token_signing_alg_values_supported": {
+                "subset_of": [
+                  "RS256"
+                ]
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/crit/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/crit/resolver",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1",
+        "crit": [
+          "subject_entity_configuration_location"
+        ],
+        "override-configuration-location": "http://localhost:11111/im/banan"
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/metadata_policy_crit/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/metadata_policy_crit/resolver",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1",
+        "metadata-policy-crit": [
+          "regexp",
+          "intersects"
+        ]
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:11111/trust_mark_owner/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:11111/im",
+        "jwks": "alias:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11111/trust_mark_owner/resolver",
+        "jwks": "alias:sign-key-1"
+      }
+    ],
+    "trust-mark-owners": [
+      {
+        "trustmark-identifier": "http://localhost:11111/im/tmi/certified",
+        "sub": "http://localhost:11111/im/op",
+        "jwks": "alias:sign-key-1"
+      }
+    ]
+  }
+]

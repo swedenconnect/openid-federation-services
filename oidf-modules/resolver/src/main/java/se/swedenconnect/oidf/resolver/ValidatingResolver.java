@@ -123,7 +123,7 @@ public class ValidatingResolver implements Resolver {
   private ResolverResponse internalResolve(final ResolveRequest request) {
     final List<Exception> validationErrors = new ArrayList<>();
 
-    if (!request.trustAnchor().equalsIgnoreCase(this.resolverProperties.trustAnchor())) {
+    if (!request.trustAnchor().equalsIgnoreCase(this.resolverProperties.getTrustAnchor())) {
       validationErrors.add(new InvalidTrustAnchorException("The Trust Anchor cannot be found or used."));
     }
 
@@ -182,6 +182,6 @@ public class ValidatingResolver implements Resolver {
 
   @Override
   public EntityID getEntityId() {
-    return new EntityID(this.resolverProperties.entityIdentifier());
+    return new EntityID(this.resolverProperties.getEntityIdentifier());
   }
 }

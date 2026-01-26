@@ -36,6 +36,10 @@
         <module>trustanchor</module>
     </modules>
 
+    <properties>
+        <service-revision>0.8.23-SNAPSHOT</service-revision>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>

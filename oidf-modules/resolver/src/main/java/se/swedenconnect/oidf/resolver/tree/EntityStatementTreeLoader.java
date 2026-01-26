@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Responsible for populating and creating a new (logical) tree.
@@ -187,7 +186,7 @@ public class EntityStatementTreeLoader {
       final JSONObject metadata = parent.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY);
       final FederationEntityMetadata parse = FederationEntityMetadata.parse(metadata);
       if (Objects.nonNull(parse.getFederationListEndpointURI())
-              && Objects.nonNull(parse.getFederationFetchEndpointURI())) {
+          && Objects.nonNull(parse.getFederationFetchEndpointURI())) {
         // Entity is intermediate
         final SubordinateListingRequest subordinateListingRequest = SubordinateListingRequest.requestAll();
         final FederationRequest<SubordinateListingRequest> request =
@@ -248,12 +247,12 @@ public class EntityStatementTreeLoader {
     final EntityID subjectEntityID = subordinateStatement.getClaimsSet().getSubjectEntityID();
     try {
       final JSONObject subordinateMetadata = Optional.ofNullable(
-          subordinateStatement.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY))
+              subordinateStatement.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY))
           .orElse(new JSONObject());
       final EntityConfigurationRequest entityConfigurationRequest = new EntityConfigurationRequest(subjectEntityID,
           Optional.ofNullable(subordinateStatement
-              .getClaimsSet()
-              .getClaim("subject_entity_configuration_location"))
+                  .getClaimsSet()
+                  .getClaim("subject_entity_configuration_location"))
               .map(String.class::cast)
               .orElse(null));
       final EntityStatement entityConfiguration =

@@ -24,6 +24,7 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 public class EnvironmentConfigurators {
   public static void configureRedis(final RedisContainer redis, final Logger log) {
     redis.withLogConsumer(new Slf4jLogConsumer(log));
+    redis.withExposedPorts(6379, 8001);
   }
 
   public static void configureTestContainers() {
