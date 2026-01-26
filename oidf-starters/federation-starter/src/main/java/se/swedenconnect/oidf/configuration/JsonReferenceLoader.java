@@ -22,7 +22,9 @@ import com.nimbusds.jose.shaded.gson.GsonBuilder;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import se.swedenconnect.oidf.common.entity.entity.integration.DurationDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityIdentifierDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.InstantDeserializer;
@@ -35,6 +37,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 import static se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord.EXCLUSION_STRATEGY;
@@ -49,6 +52,8 @@ public class JsonReferenceLoader {
 
   private final JWKPropertyLoader jwkPropertyLoader;
   private final JWKSPropertyLoader jwksPropertyLoader;
+
+  private static final List<String> SUPPORTED_REFERENCES = List.of("classpath:", "file:");
 
   /**
    * Load json from reference
@@ -68,11 +73,9 @@ public class JsonReferenceLoader {
    * @param <T> type
    */
   public <T> T loadJson(final String source, final TypeToken<T> typeToken) {
-    if (source.startsWith("classpath:")) {
-      final String json;
+    if (SUPPORTED_REFERENCES.stream().anyMatch(source::startsWith)) {
       try {
-        json = new ClassPathResource(source.split("classpath:")[1])
-            .getContentAsString(StandardCharsets.UTF_8);
+        final String json = getJson(source);
         return new GsonBuilder()
             .registerTypeAdapter(JWK.class, new JWKSerializer())
             .registerTypeAdapter(JWKSet.class,
@@ -89,6 +92,18 @@ public class JsonReferenceLoader {
       } catch (final IOException e) {
         throw new RuntimeException(e);
       }
+    }
+    throw new IllegalArgumentException("Could not determine metadata reference for %s".formatted(source));
+  }
+
+  private static @NonNull String getJson(final String source) throws IOException {
+    if (source.startsWith("classpath:")) {
+      return new ClassPathResource(source.split("classpath:")[1])
+          .getContentAsString(StandardCharsets.UTF_8);
+    }
+    if (source.startsWith("file:")) {
+      return new FileSystemResource(source.split("file:")[1])
+          .getContentAsString(StandardCharsets.UTF_8);
     }
     throw new IllegalArgumentException("Could not determine metadata reference for %s".formatted(source));
   }
