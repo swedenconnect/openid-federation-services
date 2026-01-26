@@ -22,12 +22,53 @@
 
     <artifactId>oidf-services</artifactId>
     <name>OpenID Federation :: Service</name>
+    <description>Service Node for OIDF</description>
+    <url>https://docs.swedenconnect.se/openid-federation-services</url>
 
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-parent</artifactId>
         <version>${service-revision}</version>
     </parent>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/swedenconnect/openid-federation-services.git</connection>
+        <developerConnection>scm:git:https://github.com/swedenconnect/openid-federation-services.git</developerConnection>
+        <url>https://github.com/swedenconnect/openid-federation-services/tree/main</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>felix</id>
+            <name>Felix Hellman</name>
+            <email>felix@idsec.se</email>
+            <url>http://www.idsec.se</url>
+            <organization>SwedenConnect</organization>
+            <organizationUrl>https://www.swedenconnect.se</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <id>plarsa</id>
+            <name>Per Fredrik Plars</name>
+            <email>pf@idsec.se</email>
+            <url>http://www.idsec.se</url>
+            <organization>SwedenConnect</organization>
+            <organizationUrl>https://www.swedenconnect.se</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </developer>
+    </developers>
 
 
     <repositories>
@@ -55,65 +96,78 @@
         <maven.compiler.target>21</maven.compiler.target>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <service-revision>0.8.23-SNAPSHOT</service-revision>
+        <service-revision>0.9.0</service-revision>
         <maven.deploy.skip>true</maven.deploy.skip>
+        <micrometer-tracing.version>1.5.5</micrometer-tracing.version>
     </properties>
 
     <dependencies>
-
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing</artifactId>
+            <version>${micrometer-tracing.version}</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-bridge-otel</artifactId>
+            <version>${micrometer-tracing.version}</version>
         </dependency>
         <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-otlp</artifactId>
+            <version>1.49.0</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>1.15.5</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
+            <version>${spring.boot.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.security</groupId>
             <artifactId>credentials-support-spring-boot-starter</artifactId>
+            <version>${credentials-support.version}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.security</groupId>
             <artifactId>credentials-support-nimbus</artifactId>
+            <version>${credentials-support.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-json</artifactId>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.19.2</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+            <version>1.18.42</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
@@ -133,14 +187,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
+            <version>1.15.5</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -162,10 +219,12 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
+            <version>10.7</version>
         </dependency>
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>oauth2-oidc-sdk</artifactId>
+            <version>11.31.1</version>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
@@ -181,6 +240,7 @@
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite</artifactId>
+            <version>1.14.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
