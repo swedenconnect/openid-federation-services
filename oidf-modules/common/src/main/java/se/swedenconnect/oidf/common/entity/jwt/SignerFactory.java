@@ -16,8 +16,7 @@
  */
 package se.swedenconnect.oidf.common.entity.jwt;
 
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 /**
  * Factory class for creating signer.
@@ -26,17 +25,8 @@ import com.nimbusds.jose.jwk.JWKSet;
  */
 public interface SignerFactory {
   /**
+   * @param entityRecord for signing
    * @return new signer
    */
-  FederationSigner createSigner();
-
-  /**
-   * @return current sign key
-   */
-  JWK getSignKey();
-
-  /**
-   * @return all current keys
-   */
-  JWKSet getSignKeys();
+  FederationSigner createSigner(final EntityRecord entityRecord);
 }

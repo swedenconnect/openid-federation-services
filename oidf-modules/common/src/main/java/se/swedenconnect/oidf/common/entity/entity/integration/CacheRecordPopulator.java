@@ -20,7 +20,6 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordReg
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkRecord;
 
 import java.util.List;
 import java.util.UUID;

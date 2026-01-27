@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -38,8 +39,11 @@ import java.util.Optional;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConstraintRecord {
+  @SerializedName("max-path-length")
   private Long maxPathLength;
-  private NamingConstraints namingConstraints;
+  @SerializedName("naming")
+  private NamingConstraints naming;
+  @SerializedName("allowed-entity-types")
   private List<String> allowedEntityTypes;
 
   /**
@@ -52,7 +56,7 @@ public class ConstraintRecord {
       json.put("max_path_length", length);
     });
 
-    Optional.ofNullable(this.namingConstraints).ifPresent(namingConstraints -> {
+    Optional.ofNullable(this.naming).ifPresent(namingConstraints -> {
       json.put("naming_constraints", namingConstraints.toJson());
     });
 
@@ -76,7 +80,7 @@ public class ConstraintRecord {
     });
 
     Optional.ofNullable(json.get("naming_constraints")).ifPresent(namingConstraints -> {
-      builder.namingConstraints(NamingConstraints.fromJson((Map<String, Object>) namingConstraints));
+      builder.naming(NamingConstraints.fromJson((Map<String, Object>) namingConstraints));
     });
 
     Optional.ofNullable(json.get("allowed_entity_types")).ifPresent(allowed -> {

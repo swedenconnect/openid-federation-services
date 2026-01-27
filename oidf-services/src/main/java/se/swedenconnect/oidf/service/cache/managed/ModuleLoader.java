@@ -18,7 +18,8 @@ package se.swedenconnect.oidf.service.cache.managed;
 
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.resolver.Resolver;
-import se.swedenconnect.oidf.service.resolver.ResolverFactory;
+import se.swedenconnect.oidf.resolver.ResolverFactory;
+
 
 import java.util.List;
 

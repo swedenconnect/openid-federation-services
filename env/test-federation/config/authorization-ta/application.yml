@@ -78,7 +78,7 @@ openid:
           hosted-record:
             trust-mark-sources:
               - issuer: https://authorization.local.swedenconnect.se/tmi
-                trust-mark-id: https://authorization.local.swedenconnect.se/tmi/certified
+                trust-mark-type: https://authorization.local.swedenconnect.se/tmi/certified
             metadata:
               json: |
                 { "federation_entity": { "organization_name": "Authorization" },
@@ -132,7 +132,7 @@ openid:
           trust-mark-validity-duration: PT29M
 
           trust-marks:
-            - trust-mark-id: https://authorization.local.swedenconnect.se/tmi/certified
+            - trust-mark-type: https://authorization.local.swedenconnect.se/tmi/certified
               subjects:
                 - sub: https://authorization.local.swedenconnect.se/op-1
                   granted: "2024-01-01T10:00:00Z"

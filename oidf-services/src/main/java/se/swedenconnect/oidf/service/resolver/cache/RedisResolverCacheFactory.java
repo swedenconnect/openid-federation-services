@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.tree.ResolverCache;
+import se.swedenconnect.oidf.resolver.ResolverCacheFactory;
 
 /**
  * Redis implementation for Resolver Cache Factory.

@@ -42,15 +42,16 @@ public class ResolverCritTestCases {
         null,false
     ));
 
-    Assertions.assertEquals(0, difference.getJsonDifference().size());
+    Assertions.assertEquals(1, difference.getJsonDifference().size());
+    Assertions.assertEquals("trust_marks", difference.getJsonDifference().keySet().stream().findFirst().get());
 
     final Map<String, MapDifference.ValueDifference<Object>> trustChainEntryDifference =
         difference.getTrustChainEntryDifference(2);
 
     final List<String> crit = (List<String>) trustChainEntryDifference.get("crit").leftValue();
-    Assertions.assertEquals("subject_entity_configuration_location", crit.getFirst());
+    Assertions.assertEquals("ec_location", crit.getFirst());
     Assertions.assertEquals("http://localhost:11111/im/banan", trustChainEntryDifference.get(
-        "subject_entity_configuration_location").leftValue());
+        "ec_location").leftValue());
   }
 
   @Test
@@ -61,7 +62,8 @@ public class ResolverCritTestCases {
         null,false
     ));
 
-    Assertions.assertEquals(0, difference.getJsonDifference().size());
+    Assertions.assertEquals(1, difference.getJsonDifference().size());
+    Assertions.assertEquals("trust_marks", difference.getJsonDifference().keySet().stream().findFirst().get());
 
     final Map<String, MapDifference.ValueDifference<Object>> trustChainEntryDifference =
         difference.getTrustChainEntryDifference(2);

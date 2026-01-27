@@ -17,8 +17,6 @@
 package se.swedenconnect.oidf.resolver.trustmark;
 
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKMatcher;
@@ -120,7 +118,7 @@ public class TrustMarkCollector {
   }
 
   private static boolean isTrustMarkAllowed(final TrustMarkEntry entry,
-                                     final Map<Identifier, List<Issuer>> trustMarkToIssuersMap) {
+                                            final Map<Identifier, List<Issuer>> trustMarkToIssuersMap) {
     final List<Issuer> issuers = trustMarkToIssuersMap.get(entry.getID());
     if (Objects.isNull(issuers) || issuers.isEmpty()) {
       return false;

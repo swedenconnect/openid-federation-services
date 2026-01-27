@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.registry.records;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
@@ -33,6 +34,7 @@ import java.util.Optional;
  */
 @Getter
 @Setter
+@Builder
 public class CompositeRecord implements Serializable {
   private final Expirable<List<EntityRecord>> entityRecords;
   private final Expirable<ModuleRecord> moduleRecord;

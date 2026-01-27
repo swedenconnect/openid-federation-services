@@ -23,7 +23,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 
 /**
- * Signer used for various federation components.
+ * Signer/Verifier used for various federation components.
  *
  * @author Felix Hellman
  */
@@ -38,4 +38,11 @@ public interface FederationSigner {
    * @throws ParseException
    */
   SignedJWT sign(final JOSEObjectType type, final JWTClaimsSet claims) throws JOSEException, ParseException;
+
+  /**
+   * Verifies jwt
+   * @param jwt to verify
+   * @return true if valid
+   */
+  boolean verify(final String jwt);
 }

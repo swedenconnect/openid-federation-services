@@ -16,19 +16,15 @@
  */
 package se.swedenconnect.oidf.service.resolver;
 
-import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
-import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
-import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Configuration properties for Resolver.
@@ -102,26 +98,6 @@ public class ResolverConfigurationProperties {
      * Number of failures when resolving a tree before a cached value shall be considered.
      */
     private Integer useCachedValue = 3;
-
-    /**
-     * @param registry to load keys from
-     * @return properties
-     */
-    public ResolverProperties toResolverProperties(final KeyRegistry registry) {
-      final List<JWK> list = this.trustedKeys.stream()
-          .map(registry::getKey)
-          .map(Optional::orElseThrow)
-          .toList();
-
-      return new ResolverProperties(
-          this.trustAnchor,
-          this.duration,
-          list,
-          this.entityIdentifier,
-          Duration.ofSeconds(10),
-          this.useCachedValue
-      );
-    }
 
     /**
      * Validate configuration data

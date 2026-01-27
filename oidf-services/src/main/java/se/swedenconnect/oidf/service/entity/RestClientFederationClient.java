@@ -142,7 +142,7 @@ public class RestClientFederationClient implements FederationClient {
     final String body = this.client.mutate().baseUrl(path).build()
         .get()
         .uri(buidler -> buidler
-            .queryParam("trust_mark_id", request.parameters().trustMarkId().getValue())
+            .queryParam("trust_mark_type", request.parameters().trustMarkType().getValue())
             .queryParam("sub", request.parameters().subject().getValue())
             .build())
         .retrieve()

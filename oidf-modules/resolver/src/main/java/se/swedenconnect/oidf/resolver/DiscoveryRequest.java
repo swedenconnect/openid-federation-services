@@ -30,10 +30,10 @@ import java.util.function.BiPredicate;
  *
  * @param trustAnchor
  * @param types
- * @param trustMarkIds
+ * @param trustMarkTypes
  * @author Felix Hellman
  */
-public record DiscoveryRequest(String trustAnchor, List<String> types, List<String> trustMarkIds) {
+public record DiscoveryRequest(String trustAnchor, List<String> types, List<String> trustMarkTypes) {
   /**
    * @return this request as a search predicate
    */
@@ -52,14 +52,14 @@ public record DiscoveryRequest(String trustAnchor, List<String> types, List<Stri
           .anyMatch(type -> Objects.nonNull(a.getClaimsSet().getMetadata(new EntityType(type)))));
     }
 
-    if (Objects.nonNull(this.trustMarkIds) && !this.trustMarkIds.isEmpty()) {
+    if (Objects.nonNull(this.trustMarkTypes) && !this.trustMarkTypes.isEmpty()) {
       predicates.add((a, s) -> {
         if (Objects.isNull(a.getClaimsSet().getTrustMarks())) {
           //We requested trust marks but there is none in this entity statement
           return false;
         }
         return a.getClaimsSet().getTrustMarks().stream()
-            .anyMatch(tmp -> this.trustMarkIds.contains(tmp.getID().getValue()));
+            .anyMatch(tmp -> this.trustMarkTypes.contains(tmp.getID().getValue()));
       });
     }
 

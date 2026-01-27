@@ -67,8 +67,8 @@ public class ResolverClient {
   public List<String> discovery(final DiscoveryRequest request) {
     final StringBuilder builder = new StringBuilder("/discovery?");
     builder.append("trust_anchor=%s".formatted(request.trustAnchor()));
-    if (Objects.nonNull(request.trustMarkIds())) {
-      builder.append("&trust_mark_id=%s".formatted(request.trustMarkIds().get(0)));
+    if (Objects.nonNull(request.trustMarkTypes())) {
+      builder.append("&trust_mark_type=%s".formatted(request.trustMarkTypes().get(0)));
     }
     if (Objects.nonNull(request.types())) {
       builder.append("&entity_type=%s".formatted(request.types().get(0)));

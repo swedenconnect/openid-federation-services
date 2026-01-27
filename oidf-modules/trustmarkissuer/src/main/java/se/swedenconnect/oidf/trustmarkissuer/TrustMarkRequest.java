@@ -17,9 +17,9 @@
 package se.swedenconnect.oidf.trustmarkissuer;
 
 /**
- * @param trustMarkId
+ * @param trustMarkType
  * @param subject
  * @author Felix Hellman
  */
-public record TrustMarkRequest(String trustMarkId, String subject) {
+public record TrustMarkRequest(String trustMarkType, String subject) {
 }

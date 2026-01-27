@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
 import se.swedenconnect.oidf.service.Application;
+import se.swedenconnect.oidf.service.TestConfiguration;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
 import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
@@ -70,11 +71,12 @@ public class InMemoryTestSuite {
     }
     configurableApplicationContext = new SpringApplicationBuilder()
         .sources(Application.class)
+        .sources(TestConfiguration.class)
         .environment(new MockEnvironment()
             .withProperty("server.port", "11111")
             .withProperty("management.server.port", "6001")
-            .withProperty("openid.federation.storage", "memory")
-            .withProperty("openid.federation.registry.integration.endpoints.base-path",
+            .withProperty("federation.service.storage", "memory")
+            .withProperty("federation.registry.integration.client.base-uri",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                     "/federationservice")
         )

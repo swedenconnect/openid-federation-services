@@ -34,16 +34,15 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkDelegation;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -57,12 +56,12 @@ public class TestDataSetup {
 
     final TrustMarkIssuerProperties trustMarkIssuerProperties = TrustMarkIssuerProperties.builder()
         .trustMarkValidityDuration(Duration.of(5, ChronoUnit.MINUTES))
-        .issuerEntityId(new EntityID("https://tmissuer.digg.se"))
+        .entityIdentifier(new EntityID("https://tmissuer.digg.se"))
         .trustMarks(new ArrayList<>())
         .build();
 
-    final TrustMarkSubjectRecord sub1 =
-        TrustMarkSubjectRecord.builder()
+    final TrustMarkSubjectProperty sub1 =
+        TrustMarkSubjectProperty.builder()
             .sub("http://tm1.digg.se/sub1")
             .expires(Instant.now().plus(10, ChronoUnit.MINUTES))
             .granted(Instant.now())
@@ -70,10 +69,10 @@ public class TestDataSetup {
 
     trustMarkIssuerProperties.trustMarks()
         .add(TrustMarkProperties.builder()
-            .trustMarkId(TrustMarkId.create("http://tm.digg.se/default"))
-            .logoUri(Optional.empty())
-            .refUri(Optional.empty())
-            .delegation(Optional.empty())
+            .trustMarkType(TrustMarkType.create("http://tm.digg.se/default"))
+            .logoUri(null)
+            .refUri(null)
+            .delegation(null)
             .build());
 
     return trustMarkIssuerProperties;
@@ -102,22 +101,4 @@ public class TestDataSetup {
     trustMarkDelegate.sign(new RSASSASigner(rsaKey));
     return trustMarkDelegate;
   }
-
-  private static RSAKey generateKey() {
-
-    final RSAKey rsaKey;
-    try {
-      rsaKey = new RSAKeyGenerator(2048)
-          .keyUse(KeyUse.SIGNATURE)
-          .keyID(UUID.randomUUID().toString())
-          .issueTime(new Date())
-          .generate();
-    }
-    catch (JOSEException e) {
-      throw new RuntimeException(e);
-    }
-    return rsaKey;
-  }
-
-
 }

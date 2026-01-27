@@ -31,11 +31,11 @@ import java.util.stream.Stream;
 /**
  * @param entityType
  * @param trustMarked
- * @param trustMarkId
+ * @param trustMarkType
  * @param intermediate
  * @author Felix Hellman
  */
-public record SubordinateListingRequest(String entityType, Boolean trustMarked, String trustMarkId,
+public record SubordinateListingRequest(String entityType, Boolean trustMarked, String trustMarkType,
     Boolean intermediate) implements Serializable {
 
   /**
@@ -49,7 +49,7 @@ public record SubordinateListingRequest(String entityType, Boolean trustMarked, 
    * @return true if any parameter is set
    */
   public boolean requiresFiltering() {
-    return Stream.of(this.entityType, this.trustMarkId, this.trustMarked, this.intermediate)
+    return Stream.of(this.entityType, this.trustMarkType, this.trustMarked, this.intermediate)
         .anyMatch(Objects::nonNull);
   }
 
@@ -64,7 +64,7 @@ public record SubordinateListingRequest(String entityType, Boolean trustMarked, 
       predicates.add(es -> Objects.nonNull(es.getClaimsSet().getMetadata(new EntityType(type))));
     });
 
-    Optional.ofNullable(this.trustMarkId).ifPresent(tmid -> {
+    Optional.ofNullable(this.trustMarkType).ifPresent(tmid -> {
       final Predicate<EntityStatement> predicate =
           es -> es.getClaimsSet().getTrustMarks().stream()
               .anyMatch(tme -> tme.getID().getValue().equals(tmid));

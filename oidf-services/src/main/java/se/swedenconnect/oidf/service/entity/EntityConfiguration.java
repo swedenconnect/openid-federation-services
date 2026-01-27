@@ -24,7 +24,6 @@ import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.SigningEntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
-import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
 import java.util.List;
 
@@ -39,16 +38,14 @@ public class EntityConfiguration {
   /**
    * Factory method to create an instance of {@link SigningEntityConfigurationFactory}.
    *
-   * @param factory for signing
    * @param client  for fetching trust marks
    * @param customizers for customizing claims
    * @return an instance of {@link SigningEntityConfigurationFactory} configured with the specified signing key
    */
   @Bean
-  EntityConfigurationFactory entityConfigurationFactory(final SignerFactory factory,
-                                                        final FederationClient client,
+  EntityConfigurationFactory entityConfigurationFactory(final FederationClient client,
                                                         final List<EntityConfigurationClaimCustomizer> customizers) {
-    return new SigningEntityConfigurationFactory(factory, client, customizers);
+    return new SigningEntityConfigurationFactory(client, customizers);
   }
 
   @Bean

@@ -23,10 +23,10 @@ import java.io.Serializable;
 /**
  * @param subject         of the trust mark
  * @param trustMarkIssuer issuer
- * @param trustMarkId     id
+ * @param trustMarkType     id
  * @author Felix Hellman
  */
 public record TrustMarkRequest(EntityID subject, EntityID trustMarkIssuer,
-                               EntityID trustMarkId) implements Serializable {
+                               EntityID trustMarkType) implements Serializable {
 
 }

@@ -30,9 +30,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.client.HttpClientErrorException;
+import se.swedenconnect.oidf.FederationProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
-import se.swedenconnect.oidf.service.keys.FederationKeys;
 import se.swedenconnect.oidf.service.service.testclient.FederationClients;
 import se.swedenconnect.oidf.service.service.testclient.TestFederationClientParameterResolver;
 import se.swedenconnect.oidf.service.service.testclient.TrustAnchorClient;
@@ -68,8 +68,8 @@ public class TrustAnchorTestCases {
     final TrustAnchorClient client = clients.intermediate();
     final SignedJWT signedJWT = client.fetch(TestFederationEntities.IM.OP);
     Assertions.assertNotNull(signedJWT);
-    final FederationKeys keys = Context.applicationContext.get().getBean(FederationKeys.class);
-    final JWK first = keys.signKeys().toPublicJWKSet().toPublicJWKSet().getKeys().getFirst();
+    final FederationProperties properties = Context.applicationContext.get().getBean(FederationProperties.class);
+    final JWK first = properties.getRegistry().getIntegration().getValidationKeys().toPublicJWKSet().getKeys().getFirst();
     final JWSVerifier jwsVerifier = new DefaultJWSVerifierFactory().createJWSVerifier(signedJWT.getHeader(), first.toRSAKey().toKeyPair().getPublic());
     signedJWT.verify(jwsVerifier);
   }

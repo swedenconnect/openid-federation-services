@@ -21,8 +21,11 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyType;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -77,5 +80,25 @@ public class JWKFederationSigner implements FederationSigner {
       return new RSASSASigner(signingKey.toRSAKey());
     }
     throw new JOSEException("Unsupported key type");
+  }
+
+  private JWSVerifier getVerifier(final JWK signingKey) throws JOSEException {
+    final KeyType keyType = signingKey.getKeyType();
+    if (keyType.equals(KeyType.EC)) {
+      return new ECDSAVerifier(signingKey.toECKey());
+    }
+    if (keyType.equals(KeyType.RSA)) {
+      return new RSASSAVerifier(signingKey.toRSAKey());
+    }
+    throw new JOSEException("Unsupported key type");
+  }
+
+  @Override
+  public boolean verify(final String jwt) {
+    try {
+      return SignedJWT.parse(jwt).verify(this.getVerifier(this.signKey));
+    } catch (final JOSEException | java.text.ParseException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

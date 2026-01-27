@@ -32,6 +32,7 @@ import java.util.Optional;
 public class KeyRegistry {
 
   private final Map<String, JWK> aliasToJwkMap = new HashMap<>();
+  private final Map<String, JWK> kidToJwkMap = new HashMap<>();
 
   /**
    * Gets a single key from registry.
@@ -40,6 +41,26 @@ public class KeyRegistry {
    */
   public Optional<JWK> getKey(final String alias) {
     return Optional.ofNullable(this.aliasToJwkMap.get(alias));
+  }
+
+  /**
+   * Gets a single key from registry.
+   * @param kid to fetch
+   * @return jwk
+   */
+  public Optional<JWK> getKeyByKid(final String kid) {
+    return Optional.ofNullable(this.kidToJwkMap.get(kid));
+  }
+
+  /**
+   *
+   * @return jwk
+   */
+  public JWK getDefaultKey() {
+    return this.aliasToJwkMap.values().stream()
+        .filter(JWK::isPrivate)
+        .findFirst()
+        .get();
   }
 
   /**
@@ -67,9 +88,20 @@ public class KeyRegistry {
   public void register(final KeyProperty property) {
     try {
       this.aliasToJwkMap.put(property.getAlias(), property.getKey());
+      if (property.getKey().isPrivate()) {
+        this.kidToJwkMap.put(property.getKey().getKeyID(), property.getKey());
+      }
     }
     catch (final Exception e) {
       throw new IllegalArgumentException("Failed to add key to registry ", e);
     }
+  }
+
+  /**
+   * Returns all public keys for all registered private keys.
+   * @return jwks
+   */
+  public JWKSet getAllPublic() {
+    return new JWKSet(this.aliasToJwkMap.values().stream().toList()).toPublicJWKSet();
   }
 }

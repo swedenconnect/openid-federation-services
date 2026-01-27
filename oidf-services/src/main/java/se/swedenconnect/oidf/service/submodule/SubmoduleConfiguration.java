@@ -16,20 +16,11 @@
  */
 package se.swedenconnect.oidf.service.submodule;
 
-import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
-import se.swedenconnect.oidf.common.entity.jwt.JWKSetSignerFactory;
-import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
+import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.service.cache.managed.ModuleLoader;
-import se.swedenconnect.oidf.service.keys.FederationKeys;
-import se.swedenconnect.oidf.service.resolver.ResolverFactory;
-import se.swedenconnect.oidf.service.resolver.observability.TimedSignerFactory;
-import se.swedenconnect.oidf.service.trustmarkissuer.TrustMarkIssuerFactory;
-import se.swedenconnect.oidf.trustmarkissuer.TrustMarkSigner;
-
-import java.time.Clock;
 
 /**
  * Configuration for submodules.
@@ -39,35 +30,7 @@ import java.time.Clock;
 @Configuration
 public class SubmoduleConfiguration {
   @Bean
-  TrustMarkIssuerFactory factory(
-      final TrustMarkSigner signer,
-      final CompositeRecordSource source,
-      final Clock clock
-  ) {
-    return new TrustMarkIssuerFactory(signer, source, clock);
-  }
-
-  @Bean
-  TrustMarkSigner trustMarkSigner(final SignerFactory adapter, final Clock clock) {
-    return new TrustMarkSigner(adapter, clock);
-  }
-
-  @Bean
-  SignerFactory entityToSignerAdapter(
-      final FederationKeys keys,
-      final ObservationRegistry registry
-  ) {
-    final JWKSetSignerFactory inner = new JWKSetSignerFactory(keys.signKeys());
-    return new TimedSignerFactory(inner, registry);
-  }
-
-  @Bean
-  Clock clock() {
-    return Clock.systemDefaultZone();
-  }
-
-  @Bean
   ModuleLoader moduleLoader(final ResolverFactory factory, final CompositeRecordSource source) {
-    return  new ModuleLoader(factory, source);
+    return new ModuleLoader(factory, source);
   }
 }

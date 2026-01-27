@@ -41,30 +41,6 @@ public class PolicyRecord implements Serializable {
     this.policy = policy;
   }
 
-  /**
-   * Default constructor.
-   */
-  public PolicyRecord() {
-  }
-
   private String id;
   private Map<String, Object> policy;
-
-  /**
-   * @param policyRecord json object
-   * @return new instance
-   */
-  public static PolicyRecord fromJson(final Map<String, Object> policyRecord) {
-    return new PolicyRecord(
-        (String) policyRecord.get(RecordFields.Policy.POLICY_RECORD_ID),
-        (Map<String, Object>) policyRecord.get(RecordFields.Policy.POLICY)
-    );
-  }
-
-  /**
-   * @return current record as json object
-   */
-  public Map<String, Object> toJson() {
-    return Map.of(RecordFields.Policy.POLICY_RECORD_ID, this.id, RecordFields.Policy.POLICY, this.policy);
-  }
 }

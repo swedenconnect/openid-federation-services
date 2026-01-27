@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.service.keys;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import se.swedenconnect.oidf.KeyEntry;
 
 class KeyEntryTest {
   @Test

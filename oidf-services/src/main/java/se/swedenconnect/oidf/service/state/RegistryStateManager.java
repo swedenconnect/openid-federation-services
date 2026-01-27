@@ -21,10 +21,10 @@ import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import se.swedenconnect.oidf.FederationProperties;
+import se.swedenconnect.oidf.FederationServiceState;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
-import se.swedenconnect.oidf.service.configuration.OpenIdFederationConfigurationProperties;
 import se.swedenconnect.oidf.service.health.ReadyStateComponent;
 
 import java.util.concurrent.TimeUnit;
@@ -35,13 +35,12 @@ import java.util.concurrent.TimeUnit;
  * @author Felix Hellman
  */
 @Slf4j
-@Component
 public class RegistryStateManager extends ReadyStateComponent {
   private final CacheRecordPopulator populator;
   private final FederationServiceState state;
   private final ServiceLock serviceLock;
   private final ApplicationEventPublisher publisher;
-  private final OpenIdFederationConfigurationProperties properties;
+  private final FederationProperties properties;
 
   /**
    * Constructor.
@@ -57,7 +56,7 @@ public class RegistryStateManager extends ReadyStateComponent {
       final FederationServiceState state,
       final ServiceLock serviceLock,
       final ApplicationEventPublisher publisher,
-      final OpenIdFederationConfigurationProperties properties) {
+      final FederationProperties properties) {
     this.populator = populator;
     this.state = state;
     this.serviceLock = serviceLock;
@@ -107,7 +106,7 @@ public class RegistryStateManager extends ReadyStateComponent {
               log.debug("Registry updated with new hash {}", registrySha256);
               this.state.updateRegistryState(registrySha256);
             } catch (final Exception e) {
-              log.error("Failed to serialize state",e);
+              log.error("Failed to serialize state", e);
             }
           } catch (final Exception e) {
             log.error("Failed to load from registry", e);

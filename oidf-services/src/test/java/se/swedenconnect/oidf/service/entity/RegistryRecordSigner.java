@@ -23,49 +23,31 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import lombok.AllArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkRecord;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Signer for {@link EntityRecord}
  *
  * @author Felix Hellman
  */
+@AllArgsConstructor
 public class RegistryRecordSigner {
 
   private final JWSSigner signer;
-
-  /**
-   * Constructor.
-   *
-   * @param signer for signing jwt
-   */
-  public RegistryRecordSigner(final JWSSigner signer) {
-    this.signer = signer;
-  }
+  private final JsonRegistryLoader jsonRegistryLoader;
 
   public SignedJWT signModules(final ModuleRecord response) throws JOSEException {
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim("module_records", response.toJson())
-        .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
-        .issueTime(Date.from(Instant.now()))
-        .build();
-
-    final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
-    final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType("module-trustMarkSubjects+jwt"))
-        .build();
-
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(this.signer);
-    return jwt;
+    return this.signJson("module_records", this.jsonRegistryLoader.toJson(response), "module-trustMarkSubjects" +
+                                                                                     "+jwt");
   }
 
   /**
@@ -74,37 +56,20 @@ public class RegistryRecordSigner {
    * @throws JOSEException if signature fails
    */
   public SignedJWT signRecords(final List<EntityRecord> records) throws JOSEException {
-    final List<Map<String, Object>> entityRecords = records.stream()
-        .map(EntityRecord::toJson)
-        .toList();
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim("entity_records", entityRecords)
-        .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
-        .issueTime(Date.from(Instant.now()))
-        .build();
-
-    final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
-    final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType("entity-trustMarkSubjects+jwt"))
-        .build();
-
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(this.signer);
-    return jwt;
+    final String json = this.jsonRegistryLoader.toJson(records);
+    return this.signJson("entity_records", json, "entity-trustMarkSubjects+jwt");
   }
 
-  public SignedJWT signTrustMarks(final List<TrustMarkRecord> tms) throws JOSEException {
-    final List<Map<String, Object>> trustMarks = tms.stream().map(TrustMarkRecord::toJson).toList();
-
+  public @NotNull SignedJWT signJson(final String entity_records, final String json, final String type) throws JOSEException {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim("trustmark_records", trustMarks)
+        .claim(entity_records, json)
         .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
         .issueTime(Date.from(Instant.now()))
         .build();
 
     final JWSAlgorithm alg = this.signer.supportedJWSAlgorithms().stream().findFirst().get();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType("trust-mark-record+jwt"))
+        .type(new JOSEObjectType(type))
         .build();
 
     final SignedJWT jwt = new SignedJWT(header, claims);
