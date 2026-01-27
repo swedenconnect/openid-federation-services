@@ -82,7 +82,7 @@ public class ResolverResponseFactory {
             .claim("trust_marks",
                 resolverResponse.trustMarkEntries().stream().map(trustMark -> {
                       final String jwt = trustMark.getTrustMark().serialize();
-                      return Map.of("trust_mark", jwt, "trust_mark_id", trustMark.getID().getValue());
+                      return Map.of("trust_mark", jwt, "trust_mark_type", trustMark.getID().getValue());
                     })
                     .toList())
             .claim("trust_chain",

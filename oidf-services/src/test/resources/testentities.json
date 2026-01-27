@@ -127,11 +127,11 @@
     "trust-mark-source": [
       {
         "issuer": "http://localhost:11111/im/tmi",
-        "trust-mark-id": "http://localhost:11111/im/tmi/certified"
+        "trust-mark-type": "http://localhost:11111/im/tmi/certified"
       },
       {
         "issuer": "http://localhost:11111/im/tmi",
-        "trust-mark-id": "http://localhost:11111/im/tmi/accepted"
+        "trust-mark-type": "http://localhost:11111/im/tmi/accepted"
       }
     ],
     "metadata": {

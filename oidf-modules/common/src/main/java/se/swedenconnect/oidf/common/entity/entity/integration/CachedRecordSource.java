@@ -20,7 +20,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
@@ -112,13 +112,13 @@ public class CachedRecordSource implements RecordSource {
   }
 
   @Override
-  public List<TrustMarkSubjectProperty> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id) {
+  public List<TrustMarkSubjectProperty> getTrustMarkSubjects(final EntityID issuer, final TrustMarkType id) {
     return this.getTrustMarkIssuerProperties().stream()
         .filter(tmi -> tmi.entityIdentifier().equals(issuer))
         .flatMap((tmi -> {
           return tmi.trustMarks()
               .stream()
-              .filter(tm -> tm.getTrustMarkId().equals(id));
+              .filter(tm -> tm.getTrustMarkType().equals(id));
         }))
         .flatMap(tm -> tm.getTrustMarkSubjects().stream())
         .toList();
@@ -127,7 +127,7 @@ public class CachedRecordSource implements RecordSource {
   @Override
   public Optional<TrustMarkSubjectProperty> getTrustMarkSubject(
       final EntityID issuer,
-      final TrustMarkId id,
+      final TrustMarkType id,
       final EntityID subject) {
     return this.getTrustMarkSubjects(issuer, id).stream()
         .filter(record -> record.sub().equals(subject.getValue()))

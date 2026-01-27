@@ -36,8 +36,6 @@ import se.swedenconnect.oidf.common.entity.entity.integration.JWKSKidReferenceLo
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkProperty;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.keys.KeyProperty;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
@@ -113,11 +111,6 @@ public class RegistryMock {
 
     this.mockModuleFor(new ModuleRecord(), instanceId);
     this.mockRecordsFor(municipalityEntities, instanceId);
-
-    final List<TrustMarkSubjectProperty> subjects = List.of(new TrustMarkSubjectProperty("https://subject.test", null, null, false));
-    final List<TrustMarkProperty> tms = List.of(new TrustMarkProperty("https://trust-mark.test", "https://trust-mark" +
-                                                                                                 ".test/cert",
-        subjects, "https://logouri.test", null, null));
   }
 
   public void initCustom(final String instanceId) throws Exception {
@@ -127,7 +120,7 @@ public class RegistryMock {
     final String entityJson = new ClassPathResource("testentities.json").getContentAsString(StandardCharsets.UTF_8);
 
     final SignedJWT moduleJwt = this.registryRecordSigner.signJson("module_records", moduleJson, "module-trustMarkSubjects" +
-                                                                                         "+jwt");
+                                                                                                 "+jwt");
     final String entityJwt =
         this.registryRecordSigner.signJson("entity_records", entityJson, "entity-trustMarkSubjects+jwt").serialize();
 

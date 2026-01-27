@@ -23,7 +23,7 @@ import com.nimbusds.jose.shaded.gson.JsonParseException;
 import com.nimbusds.jose.shaded.gson.JsonPrimitive;
 import com.nimbusds.jose.shaded.gson.JsonSerializationContext;
 import com.nimbusds.jose.shaded.gson.JsonSerializer;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 
 import java.lang.reflect.Type;
 
@@ -32,18 +32,18 @@ import java.lang.reflect.Type;
  *
  * @author Felix Hellman
  */
-public class TrustMarkIdentifierDeserializer implements JsonDeserializer<TrustMarkId>, JsonSerializer<TrustMarkId> {
+public class TrustMarkIdentifierDeserializer implements JsonDeserializer<TrustMarkType>, JsonSerializer<TrustMarkType> {
   @Override
-  public TrustMarkId deserialize(
+  public TrustMarkType deserialize(
       final JsonElement jsonElement, final Type type,
       final JsonDeserializationContext jsonDeserializationContext)
       throws JsonParseException {
-    return new TrustMarkId(jsonElement.getAsString());
+    return new TrustMarkType(jsonElement.getAsString());
   }
 
   @Override
   public JsonElement serialize(
-      final TrustMarkId trustMarkId, final Type type, final JsonSerializationContext jsonSerializationContext) {
-    return new JsonPrimitive(trustMarkId.getTrustMarkId());
+      final TrustMarkType trustMarkType, final Type type, final JsonSerializationContext jsonSerializationContext) {
+    return new JsonPrimitive(trustMarkType.getTrustMarkType());
   }
 }

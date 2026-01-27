@@ -96,7 +96,7 @@ public class TrustAnchorRouter implements Router {
           Optional.ofNullable(params.getFirst("trust_marked"))
               .map(Boolean::parseBoolean)
               .orElse(null),
-          params.getFirst("trust_mark_id"),
+          params.getFirst("trust_mark_type"),
           Optional.ofNullable(params.getFirst("intermediate"))
               .map(Boolean::parseBoolean)
               .orElse(null)

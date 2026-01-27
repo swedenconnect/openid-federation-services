@@ -24,10 +24,10 @@ import java.io.Serializable;
 /**
  * Data class for trust mark source.
  * @param issuer      of the trust mark
- * @param trustMarkId of the trust mark
+ * @param trustMarkType of the trust mark
  *
  * @author Felix Hellman
  */
 public record TrustMarkSourceProperty(@SerializedName("issuer") EntityID issuer,
-                                      @SerializedName("trust-mark-id") String trustMarkId) implements Serializable {
+                                      @SerializedName("trust-mark-type") String trustMarkType) implements Serializable {
 }

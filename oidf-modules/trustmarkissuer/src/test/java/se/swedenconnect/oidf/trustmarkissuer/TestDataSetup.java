@@ -34,7 +34,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkClaimsSet;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkDelegation;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 
@@ -69,7 +69,7 @@ public class TestDataSetup {
 
     trustMarkIssuerProperties.trustMarks()
         .add(TrustMarkProperties.builder()
-            .trustMarkId(TrustMarkId.create("http://tm.digg.se/default"))
+            .trustMarkType(TrustMarkType.create("http://tm.digg.se/default"))
             .logoUri(null)
             .refUri(null)
             .delegation(null)

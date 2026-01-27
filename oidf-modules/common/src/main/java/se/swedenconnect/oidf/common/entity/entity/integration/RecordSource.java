@@ -19,7 +19,7 @@ package se.swedenconnect.oidf.common.entity.entity.integration;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
@@ -71,7 +71,7 @@ public interface RecordSource {
    * @param id of the trust mark
    * @return subjects
    */
-  List<TrustMarkSubjectProperty> getTrustMarkSubjects(final EntityID issuer, final TrustMarkId id);
+  List<TrustMarkSubjectProperty> getTrustMarkSubjects(final EntityID issuer, final TrustMarkType id);
 
   /**
    * @param issuer of the trust mark
@@ -81,7 +81,7 @@ public interface RecordSource {
    */
   Optional<TrustMarkSubjectProperty> getTrustMarkSubject(
       final EntityID issuer,
-      final TrustMarkId id,
+      final TrustMarkType id,
       final EntityID subject);
 
   /**

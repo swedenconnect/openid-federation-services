@@ -29,6 +29,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
 import org.testcontainers.utility.DockerImageName;
 import se.swedenconnect.oidf.service.Application;
+import se.swedenconnect.oidf.service.TestConfiguration;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
 import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
@@ -78,6 +79,7 @@ public class RedisTestSuite {
     }
     configurableApplicationContext = new SpringApplicationBuilder()
         .sources(Application.class)
+        .sources(TestConfiguration.class)
         .profiles("entitytypes")
         .environment(new MockEnvironment()
             .withProperty("server.port", "11111")

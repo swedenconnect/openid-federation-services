@@ -16,6 +16,8 @@
  */
 package se.swedenconnect.oidf.service.trustmarkissuer;
 
+import com.nimbusds.jose.util.Base64URL;
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import io.restassured.RestAssured;
@@ -28,16 +30,17 @@ import org.springframework.context.ApplicationContext;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
 import se.swedenconnect.oidf.service.service.testclient.FederationClients;
 import se.swedenconnect.oidf.service.service.testclient.TestFederationClientParameterResolver;
-import se.swedenconnect.oidf.service.service.testclient.TrustMarkStatusReply;
 import se.swedenconnect.oidf.service.suites.Context;
+import se.swedenconnect.oidf.service.time.TestClock;
 
 import java.text.ParseException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Slf4j
 @ExtendWith(TestFederationClientParameterResolver.class)
 public class TrustMarkTestCases {
-
 
   public static final EntityID TRUST_MARK_ID = new EntityID("http://localhost:11111/im/tmi/certified");
 
@@ -73,43 +76,70 @@ public class TrustMarkTestCases {
     Assertions.assertFalse(trustMarkListing.isEmpty(), "Found 0 trust marks");
     final String expected = TestFederationEntities.IM.OP.getValue();
     Assertions.assertTrue(trustMarkListing.contains(expected), "Trust " +
-        "Mark Listing does not contain expected value:%s".formatted(expected));
+                                                               "Mark Listing does not contain expected value:%s".formatted(expected));
   }
 
   @Test
-  public void testTrustMarkStatusActive(final FederationClients clients) {
-    final TrustMarkStatusReply status = clients.anarchy().trustMark()
-        .trustMarkStatus(
-            TestFederationEntities.IM.TRUST_MARK_ISSUER,
-            TRUST_MARK_ID,
-            TestFederationEntities.IM.OP,
-            null
-        );
-    Assertions.assertTrue(status.getActive());
-  }
+  public void testTrustMarkStatusActive(final FederationClients clients) throws ParseException {
 
-  @Test
-  public void testTrustMarkStatusNotActive(final FederationClients clients) throws InterruptedException {
-    Thread.sleep(3000L);
-    final TrustMarkStatusReply status = clients.anarchy().trustMark().trustMarkStatus(
+    final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(
         TestFederationEntities.IM.TRUST_MARK_ISSUER,
         TRUST_MARK_ID,
-        TestFederationEntities.IM.NestedIM.OP,
-        null
+        TestFederationEntities.IM.OP
     );
-    Assertions.assertFalse(status.getActive());
-  }
 
+    final String statusJwt = clients.anarchy().trustMark()
+        .trustMarkStatus(
+            TestFederationEntities.IM.TRUST_MARK_ISSUER,
+            trustMark.serialize()
+        );
+    Assertions.assertEquals("active", SignedJWT.parse(statusJwt).getJWTClaimsSet().getStringClaim("status"));
+  }
 
   @Test
-  public void testTrustMarkStatusError(final FederationClients clients) {
-    final Runnable throwingRunnable = () -> clients.anarchy().trustMark().trustMarkStatus(
+  public void testTrustMarkStatusInvalid(final FederationClients clients) throws ParseException {
+
+    final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(
         TestFederationEntities.IM.TRUST_MARK_ISSUER,
-        new EntityID("http://localhost:11111/im/im/accepted"),
-        null,
-        null
+        TRUST_MARK_ID,
+        TestFederationEntities.IM.OP
     );
-    Assertions.assertThrows(RuntimeException.class, throwingRunnable::run);
+
+    final SignedJWT parse = SignedJWT.parse(trustMark.serialize());
+    final Base64URL header = parse.getHeader().toBase64URL();
+    final Base64URL signature = parse.getSignature();
+    final Base64URL payload = new JWTClaimsSet.Builder(parse.getJWTClaimsSet())
+        .claim("iss", "https://me.test")
+        .build().toPayload()
+        .toBase64URL();
+    final SignedJWT modifiedJwt = new SignedJWT(header, payload, signature);
+    String statusJwt = clients.anarchy().trustMark()
+        .trustMarkStatus(
+            TestFederationEntities.IM.TRUST_MARK_ISSUER,
+            modifiedJwt.serialize()
+        );
+    Assertions.assertEquals("invalid", SignedJWT.parse(statusJwt).getJWTClaimsSet().getStringClaim("status"));
   }
 
+  @Test
+  public void testTrustMarkStatusExpired(final FederationClients clients) throws InterruptedException, ParseException {
+    final TestClock clock = Context.applicationContext.get().getBean(TestClock.class);
+    try {
+      clock.stopTime(Instant.now().minus(14, ChronoUnit.DAYS));
+      final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(
+          TestFederationEntities.IM.TRUST_MARK_ISSUER,
+          TRUST_MARK_ID,
+          TestFederationEntities.IM.OP
+      );
+      clock.resumseTime();
+
+      final String status = clients.anarchy().trustMark().trustMarkStatus(
+          TestFederationEntities.IM.TRUST_MARK_ISSUER,
+          trustMark.serialize()
+      );
+      Assertions.assertEquals("expired", SignedJWT.parse(status).getJWTClaimsSet().getStringClaim("status"));
+    } finally {
+      clock.resumseTime();
+    }
+  }
 }

@@ -36,7 +36,6 @@ import se.swedenconnect.oidf.trustmarkissuer.TrustMarkStatusRequest;
 import se.swedenconnect.oidf.trustmarkissuer.starter.TrustMarkIssuerFactory;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Router responsible for matching trust mark issuer requests to a trust mark issuer module.
@@ -81,13 +80,9 @@ public class TrustMarkIssuerRouter implements Router {
     final TrustMarkIssuer trustMarkIssuer = this.factory.create(propertyByRequest);
     try {
       final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
-          List.of("trust_mark_id", "sub"));
+          List.of("trust_mark"));
       return ServerResponse.ok().body(trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest(
-          params.getFirst("trust_mark_id"),
-          params.getFirst("sub"),
-          Optional.ofNullable(params.getFirst("iat"))
-              .map(Long::parseLong)
-              .orElse(null)
+          params.getFirst("trust_mark")
       )));
     } catch (final FederationException e) {
       return this.errorHandler.handle(e);
@@ -99,10 +94,10 @@ public class TrustMarkIssuerRouter implements Router {
     final TrustMarkIssuer trustMarkIssuer = this.factory.create(property);
     try {
       final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
-          List.of("trust_mark_id"));
+          List.of("trust_mark_type"));
       return ServerResponse.ok().body(
           trustMarkIssuer.trustMarkListing(new TrustMarkListingRequest(
-              params.getFirst("trust_mark_id"),
+              params.getFirst("trust_mark_type"),
               params.getFirst("sub")
           ))
       );
@@ -117,7 +112,7 @@ public class TrustMarkIssuerRouter implements Router {
     try {
       final MultiValueMap<String, String> params = request.params();
       return ServerResponse.ok().body(trustMarkIssuer.trustMark(new TrustMarkRequest(
-          params.getFirst("trust_mark_id"),
+          params.getFirst("trust_mark_type"),
           params.getFirst("sub")
       )));
     } catch (final FederationException e) {

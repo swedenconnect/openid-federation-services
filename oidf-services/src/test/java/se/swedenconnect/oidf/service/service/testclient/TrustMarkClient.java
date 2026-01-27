@@ -34,12 +34,12 @@ public class TrustMarkClient {
 
   public SignedJWT trustMark(
       @Nonnull final EntityID trustMarkIssuer,
-      @Nonnull final EntityID trustMarkId,
+      @Nonnull final EntityID trustMarkType,
       @Nonnull final EntityID subject) {
     try {
       final StringBuilder builder = new StringBuilder("/trust_mark?");
       builder.append("sub=%s".formatted(subject.getValue()));
-      builder.append("&trust_mark_id=%s".formatted(trustMarkId.getValue()));
+      builder.append("&trust_mark_type=%s".formatted(trustMarkType.getValue()));
       final String body = this.client.get()
           .uri(trustMarkIssuer.getValue() + builder)
           .retrieve()
@@ -53,11 +53,11 @@ public class TrustMarkClient {
 
   public List<String> trustMarkListing(
       @Nonnull final EntityID trustMarkIssuer,
-      @Nonnull final EntityID trustMarkId,
+      @Nonnull final EntityID trustMarkType,
       @Nullable final EntityID subject) {
     try {
       final StringBuilder builder = new StringBuilder("/trust_mark_listing?");
-      builder.append("trust_mark_id=%s".formatted(trustMarkId.getValue()));
+      builder.append("trust_mark_type=%s".formatted(trustMarkType.getValue()));
       Optional.ofNullable(subject).ifPresent(sub -> builder.append("&sub=%s".formatted(sub.getValue())));
       final List<String> body = (List<String>) client.get()
           .uri(trustMarkIssuer.getValue() + builder)
@@ -70,21 +70,17 @@ public class TrustMarkClient {
     }
   }
 
-  public TrustMarkStatusReply trustMarkStatus(
+  public String trustMarkStatus(
       final EntityID trustMarkIssuer,
-      final EntityID trustMarkId,
-      final EntityID subject,
-      final Long issueTime) {
+      final String trustMark) {
     try {
       final StringBuilder builder = new StringBuilder("/trust_mark_status?");
-      builder.append("trust_mark_id=%s".formatted(trustMarkId.getValue()));
-      Optional.ofNullable(subject).ifPresent(sub -> builder.append("&sub=%s".formatted(sub.getValue())));
-      Optional.ofNullable(issueTime).ifPresent(iat -> builder.append("&iat=%d".formatted(iat)));
+      builder.append("trust_mark=%s".formatted(trustMark));
       return client.get()
           .uri(trustMarkIssuer.getValue() + builder)
           .header("content-type", "application/json")
           .retrieve()
-          .body(TrustMarkStatusReply.class);
+          .body(String.class);
     } catch (final Exception e) {
       throw new RuntimeException("Failed to get trust mark status for trust mark issuer %s"
           .formatted(trustMarkIssuer.getValue()), e);

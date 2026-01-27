@@ -141,7 +141,7 @@ Subordinates may define:
 
 | Property              | Description                         | Type   |
 |-----------------------|-------------------------------------|--------|
-| `trust-mark-id`       | Unique identifier of the trust mark | String |
+| `trust-mark-type`       | Unique identifier of the trust mark | String |
 | `logo-uri`            | Logo URI                            | String |
 | `ref-uri`             | Reference URI                       | String |
 | `delegation`          | TrustMarkDelegation JWT             | String |

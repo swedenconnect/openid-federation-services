@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
 import se.swedenconnect.oidf.service.Application;
+import se.swedenconnect.oidf.service.TestConfiguration;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
 import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
@@ -71,6 +72,7 @@ public class InMemoryCompleteRegistryTestSuite {
     final MockEnvironment mockEnvironment = new MockEnvironment();
     final SpringApplicationBuilder memory = new SpringApplicationBuilder()
         .sources(Application.class)
+        .sources(TestConfiguration.class)
         .environment(mockEnvironment
             .withProperty("server.port", "11111")
             .withProperty("management.server.port", "6001")

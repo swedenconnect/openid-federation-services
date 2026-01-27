@@ -25,7 +25,7 @@ import com.nimbusds.jose.shaded.gson.GsonBuilder;
 import com.nimbusds.jose.shaded.gson.TypeAdapter;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkId;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.JWKSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
@@ -63,7 +63,7 @@ public class JsonRegistryLoader {
         .registerTypeAdapter(Duration.class, new DurationDeserializer())
         .registerTypeAdapter(Instant.class, new InstantDeserializer())
         .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
-        .registerTypeAdapter(TrustMarkId.class, new TrustMarkIdentifierDeserializer())
+        .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
         .registerTypeAdapter(JWK.class, new JWKSerializer())
         .registerTypeAdapter(JWKSet.class, new JWKSSerializer(loader, loader))
         .create();
