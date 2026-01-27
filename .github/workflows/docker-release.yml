@@ -42,12 +42,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-
-      - name: Install dependencies
-        run: mvn clean install --no-transfer-progress
-        env:
-          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
-
       - name: Set Maven version from tag name
         if: startsWith(github.ref, 'refs/tags/')
         env:
