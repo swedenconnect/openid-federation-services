@@ -32,10 +32,10 @@ import java.util.Set;
 public class CriticalClaimsValidationStep implements ChainValidationStep {
 
   /**
-   * This implementation supports the subject_entity_configuration_location claim.
+   * This implementation supports the ec_location claim.
    */
   public static final Set<String> SUPPORTED_CRITICAL_CLAIMS =
-      Set.of("subject_entity_configuration_location");
+      Set.of("ec_location");
 
   /**
    * This implementation supports the additional metadata operators regexp and instersects.

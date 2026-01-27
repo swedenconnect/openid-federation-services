@@ -89,7 +89,7 @@ public class RegistryJsonSerDer {
         .trustMarkSource(List.of(new TrustMarkSourceProperty(new EntityID("http://tmi.test"), "http://tmi.test/tm")))
         .authorityHints(List.of("http://ta.test"))
         .metadata(Map.of())
-        .overrideConfigurationLocation("http://otherlocation.test")
+        .ecLocation("http://otherlocation.test")
         .build();
 
     final ObjectMapper objectMapper = new ObjectMapper();

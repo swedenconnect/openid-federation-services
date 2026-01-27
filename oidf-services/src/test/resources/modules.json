@@ -585,9 +585,9 @@
             ]
           },
           "crit": [
-            "subject_entity_configuration_location"
+            "ec_location"
           ],
-          "override-configuration-location": "http://localhost:11111/im/banan"
+          "ec-location": "http://localhost:11111/im/banan"
         }
       ]
     },

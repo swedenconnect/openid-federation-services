@@ -71,9 +71,9 @@ public class SubordinateStatementFactory {
           metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
       );
 
-      Optional.ofNullable(subordinate.getOverrideConfigurationLocation()).ifPresent(
+      Optional.ofNullable(subordinate.getEcLocation()).ifPresent(
           location -> {
-            builder.claim("subject_entity_configuration_location", location);
+            builder.claim("ec_location", location);
           }
       );
 

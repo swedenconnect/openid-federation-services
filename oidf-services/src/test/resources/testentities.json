@@ -90,7 +90,7 @@
   {
     "entity-identifier": "http://localhost:11111/im",
     "jwks": "kid:359433581122628090150675142465804663870388233428",
-    "override-configuration-location": "http://localhost:11111/im/banan",
+    "ec-location": "http://localhost:11111/im/banan",
     "metadata": {
       "federation_entity": {
         "organization_name": "Authorization",

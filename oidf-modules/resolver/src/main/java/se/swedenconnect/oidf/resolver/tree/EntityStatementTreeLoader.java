@@ -252,7 +252,7 @@ public class EntityStatementTreeLoader {
       final EntityConfigurationRequest entityConfigurationRequest = new EntityConfigurationRequest(subjectEntityID,
           Optional.ofNullable(subordinateStatement
                   .getClaimsSet()
-                  .getClaim("subject_entity_configuration_location"))
+                  .getClaim("ec_location"))
               .map(String.class::cast)
               .orElse(null));
       final EntityStatement entityConfiguration =

@@ -49,9 +49,9 @@ public class ResolverCritTestCases {
         difference.getTrustChainEntryDifference(2);
 
     final List<String> crit = (List<String>) trustChainEntryDifference.get("crit").leftValue();
-    Assertions.assertEquals("subject_entity_configuration_location", crit.getFirst());
+    Assertions.assertEquals("ec_location", crit.getFirst());
     Assertions.assertEquals("http://localhost:11111/im/banan", trustChainEntryDifference.get(
-        "subject_entity_configuration_location").leftValue());
+        "ec_location").leftValue());
   }
 
   @Test

@@ -149,9 +149,9 @@
         "entity-identifier": "http://localhost:11111/im",
         "jwks": "alias:sign-key-1",
         "crit": [
-          "subject_entity_configuration_location"
+          "ec_location"
         ],
-        "override-configuration-location": "http://localhost:11111/im/banan"
+        "ec-location": "http://localhost:11111/im/banan"
       }
     ]
   },

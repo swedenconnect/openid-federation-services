@@ -90,7 +90,7 @@
   {
     "entity-identifier": "http://localhost:11111/im",
     "jwks": "alias:sign-key-1",
-    "override-configuration-location": "http://localhost:11111/im/banan",
+    "ec-location": "http://localhost:11111/im/banan",
     "metadata": {
       "federation_entity": {
         "organization_name": "Authorization",

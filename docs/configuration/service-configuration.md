@@ -123,7 +123,7 @@ Subordinates may define:
 * `jwks`
 * `constraints` (naming, path length, entity types, etc.)
 * `policy`
-* `crit` and override configuration locations
+* `crit` and ec_location
 
 ---
 
@@ -162,13 +162,13 @@ Subordinates may define:
 
 `federation.local-registry.entities[*]`
 
-| Property                          | Description                             | Type                |
-|-----------------------------------|-----------------------------------------|---------------------|
-| `entity-identifier`               | Entity ID                               | String              |
-| `jwks`                            | Key reference                           | Object or reference |
-| `metadata`                        | Federation / OIDC metadata              | Object or reference |
-| `trust-mark-source`               | External trust mark references          | List                |
-| `override-configuration-location` | Overrides entity configuration location | String              |
+| Property            | Description                             | Type                |
+|---------------------|-----------------------------------------|---------------------|
+| `entity-identifier` | Entity ID                               | String              |
+| `jwks`              | Key reference                           | Object or reference |
+| `metadata`          | Federation / OIDC metadata              | Object or reference |
+| `trust-mark-source` | External trust mark references          | List                |
+| `ec-location`       | Overrides entity configuration location | String              |
 
 Entities define federation metadata, trust mark sources, and may represent trust anchors, resolvers, OPs, RPs, or trust mark issuers.
 
