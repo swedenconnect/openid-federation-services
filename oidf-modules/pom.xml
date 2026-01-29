@@ -37,7 +37,7 @@
     </modules>
 
     <properties>
-        <service-revision>0.9.4</service-revision>
+        <service-revision>0.9.5</service-revision>
     </properties>
 
     <dependencies>
