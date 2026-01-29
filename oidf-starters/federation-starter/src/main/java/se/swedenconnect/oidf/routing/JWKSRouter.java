@@ -50,8 +50,8 @@ public class JWKSRouter implements Router {
             builder.claim("federation", fed );
           }
       );
-      Optional.ofNullable(mappedPublicKeys.get("hosted")).ifPresent(fed -> {
-            builder.claim("hosted", fed );
+      Optional.ofNullable(mappedPublicKeys.get("hosted")).ifPresent(hosted -> {
+            builder.claim("hosted", hosted );
           }
       );
       final SignedJWT signedJwt = signer.sign(JOSEObjectType.JWT, builder.build());
