@@ -36,8 +36,9 @@ public class JWKPropertyLoader implements Converter<String, JWK> {
   @Nullable
   @Override
   public JWK convert(final String source) {
-    if (source.startsWith("alias:")) {
-      return this.registry.getObject().getKey(source.split("alias:")[1])
+    if (source.startsWith("federation:")
+        || source.startsWith("hosted:")) {
+      return this.registry.getObject().getKey(source)
           .orElseThrow();
     }
     throw new IllegalArgumentException("Could not convert string:%s to jwk".formatted(source));

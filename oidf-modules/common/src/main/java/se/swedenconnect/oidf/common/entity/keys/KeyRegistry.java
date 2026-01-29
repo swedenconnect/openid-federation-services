@@ -18,10 +18,12 @@ package se.swedenconnect.oidf.common.entity.keys;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -29,53 +31,45 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class KeyRegistry {
 
-  private final Map<String, JWK> aliasToJwkMap = new HashMap<>();
-  private final Map<String, JWK> kidToJwkMap = new HashMap<>();
+  private final Map<String, JWK> mappedKey = new HashMap<>();
 
   /**
    * Gets a single key from registry.
-   * @param alias to fetch
+   * @param reference to fetch
    * @return jwk
    */
-  public Optional<JWK> getKey(final String alias) {
-    return Optional.ofNullable(this.aliasToJwkMap.get(alias));
+  public Optional<JWK> getKey(final String reference) {
+    return Optional.ofNullable(this.mappedKey.get(reference));
   }
-
-  /**
-   * Gets a single key from registry.
-   * @param kid to fetch
-   * @return jwk
-   */
-  public Optional<JWK> getKeyByKid(final String kid) {
-    return Optional.ofNullable(this.kidToJwkMap.get(kid));
-  }
-
   /**
    *
    * @return jwk
    */
   public JWK getDefaultKey() {
-    return this.aliasToJwkMap.values().stream()
+    return this.mappedKey.entrySet()
+        .stream()
+        .filter(kv -> kv.getKey().startsWith("hosted"))
+        .map(Map.Entry::getValue)
         .filter(JWK::isPrivate)
         .findFirst()
         .get();
   }
 
   /**
-   * @param aliases to find
-   * @return a set of jwks matching the aliases provided
+   * @param mapping to find
+   * @return a set of jwks matching the mappings provided
    */
-  public JWKSet getSet(final List<String> aliases) {
-    if (!this.aliasToJwkMap.keySet().containsAll(aliases)) {
-      final String message = "Key registry does not contain all requested keys in %s".formatted(aliases);
-      throw new IllegalArgumentException(message);
+  public JWKSet getByReferences(final List<String> mapping) {
+    if (!this.mappedKey.keySet().containsAll(mapping)) {
+      log.error("Key registry does not contain all requested keys in {}", mapping);
     }
 
-    final List<JWK> list = this.aliasToJwkMap.entrySet()
+    final List<JWK> list = this.mappedKey.entrySet()
         .stream()
-        .filter(es -> aliases.contains(es.getKey()))
+        .filter(es -> mapping.contains(es.getKey()))
         .map(Map.Entry::getValue)
         .toList();
     return new JWKSet(list);
@@ -87,12 +81,17 @@ public class KeyRegistry {
    */
   public void register(final KeyProperty property) {
     try {
-      this.aliasToJwkMap.put(property.getAlias(), property.getKey());
-      if (property.getKey().isPrivate()) {
-        this.kidToJwkMap.put(property.getKey().getKeyID(), property.getKey());
+      if (Objects.nonNull(property.getMapping())) {
+        this.mappedKey.put(
+            "%s:%s".formatted(property.getMapping(), property.getKey().getKeyID()),
+            property.getKey()
+        );
+        this.mappedKey.put(
+            "%s:%s".formatted(property.getMapping(), property.getAlias()),
+            property.getKey()
+        );
       }
-    }
-    catch (final Exception e) {
+    } catch (final Exception e) {
       throw new IllegalArgumentException("Failed to add key to registry ", e);
     }
   }
@@ -101,7 +100,22 @@ public class KeyRegistry {
    * Returns all public keys for all registered private keys.
    * @return jwks
    */
-  public JWKSet getAllPublic() {
-    return new JWKSet(this.aliasToJwkMap.values().stream().toList()).toPublicJWKSet();
+  public Map<String, JWKSet> getMappedPublicKeys() {
+    final List<JWK> federationKeys = this.mappedKey.entrySet().stream()
+        .filter((kv) -> kv.getKey().startsWith("federation:"))
+        .map(Map.Entry::getValue)
+        .map(JWK::toPublicJWK)
+        .toList();
+
+    final List<JWK> hostedKeys = this.mappedKey.entrySet().stream()
+        .filter((kv) -> kv.getKey().startsWith("hosted:"))
+        .map(Map.Entry::getValue)
+        .map(JWK::toPublicJWK)
+        .toList();
+
+    return Map.of(
+        "hosted", new JWKSet(hostedKeys),
+        "federation", new JWKSet(federationKeys)
+        );
   }
 }

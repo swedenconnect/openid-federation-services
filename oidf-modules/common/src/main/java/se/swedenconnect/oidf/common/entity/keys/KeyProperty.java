@@ -32,5 +32,7 @@ public class KeyProperty {
   private JWK key;
   /** Alias for a given key */
   private String alias;
+  /** Key mapping prefix*/
+  private String mapping;
 
 }

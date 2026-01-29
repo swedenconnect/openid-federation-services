@@ -17,7 +17,9 @@
 package se.swedenconnect.oidf.routing;
 
 import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.AllArgsConstructor;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -26,6 +28,7 @@ import se.swedenconnect.oidf.common.entity.jwt.JWKFederationSigner;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Router for displaying public jwks for this node.
@@ -41,9 +44,18 @@ public class JWKSRouter implements Router {
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
     route.GET("/jwks", handler -> {
       final JWKFederationSigner signer = new JWKFederationSigner(this.registry.getDefaultKey());
-      final Map<String, Object> jwks = this.registry.getAllPublic().toJSONObject();
-      signer.sign(JOSEObjectType.JWT, new JWTClaimsSet.Builder().claim("jwks", jwks).build());
-      return ServerResponse.ok().body(jwks);
+      final Map<String, JWKSet> mappedPublicKeys = this.registry.getMappedPublicKeys();
+      final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
+      Optional.ofNullable(mappedPublicKeys.get("federation")).ifPresent(fed -> {
+            builder.claim("federation", fed );
+          }
+      );
+      Optional.ofNullable(mappedPublicKeys.get("hosted")).ifPresent(fed -> {
+            builder.claim("hosted", fed );
+          }
+      );
+      final SignedJWT signedJwt = signer.sign(JOSEObjectType.JWT, builder.build());
+      return ServerResponse.ok().body(signedJwt);
     });
   }
 }

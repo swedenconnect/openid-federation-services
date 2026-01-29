@@ -4,7 +4,7 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1",
+        "jwks": "federation:sign-key-1",
         "constraints": {
           "naming": {
             "permitted": [
@@ -23,11 +23,11 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       },
       {
         "entity-identifier": "http://localhost:11111/trust_mark_issuer/resolver",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       }
     ],
     "trust-mark-issuers": {
@@ -41,11 +41,11 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       },
       {
         "entity-identifier": "http://localhost:11111/anarchy/resolver",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       }
     ]
   },
@@ -54,14 +54,14 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1",
+        "jwks": "federation:sign-key-1",
         "constraints": {
           "max-path-length": 1
         }
       },
       {
         "entity-identifier": "http://localhost:11111/path/resolver",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       }
     ]
   },
@@ -70,7 +70,7 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1",
+        "jwks": "federation:sign-key-1",
         "constraints": {
           "allowed-entity-types": [
             "RELYING_PARTY"
@@ -79,7 +79,7 @@
       },
       {
         "entity-identifier": "http://localhost:11111/entity_type/resolver",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       }
     ]
   },
@@ -88,15 +88,15 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/im/im",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       },
       {
         "entity-identifier": "http://localhost:11111/im/op",
-        "jwks": "alias:sign-key-1"
+        "jwks": "hosted:sign-key-2"
       },
       {
         "entity-identifier": "http://localhost:11111/im/tmi",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       }
     ]
   },
@@ -105,11 +105,11 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/im/im/op",
-        "jwks": "alias:sign-key-1"
+        "jwks": "hosted:sign-key-2"
       },
       {
         "entity-identifier": "http://localhost:11111/im/im/rp",
-        "jwks": "alias:sign-key-1"
+        "jwks": "hosted:sign-key-2"
       }
     ]
   },
@@ -118,11 +118,11 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/policy/resolver",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       },
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1",
+        "jwks": "federation:sign-key-1",
         "policy": {
           "id": "policy-1",
           "policy": {
@@ -143,11 +143,11 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/crit/resolver",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       },
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1",
+        "jwks": "federation:sign-key-1",
         "crit": [
           "ec_location"
         ],
@@ -160,11 +160,11 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/metadata_policy_crit/resolver",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       },
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1",
+        "jwks": "federation:sign-key-1",
         "metadata-policy-crit": [
           "regexp",
           "intersects"
@@ -177,18 +177,18 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:11111/im",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       },
       {
         "entity-identifier": "http://localhost:11111/trust_mark_owner/resolver",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       }
     ],
     "trust-mark-owners": [
       {
         "trustmark-identifier": "http://localhost:11111/im/tmi/certified",
         "sub": "http://localhost:11111/im/op",
-        "jwks": "alias:sign-key-1"
+        "jwks": "federation:sign-key-1"
       }
     ]
   }
