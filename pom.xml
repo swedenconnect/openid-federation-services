@@ -15,7 +15,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <credentials-support.version>2.1.2</credentials-support.version>
-        <service-revision>0.9.6</service-revision>
+        <service-revision>0.9.7</service-revision>
         <spring.boot.version>3.5.7</spring.boot.version>
     </properties>
     <modules>

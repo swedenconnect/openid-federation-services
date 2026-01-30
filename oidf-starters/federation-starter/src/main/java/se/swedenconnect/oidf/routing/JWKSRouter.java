@@ -47,11 +47,11 @@ public class JWKSRouter implements Router {
       final Map<String, JWKSet> mappedPublicKeys = this.registry.getMappedPublicKeys();
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
       Optional.ofNullable(mappedPublicKeys.get("federation")).ifPresent(fed -> {
-            builder.claim("federation", fed );
+            builder.claim("federation", fed.toPublicJWKSet().toJSONObject() );
           }
       );
       Optional.ofNullable(mappedPublicKeys.get("hosted")).ifPresent(hosted -> {
-            builder.claim("hosted", hosted );
+            builder.claim("hosted", hosted.toPublicJWKSet().toJSONObject() );
           }
       );
       final SignedJWT signedJwt = signer.sign(JOSEObjectType.JWT, builder.build());
