@@ -29,7 +29,7 @@
     </parent>
 
     <properties>
-        <service-revision>0.9.7</service-revision>
+        <service-revision>0.9.8</service-revision>
     </properties>
 
     <dependencies>

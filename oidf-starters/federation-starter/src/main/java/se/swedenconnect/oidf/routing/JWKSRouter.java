@@ -55,7 +55,7 @@ public class JWKSRouter implements Router {
           }
       );
       final SignedJWT signedJwt = signer.sign(JOSEObjectType.JWT, builder.build());
-      return ServerResponse.ok().body(signedJwt);
+      return ServerResponse.ok().body(signedJwt.serialize());
     });
   }
 }
