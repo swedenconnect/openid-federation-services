@@ -96,7 +96,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <service-revision>0.9.5</service-revision>
+        <service-revision>0.9.6</service-revision>
         <maven.deploy.skip>true</maven.deploy.skip>
         <micrometer-tracing.version>1.5.5</micrometer-tracing.version>
         <spring.boot-version>3.5.7</spring.boot-version>

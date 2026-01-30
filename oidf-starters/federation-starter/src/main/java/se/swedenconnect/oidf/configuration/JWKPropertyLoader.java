@@ -37,7 +37,8 @@ public class JWKPropertyLoader implements Converter<String, JWK> {
   @Override
   public JWK convert(final String source) {
     if (source.startsWith("federation:")
-        || source.startsWith("hosted:")) {
+        || source.startsWith("hosted:")
+        || source.startsWith("public")) {
       return this.registry.getObject().getKey(source)
           .orElseThrow();
     }
