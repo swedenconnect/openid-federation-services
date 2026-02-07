@@ -56,8 +56,13 @@ public class RestClientFactory {
 
     Optional.ofNullable(property.getTrustStoreBundleName())
         .ifPresentOrElse(bundleName -> {
-              final SslBundle bundle = this.bundles.getBundle(bundleName);
-              builder.sslContext(bundle.createSslContext());
+              if ("default".equals(bundleName)) {
+                log.info("Client: %s was created without a trust-store, using default ..."
+                    .formatted(property.getName()));
+              } else {
+                final SslBundle bundle = this.bundles.getBundle(bundleName);
+                builder.sslContext(bundle.createSslContext());
+              }
             },
             () -> log.info("Client: %s was created without a trust-store, using default ..."
                 .formatted(property.getName())));

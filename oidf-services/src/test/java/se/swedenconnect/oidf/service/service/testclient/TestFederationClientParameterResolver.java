@@ -23,8 +23,8 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.web.client.RestClient;
-import se.swedenconnect.oidf.service.rest.RestClientFactory;
-import se.swedenconnect.oidf.service.rest.RestClientProperties;
+import se.swedenconnect.oidf.RestClientFactory;
+import se.swedenconnect.oidf.RestClientProperty;
 import se.swedenconnect.oidf.service.suites.Context;
 
 public class TestFederationClientParameterResolver implements ParameterResolver {
@@ -37,7 +37,7 @@ public class TestFederationClientParameterResolver implements ParameterResolver 
   @Override
   public Object resolveParameter(final ParameterContext parameterContext, final ExtensionContext extensionContext) throws ParameterResolutionException {
     final SslBundles bundles = Context.applicationContext.get().getBean(SslBundles.class);
-    final RestClientProperties.RestClientProperty property = new RestClientProperties.RestClientProperty();
+    final RestClientProperty property = new RestClientProperty();
     property.setTrustStoreBundleName("oidf-internal");
     property.setName("test");
     final RestClient client = new RestClientFactory(bundles, ObservationRegistry.NOOP).create(property);

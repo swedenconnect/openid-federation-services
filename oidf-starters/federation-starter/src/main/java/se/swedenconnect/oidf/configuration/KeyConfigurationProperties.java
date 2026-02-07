@@ -24,8 +24,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.core.annotation.Order;
 import se.swedenconnect.oidf.KeyEntry;
+import se.swedenconnect.oidf.common.entity.keys.KeyProperty;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Configuration properties for keys.
@@ -58,4 +60,28 @@ public class KeyConfigurationProperties {
    */
   @NestedConfigurationProperty
   private List<KeyEntry> additionalKeys = List.of();
+
+  private Map<String, List<String>> mapping;
+
+  /**
+   * Get mapping of key
+   * @param property to check
+   * @return key mapping
+   */
+  public String getMapping(final KeyProperty property) {
+    final String kid = property.getKey().getKeyID();
+    final String alias = property.getAlias();
+    if (this.isMappedKey(kid, alias, "federation")) {
+      return "federation";
+    }
+    if (this.isMappedKey(kid, alias, "hosted")) {
+      return "hosted";
+    }
+    return "alias";
+  }
+
+  private boolean isMappedKey(final String kid, final String alias, final String mapping) {
+    return this.getMapping().get(mapping).contains(kid) ||
+           this.getMapping().get(mapping).contains(alias);
+  }
 }

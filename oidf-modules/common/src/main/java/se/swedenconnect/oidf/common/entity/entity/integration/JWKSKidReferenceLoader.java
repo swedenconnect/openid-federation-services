@@ -32,7 +32,6 @@ import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -52,20 +51,13 @@ public class JWKSKidReferenceLoader implements JsonSerializer<JWKSet>, JsonDeser
       final Type type,
       final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
     final String jwksReference = jsonElement.getAsJsonPrimitive().getAsString();
-    final List<JWK> jwks = Arrays.stream(jwksReference.split(",")).map(reference -> {
-          if (reference.startsWith("kid:")) {
-            return this.registry.getKeyByKid(reference.split("kid:")[1]);
-          }
-          return Optional.<JWK>empty();
-        })
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .toList();
-    if (jwks.isEmpty()) {
+    final List<String> references = Arrays.stream(jwksReference.split(",")).toList();
+    final JWKSet byReferences = this.registry.getByReferences(references);
+    if (byReferences.isEmpty()) {
       log.warn("Reference %s contained no valid keys, loading default ...".formatted(jwksReference));
       return new JWKSet(this.registry.getDefaultKey());
     }
-    return new JWKSet(jwks);
+    return byReferences;
   }
 
   @Override

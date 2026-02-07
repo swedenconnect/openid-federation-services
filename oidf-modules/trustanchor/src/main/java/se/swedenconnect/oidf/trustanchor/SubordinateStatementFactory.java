@@ -16,12 +16,18 @@
  */
 package se.swedenconnect.oidf.trustanchor;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -35,15 +41,15 @@ import java.util.Optional;
  */
 public class SubordinateStatementFactory {
 
-  private final TrustAnchorProperties properties;
+  private final SignerFactory signerFactory;
 
   /**
    * Constructor.
    *
-   * @param properties for reading additional properties from
+   * @param signerFactory for signing subordinate statements
    */
-  public SubordinateStatementFactory(final TrustAnchorProperties properties) {
-    this.properties = properties;
+  public SubordinateStatementFactory(final SignerFactory signerFactory) {
+    this.signerFactory = signerFactory;
   }
 
   /**
@@ -94,9 +100,9 @@ public class SubordinateStatementFactory {
           .subject(subordinate.getEntityIdentifier().getValue())
           .build();
 
-      final EntityStatement entityStatement =
-          EntityStatement.sign(new EntityStatementClaimsSet(jwtClaimsSet), issuer.getJwks().getKeys().getFirst());
-      return entityStatement.getSignedStatement();
+      return this.signerFactory
+          .createSigner(issuer)
+          .sign(new JOSEObjectType("entity-statement+jwt"), jwtClaimsSet);
     } catch (final Exception e) {
       throw new EntityStatementSignException("Failed to sign entity statement", e);
     }

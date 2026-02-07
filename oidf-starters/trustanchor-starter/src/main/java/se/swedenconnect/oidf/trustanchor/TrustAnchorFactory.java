@@ -30,6 +30,7 @@ public class TrustAnchorFactory {
 
   private final CompositeRecordSource source;
   private final FederationClient client;
+  private final SignerFactory signerFactory;
 
   /**
    * Constructor.
@@ -45,6 +46,7 @@ public class TrustAnchorFactory {
   ) {
     this.source = source;
     this.client = client;
+    this.signerFactory = signerFactory;
   }
 
   /**
@@ -54,7 +56,7 @@ public class TrustAnchorFactory {
   public TrustAnchor create(
       final TrustAnchorProperties properties) {
     return new TrustAnchor(this.source, properties,
-        new SubordinateStatementFactory(properties),
+        new SubordinateStatementFactory(this.signerFactory),
         this.client
     );
   }

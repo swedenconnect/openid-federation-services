@@ -60,8 +60,8 @@ public class FederationKeyConfiguration {
       final KeyProperty property = new KeyProperty();
       final PkiCredential credential = bundles.getCredential(key);
       property.setKey(jwkTransformerFunction.apply(credential));
-
       property.setAlias(key);
+      property.setMapping(properties.getMapping(property));
       keyRegistry.register(property);
     });
     properties.getAdditionalKeys()
@@ -70,6 +70,7 @@ public class FederationKeyConfiguration {
           final KeyProperty property = new KeyProperty();
           property.setKey(parsed);
           property.setAlias(key.name());
+          property.setMapping("public");
           keyRegistry.register(property);
         });
 
