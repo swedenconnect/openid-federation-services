@@ -23,6 +23,7 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
+import java.io.Serializable;
 import java.time.Duration;
 import java.util.List;
 
@@ -39,7 +40,7 @@ import java.util.List;
 public record TrustMarkIssuerProperties(
     @SerializedName("trust-mark-validity-duration") Duration trustMarkValidityDuration,
     @SerializedName("entity-identifier") EntityID entityIdentifier,
-    @SerializedName("trust-marks") List<TrustMarkProperties> trustMarks) {
+    @SerializedName("trust-marks") List<TrustMarkProperties> trustMarks) implements Serializable {
 
   /**
    * Validate content of configuration.

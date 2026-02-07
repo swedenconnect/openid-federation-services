@@ -28,6 +28,7 @@ import lombok.ToString;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -44,7 +45,7 @@ import java.util.stream.Collectors;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrustAnchorProperties {
+public class TrustAnchorProperties implements Serializable {
   @SerializedName("entity-identifier")
   private EntityID entityIdentifier;
 
@@ -101,7 +102,7 @@ public class TrustAnchorProperties {
   @AllArgsConstructor
   @NoArgsConstructor
   @Builder
-  public static class SubordinateListingProperty {
+  public static class SubordinateListingProperty implements Serializable {
 
     @SerializedName("crit")
     private List<String> crit;

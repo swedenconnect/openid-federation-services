@@ -28,6 +28,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMark
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public final class TrustMarkProperties {
+public final class TrustMarkProperties implements Serializable {
   @SerializedName("trust-mark-type")
   private TrustMarkType trustMarkType;
   @SerializedName("logo-uri")

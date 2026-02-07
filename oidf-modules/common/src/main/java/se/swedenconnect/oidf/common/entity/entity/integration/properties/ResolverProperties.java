@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serializable;
 import java.time.Duration;
 
 /**
@@ -36,7 +37,7 @@ import java.time.Duration;
 @ToString
 @Builder
 @NoArgsConstructor
-public final class ResolverProperties {
+public final class ResolverProperties implements Serializable {
   @SerializedName("trust-anchor")
   private String trustAnchor;
   @SerializedName("resolver-response-duration")

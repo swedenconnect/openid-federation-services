@@ -25,6 +25,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 /**
  * Data class for trust mark owner.
  *
@@ -35,7 +37,7 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrustMarkOwner {
+public class TrustMarkOwner implements Serializable {
 
   @SerializedName("sub")
   private EntityID sub;
