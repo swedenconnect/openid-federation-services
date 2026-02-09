@@ -41,15 +41,18 @@ import java.util.List;
  */
 public class CompositeRecordSerializer implements JsonSerializer<CompositeRecord>, JsonDeserializer<CompositeRecord> {
   @Override
-  public CompositeRecord deserialize(final JsonElement jsonElement, final Type type, final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+  public CompositeRecord deserialize(
+      final JsonElement jsonElement,
+      final Type type,
+      final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
     final Instant expiration = jsonDeserializationContext
         .deserialize(jsonElement.getAsJsonObject().get("expiration"), Instant.class);
     final Instant issuedAt = jsonDeserializationContext
         .deserialize(jsonElement.getAsJsonObject().get("issuedAt"), Instant.class);
 
-    Type entityType = new TypeToken<ArrayList<EntityRecord>>() {
+    final Type entityType = new TypeToken<ArrayList<EntityRecord>>() {
     }.getType();
-    Type moduleType = new TypeToken<ModuleRecord>() {
+    final Type moduleType = new TypeToken<ModuleRecord>() {
     }.getType();
     final List<EntityRecord> entityRecords = jsonDeserializationContext
         .deserialize(jsonElement.getAsJsonObject().get("entities"), entityType);
@@ -63,7 +66,11 @@ public class CompositeRecordSerializer implements JsonSerializer<CompositeRecord
   }
 
   @Override
-  public JsonElement serialize(final CompositeRecord compositeRecord, final Type type, final JsonSerializationContext jsonSerializationContext) {
+  public JsonElement serialize(
+      final CompositeRecord compositeRecord,
+      final Type type,
+      final JsonSerializationContext jsonSerializationContext) {
+
     final JsonObject json = new JsonObject();
 
     final Instant expiration = compositeRecord.getExpiration();
