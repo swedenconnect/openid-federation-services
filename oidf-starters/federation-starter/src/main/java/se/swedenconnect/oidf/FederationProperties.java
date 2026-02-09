@@ -28,6 +28,9 @@ import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 import se.swedenconnect.oidf.routing.RouterProperties;
 
+import java.util.List;
+import java.util.Objects;
+
 /**
  * Properties for OpenId Federation.
  *
@@ -69,8 +72,16 @@ public class FederationProperties {
   void validate() {
     Assert.notNull(this.resolver, "%s.%s can not be empty".formatted(PROPERTY_KEY, "resolver"));
     this.resolver.validate("%s.%s".formatted(PROPERTY_KEY, "resolver"));
-    Assert.notNull(this.localRegistry, "%s.%s can not be empty".formatted(PROPERTY_KEY, "local-registry"));
-    this.localRegistry.validate("%s.%s".formatted(PROPERTY_KEY, "local-registry"));
+    if (Objects.nonNull(this.localRegistry)) {
+      this.localRegistry.validate("%s.%s".formatted(PROPERTY_KEY, "local-registry"));
+    } else {
+      this.localRegistry = new PropertyRegistry(
+          List.of(),
+          List.of(),
+          List.of(),
+          List.of()
+      );
+    }
     Assert.notNull(this.routing, "%s.%s can not be empty".formatted(PROPERTY_KEY, "routing"));
     this.routing.validate("%s.%s".formatted(PROPERTY_KEY, "routing"));
   }

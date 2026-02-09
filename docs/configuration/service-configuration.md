@@ -195,8 +195,10 @@ federation:
 
 ### Reference formats supported
 
-| Format     | Type                                                  |
-|------------|-------------------------------------------------------|
-| classpath: | Load file from classpath                              |
-| file:      | Load file from system                                 |
-| alias:     | Load key from all loaded keys by name (JWK,JWKS only) |
+| Format      | Type                                                 |
+|-------------|------------------------------------------------------|
+| classpath:  | Load file from classpath                             |
+| file:       | Load file from system                                |
+| public:     | Load key from public keys (JWK,JWKS only)            |
+| federation: | Load key from federation mapped keys (JWK,JWKS only) |
+| hosted:     | Load key from hosted mapped keys (JWK,JWKS only)     |
