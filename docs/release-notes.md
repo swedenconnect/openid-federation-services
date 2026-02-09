@@ -4,6 +4,12 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.9.9
+
+**Date:** 2026-01-30
+
+* Bugfix serialize registry configuration to redis correctly
+
 ### Version 0.9.8
 
 **Date:** 2026-01-30
