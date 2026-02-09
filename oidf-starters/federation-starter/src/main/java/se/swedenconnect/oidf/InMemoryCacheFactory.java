@@ -44,9 +44,4 @@ public class InMemoryCacheFactory implements CacheFactory {
   public <V> Cache<String, V> create(final Class<V> v) {
     return new InMemoryCache<>(this.clock);
   }
-
-  @Override
-  public <V> Cache<String, List<V>> createListValueCache(final Class<V> v) {
-    return new InMemoryCache<>(this.clock);
-  }
 }

@@ -118,4 +118,16 @@ public class KeyRegistry {
         "federation", new JWKSet(federationKeys)
         );
   }
+
+  /**
+   * @param kid to find mapping for
+   * @return first available mapping of key
+   */
+  public String getMapping(final String kid) {
+    final Optional<String> mapping =
+        this.mappedKey.entrySet().stream().filter(kv -> kv.getKey().contains(kid))
+            .map(Map.Entry::getKey)
+            .findFirst();
+    return mapping.orElse("mapping-missing");
+  }
 }

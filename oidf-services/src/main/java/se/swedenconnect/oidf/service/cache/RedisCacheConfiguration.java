@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.service.cache;
 
+import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
@@ -52,8 +53,8 @@ public class RedisCacheConfiguration {
 
   @Bean
   CacheFactory redisCacheFactory(final RedisConnectionFactory factory, final Clock clock,
-                                 final FederationServiceProperties properties) {
-    return new RedisCacheFactory(clock, factory, properties.getRedis().getKeyName());
+                                 final FederationServiceProperties properties, final Gson gson) {
+    return new RedisCacheFactory(clock, factory, properties.getRedis().getKeyName(), gson);
   }
 
   @Bean

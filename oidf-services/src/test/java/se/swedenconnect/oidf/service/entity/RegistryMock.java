@@ -27,17 +27,30 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import com.nimbusds.jose.shaded.gson.ExclusionStrategy;
+import com.nimbusds.jose.shaded.gson.FieldAttributes;
+import com.nimbusds.jose.shaded.gson.Gson;
+import com.nimbusds.jose.shaded.gson.GsonBuilder;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
+import se.swedenconnect.oidf.common.entity.entity.integration.DurationDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.EntityIdentifierDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.InstantDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JWKSKidReferenceLoader;
+import se.swedenconnect.oidf.common.entity.entity.integration.JWKSSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.JWKSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 import se.swedenconnect.oidf.common.entity.keys.KeyProperty;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
+import se.swedenconnect.oidf.configuration.CompositeRecordSerializer;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -48,6 +61,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.text.ParseException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -59,9 +74,9 @@ public class RegistryMock {
   @Getter
   private final int port;
   private WireMockServer wireMockServer;
-  private JsonRegistryLoader loader;
 
-  public RegistryMock(final int port) throws JOSEException, KeyStoreException, IOException, CertificateException,
+  public RegistryMock(final int port) throws JOSEException, KeyStoreException, IOException,
+      CertificateException,
       NoSuchAlgorithmException, ParseException {
     final KeyStore keystore = KeyStore.getInstance(new ClassPathResource("signkey.p12").getFile(), "changeit".toCharArray());
     final Map<String, Object> jsonObject = JWK.load(
@@ -81,13 +96,12 @@ public class RegistryMock {
     property.setKey(load);
     property.setMapping("federation");
     registry.register(property);
-    final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader(new JWKSKidReferenceLoader(registry));
-    this.loader = jsonRegistryLoader;
+    final JWKSKidReferenceLoader jwksKidReferenceLoader = new JWKSKidReferenceLoader(registry);
+    final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader(this.createGson(jwksKidReferenceLoader));
     this.registryRecordSigner = new RegistryRecordSigner(
         new RSASSASigner(set.getKeys().getFirst().toRSAKey()),
         jsonRegistryLoader
     );
-
   }
 
   public void stop() {
@@ -165,5 +179,27 @@ public class RegistryMock {
             .get(endpoint)
             .willReturn(new ResponseDefinitionBuilder().withStatus(200).withResponseBody(new Body(body)))
     );
+  }
+
+  private Gson createGson (final JWKSKidReferenceLoader loader) {
+    return new GsonBuilder()
+        .addDeserializationExclusionStrategy(new ExclusionStrategy() {
+          @Override
+          public boolean shouldSkipField(final FieldAttributes fieldAttributes) {
+            return false;
+          }
+
+          @Override
+          public boolean shouldSkipClass(final Class<?> aClass) {
+            return false;
+          }
+        })
+        .registerTypeAdapter(Duration.class, new DurationDeserializer())
+        .registerTypeAdapter(Instant.class, new InstantDeserializer())
+        .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
+        .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
+        .registerTypeAdapter(JWKSet.class, new JWKSSerializer(loader, loader))
+        .registerTypeAdapter(CompositeRecord.class, new CompositeRecordSerializer())
+        .create();
   }
 }

@@ -35,7 +35,7 @@ import java.util.Optional;
 @Getter
 @Setter
 @Builder
-public class CompositeRecord implements Serializable {
+public class CompositeRecord {
   private final Expirable<List<EntityRecord>> entityRecords;
   private final Expirable<ModuleRecord> moduleRecord;
 

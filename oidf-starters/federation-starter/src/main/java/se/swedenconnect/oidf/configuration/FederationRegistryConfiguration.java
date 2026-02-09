@@ -16,6 +16,13 @@
  */
 package se.swedenconnect.oidf.configuration;
 
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.shaded.gson.ExclusionStrategy;
+import com.nimbusds.jose.shaded.gson.FieldAttributes;
+import com.nimbusds.jose.shaded.gson.Gson;
+import com.nimbusds.jose.shaded.gson.GsonBuilder;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -32,14 +39,24 @@ import se.swedenconnect.oidf.RestClientRecordIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.Cache;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.CachedRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.DurationDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.EntityIdentifierDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
+import se.swedenconnect.oidf.common.entity.entity.integration.InstantDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JWKSKidReferenceLoader;
+import se.swedenconnect.oidf.common.entity.entity.integration.JWKSSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.JWKSerializer;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
 import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneId;
 
 /**
@@ -71,8 +88,31 @@ public class FederationRegistryConfiguration {
   }
 
   @Bean
-  JsonRegistryLoader jsonRegistryLoader(final JWKSKidReferenceLoader loader) {
-    return new JsonRegistryLoader(loader);
+  Gson registryGson (final JWKSKidReferenceLoader loader) {
+    return new GsonBuilder()
+        .addDeserializationExclusionStrategy(new ExclusionStrategy() {
+          @Override
+          public boolean shouldSkipField(final FieldAttributes fieldAttributes) {
+            return false;
+          }
+
+          @Override
+          public boolean shouldSkipClass(final Class<?> aClass) {
+            return false;
+          }
+        })
+        .registerTypeAdapter(Duration.class, new DurationDeserializer())
+        .registerTypeAdapter(Instant.class, new InstantDeserializer())
+        .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
+        .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
+        .registerTypeAdapter(JWKSet.class, new JWKSSerializer(loader, loader))
+        .registerTypeAdapter(CompositeRecord.class, new CompositeRecordSerializer())
+        .create();
+  }
+
+  @Bean
+  JsonRegistryLoader jsonRegistryLoader(final Gson gson) {
+    return new JsonRegistryLoader(gson);
   }
 
   @Bean

@@ -34,13 +34,4 @@ public interface CacheFactory {
    * @return cache for given key/value
    */
   <V> Cache<String, V> create(final Class<V> v);
-
-  /**
-   * Creates a single value cache. (where the value is a list)
-   *
-   * @param v   value class
-   * @param <V> value class
-   * @return cache for list value
-   */
-  <V> Cache<String, List<V>> createListValueCache(final Class<V> v);
 }
