@@ -44,6 +44,16 @@ Each configured federation component must be referenced an **entitiy** to functi
 | `base64-encoded-public-jwk` | Base64‑encoded JWK                    | String |
 | `certificate`               | PEM encoded certificate or public key | String |
 
+
+Keys loaded from `federation.keys.additional-keys[*]` will be available using the `public:` prefix.
+
+`federation.keys.mapping`
+
+| Property     | Description                                                | Type           | Default |
+|--------------|------------------------------------------------------------|----------------|---------|
+| `federation` | List of federation key names to be mapped to `federation:` | List\<String\> | –       |
+| `hosted`     | List of hosted key names to be mapped to `hosted:`         | List\<String\> | –       |
+
 ---
 
 ## 2.2 Federation Service
@@ -141,7 +151,7 @@ Subordinates may define:
 
 | Property              | Description                         | Type   |
 |-----------------------|-------------------------------------|--------|
-| `trust-mark-type`       | Unique identifier of the trust mark | String |
+| `trust-mark-type`     | Unique identifier of the trust mark | String |
 | `logo-uri`            | Logo URI                            | String |
 | `ref-uri`             | Reference URI                       | String |
 | `delegation`          | TrustMarkDelegation JWT             | String |
@@ -202,3 +212,12 @@ federation:
 | public:     | Load key from public keys (JWK,JWKS only)            |
 | federation: | Load key from federation mapped keys (JWK,JWKS only) |
 | hosted:     | Load key from hosted mapped keys (JWK,JWKS only)     |
+
+
+#### Reference Keys
+Reference keys can be referenced by their prefix + kid or name
+
+E.g.
+> "public:359433581122628090150675142465804663870388233428" Loads the public key for kid 359433581122628090150675142465804663870388233428
+> 
+> "federation:sign-key-1" Loads the keypair that is mapped for federation use.
