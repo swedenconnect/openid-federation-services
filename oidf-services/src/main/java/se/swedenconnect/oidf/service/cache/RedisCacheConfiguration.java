@@ -19,7 +19,7 @@ package se.swedenconnect.oidf.service.cache;
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -48,7 +48,7 @@ import java.time.Clock;
  */
 @Configuration
 @ConditionalOnProperty(name = "federation.service.storage", havingValue = "redis")
-@Import(RedisAutoConfiguration.class)
+@Import(DataRedisAutoConfiguration.class)
 public class RedisCacheConfiguration {
 
   @Bean

@@ -16,34 +16,40 @@
  */
 package se.swedenconnect.oidf.service.service;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import org.hamcrest.Matchers;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.service.suites.Context;
-
-import static io.restassured.RestAssured.given;
 
 @ActiveProfiles({"integration-test"})
 public class GeneralErrorHandlingTestCases {
+
+  private RestClient restClient;
+
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   @BeforeEach
   public void beforeMethod() {
     final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
     final boolean context = applicationContext != null;
     org.junit.Assume.assumeTrue(context);
-    // rest of setup.
-    RestAssured.port = Context.getServicePort();
-    RestAssured.basePath = "/";
+    this.restClient = RestClient.builder()
+        .baseUrl("http://localhost:" + Context.getServicePort())
+        .build();
   }
 
   @Test
-  public void testBrowserRequestExpectNotFound() {
-    given()
+  public void testBrowserRequestExpectNotFound() throws Exception {
+    final ResponseEntity<String> response = this.restClient.get()
+        .uri("/notfound/myfrend")
         .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             + "(KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36")
         .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,"
@@ -51,42 +57,47 @@ public class GeneralErrorHandlingTestCases {
         .header("Accept-Language", "en-US,en;q=0.9")
         .header("Accept-Encoding", "gzip, deflate, br")
         .header("Connection", "keep-alive")
-        .when().log().all()
-        .contentType(ContentType.HTML)
-        .get("/notfound/myfrend")
-        .then().log().all()
-        .statusCode(HttpStatus.NOT_FOUND.value())
-        .body("error", Matchers.equalTo("not_found"))
-        .body("error_description", Matchers.equalTo("No static resource notfound/myfrend."))
-        .contentType(ContentType.JSON);
-  }
+        .retrieve()
+        .onStatus(HttpStatusCode::isError, (req, res) -> {})
+        .toEntity(String.class);
 
-
-  @Test
-  public void testMethodNotSupported() {
-    given()
-        .when().log().all()
-        .contentType(ContentType.JSON)
-        .delete("/authorization-tmi/trust_mark")
-        .then().log().all()
-        .statusCode(HttpStatus.NOT_FOUND.value())
-        .body("error", Matchers.equalTo("not_found"))
-        .body("error_description", Matchers.equalTo("No static resource authorization-tmi/trust_mark."))
-        .contentType(ContentType.JSON);
+    Assertions.assertEquals(404, response.getStatusCode().value());
+    final JsonNode body = this.objectMapper.readTree(response.getBody());
+    Assertions.assertEquals("not_found", body.get("error").asText());
+    Assertions.assertEquals("No static resource notfound/myfrend.", body.get("error_description").asText());
+    Assertions.assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
   }
 
   @Test
-  public void testMissingParamExpect400() {
-    given()
-        .when().log().all()
-        .contentType("VerySpecialContentType")
-        .get("/im/tmi/trust_mark_listing")
-        .then().log().all()
-        .statusCode(HttpStatus.BAD_REQUEST.value())
-        .body("error", Matchers.equalTo("invalid_request"))
-        .body("error_description", Matchers.equalTo("Required request parameter [trust_mark_type] was missing."))
-        .contentType(ContentType.JSON);
+  public void testMethodNotSupported() throws Exception {
+    final ResponseEntity<String> response = this.restClient.delete()
+        .uri("/authorization-tmi/trust_mark")
+        .retrieve()
+        .onStatus(HttpStatusCode::isError, (req, res) -> {})
+        .toEntity(String.class);
+
+    Assertions.assertEquals(404, response.getStatusCode().value());
+    final JsonNode body = this.objectMapper.readTree(response.getBody());
+    Assertions.assertEquals("not_found", body.get("error").asText());
+    Assertions.assertEquals("No static resource authorization-tmi/trust_mark.", body.get("error_description").asText());
+    Assertions.assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
   }
 
+  @Test
+  public void testMissingParamExpect400() throws Exception {
+    final ResponseEntity<String> response = this.restClient.get()
+        .uri("/im/tmi/trust_mark_listing")
+        .header("Content-Type", "VerySpecialContentType")
+        .retrieve()
+        .onStatus(HttpStatusCode::isError, (req, res) -> {})
+        .toEntity(String.class);
+
+    Assertions.assertEquals(400, response.getStatusCode().value());
+    final JsonNode body = this.objectMapper.readTree(response.getBody());
+    Assertions.assertEquals("invalid_request", body.get("error").asText());
+    Assertions.assertEquals("Required request parameter [trust_mark_type] was missing.",
+        body.get("error_description").asText());
+    Assertions.assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
+  }
 
 }
