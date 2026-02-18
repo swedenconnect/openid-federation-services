@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.trustmarkissuer.starter.routing;
 
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
@@ -81,7 +82,9 @@ public class TrustMarkIssuerRouter implements Router {
     try {
       final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
           List.of("trust_mark"));
-      return ServerResponse.ok().body(trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest(
+      return ServerResponse.ok()
+          .contentType(MediaType.parseMediaType("application/trust-mark-status-response+jwt"))
+          .body(trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest(
           params.getFirst("trust_mark")
       )));
     } catch (final FederationException e) {

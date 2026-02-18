@@ -25,10 +25,12 @@ import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
 import java.io.Serializable;
 import java.text.ParseException;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * TrustMarkDelegation according to 7.2.1 in OpenID Federation 1.0 draft 40
+ * TrustMarkDelegation according to 7.2.1 in OpenID Federation 1.0
  *
  * @author Per Fredrik Plars
  */
@@ -72,17 +74,29 @@ public class TrustMarkDelegation implements Serializable {
           () -> ex.apply("Type is expected in JWT header"));
 
       if (!jwsHeader.getType().getType().equals(DELEGATION_TYPE)) {
-        ex.apply("Delegation header type is expected to be:'" + DELEGATION_TYPE +
+         throw ex.apply("Delegation header type is expected to be:'" + DELEGATION_TYPE +
             "' actual value:'" + jwsHeader.getType().getType() + "'");
+      }
+
+      if (Objects.isNull(jwsHeader.getAlgorithm())) {
+        throw ex.apply("Delegation header must contain alg field");
       }
 
       final JWTClaimsSet claimsSet = delegationJWT.getJWTClaimsSet();
 
       FederationAssert.assertNotEmptyThrows(claimsSet.getIssuer(), () -> ex.apply("Issuer is expected in JWT claim"));
       FederationAssert.assertNotEmptyThrows(claimsSet.getSubject(), () -> ex.apply("Subject is expected in JWT claim"));
-      FederationAssert.assertNotEmptyThrows(claimsSet.getClaim("id"), () -> ex.apply("ID is expected in JWT claim"));
+      FederationAssert
+          .assertNotEmptyThrows(claimsSet.getClaim("trust_mark_type"),
+              () -> ex.apply("trust_mark_type is expected in JWT claim"));
       FederationAssert.assertNotEmptyThrows(
           claimsSet.getIssueTime(), () -> ex.apply("IssueTime is expected in JWT claim"));
+
+      if (Objects.nonNull(claimsSet.getExpirationTime())) {
+        if (!claimsSet.getIssueTime().before(claimsSet.getExpirationTime())) {
+          throw ex.apply("Delegation payload claim 'iat' must be before 'exp'");
+        }
+      }
     } catch (final ParseException e) {
       throw ex.apply("Unable to parse delegation JWT: '" + e.getMessage() + "'");
     }

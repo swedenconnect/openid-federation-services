@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -69,6 +70,8 @@ public class JWKSKidReferenceLoader implements JsonSerializer<JWKSet>, JsonDeser
         jwkSet.getKeys()
             .stream()
             .map(JWK::getKeyID)
+            .filter(Objects::nonNull)
+            .map(this.registry::getMapping)
             .collect(Collectors.joining(","))
     );
   }

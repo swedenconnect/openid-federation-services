@@ -16,23 +16,13 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration;
 
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.shaded.gson.ExclusionStrategy;
-import com.nimbusds.jose.shaded.gson.FieldAttributes;
 import com.nimbusds.jose.shaded.gson.Gson;
-import com.nimbusds.jose.shaded.gson.GsonBuilder;
 import com.nimbusds.jose.shaded.gson.TypeAdapter;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.JWKSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 
 /**
@@ -41,32 +31,14 @@ import java.util.List;
  * @author Felix Hellman
  */
 public class JsonRegistryLoader {
-  private final Gson GSON;
+  private final Gson gson;
 
   /**
    * Constructor.
-   * @param loader for jwks
+   * @param gson for serialization
    */
-  public JsonRegistryLoader(final JWKSKidReferenceLoader loader) {
-    this.GSON = new GsonBuilder()
-        .addDeserializationExclusionStrategy(new ExclusionStrategy() {
-          @Override
-          public boolean shouldSkipField(final FieldAttributes fieldAttributes) {
-            return false;
-          }
-
-          @Override
-          public boolean shouldSkipClass(final Class<?> aClass) {
-            return false;
-          }
-        })
-        .registerTypeAdapter(Duration.class, new DurationDeserializer())
-        .registerTypeAdapter(Instant.class, new InstantDeserializer())
-        .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
-        .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
-        .registerTypeAdapter(JWK.class, new JWKSerializer())
-        .registerTypeAdapter(JWKSet.class, new JWKSSerializer(loader, loader))
-        .create();
+  public JsonRegistryLoader(final Gson gson) {
+    this.gson = gson;
   }
 
   /**
@@ -76,7 +48,7 @@ public class JsonRegistryLoader {
    */
   public List<EntityRecord> parseEntityRecord(final String json) {
     try {
-      final TypeAdapter<List<EntityRecord>> adapter = this.GSON.getAdapter(new TypeToken<>() {
+      final TypeAdapter<List<EntityRecord>> adapter = this.gson.getAdapter(new TypeToken<>() {
       });
       return adapter.fromJson(json);
     } catch (final IOException e) {
@@ -91,7 +63,7 @@ public class JsonRegistryLoader {
    */
   public ModuleRecord parseModuleJson(final String json) {
     try {
-      final TypeAdapter<ModuleRecord> adapter = this.GSON.getAdapter(new TypeToken<>() {
+      final TypeAdapter<ModuleRecord> adapter = this.gson.getAdapter(new TypeToken<>() {
       });
       return adapter.fromJson(json);
     } catch (final IOException e) {
@@ -105,7 +77,7 @@ public class JsonRegistryLoader {
    * @return json string
    */
   public String toJson(final ModuleRecord moduleRecord) {
-    return this.GSON.getAdapter(ModuleRecord.class).toJson(moduleRecord);
+    return this.gson.getAdapter(ModuleRecord.class).toJson(moduleRecord);
   }
 
   /**
@@ -114,7 +86,7 @@ public class JsonRegistryLoader {
    * @return json string
    */
   public String toJson(final List<EntityRecord> entityRecords) {
-    return this.GSON.getAdapter(new TypeToken<List<EntityRecord>>(){}).toJson(entityRecords);
+    return this.gson.getAdapter(new TypeToken<List<EntityRecord>>(){}).toJson(entityRecords);
   }
 }
 

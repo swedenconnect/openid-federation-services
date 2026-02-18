@@ -77,7 +77,7 @@ public class JWKSSerializer implements JsonDeserializer<JWKSet>, JsonSerializer<
       final Type type,
       final JsonSerializationContext jsonSerializationContext) {
     if (Objects.nonNull(this.referenceSerializer)) {
-      this.referenceSerializer.serialize(jwks, type, jsonSerializationContext);
+      return this.referenceSerializer.serialize(jwks, type, jsonSerializationContext);
     }
     return new JsonParser().parse(jwks.toString(true));
   }
