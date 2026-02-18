@@ -4,6 +4,18 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.9.10
+
+**Date:** 2026-02-18
+
+* Added `EntityRecordDeserializer` for proper deserialization of entity records, with JWKS kid-reference support and fallback to the default key from `KeyRegistry` when no JWKS is present
+* Bugfix `TrustMarkDelegation` validation: the delegation type header mismatch now correctly throws an exception (missing `throw` keyword)
+* Bugfix `TrustMarkDelegation` validation: changed validated claim from `id` to `trust_mark_type` to align with the OpenID Federation 1.0 specification
+* Added `TrustMarkDelegation` validation for the `alg` field in the JWT header
+* Added `TrustMarkDelegation` validation that `iat` must be before `exp` when expiration is present
+* Bugfix `/trust_mark_status` endpoint now returns correct content type `application/trust-mark-status-response+jwt`
+* Refactored registry GSON configuration to use `EntityRecordDeserializer` and removed redundant exclusion strategy
+
 ### Version 0.9.9
 
 **Date:** 2026-01-30

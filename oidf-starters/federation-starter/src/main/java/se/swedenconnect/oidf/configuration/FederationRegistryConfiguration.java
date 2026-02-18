@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.configuration;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.shaded.gson.ExclusionStrategy;
 import com.nimbusds.jose.shaded.gson.FieldAttributes;
@@ -41,17 +40,17 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulat
 import se.swedenconnect.oidf.common.entity.entity.integration.CachedRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.DurationDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityIdentifierDeserializer;
-import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
 import se.swedenconnect.oidf.common.entity.entity.integration.InstantDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JWKSKidReferenceLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.JWKSSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.EntityRecordDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.JWKSerializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
 import java.time.Clock;
@@ -88,25 +87,15 @@ public class FederationRegistryConfiguration {
   }
 
   @Bean
-  Gson registryGson (final JWKSKidReferenceLoader loader) {
+  Gson registryGson(final JWKSKidReferenceLoader loader, final KeyRegistry registry) {
     return new GsonBuilder()
-        .addDeserializationExclusionStrategy(new ExclusionStrategy() {
-          @Override
-          public boolean shouldSkipField(final FieldAttributes fieldAttributes) {
-            return false;
-          }
-
-          @Override
-          public boolean shouldSkipClass(final Class<?> aClass) {
-            return false;
-          }
-        })
         .registerTypeAdapter(Duration.class, new DurationDeserializer())
         .registerTypeAdapter(Instant.class, new InstantDeserializer())
         .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
         .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
         .registerTypeAdapter(JWKSet.class, new JWKSSerializer(loader, loader))
         .registerTypeAdapter(CompositeRecord.class, new CompositeRecordSerializer())
+        .registerTypeAdapter(EntityRecord.class, new EntityRecordDeserializer(loader, registry))
         .create();
   }
 

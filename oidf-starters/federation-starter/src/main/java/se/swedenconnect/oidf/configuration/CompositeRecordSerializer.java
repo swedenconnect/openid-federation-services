@@ -16,6 +16,8 @@
  */
 package se.swedenconnect.oidf.configuration;
 
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.shaded.gson.JsonDeserializationContext;
 import com.nimbusds.jose.shaded.gson.JsonDeserializer;
 import com.nimbusds.jose.shaded.gson.JsonElement;
@@ -24,15 +26,18 @@ import com.nimbusds.jose.shaded.gson.JsonParseException;
 import com.nimbusds.jose.shaded.gson.JsonSerializationContext;
 import com.nimbusds.jose.shaded.gson.JsonSerializer;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
+import lombok.AllArgsConstructor;
 import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
+import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * GSON serializer for composite records.
@@ -40,6 +45,7 @@ import java.util.List;
  * @author Felix Hellman
  */
 public class CompositeRecordSerializer implements JsonSerializer<CompositeRecord>, JsonDeserializer<CompositeRecord> {
+
   @Override
   public CompositeRecord deserialize(
       final JsonElement jsonElement,

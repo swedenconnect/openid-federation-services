@@ -54,9 +54,6 @@ Each module _has_ to belong to a given entity that is present in properties or r
 
 #### Subordinate Listing
 
-Last Updated
-for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1_0.html#name-subordinate-listing-request)**
-
 `GET /subordinate_listing`
 
 *Query Parameters*
@@ -70,9 +67,6 @@ for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1
 
 #### Fetch
 
-Last Updated
-for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1_0.html#name-fetch-subordinate-statement)**
-
 `GET /fetch`
 
 *Query Parameters*
@@ -85,9 +79,6 @@ for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1
 
 #### Trust Mark Endpoint
 
-Last Updated
-for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1_0.html#name-trust-mark-endpoint)**
-
 `GET /trust_mark`
 
 *Query Parameters*
@@ -98,9 +89,6 @@ for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1
 | Yes      | sub           | The subject for which the Trust Mark is issued to |
 
 #### Trust Mark Status
-
-Last Updated
-for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1_0.html#name-trust-mark-status)**
 
 `GET /trust_mark_status`
 
@@ -113,9 +101,6 @@ for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1
 | No       | iat           | Seconds Since the Epoch. Time when this Trust Mark was issued. |
 
 #### Trust Mark Listing
-
-Last Updated
-for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1_0.html#name-trust-marked-entities-listi)**
 
 `GET /trust_mark_listing`
 
@@ -130,9 +115,6 @@ for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1
 
 #### Resolve
 
-Last Updated
-for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1_0.html#name-trust-marked-entities-listi)**
-
 `GET /resolve`
 
 *Query Parameters*
@@ -144,9 +126,6 @@ for: **[OpenId Federation Draft 47](https://openid.net/specs/openid-federation-1
 | No       | entity_type  | Filter response to only contain entities with this entity type |
 
 #### Discovery
-
-Last Updated
-for: **[Version: 1.0 - draft 05 - 2024-06-14](https://github.com/oidc-sweden/specifications/blob/main/swedish-oidc-fed-profile.md#62-discovery-request)**
 
 `GET /discovery`
 

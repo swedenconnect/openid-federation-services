@@ -43,6 +43,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.JWKSKidReferenceLo
 import se.swedenconnect.oidf.common.entity.entity.integration.JWKSSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.EntityRecordDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
@@ -97,7 +98,7 @@ public class RegistryMock {
     property.setMapping("federation");
     registry.register(property);
     final JWKSKidReferenceLoader jwksKidReferenceLoader = new JWKSKidReferenceLoader(registry);
-    final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader(this.createGson(jwksKidReferenceLoader));
+    final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader(this.createGson(jwksKidReferenceLoader, registry));
     this.registryRecordSigner = new RegistryRecordSigner(
         new RSASSASigner(set.getKeys().getFirst().toRSAKey()),
         jsonRegistryLoader
@@ -181,7 +182,7 @@ public class RegistryMock {
     );
   }
 
-  private Gson createGson (final JWKSKidReferenceLoader loader) {
+  private Gson createGson (final JWKSKidReferenceLoader loader, final KeyRegistry registry) {
     return new GsonBuilder()
         .addDeserializationExclusionStrategy(new ExclusionStrategy() {
           @Override
@@ -200,6 +201,7 @@ public class RegistryMock {
         .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
         .registerTypeAdapter(JWKSet.class, new JWKSSerializer(loader, loader))
         .registerTypeAdapter(CompositeRecord.class, new CompositeRecordSerializer())
+        .registerTypeAdapter(EntityRecord.class, new EntityRecordDeserializer(loader, registry))
         .create();
   }
 }

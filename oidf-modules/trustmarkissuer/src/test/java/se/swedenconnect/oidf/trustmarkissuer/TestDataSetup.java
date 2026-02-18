@@ -91,11 +91,14 @@ public class TestDataSetup {
         .type(new JOSEObjectType(TrustMarkDelegation.DELEGATION_TYPE))
         .build();
 
+    final Identifier identifier = new Identifier(UUID.randomUUID().toString());
     final TrustMarkClaimsSet trustMarkClaimsSet = new TrustMarkClaimsSet(
         Issuer.parse("http://issuer.digg.se"),
         new Subject("http://subject.digg.se"),
-        new Identifier(UUID.randomUUID().toString()),
+        identifier,
         new Date());
+
+    trustMarkClaimsSet.setClaim("trust_mark_type", identifier);
 
     final SignedJWT trustMarkDelegate = new SignedJWT(jwsHeader, trustMarkClaimsSet.toJWTClaimsSet());
     trustMarkDelegate.sign(new RSASSASigner(rsaKey));
