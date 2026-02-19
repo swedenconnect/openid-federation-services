@@ -56,7 +56,12 @@ public class JWKSKidReferenceLoader implements JsonSerializer<JWKSet>, JsonDeser
     final JWKSet byReferences = this.registry.getByReferences(references);
     if (byReferences.isEmpty()) {
       log.warn("Reference %s contained no valid keys, loading default ...".formatted(jwksReference));
-      return new JWKSet(this.registry.getDefaultKey());
+      return this.registry.getDefaultKey()
+          .map(JWKSet::new)
+          .orElseGet(() -> {
+            log.error("Failed to load default key since no default key was configured ...");
+            return null;
+          });
     }
     return byReferences;
   }

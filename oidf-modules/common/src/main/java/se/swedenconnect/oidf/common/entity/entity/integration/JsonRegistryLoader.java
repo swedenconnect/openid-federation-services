@@ -19,17 +19,20 @@ package se.swedenconnect.oidf.common.entity.entity.integration;
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jose.shaded.gson.TypeAdapter;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
+import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Parses and loads json from registry.
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class JsonRegistryLoader {
   private final Gson gson;
 
@@ -50,7 +53,16 @@ public class JsonRegistryLoader {
     try {
       final TypeAdapter<List<EntityRecord>> adapter = this.gson.getAdapter(new TypeToken<>() {
       });
-      return adapter.fromJson(json);
+      return adapter.fromJson(json).stream()
+          .filter(er -> {
+            final boolean jwkIsMissingFromEntity = Objects.isNull(er.getJwks());
+            if (jwkIsMissingFromEntity) {
+              log.error("Failed to load entity {} due to no JWK available, is default key missing?",
+                  er.getEntityIdentifier().getValue());
+            }
+            return !jwkIsMissingFromEntity;
+          })
+          .toList();
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }

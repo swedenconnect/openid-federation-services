@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.common.entity.tree;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -65,6 +66,9 @@ public class Tree<T> {
    */
   public Set<SearchResult<T>> search(final SearchRequest<T> request) {
     final Node<T> root = request.snapshot().getRoot();
+    if (Objects.isNull(root)) {
+      throw new IllegalStateException("Could not find root node for request %s".formatted(request));
+    }
     final HashSet<NodeKey> visisted = new HashSet<>(List.of(root.getKey()));
     final Node.NodeSearchContext<T> context =
         new Node.NodeSearchContext<>(0, request.includeParent(), request.snapshot(), visisted);

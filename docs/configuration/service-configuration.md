@@ -31,10 +31,11 @@ Each configured federation component must be referenced an **entitiy** to functi
 
 `federation.keys.*`
 
-| Property          | Description                                           | Type   | Default    |
-|-------------------|-------------------------------------------------------|--------|------------|
-| `kid-algorithm`   | Key ID algorithm (`thumbprint` or `serial`)           | String | thumbprint |
-| `additional-keys` | List of additional public keys that can be referenced | List   | –          |
+| Property          | Description                                                            | Type   | Default    |
+|-------------------|------------------------------------------------------------------------|--------|------------|
+| `kid-algorithm`   | Key ID algorithm (`thumbprint` or `serial`)                            | String | thumbprint |
+| `additional-keys` | List of additional public keys that can be referenced                  | Object | –          |
+| `mapping`         | Mapping of private keys to determine their usecase (federation/hosted) | Object | -          |
 
 `federation.keys.additional-keys[*]`
 
@@ -49,10 +50,10 @@ Keys loaded from `federation.keys.additional-keys[*]` will be available using th
 
 `federation.keys.mapping`
 
-| Property     | Description                                                | Type           | Default |
-|--------------|------------------------------------------------------------|----------------|---------|
-| `federation` | List of federation key names to be mapped to `federation:` | List\<String\> | –       |
-| `hosted`     | List of hosted key names to be mapped to `hosted:`         | List\<String\> | –       |
+| Property     | Description                                                                                                                                         | Type           | Default |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|----------------|---------|
+| `federation` | List of federation key names to be mapped to `federation:`                                                                                          | List\<String\> | –       |
+| `hosted`     | List of hosted key names to be mapped to `hosted:` **At least one key needs to be hosted if you want a default key to be loaded from the registry** | List\<String\> | –       |
 
 ---
 

@@ -16,10 +16,12 @@
  */
 package se.swedenconnect.oidf.configuration;
 
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.core.annotation.Order;
@@ -28,6 +30,7 @@ import se.swedenconnect.oidf.common.entity.keys.KeyProperty;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Configuration properties for keys.
@@ -39,6 +42,7 @@ import java.util.Map;
 @NoArgsConstructor
 @Getter
 @Setter
+@Slf4j
 @ConfigurationProperties("federation.keys")
 public class KeyConfigurationProperties {
   /**
@@ -83,5 +87,19 @@ public class KeyConfigurationProperties {
   private boolean isMappedKey(final String kid, final String alias, final String mapping) {
     return this.getMapping().get(mapping).contains(kid) ||
            this.getMapping().get(mapping).contains(alias);
+  }
+
+  @PostConstruct
+  void validate() {
+    if (Objects.nonNull(this.mapping)) {
+      if (!this.mapping.containsKey("hosted")) {
+        log.warn("No hosted key was specified for this instance, no default key will be loaded.");
+      }
+      if (!this.mapping.containsKey("federation")) {
+        throw new IllegalArgumentException("No federation key was specified which is required. See documentation.");
+      }
+    } else {
+      throw new IllegalArgumentException("No key mapping was configured which is required. See documentation.");
+    }
   }
 }
