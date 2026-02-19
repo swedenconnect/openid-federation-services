@@ -18,14 +18,14 @@ package se.swedenconnect.oidf.service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 
 /**
  * Application.
  *
  * @author Felix Hellman
  */
-@SpringBootApplication(exclude = RedisAutoConfiguration.class)
+@SpringBootApplication(exclude = DataRedisAutoConfiguration.class)
 public class Application {
   /**
    * Main method.

@@ -48,14 +48,13 @@ public class KeyRegistry {
    *
    * @return jwk
    */
-  public JWK getDefaultKey() {
+  public Optional<JWK> getDefaultKey() {
     return this.mappedKey.entrySet()
         .stream()
         .filter(kv -> kv.getKey().startsWith("hosted"))
         .map(Map.Entry::getValue)
         .filter(JWK::isPrivate)
-        .findFirst()
-        .get();
+        .findFirst();
   }
 
   /**

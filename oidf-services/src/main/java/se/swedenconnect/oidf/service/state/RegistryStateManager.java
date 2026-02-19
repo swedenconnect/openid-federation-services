@@ -41,6 +41,7 @@ public class RegistryStateManager extends ReadyStateComponent {
   private final ServiceLock serviceLock;
   private final ApplicationEventPublisher publisher;
   private final FederationProperties properties;
+  private final StateHashFactory hashFactory;
 
   /**
    * Constructor.
@@ -50,18 +51,21 @@ public class RegistryStateManager extends ReadyStateComponent {
    * @param serviceLock
    * @param publisher
    * @param properties
+   * @param hashFactory
    */
   public RegistryStateManager(
       final CacheRecordPopulator populator,
       final FederationServiceState state,
       final ServiceLock serviceLock,
       final ApplicationEventPublisher publisher,
-      final FederationProperties properties) {
+      final FederationProperties properties,
+      final StateHashFactory hashFactory) {
     this.populator = populator;
     this.state = state;
     this.serviceLock = serviceLock;
     this.publisher = publisher;
     this.properties = properties;
+    this.hashFactory = hashFactory;
   }
 
   /**
@@ -102,7 +106,7 @@ public class RegistryStateManager extends ReadyStateComponent {
           try {
             final CompositeRecord record = this.populator.reload();
             try {
-              final String registrySha256 = StateHashFactory.hashState(record);
+              final String registrySha256 = this.hashFactory.hashState(record);
               log.debug("Registry updated with new hash {}", registrySha256);
               this.state.updateRegistryState(registrySha256);
             } catch (final Exception e) {

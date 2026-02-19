@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.service.configuration;
 
+import com.nimbusds.jose.shaded.gson.Gson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
@@ -36,6 +37,7 @@ import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 import se.swedenconnect.oidf.service.state.NoOperationServiceLock;
 import se.swedenconnect.oidf.service.state.RegistryStateManager;
 import se.swedenconnect.oidf.service.state.ServiceLock;
+import se.swedenconnect.oidf.service.state.StateHashFactory;
 
 /**
  * Configuration class for openid federation.
@@ -64,14 +66,21 @@ public class OpenIdFederationConfiguration {
       final FederationServiceState state,
       final ServiceLock lock,
       final ApplicationEventPublisher publisher,
-      final FederationProperties properties
-  ) {
+      final FederationProperties properties,
+      final StateHashFactory stateHashFactory
+      ) {
     return new RegistryStateManager(populator,
         state,
         lock,
         publisher,
-        properties
+        properties,
+        stateHashFactory
     );
+  }
+
+  @Bean
+  StateHashFactory stateHashFactory(final Gson gson) {
+    return new StateHashFactory(gson);
   }
 
   @Bean

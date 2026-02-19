@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.routing;
 
 import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -43,7 +44,11 @@ public class JWKSRouter implements Router {
   @Override
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
     route.GET("/jwks", handler -> {
-      final JWKFederationSigner signer = new JWKFederationSigner(this.registry.getDefaultKey());
+      final Optional<JWK> defaultKey = this.registry.getDefaultKey();
+      if (defaultKey.isEmpty()) {
+        throw new IllegalArgumentException("No (default) sign key was found for the jwks endpoint.");
+      }
+      final JWKFederationSigner signer = new JWKFederationSigner(defaultKey.get());
       final Map<String, JWKSet> mappedPublicKeys = this.registry.getMappedPublicKeys();
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
       Optional.ofNullable(mappedPublicKeys.get("federation")).ifPresent(fed -> {

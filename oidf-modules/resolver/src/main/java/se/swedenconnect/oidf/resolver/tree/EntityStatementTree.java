@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.resolver.tree;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class EntityStatementTree {
   private final Tree<EntityStatement> tree;
 
@@ -59,16 +61,20 @@ public class EntityStatementTree {
     final CacheSnapshot<EntityStatement> snapshot = this.tree.getCurrentSnapshot();
     // Find the entity that matches our subject, include parents
     final SearchRequest<EntityStatement> request = new SearchRequest<>(resolveRequest.asPredicate(), true, snapshot);
-
-    return this.tree.search(request).stream()
-        //Sort by level in tree
-        .sorted(Comparator.comparingInt(a -> a.context().level()))
-        .map(Tree.SearchResult::getData)
-        // Remove intermediate authorities
-        .filter(es -> !this.isIntermediate(es, resolveRequest))
-        .collect(Collectors.toCollection(LinkedHashSet::new))
-        //Reverse order to be leaf --> n --> root
-        .reversed();
+    try {
+      return this.tree.search(request).stream()
+          //Sort by level in tree
+          .sorted(Comparator.comparingInt(a -> a.context().level()))
+          .map(Tree.SearchResult::getData)
+          // Remove intermediate authorities
+          .filter(es -> !this.isIntermediate(es, resolveRequest))
+          .collect(Collectors.toCollection(LinkedHashSet::new))
+          //Reverse order to be leaf --> n --> root
+          .reversed();
+    } catch (final IllegalStateException e) {
+      log.error("Failed to load from cache due to internal error for request {}", resolveRequest);
+      throw e;
+    }
   }
 
   /**

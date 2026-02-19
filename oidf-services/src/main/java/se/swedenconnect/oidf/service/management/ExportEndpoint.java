@@ -20,8 +20,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.nimbusds.jose.jwk.JWKSet;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import lombok.AllArgsConstructor;
@@ -36,7 +34,6 @@ import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
-import se.swedenconnect.oidf.service.state.StateHashFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,11 +61,7 @@ public class ExportEndpoint {
   static {
     MAPPER.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
-    MAPPER.registerModule(new JavaTimeModule());
-
     final SimpleModule module = new SimpleModule();
-    module.addSerializer(JWKSet.class, new StateHashFactory.JWKSetSerializer());
-    module.addDeserializer(JWKSet.class, new StateHashFactory.JWKSetDeserializer());
     MAPPER.registerModule(module);
   }
 
