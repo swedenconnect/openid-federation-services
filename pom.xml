@@ -16,7 +16,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <credentials-support.version>2.1.2</credentials-support.version>
-        <service-revision>0.9.10</service-revision>
+        <service-revision>0.9.11</service-revision>
         <spring.boot.version>4.0.2</spring.boot.version>
     </properties>
     <modules>

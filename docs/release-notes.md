@@ -4,6 +4,16 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.9.11
+
+**Date:** 2026-02-19
+
+* Migrated to Java 25
+* Upgraded to Spring Boot 4.0.2
+* Updated Jib plugin version for Java 25 compatibility
+* Updated GitHub Actions workflows to use Java 25
+* Added documentation for new error messages and how the default key is loaded
+
 ### Version 0.9.10
 
 **Date:** 2026-02-18

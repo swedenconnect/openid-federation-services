@@ -19,7 +19,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <java.version>25</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <service-revision>0.9.10</service-revision>
+        <service-revision>0.9.11</service-revision>
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 
