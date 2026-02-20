@@ -29,7 +29,7 @@
     <artifactId>trustanchor</artifactId>
 
     <properties>
-        <service-revision>0.9.11</service-revision>
+        <service-revision>0.9.12</service-revision>
     </properties>
 
     <dependencies>
