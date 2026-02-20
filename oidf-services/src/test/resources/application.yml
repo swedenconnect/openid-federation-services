@@ -64,8 +64,10 @@ federation:
       - name: blue
         base64-encoded-public-jwk: ewogICAgICAgICJhbGciOiAiRVM1MTIiLAogICAgICAgICJjcnYiOiAiUC01MjEiLAogICAgICAgICJraWQiOiAiQjRkbGU1ajJYT19yLXZsdG9qSDB6X0FHTEhUSjVTamR0di04MDA1YzRMNCIsCiAgICAgICAgImt0eSI6ICJFQyIsCiAgICAgICAgInVzZSI6ICJzaWciLAogICAgICAgICJ4IjogIkFJMXRINm5qRlRBT1hiVDFQVkp3QS1VaWh1R3dwdk5HX1BYWm50R1lIM0o4QzFDcjd2MmZiVkxyM1l4VnR3bW10cGZsZWVoN3dxUWtndWdRWm1iVjV6T3kiLAogICAgICAgICJ5IjogIkFFdTNoa1NycTVHZVN5ZW5rUkxfR180QkJlVXRpLXV5ZDVOQzBiZmlkYlR2VnBkdXZVTHVHSGV2QXRZUUFmUnJYYTlOekFkTHVJQkFpbWFXbWNlLTBmc2wiCiAgICAgIH0K
     mapping:
-      federation: "sign-key-1"
-      hosted: "sign-key-2"
+      federation:
+      - "sign-key-1"
+      hosted:
+      - "sign-key-2"
   service:
     storage: redis
     redis:

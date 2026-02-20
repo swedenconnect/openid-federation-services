@@ -74,6 +74,16 @@ public class FederationKeyConfiguration {
           keyRegistry.register(property);
         });
 
+    properties.getMapping().forEach((mapping, list) -> {
+      list.forEach(key -> {
+        keyRegistry.getKey("%s:%s".formatted(mapping, key)).orElseThrow(
+            () -> {
+              final String message = "An unknown private key was mapped %s to %s, remove this mapping or load the key";
+              return new IllegalArgumentException(message.formatted(key, mapping));
+            });
+      });
+    });
+
     return keyRegistry;
   }
 }

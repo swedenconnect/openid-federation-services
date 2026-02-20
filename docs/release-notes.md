@@ -4,6 +4,12 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.9.12
+
+**Date:** 2026-02-20
+
+* Added fail-fast validation at startup that verifies all configured key mappings reference keys that exist in the `KeyRegistry`. If an unknown key is referenced, startup fails with a descriptive error message.
+
 ### Version 0.9.11
 
 **Date:** 2026-02-19
