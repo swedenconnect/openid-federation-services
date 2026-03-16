@@ -4,6 +4,12 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.9.13
+
+**Date:** 2026-03-06
+
+* Bugfix: public keys are now serialized as-is to Redis — when a JWKS contains no private keys, it is serialized using `toString(true)` directly instead of going through the reference serializer
+
 ### Version 0.9.12
 
 **Date:** 2026-02-20

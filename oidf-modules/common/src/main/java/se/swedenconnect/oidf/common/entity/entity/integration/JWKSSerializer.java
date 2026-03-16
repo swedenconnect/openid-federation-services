@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration;
 
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.shaded.gson.JsonDeserializationContext;
 import com.nimbusds.jose.shaded.gson.JsonDeserializer;
@@ -76,6 +77,9 @@ public class JWKSSerializer implements JsonDeserializer<JWKSet>, JsonSerializer<
       final JWKSet jwks,
       final Type type,
       final JsonSerializationContext jsonSerializationContext) {
+    if (jwks.getKeys().stream().noneMatch(JWK::isPrivate)) {
+      return new JsonParser().parse(jwks.toString(true));
+    }
     if (Objects.nonNull(this.referenceSerializer)) {
       return this.referenceSerializer.serialize(jwks, type, jsonSerializationContext);
     }
