@@ -4,6 +4,12 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.9.15
+
+**Date:** 2026-03-16
+
+* Bugfix: entity configuration presentation no longer fails when a trust mark cannot be fetched — the failed trust mark is now skipped (with an error log) instead of propagating the exception
+
 ### Version 0.9.14
 
 **Date:** 2026-03-16
