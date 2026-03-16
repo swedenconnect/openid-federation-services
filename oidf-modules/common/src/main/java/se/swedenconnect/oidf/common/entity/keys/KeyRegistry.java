@@ -81,14 +81,16 @@ public class KeyRegistry {
   public void register(final KeyProperty property) {
     try {
       if (Objects.nonNull(property.getMapping())) {
-        this.mappedKey.put(
-            "%s:%s".formatted(property.getMapping(), property.getKey().getKeyID()),
-            property.getKey()
-        );
-        this.mappedKey.put(
-            "%s:%s".formatted(property.getMapping(), property.getAlias()),
-            property.getKey()
-        );
+        property.getMapping().forEach(mapping -> {
+          this.mappedKey.put(
+              "%s:%s".formatted(mapping, property.getKey().getKeyID()),
+              property.getKey()
+          );
+          this.mappedKey.put(
+              "%s:%s".formatted(mapping, property.getAlias()),
+              property.getKey()
+          );
+        });
       }
     } catch (final Exception e) {
       throw new IllegalArgumentException("Failed to add key to registry ", e);

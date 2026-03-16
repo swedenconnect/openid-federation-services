@@ -95,7 +95,7 @@ public class RegistryMock {
     final KeyProperty property = new KeyProperty();
     property.setAlias("sign-key-1");
     property.setKey(load);
-    property.setMapping("federation");
+    property.setMapping(List.of("federation"));
     registry.register(property);
     final JWKSKidReferenceLoader jwksKidReferenceLoader = new JWKSKidReferenceLoader(registry);
     final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader(this.createGson(jwksKidReferenceLoader, registry));

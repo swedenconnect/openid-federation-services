@@ -20,6 +20,8 @@ import com.nimbusds.jose.jwk.JWK;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
  * Property class for keys.
  *
@@ -33,6 +35,6 @@ public class KeyProperty {
   /** Alias for a given key */
   private String alias;
   /** Key mapping prefix*/
-  private String mapping;
+  private List<String> mapping;
 
 }

@@ -57,7 +57,7 @@ class JsonRegistryLoaderTest {
     final KeyProperty property = new KeyProperty();
     property.setKey(generateKey());
     property.setAlias("sign-key-1");
-    property.setMapping("hosted");
+    property.setMapping(List.of("hosted"));
     registry.register(property);
     final JsonRegistryLoader jsonRegistryLoader =
         new JsonRegistryLoader(this.createGson(new JWKSKidReferenceLoader(registry)));

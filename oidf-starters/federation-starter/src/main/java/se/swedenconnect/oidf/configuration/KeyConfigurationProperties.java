@@ -28,6 +28,7 @@ import org.springframework.core.annotation.Order;
 import se.swedenconnect.oidf.KeyEntry;
 import se.swedenconnect.oidf.common.entity.keys.KeyProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,16 +73,17 @@ public class KeyConfigurationProperties {
    * @param property to check
    * @return key mapping
    */
-  public String getMapping(final KeyProperty property) {
+  public List<String> getMapping(final KeyProperty property) {
+    final List<String> mappings = new ArrayList<>();
     final String kid = property.getKey().getKeyID();
     final String alias = property.getAlias();
     if (this.isMappedKey(kid, alias, "federation")) {
-      return "federation";
+      mappings.add("federation");
     }
     if (this.isMappedKey(kid, alias, "hosted")) {
-      return "hosted";
+      mappings.add("hosted");
     }
-    return "alias";
+    return mappings;
   }
 
   private boolean isMappedKey(final String kid, final String alias, final String mapping) {
