@@ -24,6 +24,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
+import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
@@ -42,6 +43,7 @@ import java.util.Objects;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class SigningEntityConfigurationFactory implements EntityConfigurationFactory {
 
   private final FederationClient federationClient;
@@ -77,10 +79,17 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
         final List<TrustMarkEntry> trustMarks = trustMarkSourceProperties.stream()
             .map(s -> new TrustMarkRequest(record.getEntityIdentifier(), s.issuer(), new EntityID(s.trustMarkType())))
             .map(request -> {
-              final SignedJWT signedJWT =
-                  this.federationClient.trustMark(new FederationRequest<>(request, Map.of(), true));
-              return new TrustMarkEntry(request.trustMarkType(), signedJWT);
+              try {
+                final SignedJWT signedJWT =
+                    this.federationClient.trustMark(new FederationRequest<>(request, Map.of(), true));
+                return new TrustMarkEntry(request.trustMarkType(), signedJWT);
+              } catch (final Exception e) {
+                log.error("Failed to fetch trust mark type %s for entity %s".formatted(request.trustMarkType(),
+                    request.subject()));
+                return null;
+              }
             })
+            .filter(Objects::nonNull)
             .toList();
         builder.claim("trust_marks", trustMarks.stream().map(TrustMarkEntry::toJSONObject).toList());
       }
