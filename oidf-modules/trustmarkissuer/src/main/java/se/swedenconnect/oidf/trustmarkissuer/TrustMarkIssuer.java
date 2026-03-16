@@ -176,10 +176,16 @@ public class TrustMarkIssuer {
    */
   public String trustMark(final TrustMarkRequest request) throws ServerErrorException, NotFoundException {
 
+    final Optional<TrustMarkProperties> trustMarkProperties = this.trustMarkIssuerProperties.trustMarks().stream()
+        .filter(tm -> request.trustMarkType().equals(tm.getTrustMarkType().getTrustMarkType()))
+        .findFirst();
+    if (trustMarkProperties.isEmpty()) {
+      throw new NotFoundException("Trust mark type %s was not found for the trust mark issuer."
+          .formatted(request.trustMarkType())
+      );
+    }
     final TrustMarkProperties properties =
-        this.trustMarkIssuerProperties.trustMarks().stream()
-            .filter(tm -> request.trustMarkType().equals(tm.getTrustMarkType().getTrustMarkType()))
-            .findFirst()
+        trustMarkProperties
             .get();
 
     final Optional<TrustMarkSubjectProperty> subject = properties.getTrustMarkSubjects()
