@@ -7,6 +7,99 @@ This service component can work standalone with management of properties or in m
 using a [registry](https://github.com/swedenconnect/openid-federation-registry) sevice to enable management using a web
 interface.
 
+## Use cases
+## Use Case Overview
+
+OpenID Federation Services exposes APIs for federation metadata resolution, trust anchor and intermediate federation data, trust mark issuance and validation, and service configuration and monitoring.
+
+The overview below summarizes the main API use cases and the supporting capabilities of the service.
+
+For detailed use case descriptions, see [Use Cases](./docs/usecases/use-cases.md).
+
+```mermaid
+flowchart LR
+
+  %% Actors
+  OIDFC[OpenID Federation Client]
+  SvcOp[Service Operator]
+  Registry[OpenID Federation Registry]
+
+  %% System boundary
+  subgraph OFS["OpenID Federation Services"]
+
+    subgraph Resolver["Resolver API"]
+      R1([Resolve and verify entity metadata])
+    end
+
+    subgraph TA["Trust Anchor API"]
+      TA1([Discover entities])
+      TA2([Get subordinate listing])
+      TA3([Get subordinate statement])
+    end
+
+    subgraph INT["Intermediate API"]
+      I1([Get subordinate listing])
+      I2([Get subordinate statement])
+    end
+
+    subgraph TMI["Trust Mark Issuer API"]
+      TM1([Get trust mark])
+      TM2([Verify trust mark status])
+      TM3([List trust marks])
+    end
+
+    subgraph CFG["Configuration and status"]
+      C1([Module configuration])
+      C2([Monitoring])
+      C3([Registry-based configuration])
+    end
+
+    subgraph CORE["Shared supporting capabilities"]
+      S1([Fetch external federation metadata])
+      S2([Verify signatures])
+      S3([Cache federation metadata])
+    end
+  end
+
+  %% Actor relations
+  OIDFC --> R1
+  OIDFC --> TA1
+  OIDFC --> TA2
+  OIDFC --> TA3
+  OIDFC --> I1
+  OIDFC --> I2
+  OIDFC --> TM1
+  OIDFC --> TM2
+  OIDFC --> TM3
+
+  SvcOp --> C1
+  SvcOp --> C2
+  SvcOp --> C3
+
+  Registry --> C3
+
+  %% Dependencies
+  R1 -.-> S1
+  R1 -.-> S2
+  R1 -.-> S3
+
+  TA1 -.-> S1
+  TA1 -.-> S2
+  TA1 -.-> S3
+
+  TM1 -.-> S2
+  TM2 -.-> S2
+  TM3 -.-> S2
+
+  %% Styling
+  classDef actor fill:#ffffff,stroke:#333,stroke-width:1px,color:#111;
+  classDef usecase fill:#f7f7f7,stroke:#333,stroke-width:1px,color:#111;
+
+  class OIDFC,SvcOp,Registry actor;
+  class R1,TA1,TA2,TA3,I1,I2,TM1,TM2,TM3,C1,C2,C3,S1,S2,S3 usecase;
+```
+
+
 ## Managed Mode
 
 When this service is running in managed mode it loads its instance configuration from a given registry.
