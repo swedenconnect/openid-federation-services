@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.resolver;
 
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusStore;
 import se.swedenconnect.oidf.common.entity.tree.ResolverCache;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTreeLoader;
@@ -24,12 +25,14 @@ import se.swedenconnect.oidf.resolver.tree.EntityStatementTreeLoader;
 /**
  * Registartion of a cache.
  *
- * @param tree       of the cache
- * @param loader     for the cache
- * @param cache      the actual cache
- * @param properties properties for the cache
+ * @param tree        of the cache
+ * @param loader      for the cache
+ * @param cache       the actual cache
+ * @param properties  properties for the cache
+ * @param statusStore for trust mark status results
  * @author Felix Hellman
  */
 public record ResolverCacheRegistration(EntityStatementTree tree, EntityStatementTreeLoader loader,
-                                        ResolverCache cache, ResolverProperties properties) {
+                                        ResolverCache cache, ResolverProperties properties,
+                                        TrustMarkStatusStore statusStore) {
 }

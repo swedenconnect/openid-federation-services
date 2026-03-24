@@ -17,7 +17,10 @@
 package se.swedenconnect.oidf.resolver;
 
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.InMemoryTrustMarkStatusStore;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusStore;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.common.entity.tree.ResolverCache;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
@@ -27,6 +30,8 @@ import se.swedenconnect.oidf.resolver.chain.CriticalClaimsValidationStep;
 import se.swedenconnect.oidf.resolver.chain.SignatureValidationStep;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
+import se.swedenconnect.oidf.resolver.trustmark.TrustMarkCollector;
+import se.swedenconnect.oidf.resolver.trustmark.TrustMarkStatusLoader;
 
 import java.time.Clock;
 import java.util.List;
@@ -46,17 +51,19 @@ public class ResolverFactory {
   private final SignerFactory signerFactory;
   private final List<Function<Resolver, Resolver>> transformers;
   private final CompositeRecordSource compositeRecordSource;
+  private final FederationClient federationClient;
 
   /**
    * Constructor.
    *
-   * @param resolverCacheFactory factory for creating snap resolver caches
-   * @param processor            to use for metadata
-   * @param treeLoaderFactory    to use for creating tree loaders
-   * @param registry             for caches
-   * @param signerFactory        to use
-   * @param transformers         functions to apply on resolver
+   * @param resolverCacheFactory  factory for creating snap resolver caches
+   * @param processor             to use for metadata
+   * @param treeLoaderFactory     to use for creating tree loaders
+   * @param registry              for caches
+   * @param signerFactory         to use
+   * @param transformers          functions to apply on resolver
    * @param compositeRecordSource to find entity
+   * @param federationClient      for trust mark status checks
    */
   public ResolverFactory(
       final ResolverCacheFactory resolverCacheFactory,
@@ -65,7 +72,8 @@ public class ResolverFactory {
       final ResolverCacheRegistry registry,
       final SignerFactory signerFactory,
       final List<Function<Resolver, Resolver>> transformers,
-      final CompositeRecordSource compositeRecordSource) {
+      final CompositeRecordSource compositeRecordSource,
+      final FederationClient federationClient) {
 
     this.resolverCacheFactory = resolverCacheFactory;
     this.processor = processor;
@@ -74,6 +82,7 @@ public class ResolverFactory {
     this.signerFactory = signerFactory;
     this.transformers = transformers;
     this.compositeRecordSource = compositeRecordSource;
+    this.federationClient = federationClient;
   }
 
 
@@ -86,9 +95,12 @@ public class ResolverFactory {
   public Resolver create(final ResolverProperties properties) {
     if (this.registry.getRegistration(properties.getEntityIdentifier()).isEmpty()) {
       final ResolverCache entityStatementSnapshotSource = this.resolverCacheFactory.create(properties);
+      final TrustMarkStatusStore statusStore = new InMemoryTrustMarkStatusStore();
+      final TrustMarkStatusLoader checker = new TrustMarkStatusLoader(
+          this.federationClient, statusStore, properties.getTrustAnchor());
       final EntityStatementTree entityStatementTree =
-          new EntityStatementTree(new Tree<>(entityStatementSnapshotSource));
-      this.registerCache(properties, entityStatementTree, entityStatementSnapshotSource);
+          new EntityStatementTree(new Tree<>(entityStatementSnapshotSource), checker);
+      this.registerCache(properties, entityStatementTree, entityStatementSnapshotSource, statusStore);
     }
 
     final ResolverCacheRegistration registration = this.registry
@@ -100,7 +112,8 @@ public class ResolverFactory {
         this.createChainValidator(properties),
         registration.tree(),
         this.processor,
-        this.resolverResponseFactory(properties, this.compositeRecordSource)
+        this.resolverResponseFactory(properties, this.compositeRecordSource),
+        new TrustMarkCollector(registration.statusStore())
     );
 
     return this.transformers.stream()
@@ -111,12 +124,14 @@ public class ResolverFactory {
   private void registerCache(
       final ResolverProperties properties,
       final EntityStatementTree entityStatementTree,
-      final ResolverCache entityStatementSnapshotSource) {
+      final ResolverCache entityStatementSnapshotSource,
+      final TrustMarkStatusStore statusStore) {
     this.registry.registerCache(properties.getEntityIdentifier(), new ResolverCacheRegistration(
         entityStatementTree,
         this.treeLoaderFactory.create(properties),
         entityStatementSnapshotSource,
-        properties
+        properties,
+        statusStore
     ));
   }
 

@@ -58,6 +58,8 @@ public class ValidatingResolver implements Resolver {
 
   private final ResolverResponseFactory factory;
 
+  private final TrustMarkCollector trustMarkCollector;
+
   /**
    * Constructor.
    *
@@ -66,18 +68,21 @@ public class ValidatingResolver implements Resolver {
    * @param tree               data structure to search upon
    * @param processor          for processing metadata
    * @param factory            to create signed responses
+   * @param trustMarkCollector for collecting trust marks from chains
    */
   public ValidatingResolver(final ResolverProperties resolverProperties,
                             final ChainValidator validator,
                             final EntityStatementTree tree,
                             final MetadataProcessor processor,
-                            final ResolverResponseFactory factory) {
+                            final ResolverResponseFactory factory,
+                            final TrustMarkCollector trustMarkCollector) {
 
     this.resolverProperties = resolverProperties;
     this.validator = validator;
     this.tree = tree;
     this.processor = processor;
     this.factory = factory;
+    this.trustMarkCollector = trustMarkCollector;
   }
 
   @Override
@@ -158,7 +163,7 @@ public class ValidatingResolver implements Resolver {
     }
     List<TrustMarkEntry> trustMarkEntries = null;
     try {
-      trustMarkEntries = TrustMarkCollector.collectSubjectTrustMarks(chainValidationResult.chain());
+      trustMarkEntries = this.trustMarkCollector.collectSubjectTrustMarks(chainValidationResult.chain());
     } catch (final Exception e) {
       validationErrors.add(e);
     }

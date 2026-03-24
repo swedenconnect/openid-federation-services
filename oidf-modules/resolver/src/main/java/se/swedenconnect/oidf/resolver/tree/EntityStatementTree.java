@@ -26,10 +26,13 @@ import se.swedenconnect.oidf.common.entity.tree.SearchRequest;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 
+import se.swedenconnect.oidf.resolver.trustmark.TrustMarkStatusLoader;
+
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,12 +45,23 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EntityStatementTree {
   private final Tree<EntityStatement> tree;
+  private final Optional<TrustMarkStatusLoader> checker;
 
   /**
    * @param tree with federation nodes
    */
   public EntityStatementTree(final Tree<EntityStatement> tree) {
     this.tree = tree;
+    this.checker = Optional.empty();
+  }
+
+  /**
+   * @param tree    with federation nodes
+   * @param checker for validating trust mark status during tree load
+   */
+  public EntityStatementTree(final Tree<EntityStatement> tree, final TrustMarkStatusLoader checker) {
+    this.tree = tree;
+    this.checker = Optional.of(checker);
   }
 
   /**
@@ -96,6 +110,7 @@ public class EntityStatementTree {
    */
   public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId) {
     loader.resolveTree(trustAnchorEntityId, this.tree);
+    this.checker.ifPresent(c -> c.checkAll(this));
   }
 
   private boolean isIntermediate(final EntityStatement statement, final ResolveRequest request) {
