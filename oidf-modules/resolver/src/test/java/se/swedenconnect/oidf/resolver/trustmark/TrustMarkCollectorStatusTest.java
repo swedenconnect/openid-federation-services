@@ -32,6 +32,7 @@ import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.InMemoryTrustMarkStatusStore;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusStore;
 
 import java.time.Instant;
@@ -47,7 +48,7 @@ class TrustMarkCollectorStatusTest {
   @Test
   void statusStoreFiltersInactiveTrustMarks() throws Exception {
     final TrustMarkStatusStore store = new InMemoryTrustMarkStatusStore();
-    store.setTrustMarkStatus(SUBJECT, TRUST_MARK_TYPE, false);
+    store.setTrustMarkStatus(SUBJECT, TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("inactive"), false));
 
     final TrustMarkCollector collector = new TrustMarkCollector(store);
 
@@ -68,7 +69,7 @@ class TrustMarkCollectorStatusTest {
   @Test
   void statusStoreAllowsActiveTrustMarks() throws Exception {
     final TrustMarkStatusStore store = new InMemoryTrustMarkStatusStore();
-    store.setTrustMarkStatus(SUBJECT, TRUST_MARK_TYPE, true);
+    store.setTrustMarkStatus(SUBJECT, TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false));
 
     final TrustMarkCollector collector = new TrustMarkCollector(store);
 
@@ -103,8 +104,8 @@ class TrustMarkCollectorStatusTest {
     final List<EntityStatement> chain = List.of(leafStatement, superiorStatement, trustAnchor);
     final List<TrustMarkEntry> result = collector.collectSubjectTrustMarks(chain);
 
-    Assertions.assertEquals(1, result.size(),
-        "Trust mark with no recorded status should be included (orElse(true))");
+    Assertions.assertEquals(0, result.size(),
+        "Trust mark with no recorded status should be excluded (orElse(false))");
   }
 
   private String buildTrustMarkJwt(final JWK key) throws Exception {
@@ -176,6 +177,19 @@ class TrustMarkCollectorStatusTest {
     final SignedJWT jwt = new SignedJWT(header, claims);
     jwt.sign(new RSASSASigner(key.toRSAKey()));
     return EntityStatement.parse(jwt.serialize());
+  }
+
+  private SignedJWT buildStatusJwt(final String status) throws Exception {
+    final JWK key = new RSAKeyGenerator(2048).keyID("status-key").generate();
+    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(key.getKeyID()).build();
+    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
+        .issuer(ISSUER)
+        .subject(SUBJECT)
+        .claim("status", status)
+        .build();
+    final SignedJWT jwt = new SignedJWT(header, claims);
+    jwt.sign(new RSASSASigner(key.toRSAKey()));
+    return jwt;
   }
 
   private EntityStatement buildTrustAnchorStatement(final JWK ownerKey) throws Exception {

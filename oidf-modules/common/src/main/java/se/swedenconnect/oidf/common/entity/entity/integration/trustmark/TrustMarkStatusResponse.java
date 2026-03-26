@@ -21,6 +21,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Response for a trust mark status check.
+ *
+ * @author Felix Hellman
+ */
 @Getter
 @Setter
 @AllArgsConstructor

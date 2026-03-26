@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.tree;
+package se.swedenconnect.oidf.common.entity.tree.scraping;
 
 import com.nimbusds.jwt.SignedJWT;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;

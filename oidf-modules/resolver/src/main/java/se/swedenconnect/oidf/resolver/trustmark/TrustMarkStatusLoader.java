@@ -30,6 +30,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMar
 import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -68,13 +70,13 @@ public class TrustMarkStatusLoader {
    * @param tree the entity statement tree to check
    */
   public void checkAll(final EntityStatementTree tree) {
-    final Set<Tree.SearchResult<EntityStatement>> all = tree.getAll();
+    final Set<Tree.SearchResult<ScrapedEntity>> all = tree.getAll();
 
     // Find trust anchor self-statement to get trust_mark_issuers
-    final Optional<EntityStatement> trustAnchorStatement = all.stream()
+    final Optional<ScrapedEntity> trustAnchorStatement = all.stream()
         .map(Tree.SearchResult::getData)
-        .filter(es -> es.getEntityID().getValue().equals(this.trustAnchorEntityId))
-        .filter(es -> es.getClaimsSet().isSelfStatement())
+        .filter(es -> es.getEntityStatement().getEntityID().getValue().equals(this.trustAnchorEntityId))
+        .filter(es -> es.getEntityStatement().getClaimsSet().isSelfStatement())
         .findFirst();
 
     if (trustAnchorStatement.isEmpty()) {
@@ -83,6 +85,7 @@ public class TrustMarkStatusLoader {
     }
 
     final JSONObject trustMarkIssuers = trustAnchorStatement.get()
+        .getEntityStatement()
         .getClaimsSet()
         .getJSONObjectClaim("trust_mark_issuers");
 
@@ -99,21 +102,21 @@ public class TrustMarkStatusLoader {
     // Build a map of entity ID -> federation_entity metadata for endpoint lookup
     final Map<String, JSONObject> entityFederationMetadata = new java.util.HashMap<>();
     all.forEach(result -> {
-      final EntityStatement es = result.getData();
+      final EntityStatement es = result.getData().getEntityStatement();
       final JSONObject fedMeta = es.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY);
       if (fedMeta != null) {
         entityFederationMetadata.put(es.getEntityID().getValue(), fedMeta);
       }
     });
 
-    for (final Tree.SearchResult<EntityStatement> result : all) {
-      final EntityStatement es = result.getData();
-      final JSONArray trustMarks = es.getClaimsSet().getJSONArrayClaim("trust_marks");
+    for (final Tree.SearchResult<ScrapedEntity> result : all) {
+      final ScrapedEntity es = result.getData();
+      final JSONArray trustMarks = es.getEntityStatement().getClaimsSet().getJSONArrayClaim("trust_marks");
       if (trustMarks == null) {
         continue;
       }
 
-      final String subject = es.getClaimsSet().getSubject().getValue();
+      final String subject = es.getEntityStatement().getClaimsSet().getSubject().getValue();
 
       for (final Object entry : trustMarks) {
         final JSONObject tmJson = (JSONObject) entry;
@@ -139,8 +142,7 @@ public class TrustMarkStatusLoader {
             final TrustMarkStatusResponse signedJWT = this.federationClient.trustMarkStatus(
                 new FederationRequest<>(
                     new FederationTrustMarkStatusRequest(trustMarkJwt, issuer),
-                    issuerMetadata,
-                    false));
+                    issuerMetadata));
             this.store.setTrustMarkStatus(subject, trustMarkType, signedJWT);
           } catch (final Exception e) {
             log.warn("Failed to check trust mark status for subject={} type={}: {}",

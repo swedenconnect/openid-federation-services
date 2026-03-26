@@ -16,7 +16,7 @@
  */
 package se.swedenconnect.oidf.common.entity.tree;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,24 +33,24 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class VersionedInMemoryCache implements ResolverCache {
 
-  private final Map<String, List<Node<EntityStatement>>> childMap = new ConcurrentHashMap<>();
-  private final Map<String, EntityStatement> dataMap = new ConcurrentHashMap<>();
-  private final Map<Integer, Node<EntityStatement>> rootMap = new ConcurrentHashMap<>();
+  private final Map<String, List<Node<ScrapedEntity>>> childMap = new ConcurrentHashMap<>();
+  private final Map<String, ScrapedEntity> dataMap = new ConcurrentHashMap<>();
+  private final Map<Integer, Node<ScrapedEntity>> rootMap = new ConcurrentHashMap<>();
 
   private final AtomicInteger integer = new AtomicInteger(0);
 
   @Override
-  public void setData(final String key, final EntityStatement data, final int version) {
+  public void setData(final String key, final ScrapedEntity data, final int version) {
     this.dataMap.put(this.getKey(key, version), data);
   }
 
   @Override
-  public Node<EntityStatement> getRoot(final int version) {
+  public Node<ScrapedEntity> getRoot(final int version) {
     return this.rootMap.get(version);
   }
 
   @Override
-  public EntityStatement getData(final String key, final int version) {
+  public ScrapedEntity getData(final String key, final int version) {
     return this.dataMap.get(this.getKey(key, version));
   }
 
@@ -59,16 +59,16 @@ public class VersionedInMemoryCache implements ResolverCache {
   }
 
   @Override
-  public List<Node<EntityStatement>> getChildren(final Node<EntityStatement> node, final int version) {
+  public List<Node<ScrapedEntity>> getChildren(final Node<ScrapedEntity> node, final int version) {
     return Optional.ofNullable(this.childMap.get(this.getKey(node.getKey().getKey(), version))).orElseGet(List::of);
   }
 
   @Override
   public synchronized void append(
-      final Node<EntityStatement> child, final Node<EntityStatement> parent,
+      final Node<ScrapedEntity> child, final Node<ScrapedEntity> parent,
       final int version) {
     //Can probably be solved without synchronized using compute if missing ...
-    List<Node<EntityStatement>> nodes = this.childMap.get(this.getKey(parent.getKey().getKey(), version));
+    List<Node<ScrapedEntity>> nodes = this.childMap.get(this.getKey(parent.getKey().getKey(), version));
     if (Objects.isNull(nodes)) {
       nodes = new ArrayList<>();
     }
@@ -87,14 +87,14 @@ public class VersionedInMemoryCache implements ResolverCache {
   }
 
   @Override
-  public CacheSnapshot<EntityStatement> snapshot() {
+  public CacheSnapshot<ScrapedEntity> snapshot() {
     return new CacheSnapshot<>(this, this.getCurrentVersion());
   }
 
   @Override
-  public CacheSnapshot<EntityStatement> createNewSnapshot(
-      final Node<EntityStatement> root,
-      final EntityStatement rootData) {
+  public CacheSnapshot<ScrapedEntity> createNewSnapshot(
+      final Node<ScrapedEntity> root,
+      final ScrapedEntity rootData) {
     final int version = this.getNextVersion();
     this.rootMap.put(version, root);
     this.setData(root.getKey().getKey(), rootData, version);

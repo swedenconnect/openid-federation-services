@@ -16,12 +16,12 @@
  */
 package se.swedenconnect.oidf.common.entity.tree;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 /**
  * Cache for Resolver.
  *
  * @author Felix Hellman
  */
-public interface ResolverCache extends SnapshotSource<EntityStatement>, VersionedCacheLayer<EntityStatement> {
+public interface ResolverCache extends SnapshotSource<ScrapedEntity>, VersionedCacheLayer<ScrapedEntity> {
 }

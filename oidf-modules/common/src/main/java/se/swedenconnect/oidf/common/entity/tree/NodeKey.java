@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.common.entity.tree;
 
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
@@ -64,6 +65,17 @@ public record NodeKey(String issuer, String subject) {
         es.getClaimsSet().getIssuer().getValue(),
         es.getClaimsSet().getSubject().getValue()
     );
+  }
+
+  public static NodeKey fromSignedJwt(final SignedJWT jwt) {
+    try {
+      return new NodeKey(
+          jwt.getJWTClaimsSet().getIssuer(),
+          jwt.getJWTClaimsSet().getSubject()
+      );
+    } catch (final Exception e) {
+      throw new IllegalArgumentException("Failed to determine node key from signed jwt");
+    }
   }
 
   /**

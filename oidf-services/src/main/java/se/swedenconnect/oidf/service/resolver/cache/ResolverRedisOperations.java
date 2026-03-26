@@ -16,10 +16,10 @@
  */
 package se.swedenconnect.oidf.service.resolver.cache;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.time.Duration;
 import java.util.List;
@@ -38,13 +38,13 @@ public class ResolverRedisOperations {
    * @param entityTemplate for handling entity statements
    * @param childTemplate for handling child listings
    */
-  public ResolverRedisOperations(final RedisTemplate<String, EntityStatement> entityTemplate,
+  public ResolverRedisOperations(final RedisTemplate<String, ScrapedEntity> entityTemplate,
                                  final RedisTemplate<String, String> childTemplate) {
     this.template = entityTemplate;
     this.stringTemplate = childTemplate;
   }
 
-  private final RedisTemplate<String, EntityStatement> template;
+  private final RedisTemplate<String, ScrapedEntity> template;
   private final RedisTemplate<String, String> stringTemplate;
 
   /**
@@ -53,12 +53,12 @@ public class ResolverRedisOperations {
    * @param childKey to search for
    * @return list of children, empty list if no children
    */
-  public List<Node<EntityStatement>> getChildren(final ChildKey childKey) {
+  public List<Node<ScrapedEntity>> getChildren(final ChildKey childKey) {
     final Set<String> members = this.stringTemplate.opsForSet().members(childKey.getRedisKey());
     if (Objects.nonNull(members)) {
       return members
           .stream()
-          .map(key -> new Node<EntityStatement>(NodeKey.parse(key)))
+          .map(key -> new Node<ScrapedEntity>(NodeKey.parse(key)))
           .toList();
     }
     return List.of();
@@ -69,7 +69,7 @@ public class ResolverRedisOperations {
    * @param parent key
    * @param child node key
    */
-  public void append(final ChildKey parent, final Node<EntityStatement> child) {
+  public void append(final ChildKey parent, final Node<ScrapedEntity> child) {
     this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey().getKey());
     this.stringTemplate.expire(parent.getRedisKey(), Duration.ofHours(2));
   }
@@ -79,7 +79,7 @@ public class ResolverRedisOperations {
    * @param key to update for
    * @param data to set
    */
-  public void setData(final EntityKey key, final EntityStatement data) {
+  public void setData(final EntityKey key, final ScrapedEntity data) {
     this.template.opsForValue().set(key.getRedisKey(), data);
     this.template.expire(key.getRedisKey(), Duration.ofHours(2));
   }
@@ -89,7 +89,7 @@ public class ResolverRedisOperations {
    * @param key for value
    * @return value, can be null
    */
-  public EntityStatement getData(final EntityKey key) {
+  public ScrapedEntity getData(final EntityKey key) {
     return this.template.opsForValue().get(key.getRedisKey());
   }
 
@@ -98,7 +98,7 @@ public class ResolverRedisOperations {
    * @param key for root
    * @return root node
    */
-  public Node<EntityStatement> getRoot(final RootKey key) {
+  public Node<ScrapedEntity> getRoot(final RootKey key) {
     final String root = this.stringTemplate.opsForValue().get(key.getRedisKey());
     return new Node<>(NodeKey.parse(root));
   }
@@ -108,7 +108,7 @@ public class ResolverRedisOperations {
    * @param key for the root node
    * @param root node key for root
    */
-  public void setRoot(final RootKey key, final Node<EntityStatement> root) {
+  public void setRoot(final RootKey key, final Node<ScrapedEntity> root) {
     this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey().getKey());
     this.stringTemplate.expire(key.getRedisKey(), Duration.ofHours(2));
   }
@@ -131,7 +131,7 @@ public class ResolverRedisOperations {
    * @param version to which the child and parent belongs to
    * @param entityId to which module the data belongs to
    */
-  public record ChildKey(Node<EntityStatement> parent, int version, String entityId) {
+  public record ChildKey(Node<ScrapedEntity> parent, int version, String entityId) {
     String getRedisKey() {
       return "%s:%d:children:%s".formatted(this.entityId, this.version, this.parent.getKey());
     }

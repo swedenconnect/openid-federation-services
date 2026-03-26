@@ -14,10 +14,9 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.tree.scraping;
-
-import java.util.Map;
-
-public record ScrapedTrustMark(String trustMarkType, Map<String, ScrapedTrustMarkInfo> subjects) {
-
-}
+/**
+ * Trust mark integration package.
+ *
+ * @author Felix Hellman
+ */
+package se.swedenconnect.oidf.common.entity.entity.integration.trustmark;

@@ -31,7 +31,9 @@ import se.swedenconnect.oidf.resolver.chain.ChainValidationResult;
 import se.swedenconnect.oidf.resolver.chain.ChainValidator;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
+import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 import se.swedenconnect.oidf.resolver.trustmark.TrustMarkCollector;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,8 +60,6 @@ public class ValidatingResolver implements Resolver {
 
   private final ResolverResponseFactory factory;
 
-  private final TrustMarkCollector trustMarkCollector;
-
   /**
    * Constructor.
    *
@@ -68,21 +68,18 @@ public class ValidatingResolver implements Resolver {
    * @param tree               data structure to search upon
    * @param processor          for processing metadata
    * @param factory            to create signed responses
-   * @param trustMarkCollector for collecting trust marks from chains
    */
   public ValidatingResolver(final ResolverProperties resolverProperties,
                             final ChainValidator validator,
                             final EntityStatementTree tree,
                             final MetadataProcessor processor,
-                            final ResolverResponseFactory factory,
-                            final TrustMarkCollector trustMarkCollector) {
+                            final ResolverResponseFactory factory) {
 
     this.resolverProperties = resolverProperties;
     this.validator = validator;
     this.tree = tree;
     this.processor = processor;
     this.factory = factory;
-    this.trustMarkCollector = trustMarkCollector;
   }
 
   @Override
@@ -133,22 +130,27 @@ public class ValidatingResolver implements Resolver {
     }
 
     if (request.trustAnchor().equals(request.subject())) {
-      final Set<EntityStatement> trustChain = this.tree.getTrustChain(request);
-      return ResolverResponse.builder()
-          .entityStatement(trustChain.stream().findFirst().get())
-          .build();
+      final ResolverTrustChain chain = this.tree.getTrustChain(request);
+      try {
+        return ResolverResponse.builder()
+            .entityStatement(EntityStatement.parse(chain.getTrustChain().stream().findFirst().get().getSignedStatement()))
+            .build();
+      } catch (ParseException e) {
+        throw new RuntimeException(e);
+      }
     }
 
 
-    final Set<EntityStatement> chain = this.tree.getTrustChain(request);
-    if (chain.isEmpty()) {
+    final ResolverTrustChain chain = this.tree.getTrustChain(request);
+    if (chain.getTrustChain().isEmpty()) {
       validationErrors.add(
           new NotFoundException("Resolver found no subject with requested EntityID:%s".formatted(request.subject()))
       );
     }
     ChainValidationResult chainValidationResult = null;
+    final List<EntityStatement> trustChainList = chain.getTrustChain().stream().toList();
     try {
-      chainValidationResult = this.validator.validate(chain.stream().toList());
+      chainValidationResult = this.validator.validate(trustChainList);
       validationErrors.addAll(chainValidationResult.errors());
     } catch (final Exception e) {
       validationErrors.add(e);
@@ -157,13 +159,13 @@ public class ValidatingResolver implements Resolver {
 
     JSONObject processedMetadata = null;
     try {
-      processedMetadata = this.processor.processMetadata(chainValidationResult.chain());
+      processedMetadata = this.processor.processMetadata(trustChainList);
     } catch (final Exception e) {
       validationErrors.add(e);
     }
     List<TrustMarkEntry> trustMarkEntries = null;
     try {
-      trustMarkEntries = this.trustMarkCollector.collectSubjectTrustMarks(chainValidationResult.chain());
+      trustMarkEntries = TrustMarkCollector.collectSubjectTrustMarks(chain);
     } catch (final Exception e) {
       validationErrors.add(e);
     }
@@ -174,10 +176,9 @@ public class ValidatingResolver implements Resolver {
         .entityStatement(leaf)
         .metadata(processedMetadata)
         .trustMarkEntries(trustMarkEntries)
-        .trustChain(chainValidationResult.chain())
+        .trustChain(trustChainList)
         .validationErrors(validationErrors)
         .build();
-
   }
 
   @Override

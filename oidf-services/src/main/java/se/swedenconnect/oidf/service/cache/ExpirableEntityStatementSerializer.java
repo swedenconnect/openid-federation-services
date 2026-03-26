@@ -32,8 +32,6 @@ import java.nio.charset.StandardCharsets;
  */
 public class ExpirableEntityStatementSerializer implements RedisSerializer<Expirable<EntityStatement>> {
 
-  private final RedisSerializer<EntityStatement> entityStatementSerializer = new EntityStatementSerializer();
-
   @Override
   public byte[] serialize(final Expirable<EntityStatement> value) throws SerializationException {
     if (value == null) {

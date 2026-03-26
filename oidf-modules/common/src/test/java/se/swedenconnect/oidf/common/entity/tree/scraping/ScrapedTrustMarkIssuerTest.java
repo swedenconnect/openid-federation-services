@@ -14,14 +14,12 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.tree;
+package se.swedenconnect.oidf.common.entity.tree.scraping;
 
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedTrustMarkInfo;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedTrustMarkIssuer;
 
 import java.text.ParseException;
 import java.util.HashMap;

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.tree;
+package se.swedenconnect.oidf.common.entity.tree.scraping;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
@@ -23,28 +23,26 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Wrapper for an entity statement in the resolver tree.
  *
  * @author Felix Hellman
  */
+@Slf4j
 @Getter
 @Setter
 @Builder
@@ -56,15 +54,10 @@ public class ScrapedEntity {
 
   // Base info
   private EntityStatement entityStatement;
-  private Map<String, TrustMarkStatusResponse> trustMarkStatuses;
-  // Intermediate
-  private Map<String, SignedJWT> subordinates;
-  //Trust Mark Issuer
+  private Map<String, TrustMarkStatusResponse> trustMarkStatuses = new HashMap<>();
+  //Roles
+  private ScrapedIntermediate intermediate;
   private ScrapedTrustMarkIssuer trustMarkIssuer;
-
-
-  //Trust mark Name to Subject mapping
-
 
   /**
    * Resolves the entity statement using the provided federation client.
@@ -72,7 +65,8 @@ public class ScrapedEntity {
    * @param client the federation client to use for resolution
    * @param trustAnchor entity configuration
    */
-  public void resolve(final FederationClient client, final EntityStatement trustAnchor) {
+  public void scrape(final FederationClient client, final EntityStatementWrapper trustAnchor) {
+    log.debug("Resolving entity {}", this.entityID);
     this.entityStatement =
         client.entityConfiguration(
             new FederationRequest<>(new EntityConfigurationRequest(this.entityID, this.ecLocation))
@@ -92,59 +86,20 @@ public class ScrapedEntity {
         throw new RuntimeException(e);
       }
       //Entity is federation entity
-      wrapper.getFederationEntityMetadata()
-          .ifPresent(metadata -> {
-            this.handleSubordinateListing(client, metadata);
-            this.handleTrustMarkListing(client, metadata, trustAnchor);
-            //We can not resolve all resolver responses here since they are still being calculated.
-          });
     });
-
+    wrapper.getFederationEntityMetadata()
+        .ifPresent(metadata -> {
+          if (metadata.containsKey("federation_trust_mark_list_endpoint") && trustAnchor != null) {
+            log.debug("Entity {} is trust mark issuer, resolving trust mark issuer information", this.entityID);
+            this.trustMarkIssuer = new ScrapedTrustMarkIssuer(new HashMap<>());
+            this.trustMarkIssuer.scrape(client, metadata, trustAnchor, this.entityID);
+          }
+          if (metadata.containsKey("federation_list_endpoint")) {
+            log.debug("Entity {} is intermediate, resolving subordinates", this.entityID);
+            this.intermediate = new ScrapedIntermediate(new HashMap<>());
+            this.intermediate.scrape(client, metadata);
+          }
+        });
   }
 
-  //TODO move to Scaped Trust Mark Issuer
-  private void handleTrustMarkListing(
-      final FederationClient client,
-      final Map<String, Object> metadata,
-      final EntityStatement trustAnchor) {
-    if (metadata.containsKey("federation_trust_mark_list_endpoint")) {
-      this.trustMarkIssuer = new ScrapedTrustMarkIssuer(new HashMap<>());
-      Optional.ofNullable(trustAnchor.getClaimsSet().getTrustMarksIssuers().get(this.entityID))
-          .ifPresent(tmi -> {
-            //This entity is a valid trust mark issuer for this federation.
-            tmi.forEach(tm -> {
-              // For every trust mark get subjects
-              final List<String> trustMarkSubjects =
-                  client.trustMarkedListing(new FederationRequest<>(new TrustMarkListingRequest(tm.getValue(), null),
-                      metadata));
-              trustMarkSubjects.forEach(tms -> {
-                // Trust Mark per subject
-                final SignedJWT trustMark = client.trustMark(new FederationRequest<>(new TrustMarkRequest(new EntityID(tms), this.entityID,
-                    new EntityID(tm.getValue()))));
-                // Status per subject
-                final TrustMarkStatusResponse trustMarkStatus = client.trustMarkStatus(
-                    new FederationRequest<>(new FederationTrustMarkStatusRequest(
-                        trustMark.serialize(),
-                        this.entityID.getValue())
-                    )
-                );
-                final ScrapedTrustMarkInfo info = new ScrapedTrustMarkInfo(this.entityID.getValue(), tm.getValue(), tms, trustMark, trustMarkStatus);
-                this.trustMarkIssuer.addTrustMarkInfo(info);
-              });
-            });
-          });
-    }
-  }
-
-  //TODO move to Scraped Intermediate
-  private void handleSubordinateListing(final FederationClient client, final Map<String, Object> metadata) {
-    if (metadata.containsKey("federation_list_endpoint")) {
-      final List<String> subordinates = client.subordinateListing(
-          new FederationRequest<>(SubordinateListingRequest.requestAll()));
-      subordinates.forEach(sub -> {
-        final EntityStatement fetch = client.fetch(new FederationRequest<>(new FetchRequest(sub), metadata));
-        this.subordinates.put(sub, fetch.getSignedStatement());
-      });
-    }
-  }
 }

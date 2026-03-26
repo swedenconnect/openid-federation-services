@@ -32,8 +32,8 @@ import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
-import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusStore;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
+import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 
 import java.security.Key;
 import java.util.List;
@@ -50,41 +50,23 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TrustMarkCollector {
 
-  private final TrustMarkStatusStore statusStore;
-
   /**
    * Constructor.
    *
-   * @param statusStore for filtering trust marks by their checked status
    */
-  public TrustMarkCollector(final TrustMarkStatusStore statusStore) {
-    this.statusStore = statusStore;
+  public TrustMarkCollector() {
+
   }
 
-  /**
-   * @param chain to check
-   * @return trust marks from chain, filtered by status store results
-   */
-  public List<TrustMarkEntry> collectSubjectTrustMarks(final List<EntityStatement> chain) {
-    return collectSubjectTrustMarks(chain, this.statusStore);
-  }
 
-  /**
-   * @param chain to check
-   * @return trust marks from chain (no status filtering)
-   */
-  public static List<TrustMarkEntry> collectSubjectTrustMarksStatic(final List<EntityStatement> chain) {
-    return collectSubjectTrustMarks(chain, null);
-  }
-
-  private static List<TrustMarkEntry> collectSubjectTrustMarks(final List<EntityStatement> chain,
-                                                               final TrustMarkStatusStore store) {
-    final EntityStatement leafStatement = chain.getFirst();
-    final EntityStatement trustAnchor = chain.getLast();
+  public static List<TrustMarkEntry> collectSubjectTrustMarks(final ResolverTrustChain chain) {
+    final List<EntityStatement> trustChain = chain.getTrustChain().stream().toList();
+    final EntityStatement leafStatement = trustChain.getFirst();
+    final EntityStatement trustAnchor = trustChain.getLast();
     if (leafStatement.getClaimsSet().getTrustMarks() == null) {
       return List.of();
     }
-    final EntityStatement superiorStatement = chain.get(2);
+    final EntityStatement superiorStatement = trustChain.get(2);
     final String subject = leafStatement.getClaimsSet().getSubject().getValue();
 
     final List<TrustMarkEntry> trustMarks = TrustMarkCollector.parseTrustMark(leafStatement);
@@ -135,8 +117,9 @@ public class TrustMarkCollector {
     return filtered.stream().filter(jwt -> {
       try {
         final JWTClaimsSet claims = jwt.getTrustMark().getJWTClaimsSet();
-        final Optional<TrustMarkStatusResponse> trustMarkStatus = store.getTrustMarkStatus(claims.getSubject(),
-            claims.getClaimAsString("trust_mark_type"));
+        final String trustMarkType = claims.getClaimAsString("trust_mark_type");
+        final Optional<TrustMarkStatusResponse> trustMarkStatus =
+            Optional.ofNullable(chain.getLeafEntity().getTrustMarkStatuses().get(trustMarkType));
         return trustMarkStatus.map(tms -> {
               if (tms.isError()) {
                 return true;
@@ -144,12 +127,12 @@ public class TrustMarkCollector {
               try {
                 final Map<String, Object> tmsClaims = tms.getSignedJWT().getJWTClaimsSet().getClaims();
                 return tmsClaims.containsKey("status") && "active".equals(tmsClaims.get("status"));
-              } catch (java.text.ParseException e) {
+              } catch (final java.text.ParseException e) {
                 return false;
               }
             })
             .orElse(false);
-      } catch (java.text.ParseException e) {
+      } catch (final java.text.ParseException e) {
         throw new RuntimeException(e);
       }
     }).toList();

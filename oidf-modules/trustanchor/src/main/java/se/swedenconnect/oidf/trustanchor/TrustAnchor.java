@@ -138,8 +138,7 @@ public class TrustAnchor {
           final EntityID entityID = entity.getEntityIdentifier();
           return new FederationRequest<>(
               new EntityConfigurationRequest(entityID, entity.getEcLocation()),
-              Map.of(),
-              true);
+              Map.of());
         })
         .map(this.federationClient::entityConfiguration)
         .filter(request.toPredicate())

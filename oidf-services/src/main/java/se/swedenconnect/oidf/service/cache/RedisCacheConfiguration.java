@@ -17,8 +17,8 @@
 package se.swedenconnect.oidf.service.cache;
 
 import com.nimbusds.jose.shaded.gson.Gson;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,7 +59,7 @@ public class RedisCacheConfiguration {
 
   @Bean
   ResolverRedisOperations redisOperations(
-      final RedisTemplate<String, EntityStatement> template,
+      final RedisTemplate<String, ScrapedEntity> template,
       final RedisConnectionFactory connectionFactory,
       final InstanceSpecificRedisKeySerializer keySerializer
   ) {
@@ -71,12 +71,12 @@ public class RedisCacheConfiguration {
   }
 
   @Bean
-  RedisTemplate<String, EntityStatement> entityStatementRedisTemplate(
+  RedisTemplate<String, ScrapedEntity> entityStatementRedisTemplate(
       final RedisConnectionFactory factory,
       final InstanceSpecificRedisKeySerializer keySerializer) {
-    final RedisTemplate<String, EntityStatement> template = new RedisTemplate<>();
+    final RedisTemplate<String, ScrapedEntity> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
-    template.setValueSerializer(new EntityStatementSerializer());
+    template.setValueSerializer(new ResolverEntitySerializer());
     template.setKeySerializer(keySerializer);
     template.afterPropertiesSet();
     return template;

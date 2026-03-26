@@ -33,6 +33,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryResponseException;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -168,7 +169,7 @@ public class RestClientFederationClient implements FederationClient {
   }
 
   @Override
-  public se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse trustMarkStatus(final FederationRequest<FederationTrustMarkStatusRequest> request) {
+  public TrustMarkStatusResponse trustMarkStatus(final FederationRequest<FederationTrustMarkStatusRequest> request) {
     final String path = Optional.ofNullable(
             request.federationEntityMetadata().get("federation_trust_mark_status_endpoint"))
         .filter(p -> p instanceof String)
@@ -182,10 +183,10 @@ public class RestClientFederationClient implements FederationClient {
         .retrieve()
         .body(String.class);
     try {
-      return new se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse(SignedJWT.parse(body), false);
+      return new TrustMarkStatusResponse(SignedJWT.parse(body), false);
     } catch (final java.text.ParseException e) {
       log.error("Failed to get Trust Mark Status for Trust Mark Request {}", request);
-      return new se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse(null, true);
+      return new TrustMarkStatusResponse(null, true);
     }
   }
 }

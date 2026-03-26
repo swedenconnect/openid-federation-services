@@ -14,9 +14,21 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.tree;
+package se.swedenconnect.oidf.common.entity.tree.scraping;
+
+import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,12 +39,48 @@ public record ScrapedTrustMarkIssuer(Map<String, ScrapedTrustMark> trustMark) {
         .flatMap(tms -> Optional.ofNullable(tms.get(trustMarkSubject)));
   }
 
-  public void addTrustMarkInfo(final ScrapedTrustMarkInfo info) {
+  void addTrustMarkInfo(final ScrapedTrustMarkInfo info) {
     this.trustMark().computeIfAbsent(info.trustMarkType(), key -> {
       final ScrapedTrustMark addedTrustMark = new ScrapedTrustMark(info.trustMarkType(), new HashMap<>());
       addedTrustMark.subjects().put(info.trustMarkSubject(), info);
       return addedTrustMark;
     });
+  }
+
+  public void scrape(
+      final FederationClient client,
+      final Map<String, Object> metadata,
+      final EntityStatementWrapper trustAnchor,
+      final EntityID entityID) {
+    if (metadata.containsKey("federation_trust_mark_list_endpoint")) {
+      Optional.ofNullable(trustAnchor.getEntityStatement()
+              .getClaimsSet()
+              .getTrustMarksIssuers()
+              .get(entityID))
+          .ifPresent(tmi -> {
+            //This entity is a valid trust mark issuer for this federation.
+            tmi.forEach(tm -> {
+              // For every trust mark get subjects
+              final List<String> trustMarkSubjects =
+                  client.trustMarkedListing(new FederationRequest<>(new TrustMarkListingRequest(tm.getValue(), null),
+                      metadata));
+              trustMarkSubjects.forEach(tms -> {
+                // Trust Mark per subject
+                final SignedJWT trustMark = client.trustMark(new FederationRequest<>(new TrustMarkRequest(new EntityID(tms), entityID,
+                    new EntityID(tm.getValue()))));
+                // Status per subject
+                final TrustMarkStatusResponse trustMarkStatus = client.trustMarkStatus(
+                    new FederationRequest<>(new FederationTrustMarkStatusRequest(
+                        trustMark.serialize(),
+                        entityID.getValue())
+                    )
+                );
+                final ScrapedTrustMarkInfo info = new ScrapedTrustMarkInfo(entityID.getValue(), tm.getValue(), tms, trustMark, trustMarkStatus);
+                this.addTrustMarkInfo(info);
+              });
+            });
+          });
+    }
   }
 }
 

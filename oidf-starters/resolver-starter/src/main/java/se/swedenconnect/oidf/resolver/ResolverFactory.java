@@ -112,8 +112,7 @@ public class ResolverFactory {
         this.createChainValidator(properties),
         registration.tree(),
         this.processor,
-        this.resolverResponseFactory(properties, this.compositeRecordSource),
-        new TrustMarkCollector(registration.statusStore())
+        this.resolverResponseFactory(properties, this.compositeRecordSource)
     );
 
     return this.transformers.stream()

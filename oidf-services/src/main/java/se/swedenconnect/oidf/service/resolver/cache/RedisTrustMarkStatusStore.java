@@ -43,7 +43,8 @@ public class RedisTrustMarkStatusStore implements TrustMarkStatusStore {
    * @param template  for Redis operations
    * @param namespace resolver entity identifier used to scope keys
    */
-  public RedisTrustMarkStatusStore(final RedisTemplate<String, TrustMarkStatusResponse> template, final String namespace) {
+  public RedisTrustMarkStatusStore(final RedisTemplate<String, TrustMarkStatusResponse> template,
+      final String namespace) {
     this.template = template;
     this.namespace = namespace;
   }
@@ -53,7 +54,8 @@ public class RedisTrustMarkStatusStore implements TrustMarkStatusStore {
   }
 
   @Override
-  public void setTrustMarkStatus(final String subject, final String trustMarkType, final TrustMarkStatusResponse response) {
+  public void setTrustMarkStatus(final String subject, final String trustMarkType,
+      final TrustMarkStatusResponse response) {
     final String key = this.redisKey(subject, trustMarkType);
     this.template.opsForValue().set(key, response);
     try {
@@ -66,7 +68,7 @@ public class RedisTrustMarkStatusStore implements TrustMarkStatusStore {
             .orElse(defaultExpiration);
         this.template.expire(key, expiration);
       }
-    } catch (ParseException e) {
+    } catch (final ParseException e) {
       throw new RuntimeException(e);
     }
   }
