@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.service.resolver.cache;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
@@ -25,6 +24,7 @@ import se.swedenconnect.oidf.common.entity.tree.ResolverCache;
 import se.swedenconnect.oidf.common.entity.tree.SnapshotSource;
 import se.swedenconnect.oidf.common.entity.tree.VersionedCacheLayer;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -58,31 +58,31 @@ public class RedisVersionedCacheLayer implements ResolverCache {
   }
 
   @Override
-  public List<Node<EntityStatement>> getChildren(final Node<EntityStatement> parent, final int version) {
+  public List<Node<ScrapedEntity>> getChildren(final Node<ScrapedEntity> parent, final int version) {
     return this.resolverRedisOperations
         .getChildren(new ResolverRedisOperations.ChildKey(parent, version, this.properties.getEntityIdentifier()));
   }
 
   @Override
-  public void append(final Node<EntityStatement> child, final Node<EntityStatement> parent, final int version) {
+  public void append(final Node<ScrapedEntity> child, final Node<ScrapedEntity> parent, final int version) {
     this.resolverRedisOperations
         .append(new ResolverRedisOperations.ChildKey(parent, version, this.properties.getEntityIdentifier()), child);
   }
 
   @Override
-  public void setData(final String location, final EntityStatement data, final int version) {
+  public void setData(final String location, final ScrapedEntity data, final int version) {
     this.resolverRedisOperations.
         setData(new ResolverRedisOperations.EntityKey(location, version, this.properties.getEntityIdentifier()), data);
   }
 
   @Override
-  public EntityStatement getData(final String location, final int version) {
+  public ScrapedEntity getData(final String location, final int version) {
     return this.resolverRedisOperations
         .getData(new ResolverRedisOperations.EntityKey(location, version, this.properties.getEntityIdentifier()));
   }
 
   @Override
-  public Node<EntityStatement> getRoot(final int version) {
+  public Node<ScrapedEntity> getRoot(final int version) {
     return this.resolverRedisOperations
         .getRoot(new ResolverRedisOperations.RootKey(version, this.properties.getEntityIdentifier()));
   }
@@ -102,13 +102,13 @@ public class RedisVersionedCacheLayer implements ResolverCache {
   }
 
   @Override
-  public CacheSnapshot<EntityStatement> snapshot() {
+  public CacheSnapshot<ScrapedEntity> snapshot() {
     return new CacheSnapshot<>(this, this.getCurrentVersion());
   }
 
   @Override
-  public CacheSnapshot<EntityStatement> createNewSnapshot(final Node<EntityStatement> root,
-      final EntityStatement rootData) {
+  public CacheSnapshot<ScrapedEntity> createNewSnapshot(final Node<ScrapedEntity> root,
+                                                        final ScrapedEntity rootData) {
     final int version = getNextVersion();
     this.resolverRedisOperations
         .setRoot(

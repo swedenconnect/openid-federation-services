@@ -31,6 +31,7 @@ import se.swedenconnect.oidf.resolver.chain.ChainValidationResult;
 import se.swedenconnect.oidf.resolver.chain.ChainValidator;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
+import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 import se.swedenconnect.oidf.resolver.trustmark.TrustMarkCollector;
 
 import java.util.ArrayList;
@@ -38,7 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -86,15 +86,15 @@ public class ValidatingResolver implements Resolver {
     final AtomicInteger counter = new AtomicInteger();
     final ResolverResponse resolverResponse = this.internalResolve(request);
     Optional.ofNullable(resolverResponse.validationErrors())
-            .ifPresent(validationErrors -> {
-              validationErrors
-                  .forEach(error -> {
-                    explanation.put(
-                        counter.getAndIncrement(),
-                        Map.of(error.getClass().getCanonicalName(), error.getMessage())
-                    );
-                  });
-            });
+        .ifPresent(validationErrors -> {
+          validationErrors
+              .forEach(error -> {
+                explanation.put(
+                    counter.getAndIncrement(),
+                    Map.of(error.getClass().getCanonicalName(), error.getMessage())
+                );
+              });
+        });
     return explanation;
   }
 
@@ -128,22 +128,29 @@ public class ValidatingResolver implements Resolver {
     }
 
     if (request.trustAnchor().equals(request.subject())) {
-      final Set<EntityStatement> trustChain = this.tree.getTrustChain(request);
-      return ResolverResponse.builder()
-          .entityStatement(trustChain.stream().findFirst().get())
-          .build();
+      final ResolverTrustChain chain = this.tree.getTrustChain(request);
+      try {
+        final EntityStatement es =
+            EntityStatement.parse(chain.getTrustChain().stream().findFirst().get().getSignedStatement());
+        return ResolverResponse.builder()
+            .entityStatement(es)
+            .build();
+      } catch (final ParseException e) {
+        throw new RuntimeException(e);
+      }
     }
 
 
-    final Set<EntityStatement> chain = this.tree.getTrustChain(request);
-    if (chain.isEmpty()) {
+    final ResolverTrustChain chain = this.tree.getTrustChain(request);
+    if (chain.getTrustChain().isEmpty()) {
       validationErrors.add(
           new NotFoundException("Resolver found no subject with requested EntityID:%s".formatted(request.subject()))
       );
     }
     ChainValidationResult chainValidationResult = null;
+    final List<EntityStatement> trustChainList = chain.getTrustChain().stream().toList();
     try {
-      chainValidationResult = this.validator.validate(chain.stream().toList());
+      chainValidationResult = this.validator.validate(trustChainList);
       validationErrors.addAll(chainValidationResult.errors());
     } catch (final Exception e) {
       validationErrors.add(e);
@@ -152,13 +159,13 @@ public class ValidatingResolver implements Resolver {
 
     JSONObject processedMetadata = null;
     try {
-      processedMetadata = this.processor.processMetadata(chainValidationResult.chain());
+      processedMetadata = this.processor.processMetadata(trustChainList);
     } catch (final Exception e) {
       validationErrors.add(e);
     }
     List<TrustMarkEntry> trustMarkEntries = null;
     try {
-      trustMarkEntries = TrustMarkCollector.collectSubjectTrustMarks(chainValidationResult.chain());
+      trustMarkEntries = TrustMarkCollector.collectSubjectTrustMarks(chain);
     } catch (final Exception e) {
       validationErrors.add(e);
     }
@@ -169,10 +176,9 @@ public class ValidatingResolver implements Resolver {
         .entityStatement(leaf)
         .metadata(processedMetadata)
         .trustMarkEntries(trustMarkEntries)
-        .trustChain(chainValidationResult.chain())
+        .trustChain(trustChainList)
         .validationErrors(validationErrors)
         .build();
-
   }
 
   @Override

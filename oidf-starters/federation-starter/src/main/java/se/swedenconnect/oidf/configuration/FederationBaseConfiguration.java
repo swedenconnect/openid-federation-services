@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.configuration;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.ServletContext;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -34,6 +35,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.jwt.JWKSetSignerFactory;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
+import se.swedenconnect.oidf.common.entity.tree.FederationTreeSource;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
 import se.swedenconnect.oidf.routing.ErrorHandler;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
@@ -62,8 +65,14 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
-  FederationClient federationClient(final RestClient restClient, final MeterRegistry registry) {
+  FederationClient federationClient(
+      @Qualifier("federationRestClient") final RestClient restClient, final MeterRegistry registry) {
     return new RestClientFederationClient(restClient, registry);
+  }
+
+  @Bean
+  ScrapedEntityLookup scrapedEntityLookup(final FederationTreeSource treeSource) {
+    return new ScrapedEntityLookup(treeSource);
   }
 
   @Bean

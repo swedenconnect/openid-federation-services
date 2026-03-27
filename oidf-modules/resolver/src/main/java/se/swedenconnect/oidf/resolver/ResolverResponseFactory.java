@@ -28,9 +28,12 @@ import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Factory class responsible for constructing resolver responses.
@@ -72,12 +75,40 @@ public class ResolverResponseFactory {
    */
   public String sign(final ResolverResponse resolverResponse) throws ParseException, JOSEException {
     final Instant now = Instant.now(this.clock);
+
+    final Instant configuredExpiry = now.plus(Optional.ofNullable(this.properties.getResolveResponseDuration())
+        .orElse(Duration.ofDays(7)));
+
+    final Stream<Instant> chainExpiries = Optional.ofNullable(resolverResponse.trustChain())
+        .orElse(java.util.List.of())
+        .stream()
+        .map(es -> es.getClaimsSet().getExpirationTime())
+        .filter(Objects::nonNull)
+        .map(Date::toInstant);
+
+    final Stream<Instant> trustMarkExpiries = Optional.ofNullable(resolverResponse.trustMarkEntries())
+        .orElse(java.util.List.of())
+        .stream()
+        .map(tm -> {
+          try {
+            return tm.getTrustMark().getJWTClaimsSet().getExpirationTime();
+          } catch (final Exception e) {
+            return null;
+          }
+        })
+        .filter(Objects::nonNull)
+        .map(Date::toInstant);
+
+    final Instant responseExpiry = Stream.concat(Stream.of(configuredExpiry),
+            Stream.concat(chainExpiries, trustMarkExpiries))
+        .min(Comparator.naturalOrder())
+        .orElse(configuredExpiry);
+
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder(resolverResponse.entityStatement().getClaimsSet().toJWTClaimsSet())
             .issuer(this.properties.getEntityIdentifier())
             .issueTime(Date.from(now))
-            .expirationTime(Date.from(now.plus(Optional.ofNullable(this.properties.getResolveResponseDuration())
-                .orElse(Duration.ofDays(7)))))
+            .expirationTime(Date.from(responseExpiry))
             .claim("metadata", resolverResponse.metadata())
             .claim("trust_marks",
                 resolverResponse.trustMarkEntries().stream().map(trustMark -> {

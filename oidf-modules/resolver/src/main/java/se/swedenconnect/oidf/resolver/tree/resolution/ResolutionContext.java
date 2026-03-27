@@ -16,6 +16,13 @@
  */
 package se.swedenconnect.oidf.resolver.tree.resolution;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,8 +32,12 @@ import java.util.Set;
  *
  * @author Felix Hellman
  */
+@NoArgsConstructor
 public class ResolutionContext {
   private final Set<String> visited = new HashSet<>();
+  @Getter
+  @Setter
+  private EntityStatementWrapper trustAnchorEntityStatement;
 
   /**
    * Adds an entity

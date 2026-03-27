@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.stereotype.Component;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
@@ -89,6 +90,7 @@ public class ExportEndpoint {
     tree.getAll()
         .stream()
         .map(Tree.SearchResult::getData)
+        .map(resolverEntity -> resolverEntity.getEntityStatement())
         .peek(es -> es.getClaimsSet().toJSONObject())
         .forEach(es -> {
           if (es.getClaimsSet().isSelfStatement()) {

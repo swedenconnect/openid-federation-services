@@ -52,7 +52,8 @@ public class FederationResolverConfiguration {
       final ResolverCacheRegistry resolverCacheRegistry,
       final SignerFactory signerFactory,
       final List<Function<Resolver, Resolver>> transformers,
-      final CompositeRecordSource compositeRecordSource
+      final CompositeRecordSource compositeRecordSource,
+      final FederationClient federationClient
       ) {
     return new ResolverFactory(
         cacheFactory,
@@ -61,7 +62,8 @@ public class FederationResolverConfiguration {
         resolverCacheRegistry,
         signerFactory,
         transformers,
-        compositeRecordSource
+        compositeRecordSource,
+        federationClient
     );
   }
 

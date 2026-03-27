@@ -28,24 +28,28 @@ import java.util.Objects;
 public final class FederationRequest<T>  {
   private final T parameters;
   private final Map<String, Object> federationEntityMetadata;
-  private final Boolean useCachedValue;
 
   /**
    * Constructor.
-   * @param parameters for this reuqest
-   * @param federationEntityMetadata for this request
-   * @param useCachedValue if false, a request will skip cache to fetch from integration
+   * @param parameters for this request
    */
-  public FederationRequest(final T parameters,
-                           final Map<String, Object> federationEntityMetadata,
-                           final Boolean useCachedValue) {
-    this.parameters = parameters;
-    this.federationEntityMetadata = federationEntityMetadata;
-    this.useCachedValue = useCachedValue;
+  public FederationRequest(final T parameters) {
+    this(parameters, Map.of());
   }
 
   /**
-   * @return parameters of the reuqest
+   * Constructor.
+   * @param parameters for this request
+   * @param federationEntityMetadata for this request
+   */
+  public FederationRequest(final T parameters,
+                           final Map<String, Object> federationEntityMetadata) {
+    this.parameters = parameters;
+    this.federationEntityMetadata = federationEntityMetadata;
+  }
+
+  /**
+   * @return parameters of the request
    */
   public T parameters() {
     return this.parameters;
@@ -58,16 +62,8 @@ public final class FederationRequest<T>  {
     return this.federationEntityMetadata;
   }
 
-  /**
-   * @return if false, a request will skip cache to fetch from integration
-   */
-  public Boolean useCachedValue() {
-    return this.useCachedValue;
-  }
-
   @Override
   public boolean equals(final Object obj) {
-    //Do not differentiate objects depending on flag value useCachedValue
     if (obj == this) return true;
     if (obj == null || obj.getClass() != this.getClass()) return false;
     final FederationRequest that = (FederationRequest) obj;
@@ -77,7 +73,6 @@ public final class FederationRequest<T>  {
 
   @Override
   public int hashCode() {
-    //Do not differentiate objects depending on flag value useCachedValue
     return Objects.hash(this.parameters, this.federationEntityMetadata);
   }
 
@@ -85,8 +80,7 @@ public final class FederationRequest<T>  {
   public String toString() {
     return "FederationRequest[" +
         "parameters=" + this.parameters.toString() + ", " +
-        "federationEntityMetadata=" + this.federationEntityMetadata + ", " +
-        "useCachedValue=" + this.useCachedValue + ']';
+        "federationEntityMetadata=" + this.federationEntityMetadata + ']';
   }
 
 }

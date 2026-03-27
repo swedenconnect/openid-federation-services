@@ -21,6 +21,7 @@ import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
@@ -28,9 +29,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryResponseException;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +43,7 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class RestClientFederationClient implements FederationClient {
   private final RestClient client;
   private final MeterRegistry registry;
@@ -162,5 +166,27 @@ public class RestClientFederationClient implements FederationClient {
   @Override
   public List<String> trustMarkedListing(final FederationRequest<TrustMarkListingRequest> request) {
     return List.of();
+  }
+
+  @Override
+  public TrustMarkStatusResponse trustMarkStatus(final FederationRequest<FederationTrustMarkStatusRequest> request) {
+    final String path = Optional.ofNullable(
+            request.federationEntityMetadata().get("federation_trust_mark_status_endpoint"))
+        .filter(p -> p instanceof String)
+        .map(String.class::cast)
+        .orElseGet(() -> request.parameters().trustMarkIssuer() + "/trust_mark_status");
+    final String body = this.client.mutate().baseUrl(path).build()
+        .get()
+        .uri(builder -> builder
+            .queryParam("trust_mark", request.parameters().trustMarkJwt())
+            .build())
+        .retrieve()
+        .body(String.class);
+    try {
+      return new TrustMarkStatusResponse(SignedJWT.parse(body), false);
+    } catch (final java.text.ParseException e) {
+      log.error("Failed to get Trust Mark Status for Trust Mark Request {}", request);
+      return new TrustMarkStatusResponse(null, true);
+    }
   }
 }

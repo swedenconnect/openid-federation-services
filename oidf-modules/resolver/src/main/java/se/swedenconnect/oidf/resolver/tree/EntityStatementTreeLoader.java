@@ -16,21 +16,16 @@
  */
 package se.swedenconnect.oidf.resolver.tree;
 
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
-import com.nimbusds.openid.connect.sdk.federation.entities.FederationEntityMetadata;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONObject;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.ExecutionStrategy;
@@ -39,10 +34,8 @@ import se.swedenconnect.oidf.resolver.tree.resolution.StepExecutionError;
 import se.swedenconnect.oidf.resolver.tree.resolution.StepRecoveryStrategy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -132,7 +125,7 @@ public class EntityStatementTreeLoader {
    * @param trustAnchorEntityId location of the root (trust-anchor)
    * @param tree                to add the nodes to
    */
-  public void resolveTree(final String trustAnchorEntityId, final Tree<EntityStatement> tree) {
+  public void resolveTree(final String trustAnchorEntityId, final Tree<ScrapedEntity> tree) {
     this.resolveTree(
         new NodeKey(trustAnchorEntityId, trustAnchorEntityId),
         tree,
@@ -143,167 +136,77 @@ public class EntityStatementTreeLoader {
 
   void resolveTree(
       final NodeKey nodeKey,
-      final Tree<EntityStatement> tree,
+      final Tree<ScrapedEntity> tree,
       final ErrorContext context,
       final ResolutionContext resolutionContext) {
-    try {
-      final Node<EntityStatement> root = new Node<>(nodeKey);
-      final EntityConfigurationRequest entityConfigurationRequest =
-          new EntityConfigurationRequest(new EntityID(nodeKey.issuer()), null);
-      final EntityStatement entityStatement =
-          this.client.entityConfiguration(new FederationRequest<>(
-              entityConfigurationRequest,
-              Map.of(),
-              this.useCachedValue(context)));
-      final CacheSnapshot<EntityStatement> snapshot = tree.addRoot(root, entityStatement);
-      final NodeKey key = root.getKey();
-      this.executionStrategy.execute(() -> this.subordinateListing(snapshot.getData(key), nodeKey, tree,
-          snapshot, this.errorContextFactory.createEmpty(), resolutionContext));
-      this.postHooks.forEach(this.executionStrategy::finalize);
-    } catch (final Exception e) {
-      this.handleError(StepName.RESOLVE_ROOT,
-          nodeKey,
-          c -> this.resolveTree(nodeKey, tree, c, resolutionContext),
-          context, e
-      );
-    }
-  }
 
-  void subordinateListing(
-      final EntityStatement parent,
-      final NodeKey parentKey,
-      final Tree<EntityStatement> tree,
-      final CacheSnapshot<EntityStatement> snapshot,
-      final ErrorContext context, final ResolutionContext resolutionContext
-  ) {
-    if (!((Map<String, Object>) parent.getClaimsSet().getClaim("metadata"))
-        .containsKey(EntityType.FEDERATION_ENTITY.getValue())) {
-      //Stop resolving if entity does not declare federation entity metadata.
-      return;
-    }
-    log.debug("Resolving %s".formatted(parentKey.getKey()));
-    try {
-      final JSONObject metadata = parent.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY);
-      final FederationEntityMetadata parse = FederationEntityMetadata.parse(metadata);
-      if (Objects.nonNull(parse.getFederationListEndpointURI())
-          && Objects.nonNull(parse.getFederationFetchEndpointURI())) {
-        // Entity is intermediate
-        final SubordinateListingRequest subordinateListingRequest = SubordinateListingRequest.requestAll();
-        final FederationRequest<SubordinateListingRequest> request =
-            new FederationRequest<>(
-                subordinateListingRequest,
-                metadata,
-                this.useCachedValue(context));
-        final List<String> subordinateListing = this.client.subordinateListing(request);
-        subordinateListing.forEach(subordinate -> this.resolveSubordinate(subordinate, parentKey, tree, snapshot,
-            this.errorContextFactory.createEmpty(),
-            resolutionContext, metadata));
+    final Node<ScrapedEntity> root = new Node<>(nodeKey);
+    final ScrapedEntity scrapedEntity =
+        ScrapedEntity.builder().trustMarkStatuses(new HashMap<>())
+            .entityID(new EntityID(nodeKey.issuer())).build();
+    scrapedEntity.scrape(this.client, null);
+    final EntityStatementWrapper wrapper =
+        new EntityStatementWrapper(scrapedEntity.getEntityStatement().getSignedStatement());
+    resolutionContext.setTrustAnchorEntityStatement(wrapper);
+    final CacheSnapshot<ScrapedEntity> snapshot = tree.addRoot(root, scrapedEntity);
+    final NodeKey key = root.getKey();
+    this.executionStrategy.execute(() -> {
+      if (scrapedEntity.getIntermediate() != null) {
+        scrapedEntity.getIntermediate().subordinates().forEach((name, jwt) -> {
+          this.resolveSubordinate(jwt, key, tree, snapshot, context, resolutionContext);
+        });
       }
-    } catch (final Exception e) {
-      this.handleError(
-          StepName.SUBORDINATE_LISTING,
-          parentKey,
-          c -> this.subordinateListing(parent, parentKey, tree, snapshot, c, resolutionContext),
-          context, e
-      );
+    });
+    this.postHooks.forEach(this.executionStrategy::finalize);
+  }
+
+    void resolveSubordinate ( final SignedJWT subordinateStatement,
+    final NodeKey parentKey,
+    final Tree<ScrapedEntity> tree,
+    final CacheSnapshot<ScrapedEntity> snapshot,
+    final ErrorContext context,
+    final ResolutionContext resolutionContext){
+      try {
+        final String subject = subordinateStatement.getJWTClaimsSet().getSubject();
+        if (!resolutionContext.add(subject)) {
+          return;
+        }
+        final Node<ScrapedEntity> subNode = new Node<>(NodeKey.fromSignedJwt(subordinateStatement));
+        final ScrapedEntity entity =
+            ScrapedEntity.builder().trustMarkStatuses(new HashMap<>()).entityID(new EntityID(subject)).build();
+        entity.scrape(this.client, resolutionContext.getTrustAnchorEntityStatement());
+        tree.addChild(subNode, parentKey, entity, snapshot);
+        if (entity.getIntermediate() != null) {
+          entity.getIntermediate().subordinates().forEach((name, jwt) -> {
+            this.resolveSubordinate(jwt, subNode.getKey(), tree, snapshot, context, resolutionContext);
+          });
+        }
+      } catch (final Exception e) {
+        this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey,
+            (c) -> this.resolveSubordinate(
+                subordinateStatement, parentKey, tree, snapshot, c, resolutionContext
+            ),
+            context, e
+        );
+      }
+    }
+
+    void handleError (
+    final StepName stepName,
+    final NodeKey node,
+    final Consumer<ErrorContext> step,
+    final ErrorContext context,
+    final Exception e
+  ){
+      log.error("TreeLoader {} {} failed with exception {} enable trace log for more details", node.getKey(),
+          stepName.name(),
+          e.getClass().getCanonicalName());
+      log.trace("TreeLoader {} {} failed: ", node.getKey(), stepName.name(), e);
+      final StepExecutionError error = new StepExecutionError(
+          "%s_%s".formatted(stepName, node.getKey()),
+          step,
+          context.orElseGet(() -> this.errorContextFactory.create(node, stepName)));
+      this.recoveryStrategy.handle(error);
     }
   }
-
-  void resolveSubordinate(final String subordinate,
-                          final NodeKey parentKey,
-                          final Tree<EntityStatement> tree,
-                          final CacheSnapshot<EntityStatement> snapshot,
-                          final ErrorContext context,
-                          final ResolutionContext resolutionContext,
-                          final Map<String, Object> metadataMap) {
-    try {
-      final EntityStatement subordinateStatement = this.client.fetch(
-          new FederationRequest<>(
-              new FetchRequest(subordinate),
-              metadataMap,
-              this.useCachedValue(context))
-      );
-      final Node<EntityStatement> subNode = new Node<>(NodeKey.fromEntityStatement(subordinateStatement));
-      tree.addChild(subNode, parentKey, subordinateStatement, snapshot);
-      this.resolveEntityConfiguration(tree, snapshot, this.errorContextFactory.createEmpty(), resolutionContext,
-          subordinateStatement, subNode);
-    } catch (final Exception e) {
-      this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey,
-          (c) -> this.resolveSubordinate(
-              subordinate, parentKey, tree, snapshot, c, resolutionContext, metadataMap
-          ),
-          context, e
-      );
-    }
-  }
-
-  private void resolveEntityConfiguration(
-      final Tree<EntityStatement> tree,
-      final CacheSnapshot<EntityStatement> snapshot,
-      final ErrorContext context,
-      final ResolutionContext resolutionContext,
-      final EntityStatement subordinateStatement,
-      final Node<EntityStatement> subordinateNode) {
-    final EntityID subjectEntityID = subordinateStatement.getClaimsSet().getSubjectEntityID();
-    try {
-      final JSONObject subordinateMetadata = Optional.ofNullable(
-              subordinateStatement.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY))
-          .orElse(new JSONObject());
-      final EntityConfigurationRequest entityConfigurationRequest = new EntityConfigurationRequest(subjectEntityID,
-          Optional.ofNullable(subordinateStatement
-                  .getClaimsSet()
-                  .getClaim("ec_location"))
-              .map(String.class::cast)
-              .orElse(null));
-      final EntityStatement entityConfiguration =
-          this.client.entityConfiguration(new FederationRequest<>(entityConfigurationRequest,
-              subordinateMetadata, this.useCachedValue(context)));
-      final Node<EntityStatement> node = new Node<>(NodeKey.fromEntityStatement(entityConfiguration));
-      tree.addChild(node, subordinateNode.getKey(), entityConfiguration, snapshot);
-      this.executionStrategy.execute(() ->
-          this.subordinateListing(
-              entityConfiguration,
-              node.getKey(),
-              tree,
-              snapshot,
-              this.errorContextFactory.createEmpty(),
-              resolutionContext)
-      );
-    } catch (final Exception e) {
-      this.handleError(StepName.FETCH_ENTITY_CONFIGURATION, NodeKey.fromEntityStatement(subordinateStatement),
-          (c) -> this.resolveEntityConfiguration(
-              tree,
-              snapshot,
-              c,
-              resolutionContext,
-              subordinateStatement,
-              subordinateNode
-          ),
-          context, e
-      );
-    }
-  }
-
-  private boolean useCachedValue(final ErrorContext context) {
-    return context.getErrorCount() >= this.useCacheThreshold;
-  }
-
-  void handleError(
-      final StepName stepName,
-      final NodeKey node,
-      final Consumer<ErrorContext> step,
-      final ErrorContext context,
-      final Exception e
-  ) {
-    log.error("TreeLoader {} {} failed with exception {} enable trace log for more details", node.getKey(),
-        stepName.name(),
-        e.getClass().getCanonicalName());
-    log.trace("TreeLoader {} {} failed: ", node.getKey(), stepName.name(), e);
-    final StepExecutionError error = new StepExecutionError(
-        "%s_%s".formatted(stepName, node.getKey()),
-        step,
-        context.orElseGet(() -> this.errorContextFactory.create(node, stepName)));
-    this.recoveryStrategy.handle(error);
-  }
-}
 

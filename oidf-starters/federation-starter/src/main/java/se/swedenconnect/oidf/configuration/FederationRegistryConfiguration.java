@@ -115,6 +115,14 @@ public class FederationRegistryConfiguration {
   }
 
   @Bean
+  RestClient federationRestClient(final RestClientFactory restClientFactory,
+                                  final FederationProperties properties) {
+    return restClientFactory.create(properties.getResolver().getClient()).mutate()
+        .defaultHeader("cache-control", "no-cache")
+        .build();
+  }
+
+  @Bean
   RestClient registryRestClient(final RestClientFactory restClientFactory,
                                 final FederationProperties properties) {
     return restClientFactory.create(properties.getRegistry().getIntegration().getClient());

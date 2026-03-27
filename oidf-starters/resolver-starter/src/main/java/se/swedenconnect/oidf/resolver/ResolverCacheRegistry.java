@@ -17,7 +17,11 @@
 package se.swedenconnect.oidf.resolver;
 
 import lombok.extern.slf4j.Slf4j;
+import se.swedenconnect.oidf.common.entity.tree.FederationTreeSource;
+import se.swedenconnect.oidf.common.entity.tree.Tree;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Felix Hellman
  */
 @Slf4j
-public class ResolverCacheRegistry {
+public class ResolverCacheRegistry implements FederationTreeSource {
   private final Map<String, ResolverCacheRegistration> registrations = new ConcurrentHashMap<>();
 
   /**
@@ -58,5 +62,19 @@ public class ResolverCacheRegistry {
       log.warn("Tried to access cache by entityId {} but no such cache exists", entityId);
     }
     return cacheRegistration;
+  }
+
+  /**
+   * @return all current registrations
+   */
+  public Collection<ResolverCacheRegistration> getAllRegistrations() {
+    return this.registrations.values();
+  }
+
+  @Override
+  public Collection<Tree<ScrapedEntity>> getTrees() {
+    return this.registrations.values().stream()
+        .map(r -> r.tree().getTree())
+        .toList();
   }
 }

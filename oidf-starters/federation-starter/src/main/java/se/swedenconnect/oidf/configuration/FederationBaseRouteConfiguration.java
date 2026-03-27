@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
 import se.swedenconnect.oidf.routing.EntityRouter;
 import se.swedenconnect.oidf.routing.JWKSRouter;
 import se.swedenconnect.oidf.routing.RouteFactory;
@@ -32,8 +33,9 @@ import se.swedenconnect.oidf.routing.RouteFactory;
 @Configuration
 public class FederationBaseRouteConfiguration {
   @Bean
-  EntityRouter entityRouter(final EntityConfigurationFactory entityConfigurationFactory, final RouteFactory factory) {
-    return new EntityRouter(entityConfigurationFactory, factory);
+  EntityRouter entityRouter(final EntityConfigurationFactory entityConfigurationFactory, final RouteFactory factory,
+                            final ScrapedEntityLookup lookup) {
+    return new EntityRouter(entityConfigurationFactory, factory, lookup);
   }
 
   @Bean

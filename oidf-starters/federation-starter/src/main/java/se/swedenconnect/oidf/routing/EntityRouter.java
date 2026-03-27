@@ -19,11 +19,14 @@ package se.swedenconnect.oidf.routing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -37,16 +40,22 @@ public class EntityRouter implements Router {
 
   private final EntityConfigurationFactory factory;
   private final RouteFactory routeFactory;
+  private final ScrapedEntityLookup lookup;
 
   /**
    * Constructor.
    *
    * @param factory      for creating entity configurations
-   * @param routeFactory for creating routes.
+   * @param routeFactory for creating routes
+   * @param lookup       lookup for scraped entities
    */
-  public EntityRouter(final EntityConfigurationFactory factory, final RouteFactory routeFactory) {
+  public EntityRouter(
+      final EntityConfigurationFactory factory,
+      final RouteFactory routeFactory,
+      final ScrapedEntityLookup lookup) {
     this.factory = factory;
     this.routeFactory = routeFactory;
+    this.lookup = lookup;
   }
 
   @Override
@@ -62,10 +71,22 @@ public class EntityRouter implements Router {
               .test(request))
           .findFirst()
           .get();
-      return ServerResponse.ok()
-          .body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement()
-              .serialize());
+      return this.handleCacheControl(request)
+          .orElseGet(() -> ServerResponse.ok()
+              .body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement()
+                  .serialize()));
     });
+  }
+
+  private Optional<ServerResponse> handleCacheControl(final ServerRequest request) {
+    final List<String> cacheControl = request.headers().header("cache-control");
+    if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
+      return this.lookup.findByEntityId(this.getEntityIdFromReuqest(request).getValue())
+          .filter(entity -> Objects.nonNull(entity.getEntityStatement()))
+          .map(entity -> ServerResponse.ok()
+              .body(entity.getEntityStatement().getSignedStatement().serialize()));
+    }
+    return Optional.empty();
   }
 
   private RequestPredicate getRouteForEntity(final EntityRecord entity) {

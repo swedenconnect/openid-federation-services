@@ -81,7 +81,7 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
             .map(request -> {
               try {
                 final SignedJWT signedJWT =
-                    this.federationClient.trustMark(new FederationRequest<>(request, Map.of(), true));
+                    this.federationClient.trustMark(new FederationRequest<>(request, Map.of()));
                 return new TrustMarkEntry(request.trustMarkType(), signedJWT);
               } catch (final Exception e) {
                 log.error("Failed to fetch trust mark type %s for entity %s".formatted(request.trustMarkType(),

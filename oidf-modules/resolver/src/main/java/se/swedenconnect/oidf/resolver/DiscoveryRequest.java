@@ -16,9 +16,9 @@
  */
 package se.swedenconnect.oidf.resolver;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import se.swedenconnect.oidf.common.entity.tree.Node;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +37,11 @@ public record DiscoveryRequest(String trustAnchor, List<String> types, List<Stri
   /**
    * @return this request as a search predicate
    */
-  public BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>> asPredicate() {
+  public BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>> asPredicate() {
 
-    final List<BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>>> predicates = new ArrayList<>();
+    final List<BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>>> predicates = new ArrayList<>();
 
-    predicates.add((a,s) -> a.getClaimsSet().isSelfStatement());
+    predicates.add((a, s) -> a.getEntityStatement().getClaimsSet().isSelfStatement());
 
     if (Objects.isNull(this.trustAnchor)) {
       throw new IllegalArgumentException("Trust anchor parameter can not be null");
@@ -49,20 +49,20 @@ public record DiscoveryRequest(String trustAnchor, List<String> types, List<Stri
 
     if (Objects.nonNull(this.types) && !this.types.isEmpty()) {
       predicates.add((a, s) -> this.types.stream()
-          .anyMatch(type -> Objects.nonNull(a.getClaimsSet().getMetadata(new EntityType(type)))));
+          .anyMatch(type -> Objects.nonNull(a.getEntityStatement().getClaimsSet().getMetadata(new EntityType(type)))));
     }
 
     if (Objects.nonNull(this.trustMarkTypes) && !this.trustMarkTypes.isEmpty()) {
       predicates.add((a, s) -> {
-        if (Objects.isNull(a.getClaimsSet().getTrustMarks())) {
+        if (Objects.isNull(a.getEntityStatement().getClaimsSet().getTrustMarks())) {
           //We requested trust marks but there is none in this entity statement
           return false;
         }
-        return a.getClaimsSet().getTrustMarks().stream()
+        return a.getEntityStatement().getClaimsSet().getTrustMarks().stream()
             .anyMatch(tmp -> this.trustMarkTypes.contains(tmp.getID().getValue()));
       });
     }
 
-    return predicates.stream().reduce((a,b) -> true, BiPredicate::and);
+    return predicates.stream().reduce((a, b) -> true, BiPredicate::and);
   }
 }

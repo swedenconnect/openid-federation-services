@@ -16,41 +16,32 @@
  */
 package se.swedenconnect.oidf.service.cache;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
-
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 /**
- * Implementation of {@link RedisSerializer} for {@link EntityStatement}
+ * Implementation of {@link RedisSerializer} for {@link ScrapedEntity}
  *
  * @author Felix Hellman
  */
-public class EntityStatementSerializer implements RedisSerializer<EntityStatement> {
+public class ResolverEntitySerializer implements RedisSerializer<ScrapedEntity> {
+
+  private final ScrapedEntitySerializer delegate = new ScrapedEntitySerializer();
 
   @Override
-  public byte[] serialize(final EntityStatement value) throws SerializationException {
+  public byte[] serialize(final ScrapedEntity value) throws SerializationException {
     if (value == null) {
       return null;
     }
-    //Serialize signed statement to JWT
-    final String data = value.getSignedStatement().serialize();
-    return data.getBytes(StandardCharsets.UTF_8);
+    return this.delegate.serialize(value);
   }
 
   @Override
-  public EntityStatement deserialize(final byte[] bytes) throws SerializationException {
+  public ScrapedEntity deserialize(final byte[] bytes) throws SerializationException {
     if (bytes == null) {
       return null;
     }
-    try {
-      return EntityStatement.parse(new String(bytes, Charset.defaultCharset()));
-    }
-    catch (final ParseException e) {
-      throw new RuntimeException(e);
-    }
+    return this.delegate.deserialize(bytes);
   }
 }

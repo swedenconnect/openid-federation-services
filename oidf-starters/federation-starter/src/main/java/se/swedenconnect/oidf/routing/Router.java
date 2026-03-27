@@ -16,8 +16,13 @@
  */
 package se.swedenconnect.oidf.routing;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerRequest;
+import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+
+import java.net.URI;
 
 /**
  * Router interface for adding routes.
@@ -30,4 +35,14 @@ public interface Router {
    * @param route to add routes to
    */
   void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route);
+
+  /**
+   * @param serverRequest to find entity id for
+   * @return entity id
+   */
+  default EntityID getEntityIdFromReuqest(final ServerRequest serverRequest) {
+    final URI uri = serverRequest.uri();
+    final String withoutQuery = uri.getScheme() + "://" + uri.getAuthority() + uri.getPath();
+    return new EntityID(withoutQuery.substring(0, withoutQuery.lastIndexOf('/')));
+  }
 }
