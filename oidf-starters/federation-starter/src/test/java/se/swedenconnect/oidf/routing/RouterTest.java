@@ -17,32 +17,28 @@
 package se.swedenconnect.oidf.routing;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
-import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 
 import java.net.URI;
 
-/**
- * Router interface for adding routes.
- *
- * @author Felix Hellman
- */
-public interface Router {
-  /**
-   * @param source to read from
-   * @param route to add routes to
-   */
-  void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route);
+class RouterTest {
 
-  /**
-   * @param serverRequest to find entity id for
-   * @return entity id
-   */
-  default EntityID getEntityIdFromReuqest(final ServerRequest serverRequest) {
-    final URI uri = serverRequest.uri();
-    final String withoutQuery = uri.getScheme() + "://" + uri.getAuthority() + uri.getPath();
-    return new EntityID(withoutQuery.substring(0, withoutQuery.lastIndexOf('/')));
+  @Test
+  void test() {
+    final ServerRequest mock = Mockito.mock(ServerRequest.class);
+    Mockito.when(mock.uri()).thenReturn(URI.create("https://myentity.com/entity/resolve"));
+
+    final Router router = new Router() {
+      @Override
+      public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
+
+      }
+    };
+    Assertions.assertEquals(new EntityID("https://myentity.com/entity"), router.getEntityIdFromReuqest(mock));
   }
 }

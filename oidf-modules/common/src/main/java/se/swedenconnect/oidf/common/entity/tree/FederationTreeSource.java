@@ -14,17 +14,21 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.tree.scraping;
+package se.swedenconnect.oidf.common.entity.tree;
 
-import java.util.Map;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
+
+import java.util.Collection;
 
 /**
- * Holds scraped trust mark subjects for a given trust mark type.
+ * Provides access to all federation trees currently managed by the service.
  *
- * @param trustMarkType the trust mark type identifier
- * @param subjects      map of subject entity ID to trust mark info
  * @author Felix Hellman
  */
-public record ScrapedTrustMark(String trustMarkType, Map<String, ScrapedTrustMarkInfo> subjects) {
+public interface FederationTreeSource {
 
+  /**
+   * @return all currently managed federation trees
+   */
+  Collection<Tree<ScrapedEntity>> getTrees();
 }

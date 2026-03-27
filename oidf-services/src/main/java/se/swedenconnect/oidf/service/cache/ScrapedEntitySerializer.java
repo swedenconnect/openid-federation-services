@@ -48,6 +48,9 @@ public class ScrapedEntitySerializer implements RedisSerializer<ScrapedEntity> {
 
   private final Gson gson;
 
+  /**
+   * Constructor.
+   */
   public ScrapedEntitySerializer() {
     this.gson = new GsonBuilder()
         .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())

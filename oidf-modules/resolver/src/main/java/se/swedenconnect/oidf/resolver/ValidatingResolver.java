@@ -33,14 +33,12 @@ import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 import se.swedenconnect.oidf.resolver.trustmark.TrustMarkCollector;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -88,15 +86,15 @@ public class ValidatingResolver implements Resolver {
     final AtomicInteger counter = new AtomicInteger();
     final ResolverResponse resolverResponse = this.internalResolve(request);
     Optional.ofNullable(resolverResponse.validationErrors())
-            .ifPresent(validationErrors -> {
-              validationErrors
-                  .forEach(error -> {
-                    explanation.put(
-                        counter.getAndIncrement(),
-                        Map.of(error.getClass().getCanonicalName(), error.getMessage())
-                    );
-                  });
-            });
+        .ifPresent(validationErrors -> {
+          validationErrors
+              .forEach(error -> {
+                explanation.put(
+                    counter.getAndIncrement(),
+                    Map.of(error.getClass().getCanonicalName(), error.getMessage())
+                );
+              });
+        });
     return explanation;
   }
 
@@ -132,10 +130,12 @@ public class ValidatingResolver implements Resolver {
     if (request.trustAnchor().equals(request.subject())) {
       final ResolverTrustChain chain = this.tree.getTrustChain(request);
       try {
+        final EntityStatement es =
+            EntityStatement.parse(chain.getTrustChain().stream().findFirst().get().getSignedStatement());
         return ResolverResponse.builder()
-            .entityStatement(EntityStatement.parse(chain.getTrustChain().stream().findFirst().get().getSignedStatement()))
+            .entityStatement(es)
             .build();
-      } catch (ParseException e) {
+      } catch (final ParseException e) {
         throw new RuntimeException(e);
       }
     }

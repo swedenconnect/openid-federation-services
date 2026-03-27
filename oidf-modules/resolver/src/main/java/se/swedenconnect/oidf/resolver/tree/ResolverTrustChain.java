@@ -23,6 +23,11 @@ import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.util.Set;
 
+/**
+ * Holds a resolved trust chain and the scraped leaf entity.
+ *
+ * @author Felix Hellman
+ */
 @Getter
 @AllArgsConstructor
 public class ResolverTrustChain {

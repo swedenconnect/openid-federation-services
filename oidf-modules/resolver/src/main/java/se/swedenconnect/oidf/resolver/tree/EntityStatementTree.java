@@ -174,6 +174,28 @@ public class EntityStatementTree {
   }
 
   /**
+   * @return the underlying tree
+   */
+  public Tree<ScrapedEntity> getTree() {
+    return this.tree;
+  }
+
+  /**
+   * @return snapshot of the current version of this tree
+   */
+  public CacheSnapshot<ScrapedEntity> getCurrentSnapshot() {
+    return this.tree.getCurrentSnapshot();
+  }
+
+  /**
+   * @param request defines search parameters
+   * @return matching results
+   */
+  public Set<Tree.SearchResult<ScrapedEntity>> search(final SearchRequest<ScrapedEntity> request) {
+    return this.tree.search(request);
+  }
+
+  /**
    * Get all entity statements in federation.
    * @return all ES
    */

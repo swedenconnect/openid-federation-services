@@ -19,6 +19,16 @@ package se.swedenconnect.oidf.common.entity.tree.scraping;
 import com.nimbusds.jwt.SignedJWT;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 
+/**
+ * Holds scraped trust mark information for a specific issuer, type, and subject combination.
+ *
+ * @param trustMarkIssuer  entity ID of the trust mark issuer
+ * @param trustMarkType    the trust mark type identifier
+ * @param trustMarkSubject entity ID of the trust mark subject
+ * @param trustMark        the signed trust mark JWT
+ * @param trustMarkStatus  the status response for this trust mark
+ * @author Felix Hellman
+ */
 public record ScrapedTrustMarkInfo(String trustMarkIssuer,
                                    String trustMarkType,
                                    String trustMarkSubject,

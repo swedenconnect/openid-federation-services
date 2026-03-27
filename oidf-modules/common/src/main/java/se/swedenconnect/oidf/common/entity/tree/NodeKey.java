@@ -67,6 +67,12 @@ public record NodeKey(String issuer, String subject) {
     );
   }
 
+  /**
+   * Creates a key from a signed JWT.
+   *
+   * @param jwt to create key from
+   * @return new instance
+   */
   public static NodeKey fromSignedJwt(final SignedJWT jwt) {
     try {
       return new NodeKey(

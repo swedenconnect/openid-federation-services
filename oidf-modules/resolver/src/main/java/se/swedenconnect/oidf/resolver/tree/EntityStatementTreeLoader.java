@@ -142,9 +142,12 @@ public class EntityStatementTreeLoader {
 
     final Node<ScrapedEntity> root = new Node<>(nodeKey);
     final ScrapedEntity scrapedEntity =
-        ScrapedEntity.builder().trustMarkStatuses(new HashMap<>()).entityID(new EntityID(nodeKey.issuer())).build();
+        ScrapedEntity.builder().trustMarkStatuses(new HashMap<>())
+            .entityID(new EntityID(nodeKey.issuer())).build();
     scrapedEntity.scrape(this.client, null);
-    resolutionContext.setTrustAnchorEntityStatement(new EntityStatementWrapper(scrapedEntity.getEntityStatement().getSignedStatement()));
+    final EntityStatementWrapper wrapper =
+        new EntityStatementWrapper(scrapedEntity.getEntityStatement().getSignedStatement());
+    resolutionContext.setTrustAnchorEntityStatement(wrapper);
     final CacheSnapshot<ScrapedEntity> snapshot = tree.addRoot(root, scrapedEntity);
     final NodeKey key = root.getKey();
     this.executionStrategy.execute(() -> {

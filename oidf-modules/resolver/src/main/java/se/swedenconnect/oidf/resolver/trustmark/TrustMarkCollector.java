@@ -59,6 +59,12 @@ public class TrustMarkCollector {
   }
 
 
+  /**
+   * Collects and filters trust marks from the given trust chain.
+   *
+   * @param chain the resolved trust chain including the leaf entity
+   * @return list of valid trust mark entries
+   */
   public static List<TrustMarkEntry> collectSubjectTrustMarks(final ResolverTrustChain chain) {
     final List<EntityStatement> trustChain = chain.getTrustChain().stream().toList();
     final EntityStatement leafStatement = trustChain.getFirst();

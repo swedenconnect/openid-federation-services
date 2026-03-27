@@ -25,19 +25,23 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.InMemoryTrustMarkStatusStore;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
-import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusStore;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
+import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 class TrustMarkCollectorStatusTest {
 
@@ -47,10 +51,7 @@ class TrustMarkCollectorStatusTest {
 
   @Test
   void statusStoreFiltersInactiveTrustMarks() throws Exception {
-    final TrustMarkStatusStore store = new InMemoryTrustMarkStatusStore();
-    store.setTrustMarkStatus(SUBJECT, TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("inactive"), false));
-
-    final TrustMarkCollector collector = new TrustMarkCollector(store);
+    final TrustMarkCollector collector = new TrustMarkCollector();
 
     final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
     final String trustMarkJwt = buildTrustMarkJwt(key);
@@ -59,8 +60,13 @@ class TrustMarkCollectorStatusTest {
     final EntityStatement superiorStatement = buildEntityStatementWithoutTrustMarks();
     final EntityStatement trustAnchor = buildTrustAnchorStatement(key);
 
-    final List<EntityStatement> chain = List.of(leafStatement, superiorStatement, trustAnchor);
-    final List<TrustMarkEntry> result = collector.collectSubjectTrustMarks(chain);
+    final ScrapedEntity leafEntity = ScrapedEntity.builder()
+        .entityID(new EntityID(SUBJECT))
+        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("inactive"), false)))
+        .build();
+    final Set<EntityStatement> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
+    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
 
     Assertions.assertTrue(result.isEmpty(),
         "Trust mark with inactive status should be filtered out");
@@ -68,10 +74,7 @@ class TrustMarkCollectorStatusTest {
 
   @Test
   void statusStoreAllowsActiveTrustMarks() throws Exception {
-    final TrustMarkStatusStore store = new InMemoryTrustMarkStatusStore();
-    store.setTrustMarkStatus(SUBJECT, TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false));
-
-    final TrustMarkCollector collector = new TrustMarkCollector(store);
+    final TrustMarkCollector collector = new TrustMarkCollector();
 
     final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
     final String trustMarkJwt = buildTrustMarkJwt(key);
@@ -80,8 +83,13 @@ class TrustMarkCollectorStatusTest {
     final EntityStatement superiorStatement = buildEntityStatementWithoutTrustMarks();
     final EntityStatement trustAnchor = buildTrustAnchorStatement(key);
 
-    final List<EntityStatement> chain = List.of(leafStatement, superiorStatement, trustAnchor);
-    final List<TrustMarkEntry> result = collector.collectSubjectTrustMarks(chain);
+    final ScrapedEntity leafEntity = ScrapedEntity.builder()
+        .entityID(new EntityID(SUBJECT))
+        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
+        .build();
+    final Set<EntityStatement> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
+    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
 
     Assertions.assertEquals(1, result.size(),
         "Trust mark with active status should be included");
@@ -89,10 +97,7 @@ class TrustMarkCollectorStatusTest {
 
   @Test
   void missingStatusInStoreMeansInclude() throws Exception {
-    final TrustMarkStatusStore store = new InMemoryTrustMarkStatusStore();
-    // No status recorded for this trust mark
-
-    final TrustMarkCollector collector = new TrustMarkCollector(store);
+    final TrustMarkCollector collector = new TrustMarkCollector();
 
     final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
     final String trustMarkJwt = buildTrustMarkJwt(key);
@@ -101,8 +106,13 @@ class TrustMarkCollectorStatusTest {
     final EntityStatement superiorStatement = buildEntityStatementWithoutTrustMarks();
     final EntityStatement trustAnchor = buildTrustAnchorStatement(key);
 
-    final List<EntityStatement> chain = List.of(leafStatement, superiorStatement, trustAnchor);
-    final List<TrustMarkEntry> result = collector.collectSubjectTrustMarks(chain);
+    final ScrapedEntity leafEntity = ScrapedEntity.builder()
+        .entityID(new EntityID(SUBJECT))
+        .trustMarkStatuses(Map.of())
+        .build();
+    final Set<EntityStatement> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
+    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
 
     Assertions.assertEquals(0, result.size(),
         "Trust mark with no recorded status should be excluded (orElse(false))");

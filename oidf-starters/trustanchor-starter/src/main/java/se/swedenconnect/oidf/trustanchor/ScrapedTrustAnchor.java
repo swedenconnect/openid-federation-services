@@ -22,33 +22,46 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Subordi
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.util.List;
 
+
 /**
- * Interface for trust anchor.
+ * Trust anchor implementation backed by a scraped entity.
  *
  * @author Felix Hellman
  */
-public interface TrustAnchor {
+public class ScrapedTrustAnchor implements TrustAnchor {
 
   /**
-   * @param request to fetch entity statement for
-   * @return entity statement
-   * @throws InvalidIssuerException
-   * @throws NotFoundException
+   * Constructor.
+   *
+   * @param scrapedEntity the scraped entity to back this trust anchor
    */
-  String fetchEntityStatement(FetchRequest request) throws InvalidIssuerException, NotFoundException;
+  public ScrapedTrustAnchor(final ScrapedEntity scrapedEntity) {
+    this.scrapedEntity = scrapedEntity;
+  }
 
-  /**
-   * @param request to get subordinate listing for current module
-   * @return listing of subordinates
-   * @throws FederationException when loading entity configurations fails
-   */
-  List<String> subordinateListing(SubordinateListingRequest request) throws FederationException;
+  private final ScrapedEntity scrapedEntity;
 
-  /**
-   * @return entity id of this trust anchor
-   */
-  EntityID getEntityId();
+  @Override
+  public EntityID getEntityId() {
+    return this.scrapedEntity.getEntityID();
+  }
+
+  @Override
+  public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
+    return this.scrapedEntity.getIntermediate().subordinates().keySet().stream().toList();
+  }
+
+  @Override
+  public String fetchEntityStatement(final FetchRequest request) throws InvalidIssuerException, NotFoundException {
+    final com.nimbusds.jwt.SignedJWT jwt =
+        this.scrapedEntity.getIntermediate().subordinates().get(request.subject());
+    if (jwt == null) {
+      throw new NotFoundException("No entity statement found for subject: " + request.subject());
+    }
+    return jwt.serialize();
+  }
 }

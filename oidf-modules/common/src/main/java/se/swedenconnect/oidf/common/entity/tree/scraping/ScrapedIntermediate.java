@@ -27,9 +27,21 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Subordi
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Holds scraped subordinate entity statements for an intermediate entity.
+ *
+ * @param subordinates map of subject entity ID to signed subordinate statement
+ * @author Felix Hellman
+ */
 @Slf4j
 public record ScrapedIntermediate(Map<String, SignedJWT> subordinates) {
 
+  /**
+   * Scrapes all subordinates of this intermediate from the federation.
+   *
+   * @param client   federation client to use
+   * @param metadata metadata for the intermediate endpoint
+   */
   public void scrape(final FederationClient client, final Map<String, Object> metadata) {
     final List<String> subordinates = client.subordinateListing(
         new FederationRequest<>(SubordinateListingRequest.requestAll(), metadata));

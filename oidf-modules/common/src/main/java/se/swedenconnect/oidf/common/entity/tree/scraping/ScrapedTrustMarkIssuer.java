@@ -32,7 +32,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Holds scraped trust mark data for a trust mark issuer, keyed by trust mark type.
+ *
+ * @param trustMark map of trust mark type to scraped trust mark data
+ * @author Felix Hellman
+ */
 public record ScrapedTrustMarkIssuer(Map<String, ScrapedTrustMark> trustMark) {
+
+  /**
+   * Looks up trust mark info for a given type and subject.
+   *
+   * @param trustMarkType    the trust mark type
+   * @param trustMarkSubject the subject
+   * @return the matching info, or empty if not found
+   */
   public Optional<ScrapedTrustMarkInfo> trustMarkInfo(final String trustMarkType, final String trustMarkSubject) {
     return Optional.ofNullable(this.trustMark().get(trustMarkType))
         .flatMap(tm -> Optional.ofNullable(tm.subjects()))
@@ -47,6 +61,14 @@ public record ScrapedTrustMarkIssuer(Map<String, ScrapedTrustMark> trustMark) {
     });
   }
 
+  /**
+   * Scrapes trust mark data for this issuer from the federation.
+   *
+   * @param client      federation client to use
+   * @param metadata    metadata for the issuer endpoint
+   * @param trustAnchor the trust anchor entity statement
+   * @param entityID    the entity ID of this issuer
+   */
   public void scrape(
       final FederationClient client,
       final Map<String, Object> metadata,
@@ -66,8 +88,9 @@ public record ScrapedTrustMarkIssuer(Map<String, ScrapedTrustMark> trustMark) {
                       metadata));
               trustMarkSubjects.forEach(tms -> {
                 // Trust Mark per subject
-                final SignedJWT trustMark = client.trustMark(new FederationRequest<>(new TrustMarkRequest(new EntityID(tms), entityID,
-                    new EntityID(tm.getValue()))));
+                final TrustMarkRequest trustMarkRequest =
+                    new TrustMarkRequest(new EntityID(tms), entityID, new EntityID(tm.getValue()));
+                final SignedJWT trustMark = client.trustMark(new FederationRequest<>(trustMarkRequest));
                 // Status per subject
                 final TrustMarkStatusResponse trustMarkStatus = client.trustMarkStatus(
                     new FederationRequest<>(new FederationTrustMarkStatusRequest(
@@ -75,7 +98,8 @@ public record ScrapedTrustMarkIssuer(Map<String, ScrapedTrustMark> trustMark) {
                         entityID.getValue())
                     )
                 );
-                final ScrapedTrustMarkInfo info = new ScrapedTrustMarkInfo(entityID.getValue(), tm.getValue(), tms, trustMark, trustMarkStatus);
+                final ScrapedTrustMarkInfo info = new ScrapedTrustMarkInfo(
+                    entityID.getValue(), tm.getValue(), tms, trustMark, trustMarkStatus);
                 this.addTrustMarkInfo(info);
               });
             });

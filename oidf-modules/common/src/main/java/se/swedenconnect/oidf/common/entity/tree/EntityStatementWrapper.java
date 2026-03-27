@@ -39,10 +39,15 @@ public class EntityStatementWrapper {
   @Getter
   private final SignedJWT entityStatement;
 
+  /**
+   * Parses and returns the entity statement from the underlying signed JWT.
+   *
+   * @return parsed entity statement
+   */
   public EntityStatement getEntityStatement() {
     try {
       return EntityStatement.parse(this.entityStatement);
-    } catch (com.nimbusds.oauth2.sdk.ParseException e) {
+    } catch (final com.nimbusds.oauth2.sdk.ParseException e) {
       throw new RuntimeException(e);
     }
   }

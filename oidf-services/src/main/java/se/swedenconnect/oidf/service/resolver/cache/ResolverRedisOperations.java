@@ -100,6 +100,9 @@ public class ResolverRedisOperations {
    */
   public Node<ScrapedEntity> getRoot(final RootKey key) {
     final String root = this.stringTemplate.opsForValue().get(key.getRedisKey());
+    if (root == null) {
+      return null;
+    }
     return new Node<>(NodeKey.parse(root));
   }
 
