@@ -47,7 +47,15 @@
         "entity-identifier": "http://localhost:11111/anarchy/resolver",
         "jwks": "federation:sign-key-1"
       }
-    ]
+    ],
+    "trust-mark-issuers": {
+      "http://localhost:11111/im/tmi/certified": [
+        "http://localhost:11111/im/tmi"
+      ],
+      "http://localhost:11111/im/tmi/accepted": [
+        "http://localhost:11111/im/tmi"
+      ]
+    }
   },
   {
     "entity-identifier": "http://localhost:11111/path/ta",

@@ -1,0 +1,5 @@
+federation:
+  service:
+    scheduling:
+      registry-trigger-enabled: false
+      resolver-trigger-enabled: false

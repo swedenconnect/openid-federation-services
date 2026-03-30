@@ -29,6 +29,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
 import org.testcontainers.utility.DockerImageName;
 import se.swedenconnect.oidf.service.Application;
+import se.swedenconnect.oidf.service.CacheTestCases;
 import se.swedenconnect.oidf.service.TestConfiguration;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
@@ -54,7 +55,8 @@ import java.util.Random;
     TrustAnchorTestCases.class,
     ActuatorTestCases.class,
     ResolverPolicyTestCases.class,
-    ResolverCritTestCases.class
+    ResolverCritTestCases.class,
+    CacheTestCases.class
 })
 public class RedisTestSuite {
 
@@ -85,6 +87,7 @@ public class RedisTestSuite {
             .withProperty("server.port", "11111")
             .withProperty("management.server.port", "6001")
             .withProperty("spring.data.redis.url", redis.getRedisURI())
+            .withProperty("federation.registration.integeration.enabled", "false")
             .withProperty("federation.registry.integration.endpoints.base-path",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                 "/federationservice")

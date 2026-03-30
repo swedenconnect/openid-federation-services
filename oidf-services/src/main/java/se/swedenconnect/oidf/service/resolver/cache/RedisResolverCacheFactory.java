@@ -30,7 +30,7 @@ import se.swedenconnect.oidf.resolver.ResolverCacheFactory;
 @Slf4j
 public class RedisResolverCacheFactory implements ResolverCacheFactory {
 
-  private final RedisTemplate<String, Integer> versionTemplate;
+  private final RedisTemplate<String, Long> versionTemplate;
   private final ResolverRedisOperations resolverRedisOperations;
 
   /**
@@ -40,7 +40,7 @@ public class RedisResolverCacheFactory implements ResolverCacheFactory {
    * @param resolverRedisOperations for performing operations
    */
   public RedisResolverCacheFactory(
-      final RedisTemplate<String, Integer> versionTemplate,
+      final RedisTemplate<String, Long> versionTemplate,
       final ResolverRedisOperations resolverRedisOperations) {
 
     this.versionTemplate = versionTemplate;

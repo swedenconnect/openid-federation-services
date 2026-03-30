@@ -118,7 +118,7 @@ public class ResolverDifferentiator {
     private Response reference;
     private Response response;
 
-    private static final List<String> IGNORED_FIELDS = List.of("iat", "exp", "trust_chain", "iss");
+    private static final List<String> IGNORED_FIELDS = List.of("iat", "exp", "trust_chain", "iss", "jti");
 
     private final ObjectMapper mapper = new ObjectMapper();
 

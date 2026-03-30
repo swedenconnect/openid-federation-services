@@ -35,7 +35,7 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 public class RedisVersionedCacheLayer implements ResolverCache {
-  private final RedisTemplate<String, Integer> versionTemplate;
+  private final RedisTemplate<String, Long> versionTemplate;
 
   private final ResolverRedisOperations resolverRedisOperations;
   private final ResolverProperties properties;
@@ -47,7 +47,7 @@ public class RedisVersionedCacheLayer implements ResolverCache {
    * @param properties for handling which submodule the operation is for
    */
   public RedisVersionedCacheLayer(
-      final RedisTemplate<String, Integer> versionTemplate,
+      final RedisTemplate<String, Long> versionTemplate,
       final ResolverRedisOperations resolverRedisOperations,
       final ResolverProperties properties
       ) {
@@ -58,47 +58,52 @@ public class RedisVersionedCacheLayer implements ResolverCache {
   }
 
   @Override
-  public List<Node<ScrapedEntity>> getChildren(final Node<ScrapedEntity> parent, final int version) {
+  public List<Node<ScrapedEntity>> getChildren(final Node<ScrapedEntity> parent, final long version) {
     return this.resolverRedisOperations
         .getChildren(new ResolverRedisOperations.ChildKey(parent, version, this.properties.getEntityIdentifier()));
   }
 
   @Override
-  public void append(final Node<ScrapedEntity> child, final Node<ScrapedEntity> parent, final int version) {
+  public void append(final Node<ScrapedEntity> child, final Node<ScrapedEntity> parent, final long version) {
     this.resolverRedisOperations
         .append(new ResolverRedisOperations.ChildKey(parent, version, this.properties.getEntityIdentifier()), child);
   }
 
   @Override
-  public void setData(final String location, final ScrapedEntity data, final int version) {
+  public void setData(final String location, final ScrapedEntity data, final long version) {
     this.resolverRedisOperations.
         setData(new ResolverRedisOperations.EntityKey(location, version, this.properties.getEntityIdentifier()), data);
   }
 
   @Override
-  public ScrapedEntity getData(final String location, final int version) {
+  public ScrapedEntity getData(final String location, final long version) {
     return this.resolverRedisOperations
         .getData(new ResolverRedisOperations.EntityKey(location, version, this.properties.getEntityIdentifier()));
   }
 
   @Override
-  public Node<ScrapedEntity> getRoot(final int version) {
+  public Node<ScrapedEntity> getRoot(final long version) {
     return this.resolverRedisOperations
         .getRoot(new ResolverRedisOperations.RootKey(version, this.properties.getEntityIdentifier()));
   }
 
   @Override
-  public int getCurrentVersion() {
-    final BoundValueOperations<String, Integer> stringIntegerBoundValueOperations =
+  public long getCurrentVersion() {
+    final BoundValueOperations<String, Long> stringLongBoundValueOperations =
         this.versionTemplate.boundValueOps("%s:tree:version".formatted(this.properties.getEntityIdentifier()));
-    return Optional.ofNullable(stringIntegerBoundValueOperations.get()).orElse(0);
+    return Optional.ofNullable(stringLongBoundValueOperations.get()).orElse(0L);
   }
 
   @Override
   public void useNextVersion() {
-    this.versionTemplate
-        .boundValueOps("%s:tree:version".formatted(this.properties.getEntityIdentifier()))
-        .set(this.getNextVersion());
+    final Long pendingVersion = this.versionTemplate
+        .boundValueOps("%s:tree:pending-version".formatted(this.properties.getEntityIdentifier()))
+        .get();
+    if (pendingVersion != null) {
+      this.versionTemplate
+          .boundValueOps("%s:tree:version".formatted(this.properties.getEntityIdentifier()))
+          .set(pendingVersion);
+    }
   }
 
   @Override
@@ -109,7 +114,10 @@ public class RedisVersionedCacheLayer implements ResolverCache {
   @Override
   public CacheSnapshot<ScrapedEntity> createNewSnapshot(final Node<ScrapedEntity> root,
                                                         final ScrapedEntity rootData) {
-    final int version = getNextVersion();
+    final long version = getNextVersion();
+    this.versionTemplate
+        .boundValueOps("%s:tree:pending-version".formatted(this.properties.getEntityIdentifier()))
+        .set(version);
     this.resolverRedisOperations
         .setRoot(
             new ResolverRedisOperations.RootKey(version, this.properties.getEntityIdentifier()), root

@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
 import se.swedenconnect.oidf.service.Application;
+import se.swedenconnect.oidf.service.CacheTestCases;
 import se.swedenconnect.oidf.service.TestConfiguration;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
@@ -52,7 +53,8 @@ import java.util.Random;
     TrustAnchorTestCases.class,
     ActuatorTestCases.class,
     ResolverPolicyTestCases.class,
-    ResolverCritTestCases.class
+    ResolverCritTestCases.class,
+    CacheTestCases.class
 })
 public class InMemoryTestSuite {
 
@@ -76,6 +78,7 @@ public class InMemoryTestSuite {
             .withProperty("server.port", "11111")
             .withProperty("management.server.port", "6001")
             .withProperty("federation.service.storage", "memory")
+            .withProperty("federation.registration.integeration.enabled", "false")
             .withProperty("federation.registry.integration.client.base-uri",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                     "/federationservice")

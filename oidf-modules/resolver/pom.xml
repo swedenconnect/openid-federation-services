@@ -29,7 +29,7 @@
     <artifactId>resolver</artifactId>
 
     <properties>
-        <service-revision>0.10.0</service-revision>
+        <service-revision>0.10.1</service-revision>
     </properties>
 
     <dependencies>

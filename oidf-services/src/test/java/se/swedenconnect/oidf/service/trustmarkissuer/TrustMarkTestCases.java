@@ -126,7 +126,7 @@ public class TrustMarkTestCases {
     final TestClock clock = Context.applicationContext.get().getBean(TestClock.class);
     try {
       clock.stopTime(Instant.now().minus(14, ChronoUnit.DAYS));
-      final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(
+      final SignedJWT trustMark = clients.disableCaching().anarchy().trustMark().trustMark(
           TestFederationEntities.IM.TRUST_MARK_ISSUER,
           TRUST_MARK_ID,
           TestFederationEntities.IM.OP

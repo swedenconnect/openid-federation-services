@@ -18,7 +18,8 @@ package se.swedenconnect.oidf.common.entity.tree.scraping;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
@@ -75,33 +76,37 @@ public record ScrapedTrustMarkIssuer(Map<String, ScrapedTrustMark> trustMark) {
       final EntityStatementWrapper trustAnchor,
       final EntityID entityID) {
     if (metadata.containsKey("federation_trust_mark_list_endpoint")) {
-      Optional.ofNullable(trustAnchor.getEntityStatement()
-              .getClaimsSet()
-              .getTrustMarksIssuers()
-              .get(entityID))
-          .ifPresent(tmi -> {
-            //This entity is a valid trust mark issuer for this federation.
-            tmi.forEach(tm -> {
-              // For every trust mark get subjects
-              final List<String> trustMarkSubjects =
-                  client.trustMarkedListing(new FederationRequest<>(new TrustMarkListingRequest(tm.getValue(), null),
-                      metadata));
-              trustMarkSubjects.forEach(tms -> {
-                // Trust Mark per subject
-                final TrustMarkRequest trustMarkRequest =
-                    new TrustMarkRequest(new EntityID(tms), entityID, new EntityID(tm.getValue()));
-                final SignedJWT trustMark = client.trustMark(new FederationRequest<>(trustMarkRequest));
-                // Status per subject
-                final TrustMarkStatusResponse trustMarkStatus = client.trustMarkStatus(
-                    new FederationRequest<>(new FederationTrustMarkStatusRequest(
-                        trustMark.serialize(),
-                        entityID.getValue())
-                    )
-                );
-                final ScrapedTrustMarkInfo info = new ScrapedTrustMarkInfo(
-                    entityID.getValue(), tm.getValue(), tms, trustMark, trustMarkStatus);
-                this.addTrustMarkInfo(info);
-              });
+      final JSONObject trustMarkIssuers = trustAnchor.getEntityStatement()
+          .getClaimsSet()
+          .getJSONObjectClaim("trust_mark_issuers");
+      trustMarkIssuers.entrySet().stream()
+          .filter(entry -> {
+            final JSONArray issuers = (JSONArray) entry.getValue();
+            return issuers.stream()
+                .map(JSONObject.class::cast)
+                .map(v -> v.getAsString("value"))
+                .anyMatch(entityID.getValue()::equals);
+          })
+          .forEach(entry -> {
+            final String trustMarkTypeValue = entry.getKey();
+            // For every trust mark get subjects
+            final List<String> trustMarkSubjects =
+                client.trustMarkedListing(new FederationRequest<>(
+                    new TrustMarkListingRequest(trustMarkTypeValue, null), metadata));
+            trustMarkSubjects.forEach(tms -> {
+              // Trust Mark per subject
+              final TrustMarkRequest trustMarkRequest =
+                  new TrustMarkRequest(new EntityID(tms), entityID, new EntityID(trustMarkTypeValue));
+              final SignedJWT trustMark = client.trustMark(new FederationRequest<>(trustMarkRequest));
+              final TrustMarkStatusResponse statusResponse = client.trustMarkStatus(
+                  new FederationRequest<>(
+                      new FederationTrustMarkStatusRequest(trustMark.serialize(), entityID.getValue()),
+                      metadata
+                  )
+              );
+              final ScrapedTrustMarkInfo info = new ScrapedTrustMarkInfo(
+                  entityID.getValue(), trustMarkTypeValue, tms, trustMark, statusResponse);
+              this.addTrustMarkInfo(info);
             });
           });
     }

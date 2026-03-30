@@ -265,7 +265,8 @@
       "federation_entity": {
         "organization_name": "Authorization",
         "federation_trust_mark_endpoint": "http://localhost:11111/im/tmi/trust_mark",
-        "federation_trust_mark_status_endpoint": "http://localhost:11111/im/tmi/trust_mark_status"
+        "federation_trust_mark_status_endpoint": "http://localhost:11111/im/tmi/trust_mark_status",
+        "federation_trust_mark_list_endpoint" : "http://localhost:11111/im/tmi/trust_mark_listing"
       }
     }
   }

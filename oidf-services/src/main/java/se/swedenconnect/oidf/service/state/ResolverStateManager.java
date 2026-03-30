@@ -20,12 +20,9 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.service.health.ReadyStateComponent;
 import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Readystate component for loading resolvers.
@@ -64,8 +61,8 @@ public class ResolverStateManager extends ReadyStateComponent {
   /**
    * Trigger reload of this component.
    */
-  @Scheduled(fixedRate = 60, timeUnit = TimeUnit.MINUTES)
   public void reload() {
+    log.debug("Reload resolver triggered from cron");
     if (this.ready()) {
       //No need to execute cron job during startup
       this.reloadResolvers();
@@ -75,15 +72,20 @@ public class ResolverStateManager extends ReadyStateComponent {
   @EventListener
   void handle(final RegistryReadyEvent event) {
     try {
+      log.debug("Triggering reload resolvers from ready event");
       this.reloadResolvers();
     } finally {
+      log.debug("Resolver ready for traffic");
       this.markReady();
     }
   }
 
   @EventListener
   void handle(final RegistryLoadedEvent event) {
-    this.reloadResolvers();
+    if (this.ready()) {
+      log.debug("Triggering reload resolvers from loaded event");
+      this.reloadResolvers();
+    }
   }
 
   private void reloadResolvers() {

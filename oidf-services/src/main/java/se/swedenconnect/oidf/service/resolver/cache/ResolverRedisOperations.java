@@ -122,7 +122,7 @@ public class ResolverRedisOperations {
    * @param version to which the entity belongs to
    * @param entityId to which module the data belongs to
    */
-  public record EntityKey(String location, int version, String entityId) {
+  public record EntityKey(String location, long version, String entityId) {
     String getRedisKey() {
       return "%s:%d:entity:%s".formatted(this.entityId, this.version, this.location);
     }
@@ -134,7 +134,7 @@ public class ResolverRedisOperations {
    * @param version to which the child and parent belongs to
    * @param entityId to which module the data belongs to
    */
-  public record ChildKey(Node<ScrapedEntity> parent, int version, String entityId) {
+  public record ChildKey(Node<ScrapedEntity> parent, long version, String entityId) {
     String getRedisKey() {
       return "%s:%d:children:%s".formatted(this.entityId, this.version, this.parent.getKey());
     }
@@ -145,7 +145,7 @@ public class ResolverRedisOperations {
    * @param version to which the root belongs to
    * @param entityId to which module the data belongs to
    */
-  public record RootKey(int version, String entityId) {
+  public record RootKey(long version, String entityId) {
     String getRedisKey() {
       return "%s:%d:root".formatted(this.entityId, this.version);
     }

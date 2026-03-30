@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.resolver;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
 import se.swedenconnect.oidf.resolver.routing.ResolverRouter;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
@@ -33,8 +35,10 @@ public class FederationResolverRoutingConfiguration {
   ResolverRouter resolverRouter(
       final ResolverFactory factory,
       final RouteFactory routeFactory,
-      final ServerResponseErrorHandler errorHandler
+      final ServerResponseErrorHandler errorHandler,
+      final ResolverResponseCache resolverResponseCache,
+      final ScrapedEntityLookup lookup
       ) {
-    return new ResolverRouter(factory, routeFactory, errorHandler);
+    return new ResolverRouter(factory, routeFactory, errorHandler, resolverResponseCache, lookup);
   }
 }

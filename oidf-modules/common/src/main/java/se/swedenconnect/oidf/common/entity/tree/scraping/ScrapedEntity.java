@@ -24,6 +24,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
@@ -62,7 +63,7 @@ public class ScrapedEntity {
   /**
    * Resolves the entity statement using the provided federation client.
    *
-   * @param client the federation client to use for resolution
+   * @param client      the federation client to use for resolution
    * @param trustAnchor entity configuration
    */
   public void scrape(final FederationClient client, final EntityStatementWrapper trustAnchor) {
@@ -90,9 +91,14 @@ public class ScrapedEntity {
     wrapper.getFederationEntityMetadata()
         .ifPresent(metadata -> {
           if (metadata.containsKey("federation_trust_mark_list_endpoint") && trustAnchor != null) {
-            log.debug("Entity {} is trust mark issuer, resolving trust mark issuer information", this.entityID);
-            this.trustMarkIssuer = new ScrapedTrustMarkIssuer(new HashMap<>());
-            this.trustMarkIssuer.scrape(client, metadata, trustAnchor, this.entityID);
+            final JSONObject trustMarkIssuers = trustAnchor.getEntityStatement()
+                .getClaimsSet()
+                .getJSONObjectClaim("trust_mark_issuers");
+            if (trustMarkIssuers != null) {
+              log.debug("Entity {} is trust mark issuer, resolving trust mark issuer information", this.entityID);
+              this.trustMarkIssuer = new ScrapedTrustMarkIssuer(new HashMap<>());
+              this.trustMarkIssuer.scrape(client, metadata, trustAnchor, this.entityID);
+            }
           }
           if (metadata.containsKey("federation_list_endpoint")) {
             log.debug("Entity {} is intermediate, resolving subordinates", this.entityID);

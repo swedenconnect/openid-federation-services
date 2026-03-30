@@ -16,7 +16,8 @@
  */
 package se.swedenconnect.oidf.trustmarkissuer.starter.routing;
 
-import com.nimbusds.jwt.SignedJWT;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
@@ -27,7 +28,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
@@ -41,7 +42,6 @@ import se.swedenconnect.oidf.trustmarkissuer.TrustMarkRequest;
 import se.swedenconnect.oidf.trustmarkissuer.TrustMarkStatusRequest;
 import se.swedenconnect.oidf.trustmarkissuer.starter.TrustMarkIssuerFactory;
 
-import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -53,27 +53,33 @@ import java.util.Optional;
 @Component
 public class TrustMarkIssuerRouter implements Router {
 
+  private static final Logger log = LoggerFactory.getLogger(TrustMarkIssuerRouter.class);
   private final RouteFactory routeFactory;
   private final TrustMarkIssuerFactory factory;
   private final ServerResponseErrorHandler errorHandler;
   private final ScrapedEntityLookup lookup;
+  private final TrustMarkStatusCache trustMarkStatusCache;
 
   /**
    * Constructor.
+   *
    * @param routeFactory route factory
    * @param factory      trust mark issuer factory
    * @param errorHandler handler for server response errors
    * @param lookup       lookup for scraped entities
+   * @param cache        to store responses
    */
   public TrustMarkIssuerRouter(
       final RouteFactory routeFactory,
       final TrustMarkIssuerFactory factory,
       final ServerResponseErrorHandler errorHandler,
-      final ScrapedEntityLookup lookup) {
+      final ScrapedEntityLookup lookup,
+      final TrustMarkStatusCache cache) {
     this.routeFactory = routeFactory;
     this.factory = factory;
     this.errorHandler = errorHandler;
     this.lookup = lookup;
+    this.trustMarkStatusCache = cache;
   }
 
   @Override
@@ -94,16 +100,21 @@ public class TrustMarkIssuerRouter implements Router {
       final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
           List.of("trust_mark"));
       final String trustMarkJwt = params.getFirst("trust_mark");
-      return this.handleTrustMarkStatusCacheControl(request, trustMarkJwt)
-          .orElseGet(() -> {
-            try {
-              return ServerResponse.ok()
-                  .contentType(MediaType.parseMediaType("application/trust-mark-status-response+jwt"))
-                  .body(trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest(trustMarkJwt)));
-            } catch (final FederationException e) {
-              return this.errorHandler.handle(e);
-            }
-          });
+      final Long snapshot = this.lookup.getLatestSnapshotVersion();
+      final Optional<ServerResponse> serverResponse =
+          this.handleTrustMarkStatusCacheControl(request, trustMarkJwt, snapshot);
+      if (serverResponse.isPresent()) {
+        return serverResponse.get();
+      }
+      try {
+        final String trustMarkStatus = trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest(trustMarkJwt));
+        this.trustMarkStatusCache.put(snapshot, trustMarkJwt, trustMarkStatus);
+        return ServerResponse.ok()
+            .contentType(MediaType.parseMediaType("application/trust-mark-status-response+jwt"))
+            .body(trustMarkStatus);
+      } catch (final FederationException e) {
+        return this.errorHandler.handle(e);
+      }
     } catch (final FederationException e) {
       return this.errorHandler.handle(e);
     }
@@ -131,10 +142,12 @@ public class TrustMarkIssuerRouter implements Router {
     final TrustMarkIssuer trustMarkIssuer = this.factory.create(property);
     final MultiValueMap<String, String> params = request.params();
     final String trustMarkType = params.getFirst("trust_mark_type");
+    log.debug("Handling trust mark request {}", params);
     final String sub = params.getFirst("sub");
     return this.handleTrustMarkCacheControl(request, trustMarkType, sub)
         .orElseGet(() -> {
           try {
+            log.debug("Using fresh trust mark for {} {} {}", params, property, request.headers());
             return ServerResponse.ok().body(trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkType, sub)));
           } catch (final FederationException e) {
             return this.errorHandler.handle(e);
@@ -159,31 +172,12 @@ public class TrustMarkIssuerRouter implements Router {
     return Optional.empty();
   }
 
-  private Optional<ServerResponse> handleTrustMarkStatusCacheControl(
-      final ServerRequest request, final String trustMarkJwt) {
+  private Optional<ServerResponse> handleTrustMarkStatusCacheControl(final ServerRequest request,
+      final String trustMarkJwt, final Long snapshot) {
     final List<String> cacheControl = request.headers().header("cache-control");
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
-      try {
-        final SignedJWT parsed = SignedJWT.parse(trustMarkJwt);
-        final String trustMarkType = parsed.getJWTClaimsSet().getStringClaim("trust_mark_type");
-        final String sub = parsed.getJWTClaimsSet().getSubject();
-        final Optional<ScrapedEntity> entity =
-            this.lookup.findTrustMarkIssuer(this.getEntityIdFromReuqest(request).getValue());
-        if (entity.isPresent()) {
-          final Optional<ScrapedTrustMarkInfo> info =
-              entity.get().getTrustMarkIssuer().trustMarkInfo(trustMarkType, sub);
-          if (info.isPresent()) {
-            final TrustMarkStatusResponse status = info.get().trustMarkStatus();
-            if (!status.isError()) {
-              return Optional.of(ServerResponse.ok()
-                  .contentType(MediaType.parseMediaType("application/trust-mark-status-response+jwt"))
-                  .body(status.getSignedJWT().serialize()));
-            }
-          }
-        }
-      } catch (final ParseException e) {
-        return Optional.empty();
-      }
+      return this.trustMarkStatusCache.get(snapshot, trustMarkJwt)
+          .map(status -> ServerResponse.ok().body(status));
     }
     return Optional.empty();
   }

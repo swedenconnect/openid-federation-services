@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.routing;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -71,17 +72,17 @@ public class EntityRouter implements Router {
               .test(request))
           .findFirst()
           .get();
-      return this.handleCacheControl(request)
+      return this.handleCacheControl(request, entityRecord.getEntityIdentifier())
           .orElseGet(() -> ServerResponse.ok()
               .body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement()
                   .serialize()));
     });
   }
 
-  private Optional<ServerResponse> handleCacheControl(final ServerRequest request) {
+  private Optional<ServerResponse> handleCacheControl(final ServerRequest request, final EntityID entityId) {
     final List<String> cacheControl = request.headers().header("cache-control");
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
-      return this.lookup.findByEntityId(this.getEntityIdFromReuqest(request).getValue())
+      return this.lookup.findByEntityId(entityId.getValue(), a -> true)
           .filter(entity -> Objects.nonNull(entity.getEntityStatement()))
           .map(entity -> ServerResponse.ok()
               .body(entity.getEntityStatement().getSignedStatement().serialize()));

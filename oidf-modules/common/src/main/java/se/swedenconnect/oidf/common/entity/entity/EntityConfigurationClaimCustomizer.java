@@ -27,7 +27,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 @FunctionalInterface
 public interface EntityConfigurationClaimCustomizer {
   /**
-   * @param record of the enity
+   * @param record of the entity
    * @param builder to customize
    * @return builder
    */

@@ -25,6 +25,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -45,6 +47,7 @@ public class ResolverResponseFactory {
   private final ResolverProperties properties;
   private final SignerFactory signerFactory;
   private final CompositeRecordSource compositeRecordSource;
+  private static final SecureRandom rng = new SecureRandom();
 
   /**
    * Constructor.
@@ -108,6 +111,7 @@ public class ResolverResponseFactory {
         new JWTClaimsSet.Builder(resolverResponse.entityStatement().getClaimsSet().toJWTClaimsSet())
             .issuer(this.properties.getEntityIdentifier())
             .issueTime(Date.from(now))
+            .jwtID(new BigInteger(128, rng).toString(16))
             .expirationTime(Date.from(responseExpiry))
             .claim("metadata", resolverResponse.metadata())
             .claim("trust_marks",

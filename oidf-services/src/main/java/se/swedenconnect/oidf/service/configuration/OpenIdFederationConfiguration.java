@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.service.configuration;
 
 import com.nimbusds.jose.shaded.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
@@ -27,6 +28,10 @@ import se.swedenconnect.oidf.FederationServiceState;
 import se.swedenconnect.oidf.InMemoryFederationServiceState;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryTrustMarkStatusCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheFactory;
@@ -44,6 +49,7 @@ import se.swedenconnect.oidf.service.state.StateHashFactory;
  *
  * @author Felix Hellman
  */
+@Slf4j
 @Configuration
 @EnableConfigurationProperties(FederationServiceProperties.class)
 public class OpenIdFederationConfiguration {
@@ -68,7 +74,7 @@ public class OpenIdFederationConfiguration {
       final ApplicationEventPublisher publisher,
       final FederationProperties properties,
       final StateHashFactory stateHashFactory
-      ) {
+  ) {
     return new RegistryStateManager(populator,
         state,
         lock,
@@ -103,5 +109,21 @@ public class OpenIdFederationConfiguration {
   @Bean
   ManagedCacheRepository managedRedisCacheRepository(final ManagedCacheFactory cacheFactory) {
     return new ManagedCacheRepository(cacheFactory);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  TrustMarkStatusCache inMemoryTrustMarkStatusCache() {
+    log.warn("Starting application with in memory implementation of TrustMarkStatusCache is not recommended." +
+             "See docs for more information");
+    return new InMemoryTrustMarkStatusCache();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  ResolverResponseCache inMemoryResolverResponseCache() {
+    log.warn("Starting application with in memory implementation of ResolverResponseCache is not recommended. " +
+             "See docs for more information");
+    return new InMemoryResolverResponseCache();
   }
 }

@@ -24,6 +24,10 @@ public class FederationClients {
 
   private final RestClient client;
 
+  public FederationClients disableCaching() {
+    return new FederationClients(this.client.mutate().defaultHeader("cache-control", "no-cache").build());
+  }
+
   public FederationClients(final RestClient client) {
     this.client = client;
   }
@@ -33,6 +37,15 @@ public class FederationClients {
         this.client,
         TestFederationEntities.Anarchy.RESOLVER,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,
+        TestFederationEntities.IM.TRUST_MARK_ISSUER
+    );
+  }
+
+  public TestFederationClient trustMarkIssuerClient() {
+    return new TestFederationClient(
+        this.client,
+        TestFederationEntities.TrustMarkIssuer.RESOLVER,
+        TestFederationEntities.TrustMarkIssuer.TRUST_ANCHOR,
         TestFederationEntities.IM.TRUST_MARK_ISSUER
     );
   }

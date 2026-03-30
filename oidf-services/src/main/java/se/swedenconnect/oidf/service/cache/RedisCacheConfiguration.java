@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.service.cache;
 
 import com.nimbusds.jose.shaded.gson.Gson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -83,11 +85,11 @@ public class RedisCacheConfiguration {
   }
 
   @Bean
-  RedisTemplate<String, Integer> integerRedisTemplate(
+  RedisTemplate<String, Long> longRedisTemplate(
       final RedisConnectionFactory factory,
       final InstanceSpecificRedisKeySerializer keySerializer
   ) {
-    final RedisTemplate<String, Integer> template = new RedisTemplate<>();
+    final RedisTemplate<String, Long> template = new RedisTemplate<>();
     template.setConnectionFactory(factory);
     template.setKeySerializer(keySerializer);
     return template;
@@ -106,7 +108,7 @@ public class RedisCacheConfiguration {
 
   @Bean
   ResolverCacheFactory resolverCacheFactory(
-      final RedisTemplate<String, Integer> versionTemplate,
+      final RedisTemplate<String, Long> versionTemplate,
       final ResolverRedisOperations resolverRedisOperations
   ) {
     return new RedisResolverCacheFactory(
@@ -153,5 +155,15 @@ public class RedisCacheConfiguration {
     template.setKeySerializer(keySerializer);
     template.afterPropertiesSet();
     return new RedisServiceLock(template);
+  }
+
+  @Bean
+  TrustMarkStatusCache trustMarkStatusCache(final RedisTemplate<String, String> template) {
+    return new RedisTrustMarkStatusCache(template);
+  }
+
+  @Bean
+  ResolverResponseCache redisResolverResponseCache(final RedisTemplate<String, String> template) {
+    return new RedisResolverResponseCache(template);
   }
 }

@@ -20,14 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import se.swedenconnect.oidf.FederationProperties;
 import se.swedenconnect.oidf.FederationServiceState;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.service.health.ReadyStateComponent;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Responsible for registry state.
@@ -85,8 +82,8 @@ public class RegistryStateManager extends ReadyStateComponent {
   /**
    * Trigger reload of this component if needed.
    */
-  @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
   public void reload() {
+    log.debug("Reload registry triggered from cron");
     if (this.ready()) {
       //No need to execute cron job during startup
       this.reloadFromRegistry();

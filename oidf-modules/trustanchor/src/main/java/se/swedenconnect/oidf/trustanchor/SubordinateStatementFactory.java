@@ -29,6 +29,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAn
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -40,6 +42,8 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 public class SubordinateStatementFactory {
+
+  private static final SecureRandom RNG = new SecureRandom();
 
   private final SignerFactory signerFactory;
 
@@ -96,6 +100,7 @@ public class SubordinateStatementFactory {
       final JWTClaimsSet jwtClaimsSet = builder
           .issueTime(Date.from(Instant.now()))
           .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
+          .jwtID(new BigInteger(128, RNG).toString(16))
           .issuer(issuer.getEntityIdentifier().getValue())
           .subject(subordinate.getEntityIdentifier().getValue())
           .build();

@@ -165,7 +165,18 @@ public class RestClientFederationClient implements FederationClient {
 
   @Override
   public List<String> trustMarkedListing(final FederationRequest<TrustMarkListingRequest> request) {
-    return List.of();
+    final String path = Optional.ofNullable(
+            request.federationEntityMetadata().get("federation_trust_mark_list_endpoint"))
+        .filter(p -> p instanceof String)
+        .map(String.class::cast)
+        .orElseThrow();
+    return (List<String>) this.client.mutate().baseUrl(path).build()
+        .get()
+        .uri(builder -> builder
+            .queryParam("trust_mark_type", request.parameters().trustMarkType())
+            .build())
+        .retrieve()
+        .body(List.class);
   }
 
   @Override

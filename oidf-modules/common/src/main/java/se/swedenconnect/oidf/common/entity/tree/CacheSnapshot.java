@@ -16,6 +16,8 @@
  */
 package se.swedenconnect.oidf.common.entity.tree;
 
+import lombok.Getter;
+
 import java.util.List;
 
 /**
@@ -27,14 +29,15 @@ import java.util.List;
  */
 public class CacheSnapshot<T> {
   private final VersionedCacheLayer<T> cache;
-  private final int version;
+  @Getter
+  private final long version;
 
   /**
    * Constructor.
    * @param cache to perform operations upon
    * @param version key to use with the cache
    */
-  public CacheSnapshot(final VersionedCacheLayer<T> cache, final int version) {
+  public CacheSnapshot(final VersionedCacheLayer<T> cache, final long version) {
     this.cache = cache;
     this.version = version;
   }

@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.common.entity.tree.Tree;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -53,9 +54,10 @@ public class ScrapedEntityLookup {
    * When the same entity appears in multiple trees, the most recently scraped instance is returned.
    *
    * @param entityId to search for
+   * @param matching predicate to filter results
    * @return the most recently scraped matching entity, or empty if not found in any tree
    */
-  public Optional<ScrapedEntity> findByEntityId(final String entityId) {
+  public Optional<ScrapedEntity> findByEntityId(final String entityId, final Predicate<ScrapedEntity> matching) {
     return this.treeSource.getTrees().stream()
         .flatMap(tree -> {
           final CacheSnapshot<ScrapedEntity> snapshot = tree.getCurrentSnapshot();
@@ -69,7 +71,20 @@ public class ScrapedEntityLookup {
           );
           return tree.search(request).stream().map(Tree.SearchResult::getData);
         })
-        .max(Comparator.comparing(ScrapedEntity::getScrapedAt));
+        .filter(matching)
+        .findFirst();
+  }
+
+  /**
+   * Returns the highest current snapshot version across all managed trees.
+   *
+   * @return the latest snapshot version, or 0 if no trees are present
+   */
+  public Long getLatestSnapshotVersion() {
+    return this.treeSource.getTrees().stream()
+        .mapToLong(tree -> tree.getCurrentSnapshot().getVersion())
+        .max()
+        .orElse(0L);
   }
 
   /**
@@ -79,8 +94,7 @@ public class ScrapedEntityLookup {
    * @return matching entity with intermediate data, or empty if not found
    */
   public Optional<ScrapedEntity> findTrustAnchorByEntityId(final String entityId) {
-    return this.findByEntityId(entityId)
-        .filter(entity -> Objects.nonNull(entity.getIntermediate()));
+    return this.findByEntityId(entityId, a -> Objects.nonNull(a.getIntermediate()));
   }
 
   /**
@@ -90,7 +104,6 @@ public class ScrapedEntityLookup {
    * @return matching entity with trust mark issuer data, or empty if not found
    */
   public Optional<ScrapedEntity> findTrustMarkIssuer(final String entityId) {
-    return this.findByEntityId(entityId)
-        .filter(entity -> Objects.nonNull(entity.getTrustMarkIssuer()));
+    return this.findByEntityId(entityId, a -> Objects.nonNull(a.getTrustMarkIssuer()));
   }
 }

@@ -148,6 +148,7 @@ public class TrustMarkSigner {
         .claim("trust_mark", trustMark)
         .issueTime(new Date(Instant.now(this.clock).toEpochMilli()))
         .issuer(entity.getEntityIdentifier().getValue())
+        .jwtID(new BigInteger(128, rng).toString(16))
         .claim("status", status);
 
     try {
