@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,12 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedTrustMarkInfo;
 import se.swedenconnect.oidf.routing.RequireParameters;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.Router;
@@ -59,27 +58,31 @@ public class TrustMarkIssuerRouter implements Router {
   private final ServerResponseErrorHandler errorHandler;
   private final ScrapedEntityLookup lookup;
   private final TrustMarkStatusCache trustMarkStatusCache;
+  private final TrustMarkCache trustMarkCache;
 
   /**
    * Constructor.
    *
-   * @param routeFactory route factory
-   * @param factory      trust mark issuer factory
-   * @param errorHandler handler for server response errors
-   * @param lookup       lookup for scraped entities
-   * @param cache        to store responses
+   * @param routeFactory       route factory
+   * @param factory            trust mark issuer factory
+   * @param errorHandler       handler for server response errors
+   * @param lookup             lookup for scraped entities
+   * @param trustMarkStatusCache cache for trust mark status responses
+   * @param trustMarkCache     cache for trust mark responses
    */
   public TrustMarkIssuerRouter(
       final RouteFactory routeFactory,
       final TrustMarkIssuerFactory factory,
       final ServerResponseErrorHandler errorHandler,
       final ScrapedEntityLookup lookup,
-      final TrustMarkStatusCache cache) {
+      final TrustMarkStatusCache trustMarkStatusCache,
+      final TrustMarkCache trustMarkCache) {
     this.routeFactory = routeFactory;
     this.factory = factory;
     this.errorHandler = errorHandler;
     this.lookup = lookup;
-    this.trustMarkStatusCache = cache;
+    this.trustMarkStatusCache = trustMarkStatusCache;
+    this.trustMarkCache = trustMarkCache;
   }
 
   @Override
@@ -93,9 +96,6 @@ public class TrustMarkIssuerRouter implements Router {
   }
 
   private ServerResponse handleTrustMarkStatus(final CompositeRecordSource source, final ServerRequest request) {
-    final TrustMarkIssuerProperties propertyByRequest
-        = this.getPropertyByRequest(source, request, "/trust_mark_status");
-    final TrustMarkIssuer trustMarkIssuer = this.factory.create(propertyByRequest);
     try {
       final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
           List.of("trust_mark"));
@@ -106,6 +106,9 @@ public class TrustMarkIssuerRouter implements Router {
       if (serverResponse.isPresent()) {
         return serverResponse.get();
       }
+      final TrustMarkIssuerProperties propertyByRequest =
+          this.getPropertyByRequest(source, request, "/trust_mark_status");
+      final TrustMarkIssuer trustMarkIssuer = this.factory.create(propertyByRequest);
       try {
         final String trustMarkStatus = trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest(trustMarkJwt));
         this.trustMarkStatusCache.put(snapshot, trustMarkJwt, trustMarkStatus);
@@ -138,36 +141,35 @@ public class TrustMarkIssuerRouter implements Router {
   }
 
   private ServerResponse handleTrustMarkRequest(final CompositeRecordSource source, final ServerRequest request) {
-    final TrustMarkIssuerProperties property = this.getPropertyByRequest(source, request, "/trust_mark");
-    final TrustMarkIssuer trustMarkIssuer = this.factory.create(property);
     final MultiValueMap<String, String> params = request.params();
     final String trustMarkType = params.getFirst("trust_mark_type");
     log.debug("Handling trust mark request {}", params);
     final String sub = params.getFirst("sub");
-    return this.handleTrustMarkCacheControl(request, trustMarkType, sub)
-        .orElseGet(() -> {
-          try {
-            log.debug("Using fresh trust mark for {} {} {}", params, property, request.headers());
-            return ServerResponse.ok().body(trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkType, sub)));
-          } catch (final FederationException e) {
-            return this.errorHandler.handle(e);
-          }
-        });
+    final Long snapshot = this.lookup.getLatestSnapshotVersion();
+
+    final Optional<ServerResponse> cached = this.handleTrustMarkCacheControl(request, trustMarkType, sub, snapshot);
+    if (cached.isPresent()) {
+      return cached.get();
+    }
+
+    final TrustMarkIssuerProperties property = this.getPropertyByRequest(source, request, "/trust_mark");
+    final TrustMarkIssuer trustMarkIssuer = this.factory.create(property);
+    try {
+      log.debug("Using fresh trust mark for {} {} {}", params, property, request.headers());
+      final String response = trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkType, sub));
+      this.trustMarkCache.put(snapshot, trustMarkType, sub, response);
+      return ServerResponse.ok().body(response);
+    } catch (final FederationException e) {
+      return this.errorHandler.handle(e);
+    }
   }
 
   private Optional<ServerResponse> handleTrustMarkCacheControl(
-      final ServerRequest request, final String trustMarkType, final String sub) {
+      final ServerRequest request, final String trustMarkType, final String sub, final Long snapshot) {
     final List<String> cacheControl = request.headers().header("cache-control");
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
-      final Optional<ScrapedEntity> entity =
-          this.lookup.findTrustMarkIssuer(this.getEntityIdFromReuqest(request).getValue());
-      if (entity.isPresent()) {
-        final Optional<ScrapedTrustMarkInfo> info =
-            entity.get().getTrustMarkIssuer().trustMarkInfo(trustMarkType, sub);
-        if (info.isPresent()) {
-          return Optional.of(ServerResponse.ok().body(info.get().trustMark().serialize()));
-        }
-      }
+      return this.trustMarkCache.get(snapshot, trustMarkType, sub)
+          .map(response -> ServerResponse.ok().body(response));
     }
     return Optional.empty();
   }

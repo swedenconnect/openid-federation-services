@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.trustanchor.routing;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.MultiValueMap;
@@ -25,24 +24,20 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
-import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
-import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
 import se.swedenconnect.oidf.routing.RequireParameters;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.Router;
 import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
-import se.swedenconnect.oidf.trustanchor.ScrapedTrustAnchor;
 import se.swedenconnect.oidf.trustanchor.TrustAnchor;
 import se.swedenconnect.oidf.trustanchor.TrustAnchorFactory;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -57,6 +52,7 @@ public class TrustAnchorRouter implements Router {
   private final RouteFactory routeFactory;
   private final ServerResponseErrorHandler errorHandler;
   private final ScrapedEntityLookup lookup;
+  private final SubordinateFetchCache fetchCache;
 
   /**
    * Constructor.
@@ -64,17 +60,20 @@ public class TrustAnchorRouter implements Router {
    * @param routeFactory       factory for creating routes
    * @param errorHandler       handler for server response errors
    * @param lookup             lookup for scraped entities
+   * @param fetchCache         cache for subordinate fetch responses
    */
   public TrustAnchorRouter(
       final TrustAnchorFactory trustAnchorFactory,
       final RouteFactory routeFactory,
       final ServerResponseErrorHandler errorHandler,
-      final ScrapedEntityLookup lookup) {
+      final ScrapedEntityLookup lookup,
+      final SubordinateFetchCache fetchCache) {
 
     this.trustAnchorFactory = trustAnchorFactory;
     this.routeFactory = routeFactory;
     this.errorHandler = errorHandler;
     this.lookup = lookup;
+    this.fetchCache = fetchCache;
   }
 
   @Override
@@ -86,40 +85,33 @@ public class TrustAnchorRouter implements Router {
   }
 
   private ServerResponse handleFetchEntityStatement(final CompositeRecordSource source, final ServerRequest request) {
-
-
-    final TrustAnchorProperties trustAnchorProperties = this.getPropertyByRequest(source, request, "/fetch");
     try {
       final MultiValueMap<String, String> params = RequireParameters.validate(request.params(), List.of("sub"));
       final FetchRequest fetchRequest = new FetchRequest(params.getFirst("sub"));
+      final Long snapshot = this.lookup.getLatestSnapshotVersion();
 
-      return this.handleCacheControl(request, fetchRequest)
-          .orElseGet(() -> {
-            try {
-              final TrustAnchor trustAnchor = this.trustAnchorFactory.create(trustAnchorProperties);
-              return ServerResponse.ok().body(trustAnchor.fetchEntityStatement(fetchRequest));
-            } catch (final FederationException e) {
-              return this.errorHandler.handle(e);
-            }
-          });
+      final Optional<ServerResponse> cached = this.handleCacheControl(request, fetchRequest, snapshot);
+      if (cached.isPresent()) {
+        return cached.get();
+      }
 
+      final TrustAnchorProperties trustAnchorProperties = this.getPropertyByRequest(source, request, "/fetch");
+      final TrustAnchor trustAnchor = this.trustAnchorFactory.create(trustAnchorProperties);
+      final String response = trustAnchor.fetchEntityStatement(fetchRequest);
+      this.fetchCache.put(snapshot, fetchRequest, response);
+      return ServerResponse.ok().body(response);
     } catch (final FederationException e) {
       return this.errorHandler.handle(e);
     }
   }
 
   private Optional<ServerResponse> handleCacheControl(
-      final ServerRequest request, final FetchRequest fetchRequest)
-      throws InvalidIssuerException, NotFoundException {
+      final ServerRequest request, final FetchRequest fetchRequest, final Long snapshot) {
     final List<String> cacheControl = request.headers().header("cache-control");
     log.debug("Cache header was {} for trust anchor", cacheControl);
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
-      final Optional<ScrapedEntity> trustMarkIssuer =
-          this.lookup.findTrustAnchorByEntityId(this.getEntityIdFromReuqest(request).getValue());
-      if (trustMarkIssuer.isPresent()) {
-        return Optional.of(ServerResponse.ok()
-            .body(new ScrapedTrustAnchor(trustMarkIssuer.get()).fetchEntityStatement(fetchRequest)));
-      }
+      return this.fetchCache.get(snapshot, fetchRequest)
+          .map(response -> ServerResponse.ok().body(response));
     }
     return Optional.empty();
   }

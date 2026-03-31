@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,12 @@ import se.swedenconnect.oidf.InMemoryFederationServiceState;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemorySubordinateFetchCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryTrustMarkCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryTrustMarkStatusCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
@@ -125,5 +129,21 @@ public class OpenIdFederationConfiguration {
     log.warn("Starting application with in memory implementation of ResolverResponseCache is not recommended. " +
              "See docs for more information");
     return new InMemoryResolverResponseCache();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  SubordinateFetchCache inMemorySubordinateFetchCache() {
+    log.warn("Starting application with in memory implementation of SubordinateFetchCache is not recommended. " +
+             "See docs for more information");
+    return new InMemorySubordinateFetchCache();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  TrustMarkCache inMemoryTrustMarkCache() {
+    log.warn("Starting application with in memory implementation of TrustMarkCache is not recommended. " +
+             "See docs for more information");
+    return new InMemoryTrustMarkCache();
   }
 }

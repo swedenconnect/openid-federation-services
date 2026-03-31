@@ -4,6 +4,16 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.10.2
+
+**Date:** 2026-03-31
+
+* Added `SubordinateFetchCache` interface with in-memory and Redis implementations; `TrustAnchorRouter` now caches `/fetch` responses and performs cache lookup before creating the `TrustAnchor` instance
+* Added `TrustMarkCache` interface with in-memory and Redis implementations; `TrustMarkIssuerRouter` now caches `/trust_mark` responses and performs cache lookup before creating the `TrustMarkIssuer` instance
+* Refactored `TrustMarkIssuerRouter` and `ResolverRouter` to defer property resolution and factory creation until after a cache miss, avoiding unnecessary work on cache hits
+* Added a local 10-second TTL cache in `CachedRecordSource` to reduce redundant lookups against the backing cache store
+* Updated copyright year to 2024-2026
+
 ### Version 0.10.1
 
 **Date:** 2026-03-31

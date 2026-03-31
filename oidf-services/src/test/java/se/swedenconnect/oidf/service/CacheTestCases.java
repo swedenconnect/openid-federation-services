@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,8 @@ import java.util.stream.IntStream;
 @ExtendWith(TestFederationClientParameterResolver.class)
 public class CacheTestCases {
 
-  public static final int TEST_END_EXCLUSIVE = 10;
+  public static final int TEST_END_EXCLUSIVE = 1000;
+  public static final int NO_CACHE_TEST_END_EXCLUSIVE = 10;
 
   @BeforeEach
   public void beforeMethod() {
@@ -50,7 +51,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Subordinate fetch 10 times with cache")
+  @DisplayName("Subordinate fetch 1000 times with cache")
   void testFetchCaching(final FederationClients clients) {
     final TrustAnchorClient client = clients.anarchy().trustAnchor();
     final List<String> body = client.subordinateListing(new SubordinateListingRequest(null, null, null, null));
@@ -70,14 +71,14 @@ public class CacheTestCases {
             .subordinateListing(new SubordinateListingRequest(null, null, null, null));
     final SignedJWT fetch = clients.disableCaching().anarchy().trustAnchor().fetch(new EntityID(body.getFirst()));
 
-    IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
+    IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT fetchResponse = clients.disableCaching().anarchy().trustAnchor().fetch(new EntityID(body.getFirst()));
       Assertions.assertNotEquals(fetch.serialize(), fetchResponse.serialize());
     });
   }
 
   @Test
-  @DisplayName("Trust mark 10 times with cache")
+  @DisplayName("Trust mark 1000 times with cache")
   void testTrustMarkCaching(final FederationClients clients) {
     final SignedJWT trustMark = clients.trustMarkIssuerClient().trustMark().trustMark(
         new EntityID(TestFederationEntities.IM.TRUST_MARK_ISSUER.getValue()),
@@ -103,7 +104,7 @@ public class CacheTestCases {
         new EntityID("http://localhost:11111/im/tmi/certified"),
         new EntityID("http://localhost:11111/im/op")
     );
-    IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
+    IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT trustMarkResponse = clients.disableCaching().anarchy().trustMark().trustMark(
           new EntityID("http://localhost:11111/im/tmi"),
           new EntityID("http://localhost:11111/im/tmi/certified"),
@@ -114,7 +115,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Entity Configuration 10 times with cache")
+  @DisplayName("Entity Configuration 1000 times with cache")
   void entityConfigurationCache(final FederationClients clients) {
     final EntityStatement entityConfigurationReference =
         clients.entity().getEntityConfiguration(TestFederationEntities.IM.OP);
@@ -133,7 +134,7 @@ public class CacheTestCases {
     final EntityStatement entityConfigurationReference =
         clients.disableCaching().entity().getEntityConfiguration(TestFederationEntities.IM.OP);
 
-    IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
+    IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final EntityStatement entityConfigurationResponse =
           clients.disableCaching().entity().getEntityConfiguration(TestFederationEntities.IM.OP);
       Assertions.assertNotEquals(entityConfigurationReference.getSignedStatement().serialize()
@@ -142,7 +143,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Resolve 10 times with cache")
+  @DisplayName("Resolve 1000 times with cache")
   void testResolveCaching(final FederationClients clients) {
     final SignedJWT reference = clients.anarchy().resolver().resolve(
         TestFederationEntities.IM.OP,
@@ -168,7 +169,7 @@ public class CacheTestCases {
         TestFederationEntities.Anarchy.TRUST_ANCHOR,
         null
     );
-    IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
+    IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT response = clients.disableCaching().anarchy().resolver().resolve(
           TestFederationEntities.IM.OP,
           TestFederationEntities.Anarchy.TRUST_ANCHOR,
@@ -179,7 +180,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Trust mark status 10 times with cache")
+  @DisplayName("Trust mark status 1000 times with cache")
   void testTrustMarkStatusCaching(final FederationClients clients) {
     final SignedJWT trustMark = clients.trustMarkIssuerClient().trustMark().trustMark(
         new EntityID(TestFederationEntities.IM.TRUST_MARK_ISSUER.getValue()),
@@ -212,7 +213,7 @@ public class CacheTestCases {
         TestFederationEntities.IM.TRUST_MARK_ISSUER,
         trustMark.serialize()
     );
-    IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
+    IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final String statusResponse = clients.disableCaching().trustMarkIssuerClient().trustMark().trustMarkStatus(
           TestFederationEntities.IM.TRUST_MARK_ISSUER,
           trustMark.serialize()

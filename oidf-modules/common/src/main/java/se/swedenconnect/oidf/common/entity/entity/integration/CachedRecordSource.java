@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,7 +37,12 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 public class CachedRecordSource implements RecordSource {
+
+  private static final Duration TTL = Duration.ofSeconds(10);
+
   private final Cache<String, CompositeRecord> cache;
+  private volatile CompositeRecord localRecord;
+  private volatile Instant localRecordFetchedAt = Instant.MIN;
 
   /**
    * Constructor.
@@ -54,7 +61,16 @@ public class CachedRecordSource implements RecordSource {
   }
 
   private Optional<CompositeRecord> getRecord() {
-    return Optional.ofNullable(this.cache.get("record"));
+    final Instant now = Instant.now();
+    if (this.localRecord != null && Duration.between(this.localRecordFetchedAt, now).compareTo(TTL) < 0) {
+      return Optional.of(this.localRecord);
+    }
+    final CompositeRecord fetched = this.cache.get("record");
+    if (fetched != null) {
+      this.localRecord = fetched;
+      this.localRecordFetchedAt = now;
+    }
+    return Optional.ofNullable(fetched);
   }
 
   @Override

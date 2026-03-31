@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,25 +85,5 @@ public class ScrapedEntityLookup {
         .mapToLong(tree -> tree.getCurrentSnapshot().getVersion())
         .max()
         .orElse(0L);
-  }
-
-  /**
-   * Finds an entity by entity ID that acts as a trust anchor (has intermediate data).
-   *
-   * @param entityId to search for
-   * @return matching entity with intermediate data, or empty if not found
-   */
-  public Optional<ScrapedEntity> findTrustAnchorByEntityId(final String entityId) {
-    return this.findByEntityId(entityId, a -> Objects.nonNull(a.getIntermediate()));
-  }
-
-  /**
-   * Finds an entity by entity ID that acts as a trust mark issuer.
-   *
-   * @param entityId to search for
-   * @return matching entity with trust mark issuer data, or empty if not found
-   */
-  public Optional<ScrapedEntity> findTrustMarkIssuer(final String entityId) {
-    return this.findByEntityId(entityId, a -> Objects.nonNull(a.getTrustMarkIssuer()));
   }
 }

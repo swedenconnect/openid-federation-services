@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityC
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 
@@ -58,7 +60,6 @@ public class ScrapedEntity {
   private Map<String, TrustMarkStatusResponse> trustMarkStatuses = new HashMap<>();
   //Roles
   private ScrapedIntermediate intermediate;
-  private ScrapedTrustMarkIssuer trustMarkIssuer;
 
   /**
    * Resolves the entity statement using the provided federation client.
@@ -86,20 +87,9 @@ public class ScrapedEntity {
       } catch (final ParseException e) {
         throw new RuntimeException(e);
       }
-      //Entity is federation entity
     });
     wrapper.getFederationEntityMetadata()
         .ifPresent(metadata -> {
-          if (metadata.containsKey("federation_trust_mark_list_endpoint") && trustAnchor != null) {
-            final JSONObject trustMarkIssuers = trustAnchor.getEntityStatement()
-                .getClaimsSet()
-                .getJSONObjectClaim("trust_mark_issuers");
-            if (trustMarkIssuers != null) {
-              log.debug("Entity {} is trust mark issuer, resolving trust mark issuer information", this.entityID);
-              this.trustMarkIssuer = new ScrapedTrustMarkIssuer(new HashMap<>());
-              this.trustMarkIssuer.scrape(client, metadata, trustAnchor, this.entityID);
-            }
-          }
           if (metadata.containsKey("federation_list_endpoint")) {
             log.debug("Entity {} is intermediate, resolving subordinates", this.entityID);
             this.intermediate = new ScrapedIntermediate(new HashMap<>());
@@ -107,5 +97,4 @@ public class ScrapedEntity {
           }
         });
   }
-
 }

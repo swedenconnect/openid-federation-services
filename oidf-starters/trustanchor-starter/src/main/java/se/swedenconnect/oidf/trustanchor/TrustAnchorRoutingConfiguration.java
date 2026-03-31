@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.trustanchor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
@@ -34,7 +35,8 @@ public class TrustAnchorRoutingConfiguration {
   TrustAnchorRouter trustAnchorRouter(final TrustAnchorFactory trustAnchorFactory,
                                       final RouteFactory routeFactory,
                                       final ServerResponseErrorHandler errorHandler,
-                                      final ScrapedEntityLookup lookup) {
-    return new TrustAnchorRouter(trustAnchorFactory, routeFactory, errorHandler, lookup);
+                                      final ScrapedEntityLookup lookup,
+                                      final SubordinateFetchCache fetchCache) {
+    return new TrustAnchorRouter(trustAnchorFactory, routeFactory, errorHandler, lookup, fetchCache);
   }
 }

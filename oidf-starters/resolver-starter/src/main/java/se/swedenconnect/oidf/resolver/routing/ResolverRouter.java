@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,12 +83,6 @@ public class ResolverRouter implements Router {
               }).reduce(p -> false, RequestPredicate::or)
               .test(request);
         }, request -> {
-          final ResolverProperties resolverProperties = source.getResolverProperties().stream()
-              .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.getEntityIdentifier()), "/resolve")
-                  .test(request))
-              .findFirst()
-              .get();
-          final Resolver resolver = this.resolverFactory.create(resolverProperties);
           try {
             final MultiValueMap<String, String> params = RequireParameters.validate(
                 request.params(),
@@ -96,7 +90,12 @@ public class ResolverRouter implements Router {
             );
 
             if (params.containsKey("explain") && Boolean.parseBoolean(params.getFirst("explain"))) {
-              return ServerResponse.ok().body(resolver.explain(new ResolveRequest(
+              final ResolverProperties resolverProperties = source.getResolverProperties().stream()
+                  .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.getEntityIdentifier()), "/resolve")
+                      .test(request))
+                  .findFirst()
+                  .get();
+              return ServerResponse.ok().body(this.resolverFactory.create(resolverProperties).explain(new ResolveRequest(
                   params.getFirst("sub"),
                   params.getFirst("trust_anchor"),
                   params.getFirst("entity_type"),
@@ -115,7 +114,12 @@ public class ResolverRouter implements Router {
             if (serverResponse.isPresent()) {
               return serverResponse.get();
             }
-            final String resolveResponse = resolver.resolve(resolveRequest);
+            final ResolverProperties resolverProperties = source.getResolverProperties().stream()
+                .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.getEntityIdentifier()), "/resolve")
+                    .test(request))
+                .findFirst()
+                .get();
+            final String resolveResponse = this.resolverFactory.create(resolverProperties).resolve(resolveRequest);
             this.resolverResponseCache.put(snapshot, resolveRequest, resolveResponse);
             return ServerResponse.ok().body(resolveResponse);
           } catch (final FederationException e) {

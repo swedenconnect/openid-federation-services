@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package se.swedenconnect.oidf.service.cache;
 import com.nimbusds.jose.shaded.gson.Gson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
@@ -165,5 +167,15 @@ public class RedisCacheConfiguration {
   @Bean
   ResolverResponseCache redisResolverResponseCache(final RedisTemplate<String, String> template) {
     return new RedisResolverResponseCache(template);
+  }
+
+  @Bean
+  SubordinateFetchCache redisSubordinateFetchCache(final RedisTemplate<String, String> template) {
+    return new RedisSubordinateFetchCache(template);
+  }
+
+  @Bean
+  TrustMarkCache redisTrustMarkCache(final RedisTemplate<String, String> template) {
+    return new RedisTrustMarkCache(template);
   }
 }
