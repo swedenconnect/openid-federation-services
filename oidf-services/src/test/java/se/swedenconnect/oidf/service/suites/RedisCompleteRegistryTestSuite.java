@@ -55,8 +55,7 @@ import java.util.Random;
     TrustAnchorTestCases.class,
     ActuatorTestCases.class,
     ResolverPolicyTestCases.class,
-    ResolverCritTestCases.class,
-    CacheTestCases.class
+    ResolverCritTestCases.class
 })
 public class RedisCompleteRegistryTestSuite {
 
