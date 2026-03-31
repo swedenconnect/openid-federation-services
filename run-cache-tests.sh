@@ -72,19 +72,25 @@ def is_cached(name):
   n = name.lower()
   return 'with cache' in n and 'without' not in n and 'with no' not in n
 
-cached_map = {base_name(name): count / time for time, name, count in results if time > 0 and is_cached(name)}
-nocache_map = {base_name(name): count / time for time, name, count in results if time > 0 and not is_cached(name)}
+def payload_kb(name):
+  m = re.search(r'\((\d+(?:\.\d+)?)\s*KB\)', name)
+  return float(m.group(1)) if m else 0.0
+
+cached_map  = {base_name(name): (count / time, payload_kb(name)) for time, name, count in results if time > 0 and is_cached(name)}
+nocache_map = {base_name(name): (count / time, payload_kb(name)) for time, name, count in results if time > 0 and not is_cached(name)}
 
 pairs = sorted(set(cached_map) & set(nocache_map))
 if pairs:
   max_base = max(len(p) for p in pairs)
-  print(f"{'Test':<{max_base}}  {'Cached RPS':>10}  {'No-cache RPS':>12}  {'Speedup':>8}")
-  print("-" * (max_base + 36))
+  print(f"{'Test':<{max_base}}  {'Cached RPS':>10}  {'No-cache RPS':>12}  {'Speedup':>8}  {'Cached Mbit/s':>13}  {'No-cache Mbit/s':>15}")
+  print("-" * (max_base + 64))
   for name in pairs:
-    c_rps = cached_map[name]
-    n_rps = nocache_map[name]
+    c_rps, c_kb = cached_map[name]
+    n_rps, n_kb = nocache_map[name]
     speedup = c_rps / n_rps
-    print(f"{name:<{max_base}}  {c_rps:>10.1f}  {n_rps:>12.1f}  {speedup:>7.1f}x")
+    c_bw = c_rps * c_kb * 1024 * 8 / 1_000_000
+    n_bw = n_rps * n_kb * 1024 * 8 / 1_000_000
+    print(f"{name:<{max_base}}  {c_rps:>10.1f}  {n_rps:>12.1f}  {speedup:>7.1f}x  {c_bw:>12.3f}  {n_bw:>14.3f}")
 else:
   print("No matching cache/no-cache pairs found.")
 EOF

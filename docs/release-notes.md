@@ -16,15 +16,15 @@
 
 #### Performance Indicator
 
-Measured with Redis, 1000 parallel requests per scenario.
+Measured with Redis, 10000 parallel requests per scenario.
 
-| Scenario | Cached RPS | No-cache RPS | Speedup |
-|---|---:|---:|---:|
-| Entity Configuration | 1245.3 | 259.3 | 4.8x |
-| Resolve | 2183.4 | 353.7 | 6.2x |
-| Subordinate fetch | 1508.3 | 1298.7 | 1.2x |
-| Trust mark | 3125.0 | 607.9 | 5.1x |
-| Trust mark status | 2247.2 | 523.0 | 4.3x |
+| Scenario | Payload | Cached RPS | No-cache RPS | Speedup | Cached Mbit/s | No-cache Mbit/s |
+|---|---:|---:|---:|---:|---:|---:|
+| Entity Configuration | 3.36 KB | 1633.5 | 284.6 | 5.7x | 44.96 | 7.83 |
+| Resolve | 12.87 KB | 3235.2 | 595.7 | 5.4x | 341.09 | 62.81 |
+| Subordinate fetch | 0.69 KB | 3944.8 | 1563.7 | 2.5x | 22.30 | 8.84 |
+| Trust mark | 0.30 KB | 4557.9 | 453.8 | 10.0x | 11.20 | 1.12 |
+| Trust mark status | 2.58 KB | 3647.0 | 607.9 | 6.0x | 77.08 | 12.85 |
 
 ### Version 0.10.1
 

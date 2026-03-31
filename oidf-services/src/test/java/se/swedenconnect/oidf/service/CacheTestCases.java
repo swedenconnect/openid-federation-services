@@ -51,11 +51,12 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Subordinate fetch 1000 times with cache")
+  @DisplayName("Subordinate fetch 1000 times with cache (0.69 KB)")
   void testFetchCaching(final FederationClients clients) {
     final TrustAnchorClient client = clients.anarchy().trustAnchor();
     final List<String> body = client.subordinateListing(new SubordinateListingRequest(null, null, null, null));
     final SignedJWT fetch = clients.anarchy().trustAnchor().fetch(new EntityID(body.getFirst()));
+    log.info("[testFetchCaching] Reference payload: {} KB", fetch.getPayload().toBytes().length / 1024.0);
 
     IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT fetchResponse = clients.anarchy().trustAnchor().fetch(new EntityID(body.getFirst()));
@@ -64,12 +65,13 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Subordinate fetch 1000 times without cache")
+  @DisplayName("Subordinate fetch 1000 times without cache (0.69 KB)")
   void testFetchNoCaching(final FederationClients clients) {
     final List<String> body =
         clients.disableCaching().anarchy().trustAnchor()
             .subordinateListing(new SubordinateListingRequest(null, null, null, null));
     final SignedJWT fetch = clients.disableCaching().anarchy().trustAnchor().fetch(new EntityID(body.getFirst()));
+    log.info("[testFetchNoCaching] Reference payload: {} KB", fetch.getPayload().toBytes().length / 1024.0);
 
     IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT fetchResponse = clients.disableCaching().anarchy().trustAnchor().fetch(new EntityID(body.getFirst()));
@@ -78,13 +80,14 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Trust mark 1000 times with cache")
+  @DisplayName("Trust mark 1000 times with cache (0.30 KB)")
   void testTrustMarkCaching(final FederationClients clients) {
     final SignedJWT trustMark = clients.trustMarkIssuerClient().trustMark().trustMark(
         new EntityID(TestFederationEntities.IM.TRUST_MARK_ISSUER.getValue()),
         new EntityID("http://localhost:11111/im/tmi/certified"),
         new EntityID("http://localhost:11111/im/op")
     );
+    log.info("[testTrustMarkCaching] Reference payload: {} KB", trustMark.getPayload().toBytes().length / 1024.0);
     IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT trustMarkResponse = clients.trustMarkIssuerClient().trustMark().trustMark(
           new EntityID(TestFederationEntities.IM.TRUST_MARK_ISSUER.getValue()),
@@ -97,13 +100,14 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Trust mark 1000 times with no cache")
+  @DisplayName("Trust mark 1000 times with no cache (0.30 KB)")
   void testTrustMarkNoCaching(final FederationClients clients) {
     final SignedJWT trustMark = clients.disableCaching().anarchy().trustMark().trustMark(
         new EntityID("http://localhost:11111/im/tmi"),
         new EntityID("http://localhost:11111/im/tmi/certified"),
         new EntityID("http://localhost:11111/im/op")
     );
+    log.info("[testTrustMarkNoCaching] Reference payload: {} KB", trustMark.getPayload().toBytes().length / 1024.0);
     IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT trustMarkResponse = clients.disableCaching().anarchy().trustMark().trustMark(
           new EntityID("http://localhost:11111/im/tmi"),
@@ -115,10 +119,12 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Entity Configuration 1000 times with cache")
+  @DisplayName("Entity Configuration 1000 times with cache (3.36 KB)")
   void entityConfigurationCache(final FederationClients clients) {
     final EntityStatement entityConfigurationReference =
         clients.entity().getEntityConfiguration(TestFederationEntities.IM.OP);
+    log.info("[entityConfigurationCache] Reference payload: {} KB",
+        entityConfigurationReference.getSignedStatement().getPayload().toBytes().length / 1024.0);
 
     IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final EntityStatement entityConfigurationResponse =
@@ -129,10 +135,12 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Entity Configuration 1000 times with no cache")
+  @DisplayName("Entity Configuration 1000 times with no cache (3.36 KB)")
   void entityConfigurationNoCache(final FederationClients clients) {
     final EntityStatement entityConfigurationReference =
         clients.disableCaching().entity().getEntityConfiguration(TestFederationEntities.IM.OP);
+    log.info("[entityConfigurationNoCache] Reference payload: {} KB",
+        entityConfigurationReference.getSignedStatement().getPayload().toBytes().length / 1024.0);
 
     IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final EntityStatement entityConfigurationResponse =
@@ -143,13 +151,14 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Resolve 1000 times with cache")
+  @DisplayName("Resolve 1000 times with cache (12.87 KB)")
   void testResolveCaching(final FederationClients clients) {
     final SignedJWT reference = clients.anarchy().resolver().resolve(
         TestFederationEntities.IM.OP,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,
         null
     );
+    log.info("[testResolveCaching] Reference payload: {} KB", reference.getPayload().toBytes().length / 1024.0);
     IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT response = clients.anarchy().resolver().resolve(
           TestFederationEntities.IM.OP,
@@ -162,13 +171,14 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Resolve 1000 times without cache")
+  @DisplayName("Resolve 1000 times without cache (12.87 KB)")
   void testResolveNoCaching(final FederationClients clients) {
     final SignedJWT reference = clients.disableCaching().anarchy().resolver().resolve(
         TestFederationEntities.IM.OP,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,
         null
     );
+    log.info("[testResolveNoCaching] Reference payload: {} KB", reference.getPayload().toBytes().length / 1024.0);
     IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final SignedJWT response = clients.disableCaching().anarchy().resolver().resolve(
           TestFederationEntities.IM.OP,
@@ -180,7 +190,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Trust mark status 1000 times with cache")
+  @DisplayName("Trust mark status 1000 times with cache (2.58 KB)")
   void testTrustMarkStatusCaching(final FederationClients clients) {
     final SignedJWT trustMark = clients.trustMarkIssuerClient().trustMark().trustMark(
         new EntityID(TestFederationEntities.IM.TRUST_MARK_ISSUER.getValue()),
@@ -191,6 +201,7 @@ public class CacheTestCases {
         TestFederationEntities.IM.TRUST_MARK_ISSUER,
         trustMark.serialize()
     );
+    log.info("[testTrustMarkStatusCaching] Reference payload: {} KB", statusReference.getBytes().length / 1024.0);
     IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final String statusResponse = clients.trustMarkIssuerClient().trustMark().trustMarkStatus(
           TestFederationEntities.IM.TRUST_MARK_ISSUER,
@@ -202,7 +213,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Trust mark status 1000 times without cache")
+  @DisplayName("Trust mark status 1000 times without cache (2.58 KB)")
   void testTrustMarkStatusNoCaching(final FederationClients clients) {
     final SignedJWT trustMark = clients.disableCaching().trustMarkIssuerClient().trustMark().trustMark(
         new EntityID(TestFederationEntities.IM.TRUST_MARK_ISSUER.getValue()),
@@ -213,6 +224,7 @@ public class CacheTestCases {
         TestFederationEntities.IM.TRUST_MARK_ISSUER,
         trustMark.serialize()
     );
+    log.info("[testTrustMarkStatusNoCaching] Reference payload: {} KB", statusReference.getBytes().length / 1024.0);
     IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final String statusResponse = clients.disableCaching().trustMarkIssuerClient().trustMark().trustMarkStatus(
           TestFederationEntities.IM.TRUST_MARK_ISSUER,
