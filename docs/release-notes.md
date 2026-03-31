@@ -4,6 +4,25 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.10.1
+
+**Date:** 2026-03-31
+
+* Introduced `ResolverResponseCache` and `TrustMarkStatusCache` interfaces with in-memory and Redis implementations, replacing the previous `TrustMarkStatusStore`
+* Removed `CacheStateManager`; replaced with `RegistryStateTrigger` and `ResolverStateTrigger` for cleaner state management
+* Added `ScrapedEntityLookup` and `ScrapedTrustMarkInfo` to carry all available scraped data through the cache layer
+* Resolver response caching is now applied to the `/resolve` endpoint via `RedisResolverResponseCache` and `InMemoryResolverResponseCache`
+* Refactored `VersionedInMemoryCache` and `VersionedCacheLayer` to align with the new cache interfaces
+* Added `CacheTestCases` integration tests covering both in-memory and Redis cache configurations
+
+### Version 0.10.0
+
+**Date:** 2026-03-28
+
+* Implemented caching pattern for all signed endpoints
+* Trust mark status is now fetched and cached for all trust marks when loading the federation
+* Scraped entities now carry all available information through the entity tree
+
 ### Version 0.9.16
 
 **Date:** 2026-03-16
