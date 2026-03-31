@@ -22,6 +22,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
@@ -49,11 +50,12 @@ public class ExportFriendlyEndpoint {
 
   /**
    * Exports federation in grafana friendly format
+   * @param trustAnchor optional trust anchor entity identifier to select resolver, defaults to first available
    * @return json string
    * @throws JsonProcessingException
    */
   @ReadOperation
-  public String getGrafanaFriendlyJson() throws JsonProcessingException {
+  public String getGrafanaFriendlyJson(@Nullable final String trustAnchor) throws JsonProcessingException {
     final Map<String, String> icons = Map.of(
         "tmi", "pen",
         "ta", "anchor",
@@ -64,7 +66,7 @@ public class ExportFriendlyEndpoint {
         "saml_service_provider", "user",
         "error", "exclamation-circle"
     );
-    final Map<String, List<Map<String, Object>>> nodesAndEdges = this.exportEndpoint.getNodesAndEdges();
+    final Map<String, List<Map<String, Object>>> nodesAndEdges = this.exportEndpoint.getNodesAndEdges(trustAnchor);
     final List<Map<String, String>> nodes = nodesAndEdges.get("nodes")
         .stream().map(node -> {
           final Boolean verified = (Boolean) node.get("verifiedSelfStatement");

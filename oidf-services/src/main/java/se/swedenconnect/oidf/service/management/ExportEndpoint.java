@@ -20,14 +20,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.nimbusds.oauth2.sdk.ParseException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import org.w3c.dom.Entity;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
@@ -39,6 +42,7 @@ import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Export endpoint for oidf service.
@@ -68,21 +72,28 @@ public class ExportEndpoint {
 
   /**
    * Exports federation as json
+   * @param trustAnchor optional trust anchor entity identifier to select resolver, defaults to first available
    * @return federation as json
    * @throws JsonProcessingException
    */
   @ReadOperation
-  public String exportFederation() throws JsonProcessingException {
-    final Map<String, List<Map<String, Object>>> nodes = this.getNodesAndEdges();
+  public String exportFederation(@Nullable final String trustAnchor) throws JsonProcessingException {
+    final Map<String, List<Map<String, Object>>> nodes = this.getNodesAndEdges(trustAnchor);
     return MAPPER.writeValueAsString(nodes);
   }
 
   /**
    * Gets nodes an edges in map format
+   * @param trustAnchor optional trust anchor entity identifier to select resolver, defaults to first available
    * @return map of nodes and edges
    */
-  public Map<String, List<Map<String, Object>>> getNodesAndEdges() {
-    final ResolverProperties properties = this.source.getResolverProperties().getFirst();
+  public Map<String, List<Map<String, Object>>> getNodesAndEdges(@Nullable final String trustAnchor) {
+    final ResolverProperties properties = trustAnchor == null
+        ? this.source.getResolverProperties().getFirst()
+        : this.source.getResolverProperties().stream()
+            .filter(p -> trustAnchor.equals(p.getTrustAnchor()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("No resolver found for trust anchor: " + trustAnchor));
     final List<ExportStatement> selfStatements = new ArrayList<>();
     final List<ExportStatement> subordinateStatements = new ArrayList<>();
 
@@ -90,6 +101,17 @@ public class ExportEndpoint {
     tree.getAll()
         .stream()
         .map(Tree.SearchResult::getData)
+        .peek(entity -> {
+          if (Objects.nonNull(entity.getIntermediate())) {
+            entity.getIntermediate().subordinates().values().forEach(jwt -> {
+              try {
+                subordinateStatements.add(new ExportStatement(EntityStatement.parse(jwt)));
+              } catch (final ParseException e) {
+                throw new RuntimeException(e);
+              }
+            });
+          }
+        })
         .map(resolverEntity -> resolverEntity.getEntityStatement())
         .peek(es -> es.getClaimsSet().toJSONObject())
         .forEach(es -> {
