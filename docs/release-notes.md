@@ -4,6 +4,13 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.10.3
+
+**Date:** 2026-03-31
+
+* Updated to Spring Boot 4.0.4
+* Bugfix for Grafana export endpoint: added query parameter to select which trust anchor to export
+
 ### Version 0.10.2
 
 **Date:** 2026-03-31

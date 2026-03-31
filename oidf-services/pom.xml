@@ -100,7 +100,7 @@
         <service-revision>0.10.3</service-revision>
         <maven.deploy.skip>true</maven.deploy.skip>
         <micrometer-tracing.version>1.6.2</micrometer-tracing.version>
-        <spring.boot.version>4.0.2</spring.boot.version>
+        <spring.boot.version>4.0.4</spring.boot.version>
         <credentials.support.version>2.1.2</credentials.support.version>
     </properties>
 

@@ -24,7 +24,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testcontainers.shaded.com.google.common.collect.MapDifference;
@@ -75,8 +74,7 @@ public class ResolverDifferentiator {
 
 
   private Response getResponse(final ResolveRequest resolveRequest, final String resolver) {
-    final Response response = new Response();
-    final String responseBody = this.client.mutate()
+    return this.client.mutate()
         .baseUrl(resolver)
         .build()
         .get()
@@ -85,26 +83,20 @@ public class ResolverDifferentiator {
             .queryParam("trust_anchor", resolveRequest.trustAnchor())
             .queryParamIfPresent("entity_type", Optional.ofNullable(resolveRequest.type()))
             .build())
-        .retrieve()
-        .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+        .exchange((req, res) -> {
           final String body = new String(res.getBody().readAllBytes());
-          response.setError(Response.Error.builder()
-              .statusCode(res.getStatusCode().value())
-              .message(body)
-              .build());
-        })
-        .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-          final String body = new String(res.getBody().readAllBytes());
-          response.setError(Response.Error.builder()
-              .statusCode(res.getStatusCode().value())
-              .message(body)
-              .build());
-        })
-        .body(String.class);
-
-    response.setBody(responseBody);
-
-    return response;
+          if (res.getStatusCode().isError()) {
+            return Response.builder()
+                .error(Response.Error.builder()
+                    .statusCode(res.getStatusCode().value())
+                    .message(body)
+                    .build())
+                .build();
+          }
+          return Response.builder()
+              .body(body)
+              .build();
+        });
   }
 
 
