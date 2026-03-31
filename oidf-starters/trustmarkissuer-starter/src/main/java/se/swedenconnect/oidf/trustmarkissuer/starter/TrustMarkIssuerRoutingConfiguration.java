@@ -16,6 +16,7 @@
  */
   package se.swedenconnect.oidf.trustmarkissuer.starter;
 
+  import io.micrometer.observation.ObservationRegistry;
   import org.springframework.context.annotation.Bean;
   import org.springframework.context.annotation.Configuration;
   import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
@@ -37,7 +38,9 @@
                                                 final ServerResponseErrorHandler handler,
                                                 final ScrapedEntityLookup lookup,
                                                 final TrustMarkStatusCache trustMarkStatusCache,
-                                                final TrustMarkCache trustMarkCache) {
-      return new TrustMarkIssuerRouter(routeFactory, factory, handler, lookup, trustMarkStatusCache, trustMarkCache);
+                                                final TrustMarkCache trustMarkCache,
+                                                final ObservationRegistry observationRegistry) {
+      return new TrustMarkIssuerRouter(routeFactory, factory, handler, lookup, trustMarkStatusCache, trustMarkCache,
+          observationRegistry);
     }
   }

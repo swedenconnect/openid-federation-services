@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.trustanchor;
 
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
@@ -36,7 +37,9 @@ public class TrustAnchorRoutingConfiguration {
                                       final RouteFactory routeFactory,
                                       final ServerResponseErrorHandler errorHandler,
                                       final ScrapedEntityLookup lookup,
-                                      final SubordinateFetchCache fetchCache) {
-    return new TrustAnchorRouter(trustAnchorFactory, routeFactory, errorHandler, lookup, fetchCache);
+                                      final SubordinateFetchCache fetchCache,
+                                      final ObservationRegistry observationRegistry) {
+    return new TrustAnchorRouter(trustAnchorFactory, routeFactory, errorHandler, lookup, fetchCache,
+        observationRegistry);
   }
 }

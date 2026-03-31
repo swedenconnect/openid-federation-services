@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.configuration;
 
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
@@ -34,8 +35,8 @@ import se.swedenconnect.oidf.routing.RouteFactory;
 public class FederationBaseRouteConfiguration {
   @Bean
   EntityRouter entityRouter(final EntityConfigurationFactory entityConfigurationFactory, final RouteFactory factory,
-                            final ScrapedEntityLookup lookup) {
-    return new EntityRouter(entityConfigurationFactory, factory, lookup);
+                            final ScrapedEntityLookup lookup, final ObservationRegistry observationRegistry) {
+    return new EntityRouter(entityConfigurationFactory, factory, lookup, observationRegistry);
   }
 
   @Bean

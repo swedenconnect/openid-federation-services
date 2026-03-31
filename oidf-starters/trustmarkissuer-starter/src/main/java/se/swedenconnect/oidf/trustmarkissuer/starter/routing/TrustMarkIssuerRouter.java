@@ -16,6 +16,8 @@
  */
 package se.swedenconnect.oidf.trustmarkissuer.starter.routing;
 
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -59,16 +61,18 @@ public class TrustMarkIssuerRouter implements Router {
   private final ScrapedEntityLookup lookup;
   private final TrustMarkStatusCache trustMarkStatusCache;
   private final TrustMarkCache trustMarkCache;
+  private final ObservationRegistry observationRegistry;
 
   /**
    * Constructor.
    *
-   * @param routeFactory       route factory
-   * @param factory            trust mark issuer factory
-   * @param errorHandler       handler for server response errors
-   * @param lookup             lookup for scraped entities
+   * @param routeFactory        route factory
+   * @param factory             trust mark issuer factory
+   * @param errorHandler        handler for server response errors
+   * @param lookup              lookup for scraped entities
    * @param trustMarkStatusCache cache for trust mark status responses
-   * @param trustMarkCache     cache for trust mark responses
+   * @param trustMarkCache      cache for trust mark responses
+   * @param observationRegistry for recording observations
    */
   public TrustMarkIssuerRouter(
       final RouteFactory routeFactory,
@@ -76,13 +80,15 @@ public class TrustMarkIssuerRouter implements Router {
       final ServerResponseErrorHandler errorHandler,
       final ScrapedEntityLookup lookup,
       final TrustMarkStatusCache trustMarkStatusCache,
-      final TrustMarkCache trustMarkCache) {
+      final TrustMarkCache trustMarkCache,
+      final ObservationRegistry observationRegistry) {
     this.routeFactory = routeFactory;
     this.factory = factory;
     this.errorHandler = errorHandler;
     this.lookup = lookup;
     this.trustMarkStatusCache = trustMarkStatusCache;
     this.trustMarkCache = trustMarkCache;
+    this.observationRegistry = observationRegistry;
   }
 
   @Override
@@ -104,6 +110,7 @@ public class TrustMarkIssuerRouter implements Router {
       final Optional<ServerResponse> serverResponse =
           this.handleTrustMarkStatusCacheControl(request, trustMarkJwt, snapshot);
       if (serverResponse.isPresent()) {
+        this.tagObservation("/trust_mark_status", true);
         return serverResponse.get();
       }
       final TrustMarkIssuerProperties propertyByRequest =
@@ -112,6 +119,7 @@ public class TrustMarkIssuerRouter implements Router {
       try {
         final String trustMarkStatus = trustMarkIssuer.trustMarkStatus(new TrustMarkStatusRequest(trustMarkJwt));
         this.trustMarkStatusCache.put(snapshot, trustMarkJwt, trustMarkStatus);
+        this.tagObservation("/trust_mark_status", false);
         return ServerResponse.ok()
             .contentType(MediaType.parseMediaType("application/trust-mark-status-response+jwt"))
             .body(trustMarkStatus);
@@ -129,6 +137,7 @@ public class TrustMarkIssuerRouter implements Router {
     try {
       final MultiValueMap<String, String> params = RequireParameters.validate(request.params(),
           List.of("trust_mark_type"));
+      this.tagObservation("/trust_mark_listing", false);
       return ServerResponse.ok().body(
           trustMarkIssuer.trustMarkListing(new TrustMarkListingRequest(
               params.getFirst("trust_mark_type"),
@@ -149,6 +158,7 @@ public class TrustMarkIssuerRouter implements Router {
 
     final Optional<ServerResponse> cached = this.handleTrustMarkCacheControl(request, trustMarkType, sub, snapshot);
     if (cached.isPresent()) {
+      this.tagObservation("/trust_mark", true);
       return cached.get();
     }
 
@@ -158,9 +168,18 @@ public class TrustMarkIssuerRouter implements Router {
       log.debug("Using fresh trust mark for {} {} {}", params, property, request.headers());
       final String response = trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkType, sub));
       this.trustMarkCache.put(snapshot, trustMarkType, sub, response);
+      this.tagObservation("/trust_mark", false);
       return ServerResponse.ok().body(response);
     } catch (final FederationException e) {
       return this.errorHandler.handle(e);
+    }
+  }
+
+  private void tagObservation(final String endpoint, final boolean cached) {
+    final Observation observation = this.observationRegistry.getCurrentObservation();
+    if (observation != null) {
+      observation.lowCardinalityKeyValue("endpoint", endpoint)
+          .lowCardinalityKeyValue("cached", String.valueOf(cached));
     }
   }
 

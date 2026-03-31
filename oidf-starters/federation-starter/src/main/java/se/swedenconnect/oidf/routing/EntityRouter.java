@@ -17,6 +17,8 @@
 package se.swedenconnect.oidf.routing;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -42,21 +44,25 @@ public class EntityRouter implements Router {
   private final EntityConfigurationFactory factory;
   private final RouteFactory routeFactory;
   private final ScrapedEntityLookup lookup;
+  private final ObservationRegistry observationRegistry;
 
   /**
    * Constructor.
    *
-   * @param factory      for creating entity configurations
-   * @param routeFactory for creating routes
-   * @param lookup       lookup for scraped entities
+   * @param factory             for creating entity configurations
+   * @param routeFactory        for creating routes
+   * @param lookup              lookup for scraped entities
+   * @param observationRegistry for recording observations
    */
   public EntityRouter(
       final EntityConfigurationFactory factory,
       final RouteFactory routeFactory,
-      final ScrapedEntityLookup lookup) {
+      final ScrapedEntityLookup lookup,
+      final ObservationRegistry observationRegistry) {
     this.factory = factory;
     this.routeFactory = routeFactory;
     this.lookup = lookup;
+    this.observationRegistry = observationRegistry;
   }
 
   @Override
@@ -72,10 +78,26 @@ public class EntityRouter implements Router {
               .test(request))
           .findFirst()
           .get();
+      final Observation observation = this.observationRegistry.getCurrentObservation();
+      final String endpoint = request.requestPath().value();
+      if (observation != null) {
+        observation.lowCardinalityKeyValue("endpoint", endpoint);
+      }
       return this.handleCacheControl(request, entityRecord.getEntityIdentifier())
-          .orElseGet(() -> ServerResponse.ok()
-              .body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement()
-                  .serialize()));
+          .map(response -> {
+            if (observation != null) {
+              observation.lowCardinalityKeyValue("cached", "true");
+            }
+            return response;
+          })
+          .orElseGet(() -> {
+            if (observation != null) {
+              observation.lowCardinalityKeyValue("cached", "false");
+            }
+            return ServerResponse.ok()
+                .body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement()
+                    .serialize());
+          });
     });
   }
 

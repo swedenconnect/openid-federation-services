@@ -16,6 +16,8 @@
  */
 package se.swedenconnect.oidf.trustanchor.routing;
 
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.MultiValueMap;
@@ -53,27 +55,31 @@ public class TrustAnchorRouter implements Router {
   private final ServerResponseErrorHandler errorHandler;
   private final ScrapedEntityLookup lookup;
   private final SubordinateFetchCache fetchCache;
+  private final ObservationRegistry observationRegistry;
 
   /**
    * Constructor.
-   * @param trustAnchorFactory factory for creating trust anchor instances
-   * @param routeFactory       factory for creating routes
-   * @param errorHandler       handler for server response errors
-   * @param lookup             lookup for scraped entities
-   * @param fetchCache         cache for subordinate fetch responses
+   * @param trustAnchorFactory  factory for creating trust anchor instances
+   * @param routeFactory        factory for creating routes
+   * @param errorHandler        handler for server response errors
+   * @param lookup              lookup for scraped entities
+   * @param fetchCache          cache for subordinate fetch responses
+   * @param observationRegistry for recording observations
    */
   public TrustAnchorRouter(
       final TrustAnchorFactory trustAnchorFactory,
       final RouteFactory routeFactory,
       final ServerResponseErrorHandler errorHandler,
       final ScrapedEntityLookup lookup,
-      final SubordinateFetchCache fetchCache) {
+      final SubordinateFetchCache fetchCache,
+      final ObservationRegistry observationRegistry) {
 
     this.trustAnchorFactory = trustAnchorFactory;
     this.routeFactory = routeFactory;
     this.errorHandler = errorHandler;
     this.lookup = lookup;
     this.fetchCache = fetchCache;
+    this.observationRegistry = observationRegistry;
   }
 
   @Override
@@ -92,6 +98,7 @@ public class TrustAnchorRouter implements Router {
 
       final Optional<ServerResponse> cached = this.handleCacheControl(request, fetchRequest, snapshot);
       if (cached.isPresent()) {
+        this.tagObservation("/fetch", true);
         return cached.get();
       }
 
@@ -99,6 +106,7 @@ public class TrustAnchorRouter implements Router {
       final TrustAnchor trustAnchor = this.trustAnchorFactory.create(trustAnchorProperties);
       final String response = trustAnchor.fetchEntityStatement(fetchRequest);
       this.fetchCache.put(snapshot, fetchRequest, response);
+      this.tagObservation("/fetch", false);
       return ServerResponse.ok().body(response);
     } catch (final FederationException e) {
       return this.errorHandler.handle(e);
@@ -116,11 +124,20 @@ public class TrustAnchorRouter implements Router {
     return Optional.empty();
   }
 
+  private void tagObservation(final String endpoint, final boolean cached) {
+    final Observation observation = this.observationRegistry.getCurrentObservation();
+    if (observation != null) {
+      observation.lowCardinalityKeyValue("endpoint", endpoint)
+          .lowCardinalityKeyValue("cached", String.valueOf(cached));
+    }
+  }
+
   private ServerResponse handleSubordinateListing(final CompositeRecordSource source, final ServerRequest request) {
     final TrustAnchorProperties properties = this.getPropertyByRequest(source, request, "/subordinate_listing");
     final TrustAnchor trustAnchor = this.trustAnchorFactory.create(properties);
     try {
       final MultiValueMap<String, String> params = request.params();
+      this.tagObservation("/subordinate_listing", false);
       return ServerResponse.ok().body(trustAnchor.subordinateListing(new SubordinateListingRequest(
           params.getFirst("entity_type"),
           Optional.ofNullable(params.getFirst("trust_marked"))

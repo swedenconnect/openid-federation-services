@@ -17,6 +17,8 @@
 package se.swedenconnect.oidf.resolver.routing;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
@@ -52,6 +54,7 @@ public class ResolverRouter implements Router {
   private final ServerResponseErrorHandler errorHandler;
   private final ResolverResponseCache resolverResponseCache;
   private final ScrapedEntityLookup lookup;
+  private final ObservationRegistry observationRegistry;
 
   /**
    * Constructor.
@@ -61,17 +64,20 @@ public class ResolverRouter implements Router {
    * @param errorHandler handler for server response errors
    * @param resolverResponseCache cache for resolver responses
    * @param lookup lookup for scraped entities
+   * @param observationRegistry for recording observations
    */
   public ResolverRouter(final ResolverFactory resolverFactory,
                         final RouteFactory routeFactory,
                         final ServerResponseErrorHandler errorHandler,
                         final ResolverResponseCache resolverResponseCache,
-                        final ScrapedEntityLookup lookup) {
+                        final ScrapedEntityLookup lookup,
+                        final ObservationRegistry observationRegistry) {
     this.resolverFactory = resolverFactory;
     this.routeFactory = routeFactory;
     this.errorHandler = errorHandler;
     this.resolverResponseCache = resolverResponseCache;
     this.lookup = lookup;
+    this.observationRegistry = observationRegistry;
   }
 
   @Override
@@ -113,6 +119,7 @@ public class ResolverRouter implements Router {
             final Optional<ServerResponse> serverResponse =
                 this.handleResolveResponseCacheControl(request, resolveRequest, snapshot);
             if (serverResponse.isPresent()) {
+              this.tagObservation("/resolve", true);
               return serverResponse.get();
             }
             final ResolverProperties resolverProperties = source.getResolverProperties().stream()
@@ -122,6 +129,7 @@ public class ResolverRouter implements Router {
                 .get();
             final String resolveResponse = this.resolverFactory.create(resolverProperties).resolve(resolveRequest);
             this.resolverResponseCache.put(snapshot, resolveRequest, resolveResponse);
+            this.tagObservation("/resolve", false);
             return ServerResponse.ok().body(resolveResponse);
           } catch (final FederationException e) {
             return this.errorHandler.handle(e);
@@ -143,6 +151,7 @@ public class ResolverRouter implements Router {
           try {
             final MultiValueMap<String, String> params = RequireParameters.validate(request.params(), List.of(
                 "trust_anchor"));
+            this.tagObservation("/discovery", false);
             return ServerResponse.ok().body(resolver.discovery(new DiscoveryRequest(
                 params.getFirst("trust_anchor"),
                 params.get("entity_type"),
@@ -152,6 +161,14 @@ public class ResolverRouter implements Router {
             return this.errorHandler.handle(e);
           }
         });
+  }
+
+  private void tagObservation(final String endpoint, final boolean cached) {
+    final Observation observation = this.observationRegistry.getCurrentObservation();
+    if (observation != null) {
+      observation.lowCardinalityKeyValue("endpoint", endpoint)
+          .lowCardinalityKeyValue("cached", String.valueOf(cached));
+    }
   }
 
   private Optional<ServerResponse> handleResolveResponseCacheControl(final ServerRequest request,
