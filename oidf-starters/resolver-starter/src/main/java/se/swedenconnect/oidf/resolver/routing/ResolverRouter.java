@@ -95,7 +95,8 @@ public class ResolverRouter implements Router {
                       .test(request))
                   .findFirst()
                   .get();
-              return ServerResponse.ok().body(this.resolverFactory.create(resolverProperties).explain(new ResolveRequest(
+              return ServerResponse.ok().body(this.resolverFactory.create(resolverProperties)
+                  .explain(new ResolveRequest(
                   params.getFirst("sub"),
                   params.getFirst("trust_anchor"),
                   params.getFirst("entity_type"),
