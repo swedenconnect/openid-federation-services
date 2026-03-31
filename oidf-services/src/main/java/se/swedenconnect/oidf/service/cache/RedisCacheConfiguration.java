@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.service.cache;
 
 import com.nimbusds.jose.shaded.gson.Gson;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
@@ -63,16 +64,24 @@ public class RedisCacheConfiguration {
   }
 
   @Bean
-  ResolverRedisOperations redisOperations(
-      final RedisTemplate<String, ScrapedEntity> template,
-      final RedisConnectionFactory connectionFactory,
+  @Qualifier("redisCacheTemplate")
+  RedisTemplate<String, String> redisCacheTemplate(
+      final RedisConnectionFactory factory,
       final InstanceSpecificRedisKeySerializer keySerializer
   ) {
-    final RedisTemplate<String, String> stringTemplate = new RedisTemplate<>();
-    stringTemplate.setConnectionFactory(connectionFactory);
-    stringTemplate.setKeySerializer(keySerializer);
-    stringTemplate.afterPropertiesSet();
-    return new ResolverRedisOperations(template, stringTemplate);
+    final RedisTemplate<String, String> template = new RedisTemplate<>();
+    template.setConnectionFactory(factory);
+    template.setKeySerializer(keySerializer);
+    template.afterPropertiesSet();
+    return template;
+  }
+
+  @Bean
+  ResolverRedisOperations redisOperations(
+      final RedisTemplate<String, ScrapedEntity> template,
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> stringRedisTemplate
+  ) {
+    return new ResolverRedisOperations(template, stringRedisTemplate);
   }
 
   @Bean
@@ -128,14 +137,8 @@ public class RedisCacheConfiguration {
 
   @Bean
   FederationServiceState redisFederationServiceState(
-      final RedisConnectionFactory factory,
-      final InstanceSpecificRedisKeySerializer keySerializer) {
-
-    final RedisTemplate<String, String> template = new RedisTemplate<>();
-    template.setConnectionFactory(factory);
-    template.setKeySerializer(keySerializer);
-    template.afterPropertiesSet();
-    return new RedisFederationServiceState(template);
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> stringRedisTemplate) {
+    return new RedisFederationServiceState(stringRedisTemplate);
   }
 
   @Bean
@@ -149,39 +152,37 @@ public class RedisCacheConfiguration {
 
   @Bean
   ServiceLock redisServiceLock(
-      final RedisConnectionFactory factory,
-      final InstanceSpecificRedisKeySerializer keySerializer) {
-
-
-    final RedisTemplate<String, String> template = new RedisTemplate<>();
-    template.setConnectionFactory(factory);
-    template.setKeySerializer(keySerializer);
-    template.afterPropertiesSet();
-    return new RedisServiceLock(template);
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> stringRedisTemplate) {
+    return new RedisServiceLock(stringRedisTemplate);
   }
 
   @Bean
-  TrustMarkStatusCache trustMarkStatusCache(final RedisTemplate<String, String> template) {
+  TrustMarkStatusCache trustMarkStatusCache(
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
     return new RedisTrustMarkStatusCache(template);
   }
 
   @Bean
-  ResolverResponseCache redisResolverResponseCache(final RedisTemplate<String, String> template) {
+  ResolverResponseCache redisResolverResponseCache(
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
     return new RedisResolverResponseCache(template);
   }
 
   @Bean
-  SubordinateFetchCache redisSubordinateFetchCache(final RedisTemplate<String, String> template) {
+  SubordinateFetchCache redisSubordinateFetchCache(
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
     return new RedisSubordinateFetchCache(template);
   }
 
   @Bean
-  TrustMarkCache redisTrustMarkCache(final RedisTemplate<String, String> template) {
+  TrustMarkCache redisTrustMarkCache(
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
     return new RedisTrustMarkCache(template);
   }
 
   @Bean
-  EntityConfigurationCache redisEntityConfigurationCache(final RedisTemplate<String, String> template) {
+  EntityConfigurationCache redisEntityConfigurationCache(
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
     return new RedisEntityConfigurationCache(template);
   }
 }
