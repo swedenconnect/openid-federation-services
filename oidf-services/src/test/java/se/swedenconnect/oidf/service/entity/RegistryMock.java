@@ -31,6 +31,9 @@ import com.nimbusds.jose.shaded.gson.ExclusionStrategy;
 import com.nimbusds.jose.shaded.gson.FieldAttributes;
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jose.shaded.gson.GsonBuilder;
+import com.nimbusds.jose.shaded.gson.JsonArray;
+import com.nimbusds.jose.shaded.gson.JsonObject;
+import com.nimbusds.jose.shaded.gson.JsonParser;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
@@ -71,6 +74,7 @@ import java.util.Map;
 public class RegistryMock {
 
   private final RegistryRecordSigner registryRecordSigner;
+  private final JsonRegistryLoader jsonRegistryLoader;
   public static final EntityID RP_FROM_REGISTRY_ENTITY = new EntityID("https://municipality.local.swedenconnect.se/rp-from-registry");
   @Getter
   private final int port;
@@ -98,10 +102,71 @@ public class RegistryMock {
     property.setMapping(List.of("federation"));
     registry.register(property);
     final JWKSKidReferenceLoader jwksKidReferenceLoader = new JWKSKidReferenceLoader(registry);
-    final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader(this.createGson(jwksKidReferenceLoader, registry));
+    this.jsonRegistryLoader = new JsonRegistryLoader(this.createGson(jwksKidReferenceLoader, registry));
     this.registryRecordSigner = new RegistryRecordSigner(
         new RSASSASigner(set.getKeys().getFirst().toRSAKey()),
-        jsonRegistryLoader
+        this.jsonRegistryLoader
+    );
+  }
+
+  public void initLarge(final String instanceId) throws Exception {
+    this.wireMockServer.start();
+    WireMock.configureFor(this.port);
+    final String moduleJson = new ClassPathResource("modules.json").getContentAsString(StandardCharsets.UTF_8);
+    final String entityJson = new ClassPathResource("testentities.json").getContentAsString(StandardCharsets.UTF_8);
+
+    // Patch module record: add 500 subordinates to the http://localhost:11111/im trust anchor entry
+    final JsonObject moduleObject = JsonParser.parseString(moduleJson).getAsJsonObject();
+    final JsonArray trustAnchors = moduleObject.getAsJsonArray("trust-anchors");
+    JsonArray imSubordinates = null;
+    JsonObject imSubordinateJwks = null;
+    for (int i = 0; i < trustAnchors.size(); i++) {
+      final JsonObject ta = trustAnchors.get(i).getAsJsonObject();
+      if ("http://localhost:11111/im".equals(ta.get("entity-identifier").getAsString())) {
+        imSubordinates = ta.getAsJsonArray("subordinates");
+        imSubordinateJwks = imSubordinates.get(0).getAsJsonObject().getAsJsonObject("jwks");
+        break;
+      }
+    }
+    for (int i = 0; i < 500; i++) {
+      final JsonObject subordinate = new JsonObject();
+      subordinate.addProperty("entity-identifier", "http://localhost:11111/im/subordinate-" + i);
+      subordinate.add("jwks", imSubordinateJwks.deepCopy());
+      imSubordinates.add(subordinate);
+    }
+
+    // Patch entity records: add the same 500 entities
+    final JsonArray entityArray = JsonParser.parseString(entityJson).getAsJsonArray();
+    for (int i = 0; i < 500; i++) {
+      final JsonObject entity = new JsonObject();
+      entity.addProperty("entity-identifier", "http://localhost:11111/im/subordinate-" + i);
+      entity.addProperty("jwks", "federation:359433581122628090150675142465804663870388233428");
+      final JsonObject metadata = new JsonObject();
+      final JsonObject fedEntity = new JsonObject();
+      fedEntity.addProperty("organization_name", "Subordinate " + i);
+      metadata.add("federation_entity", fedEntity);
+      entity.add("metadata", metadata);
+      entityArray.add(entity);
+    }
+
+    final SignedJWT moduleJwt = this.registryRecordSigner.signJson("module_records", moduleObject.toString(),
+        "module-trustMarkSubjects+jwt");
+    final SignedJWT entityJwt = this.registryRecordSigner.signJson("entity_records", entityArray.toString(),
+        "entity-trustMarkSubjects+jwt");
+
+    final String submodulesEndpoint =
+        "/api/v1/federationservice/submodules?instanceid=%s".formatted(URLEncoder.encode(instanceId,
+            Charset.defaultCharset()));
+    WireMock.stubFor(
+        WireMock.get(submodulesEndpoint)
+            .willReturn(new ResponseDefinitionBuilder().withStatus(200)
+                .withResponseBody(new Body(moduleJwt.serialize())))
+    );
+    final String entityEndpoint = "/api/v1/federationservice/entity_record?instanceid=%s".formatted(instanceId);
+    WireMock.stubFor(
+        WireMock.get(entityEndpoint)
+            .willReturn(new ResponseDefinitionBuilder().withStatus(200)
+                .withResponseBody(new Body(entityJwt.serialize())))
     );
   }
 

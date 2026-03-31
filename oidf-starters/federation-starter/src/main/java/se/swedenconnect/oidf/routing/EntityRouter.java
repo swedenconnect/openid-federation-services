@@ -26,6 +26,7 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
 
@@ -44,24 +45,28 @@ public class EntityRouter implements Router {
   private final EntityConfigurationFactory factory;
   private final RouteFactory routeFactory;
   private final ScrapedEntityLookup lookup;
+  private final EntityConfigurationCache entityConfigurationCache;
   private final ObservationRegistry observationRegistry;
 
   /**
    * Constructor.
    *
-   * @param factory             for creating entity configurations
-   * @param routeFactory        for creating routes
-   * @param lookup              lookup for scraped entities
-   * @param observationRegistry for recording observations
+   * @param factory                  for creating entity configurations
+   * @param routeFactory             for creating routes
+   * @param lookup                   lookup for scraped entities
+   * @param entityConfigurationCache cache for entity configuration responses
+   * @param observationRegistry      for recording observations
    */
   public EntityRouter(
       final EntityConfigurationFactory factory,
       final RouteFactory routeFactory,
       final ScrapedEntityLookup lookup,
+      final EntityConfigurationCache entityConfigurationCache,
       final ObservationRegistry observationRegistry) {
     this.factory = factory;
     this.routeFactory = routeFactory;
     this.lookup = lookup;
+    this.entityConfigurationCache = entityConfigurationCache;
     this.observationRegistry = observationRegistry;
   }
 
@@ -104,10 +109,18 @@ public class EntityRouter implements Router {
   private Optional<ServerResponse> handleCacheControl(final ServerRequest request, final EntityID entityId) {
     final List<String> cacheControl = request.headers().header("cache-control");
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
+      final long snapshot = this.lookup.getLatestSnapshotVersion();
+      final Optional<String> cached = this.entityConfigurationCache.get(snapshot, entityId.getValue());
+      if (cached.isPresent()) {
+        return cached.map(response -> ServerResponse.ok().body(response));
+      }
       return this.lookup.findByEntityId(entityId.getValue(), a -> true)
           .filter(entity -> Objects.nonNull(entity.getEntityStatement()))
-          .map(entity -> ServerResponse.ok()
-              .body(entity.getEntityStatement().getSignedStatement().serialize()));
+          .map(entity -> {
+            final String response = entity.getEntityStatement().getSignedStatement().serialize();
+            this.entityConfigurationCache.put(snapshot, entityId.getValue(), response);
+            return ServerResponse.ok().body(response);
+          });
     }
     return Optional.empty();
   }

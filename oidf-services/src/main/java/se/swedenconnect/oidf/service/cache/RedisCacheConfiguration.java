@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.service.cache;
 
 import com.nimbusds.jose.shaded.gson.Gson;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
@@ -177,5 +178,10 @@ public class RedisCacheConfiguration {
   @Bean
   TrustMarkCache redisTrustMarkCache(final RedisTemplate<String, String> template) {
     return new RedisTrustMarkCache(template);
+  }
+
+  @Bean
+  EntityConfigurationCache redisEntityConfigurationCache(final RedisTemplate<String, String> template) {
+    return new RedisEntityConfigurationCache(template);
   }
 }

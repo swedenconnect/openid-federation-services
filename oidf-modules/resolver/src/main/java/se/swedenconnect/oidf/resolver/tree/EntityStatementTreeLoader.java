@@ -152,8 +152,8 @@ public class EntityStatementTreeLoader {
     final NodeKey key = root.getKey();
     this.executionStrategy.execute(() -> {
       if (scrapedEntity.getIntermediate() != null) {
-        scrapedEntity.getIntermediate().subordinates().forEach((name, jwt) -> {
-          this.resolveSubordinate(jwt, key, tree, snapshot, context, resolutionContext);
+        scrapedEntity.getIntermediate().subordinates().entrySet().stream().parallel().forEach((entry) -> {
+          this.resolveSubordinate(entry.getValue(), key, tree, snapshot, context, resolutionContext);
         });
       }
     });
@@ -177,8 +177,8 @@ public class EntityStatementTreeLoader {
         entity.scrape(this.client, resolutionContext.getTrustAnchorEntityStatement());
         tree.addChild(subNode, parentKey, entity, snapshot);
         if (entity.getIntermediate() != null) {
-          entity.getIntermediate().subordinates().forEach((name, jwt) -> {
-            this.resolveSubordinate(jwt, subNode.getKey(), tree, snapshot, context, resolutionContext);
+          entity.getIntermediate().subordinates().entrySet().stream().parallel().forEach(entry -> {
+            this.resolveSubordinate(entry.getValue(), subNode.getKey(), tree, snapshot, context, resolutionContext);
           });
         }
       } catch (final Exception e) {

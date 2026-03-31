@@ -24,6 +24,9 @@ import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.service.health.ReadyStateComponent;
 import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 
+import java.time.Duration;
+import java.time.Instant;
+
 /**
  * Readystate component for loading resolvers.
  *
@@ -97,8 +100,9 @@ public class ResolverStateManager extends ReadyStateComponent {
         try {
           // --- Critical Section Start ---
           log.info("Start Tree load");
+          final Instant before = Instant.now();
           this.treeLoader.loadTree();
-          log.info("Tree loaded");
+          log.info("Tree loaded in {}", Duration.between(before, Instant.now()));
           // --- Critical Section End
         } finally {
           this.redisServiceLock.close(this.name());

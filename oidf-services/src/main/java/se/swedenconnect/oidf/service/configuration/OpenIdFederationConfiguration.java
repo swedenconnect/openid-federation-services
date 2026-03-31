@@ -28,6 +28,8 @@ import se.swedenconnect.oidf.FederationServiceState;
 import se.swedenconnect.oidf.InMemoryFederationServiceState;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryEntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryResolverResponseCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.InMemorySubordinateFetchCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryTrustMarkCache;
@@ -145,5 +147,13 @@ public class OpenIdFederationConfiguration {
     log.warn("Starting application with in memory implementation of TrustMarkCache is not recommended. " +
              "See docs for more information");
     return new InMemoryTrustMarkCache();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  EntityConfigurationCache inMemoryEntityConfigurationCache() {
+    log.warn("Starting application with in memory implementation of EntityConfigurationCache is not recommended. " +
+             "See docs for more information");
+    return new InMemoryEntityConfigurationCache();
   }
 }
