@@ -14,20 +14,17 @@
 * Added a local 10-second TTL cache in `CachedRecordSource` to reduce redundant lookups against the backing cache store
 * Updated copyright year to 2024-2026
 
-#### Cache Performance (Redis, 0.10.2)
+#### Performance Indicator
 
-| Scenario | Requests | Total (s) | Per request (ms) |
+Measured with Redis, 1000 parallel requests per scenario.
+
+| Scenario | Cached RPS | No-cache RPS | Speedup |
 |---|---:|---:|---:|
-| Entity Configuration — no cache | 10 | 0.095 | 9.500 |
-| Resolve — no cache | 10 | 0.094 | 9.400 |
-| Trust mark status — no cache | 10 | 0.062 | 6.200 |
-| Trust mark — no cache | 10 | 0.043 | 4.300 |
-| Subordinate fetch — no cache | 10 | 0.033 | 3.300 |
-| Entity Configuration — cached | 1000 | 1.403 | 1.403 |
-| Subordinate fetch — cached | 1000 | 0.986 | 0.986 |
-| Trust mark status — cached | 1000 | 0.884 | 0.884 |
-| Trust mark — cached | 1000 | 0.706 | 0.706 |
-| Resolve — cached | 1000 | 0.672 | 0.672 |
+| Entity Configuration | 1245.3 | 259.3 | 4.8x |
+| Resolve | 2183.4 | 353.7 | 6.2x |
+| Subordinate fetch | 1508.3 | 1298.7 | 1.2x |
+| Trust mark | 3125.0 | 607.9 | 5.1x |
+| Trust mark status | 2247.2 | 523.0 | 4.3x |
 
 ### Version 0.10.1
 

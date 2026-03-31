@@ -49,16 +49,42 @@ for testcase in root.iter('testcase'):
   count = int(count_match.group(1)) if count_match else 1
   results.append((time, display, count))
 
-results.sort(key=lambda x: x[0] / x[2], reverse=True)
+results.sort(key=lambda x: x[2] / x[0] if x[0] > 0 else float('inf'))
 
 max_name = max(len(r[1]) for r in results) if results else 20
-print(f"{'Test':<{max_name}}  {'Requests':>8}  {'Total (s)':>10}  {'Per req (ms)':>13}")
-print("-" * (max_name + 37))
+print(f"{'Test':<{max_name}}  {'Requests':>8}  {'Total (s)':>10}  {'RPS':>10}")
+print("-" * (max_name + 34))
 for time, name, count in results:
-  per_req_ms = (time / count) * 1000
-  print(f"{name:<{max_name}}  {count:>8}  {time:>10.3f}  {per_req_ms:>12.3f}")
+  rps = count / time if time > 0 else float('inf')
+  print(f"{name:<{max_name}}  {count:>8}  {time:>10.3f}  {rps:>10.1f}")
 
 total_time = sum(t for t, _, _ in results)
-print("-" * (max_name + 37))
+print("-" * (max_name + 34))
 print(f"{'Total':<{max_name}}  {'':>8}  {total_time:>10.3f}")
+
+print()
+print("=== Cache Performance Gain ===")
+
+def base_name(name):
+  return re.sub(r'\s+with(?:out)?\s+(?:no\s+)?cache', '', name, flags=re.IGNORECASE).strip()
+
+def is_cached(name):
+  n = name.lower()
+  return 'with cache' in n and 'without' not in n and 'with no' not in n
+
+cached_map = {base_name(name): count / time for time, name, count in results if time > 0 and is_cached(name)}
+nocache_map = {base_name(name): count / time for time, name, count in results if time > 0 and not is_cached(name)}
+
+pairs = sorted(set(cached_map) & set(nocache_map))
+if pairs:
+  max_base = max(len(p) for p in pairs)
+  print(f"{'Test':<{max_base}}  {'Cached RPS':>10}  {'No-cache RPS':>12}  {'Speedup':>8}")
+  print("-" * (max_base + 36))
+  for name in pairs:
+    c_rps = cached_map[name]
+    n_rps = nocache_map[name]
+    speedup = c_rps / n_rps
+    print(f"{name:<{max_base}}  {c_rps:>10.1f}  {n_rps:>12.1f}  {speedup:>7.1f}x")
+else:
+  print("No matching cache/no-cache pairs found.")
 EOF

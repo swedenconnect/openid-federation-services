@@ -41,7 +41,7 @@ import java.util.stream.IntStream;
 public class CacheTestCases {
 
   public static final int TEST_END_EXCLUSIVE = 1000;
-  public static final int NO_CACHE_TEST_END_EXCLUSIVE = 10;
+  public static final int NO_CACHE_TEST_END_EXCLUSIVE = 1000;
 
   @BeforeEach
   public void beforeMethod() {
@@ -64,7 +64,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Subordinate fetch 10 times without cache")
+  @DisplayName("Subordinate fetch 1000 times without cache")
   void testFetchNoCaching(final FederationClients clients) {
     final List<String> body =
         clients.disableCaching().anarchy().trustAnchor()
@@ -97,7 +97,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Trust mark 10 times with no cache")
+  @DisplayName("Trust mark 1000 times with no cache")
   void testTrustMarkNoCaching(final FederationClients clients) {
     final SignedJWT trustMark = clients.disableCaching().anarchy().trustMark().trustMark(
         new EntityID("http://localhost:11111/im/tmi"),
@@ -129,7 +129,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Entity Configuration 10 times with no cache")
+  @DisplayName("Entity Configuration 1000 times with no cache")
   void entityConfigurationNoCache(final FederationClients clients) {
     final EntityStatement entityConfigurationReference =
         clients.disableCaching().entity().getEntityConfiguration(TestFederationEntities.IM.OP);
@@ -162,7 +162,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Resolve 10 times without cache")
+  @DisplayName("Resolve 1000 times without cache")
   void testResolveNoCaching(final FederationClients clients) {
     final SignedJWT reference = clients.disableCaching().anarchy().resolver().resolve(
         TestFederationEntities.IM.OP,
@@ -202,7 +202,7 @@ public class CacheTestCases {
   }
 
   @Test
-  @DisplayName("Trust mark status 10 times without cache")
+  @DisplayName("Trust mark status 1000 times without cache")
   void testTrustMarkStatusNoCaching(final FederationClients clients) {
     final SignedJWT trustMark = clients.disableCaching().trustMarkIssuerClient().trustMark().trustMark(
         new EntityID(TestFederationEntities.IM.TRUST_MARK_ISSUER.getValue()),
