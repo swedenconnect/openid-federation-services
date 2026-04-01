@@ -32,6 +32,7 @@ import java.util.Optional;
 public class RedisEntityConfigurationCache implements EntityConfigurationCache {
 
   private final RedisTemplate<String, String> template;
+  private final Duration cacheTtl;
 
   @Override
   public Optional<String> get(final long snapshot, final String entityId) {
@@ -43,6 +44,6 @@ public class RedisEntityConfigurationCache implements EntityConfigurationCache {
   public void put(final long snapshot, final String entityId, final String response) {
     final String key = "entity-configuration:%d:%s".formatted(snapshot, entityId);
     this.template.opsForValue().set(key, response);
-    this.template.expire(key, Duration.ofHours(2));
+    this.template.expire(key, this.cacheTtl);
   }
 }

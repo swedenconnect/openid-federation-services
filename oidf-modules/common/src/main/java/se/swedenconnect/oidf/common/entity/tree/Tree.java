@@ -76,6 +76,10 @@ public class Tree<T> {
     return root.search(request.predicate(), context);
   }
 
+  /**
+   * @param key to look up
+   * @return node data for key
+   */
   public T getNode(final NodeKey key) {
     return this.snapshotSource.snapshot().getData(key);
   }
@@ -85,7 +89,8 @@ public class Tree<T> {
    */
   public void visit(final VisitRequest<T> request) {
     final HashSet<NodeKey> visited = new HashSet<>();
-    final Node.NodeSearchContext<T> context = new Node.NodeSearchContext<>(0, false, request.snapshot(), visited, false);
+    final Node.NodeSearchContext<T> context =
+        new Node.NodeSearchContext<>(0, false, request.snapshot(), visited, false);
     request.snapshot().getRoot()
         .visit(request.searchPredicate(), request.visitor(), context);
   }

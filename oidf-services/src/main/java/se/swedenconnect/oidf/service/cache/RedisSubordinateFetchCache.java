@@ -33,6 +33,7 @@ import java.util.Optional;
 public class RedisSubordinateFetchCache implements SubordinateFetchCache {
 
   private final RedisTemplate<String, String> template;
+  private final Duration cacheTtl;
 
   @Override
   public Optional<String> get(final long snapshot, final FetchRequest request) {
@@ -44,6 +45,6 @@ public class RedisSubordinateFetchCache implements SubordinateFetchCache {
   public void put(final long snapshot, final FetchRequest request, final String response) {
     final String key = "subordinate-fetch:%d:%s".formatted(snapshot, request.subject());
     this.template.opsForValue().set(key, response);
-    this.template.expire(key, Duration.ofHours(2));
+    this.template.expire(key, this.cacheTtl);
   }
 }

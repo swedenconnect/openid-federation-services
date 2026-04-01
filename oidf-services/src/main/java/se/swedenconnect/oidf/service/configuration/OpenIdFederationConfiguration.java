@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.service.configuration;
 import com.nimbusds.jose.shaded.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -47,6 +48,8 @@ import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 import se.swedenconnect.oidf.service.state.NoOperationServiceLock;
 import se.swedenconnect.oidf.service.state.RegistryStateManager;
+import se.swedenconnect.oidf.service.state.ResolverStateManager;
+import se.swedenconnect.oidf.service.state.ResolverStateTrigger;
 import se.swedenconnect.oidf.service.state.ServiceLock;
 import se.swedenconnect.oidf.service.state.StateHashFactory;
 
@@ -93,6 +96,12 @@ public class OpenIdFederationConfiguration {
   @Bean
   StateHashFactory stateHashFactory(final Gson gson) {
     return new StateHashFactory(gson);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "federation.service.scheduling.resolver-trigger-enabled", matchIfMissing = true)
+  ResolverStateTrigger resolverStateTrigger(final ResolverStateManager resolverStateManager) {
+    return new ResolverStateTrigger(resolverStateManager);
   }
 
   @Bean

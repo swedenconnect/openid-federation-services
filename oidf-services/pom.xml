@@ -399,6 +399,9 @@
                     <includes>
                         <include>**/*Suite.java</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/LargeRedisRegistryCacheSuite.java</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>

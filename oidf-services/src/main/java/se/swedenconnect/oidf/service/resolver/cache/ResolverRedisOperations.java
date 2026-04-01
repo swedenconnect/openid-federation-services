@@ -37,15 +37,19 @@ public class ResolverRedisOperations {
    * Constructor.
    * @param entityTemplate for handling entity statements
    * @param childTemplate for handling child listings
+   * @param cacheTtl time-to-live for cached entries
    */
   public ResolverRedisOperations(final RedisTemplate<String, ScrapedEntity> entityTemplate,
-                                 final RedisTemplate<String, String> childTemplate) {
+                                 final RedisTemplate<String, String> childTemplate,
+                                 final Duration cacheTtl) {
     this.template = entityTemplate;
     this.stringTemplate = childTemplate;
+    this.cacheTtl = cacheTtl;
   }
 
   private final RedisTemplate<String, ScrapedEntity> template;
   private final RedisTemplate<String, String> stringTemplate;
+  private final Duration cacheTtl;
 
   /**
    * Gets all children for an entity
@@ -71,7 +75,7 @@ public class ResolverRedisOperations {
    */
   public void append(final ChildKey parent, final Node<ScrapedEntity> child) {
     this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey().getKey());
-    this.stringTemplate.expire(parent.getRedisKey(), Duration.ofHours(2));
+    this.stringTemplate.expire(parent.getRedisKey(), this.cacheTtl);
   }
 
   /**
@@ -81,7 +85,7 @@ public class ResolverRedisOperations {
    */
   public void setData(final EntityKey key, final ScrapedEntity data) {
     this.template.opsForValue().set(key.getRedisKey(), data);
-    this.template.expire(key.getRedisKey(), Duration.ofHours(2));
+    this.template.expire(key.getRedisKey(), this.cacheTtl);
   }
 
   /**
@@ -113,7 +117,7 @@ public class ResolverRedisOperations {
    */
   public void setRoot(final RootKey key, final Node<ScrapedEntity> root) {
     this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey().getKey());
-    this.stringTemplate.expire(key.getRedisKey(), Duration.ofHours(2));
+    this.stringTemplate.expire(key.getRedisKey(), this.cacheTtl);
   }
 
   /**

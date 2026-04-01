@@ -18,11 +18,11 @@ package se.swedenconnect.oidf.service.state;
 
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * Scheduled trigger for {@link ResolverStateManager}. Can be disabled via
  * {@code federation.service.scheduling.resolver-trigger-enabled=false}.
+ * The reload rate can be configured via
+ * {@code federation.service.scheduling.resolver-reload-rate} (ISO 8601 duration, default PT60M).
  *
  * @author Felix Hellman
  */
@@ -42,7 +42,7 @@ public class ResolverStateTrigger {
   /**
    * Trigger reload of resolver state on a fixed schedule.
    */
-  @Scheduled(fixedRate = 60, timeUnit = TimeUnit.MINUTES)
+  @Scheduled(fixedRateString = "${federation.service.scheduling.resolver-reload-rate:PT60M}")
   public void reload() {
     this.resolverStateManager.reload();
   }

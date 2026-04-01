@@ -33,7 +33,8 @@ import java.util.Optional;
 @AllArgsConstructor
 public class RedisResolverResponseCache implements ResolverResponseCache {
 
-  private final RedisTemplate<String,String> template;
+  private final RedisTemplate<String, String> template;
+  private final Duration cacheTtl;
 
   @Override
   public Optional<String> get(final long snapshot, final ResolveRequest request) {
@@ -47,6 +48,6 @@ public class RedisResolverResponseCache implements ResolverResponseCache {
     final String key = "resolve-response:%d:%s"
         .formatted(snapshot, request.toKey(new EntityID(request.subject())));
     this.template.opsForValue().set(key, response);
-    this.template.expire(key, Duration.ofHours(2));
+    this.template.expire(key, this.cacheTtl);
   }
 }

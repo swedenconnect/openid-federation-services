@@ -8,7 +8,7 @@ SOURCE_FILE="$SCRIPT_DIR/oidf-services/src/test/java/se/swedenconnect/oidf/servi
 echo "=== Running Redis Cache Test Suite ==="
 mvn -f "$SCRIPT_DIR/pom.xml" verify \
   -pl oidf-services -am \
-  -Dfailsafe.includes="**/RedisCacheTestSuite.java"
+  -Dfailsafe.includes="**/LargeRedisRegistryCacheSuite.java"
 
 echo ""
 echo "=== Test Timings ==="

@@ -19,6 +19,12 @@ package se.swedenconnect.oidf.common.entity.tree.scraping;
 import java.io.Serializable;
 import java.util.function.Supplier;
 
+/**
+ * A {@link Supplier} that is also {@link Serializable}.
+ *
+ * @param <T> the type of results supplied by this supplier
+ * @author Felix Hellman
+ */
 @FunctionalInterface
 public interface SerializableSupplier<T> extends Supplier<T>, Serializable {
 }

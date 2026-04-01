@@ -38,6 +38,7 @@ import java.util.Optional;
 public class RedisTrustMarkStatusCache implements TrustMarkStatusCache {
 
   private final RedisTemplate<String, String> redisTemplate;
+  private final Duration cacheTtl;
 
   @Override
   public Optional<String> get(final long snapshot, final String trustMarkJwt) {
@@ -49,7 +50,7 @@ public class RedisTrustMarkStatusCache implements TrustMarkStatusCache {
   public void put(final long snapshot, final String trustMarkJwt, final String response) {
     final String key = "trust-mark-status:%d:%s".formatted(snapshot, sha256(trustMarkJwt));
     this.redisTemplate.opsForValue().set(key, response);
-    this.redisTemplate.expire(key, Duration.ofHours(2));
+    this.redisTemplate.expire(key, this.cacheTtl);
   }
 
   private static String sha256(final String jwt) {

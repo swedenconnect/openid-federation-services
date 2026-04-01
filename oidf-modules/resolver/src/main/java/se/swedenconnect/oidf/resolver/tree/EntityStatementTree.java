@@ -71,7 +71,8 @@ public class EntityStatementTree {
     // Commit to current version
     final CacheSnapshot<ScrapedEntity> snapshot = this.tree.getCurrentSnapshot();
     // Find the entity that matches our subject, include parents
-    final SearchRequest<ScrapedEntity> request = new SearchRequest<>(resolveRequest.asPredicate(), true, snapshot, true);
+    final SearchRequest<ScrapedEntity> request =
+        new SearchRequest<>(resolveRequest.asPredicate(), true, snapshot, true);
     try {
       final SequencedSet<ScrapedEntity> reversed = this.tree.search(request).stream()
           //Sort by level in tree
@@ -149,8 +150,10 @@ public class EntityStatementTree {
    *
    * @param loader              to use
    * @param trustAnchorEntityId to start resolution from
+   * @param context             loader context for deduplicating scrape operations
    */
-  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId, final LoaderContext context) {
+  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId,
+                   final LoaderContext context) {
     loader.resolveTree(trustAnchorEntityId, this.tree, context);
   }
 

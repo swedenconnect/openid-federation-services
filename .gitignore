@@ -49,3 +49,4 @@ ${BACKUP_DIR}
 out
 .flattened-pom.xml
 /**/.flattened-pom.xml
+.claude/

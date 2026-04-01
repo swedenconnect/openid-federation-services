@@ -116,8 +116,10 @@ public class EntityStatementTreeLoader {
    *
    * @param trustAnchorEntityId location of the root (trust-anchor)
    * @param tree                to add the nodes to
+   * @param loaderContext       for deduplicating scrape operations across the tree
    */
-  public void resolveTree(final String trustAnchorEntityId, final Tree<ScrapedEntity> tree, final LoaderContext loaderContext) {
+  public void resolveTree(final String trustAnchorEntityId, final Tree<ScrapedEntity> tree,
+                          final LoaderContext loaderContext) {
     this.resolveTree(
         new NodeKey(trustAnchorEntityId, trustAnchorEntityId),
         tree,
@@ -171,7 +173,8 @@ public class EntityStatementTreeLoader {
       tree.addChild(subNode, subNode.getKey(), entity, snapshot);
       if (entity.getIntermediate() != null) {
         entity.getIntermediate().subordinates().entrySet().stream().parallel().forEach(entry -> {
-          this.resolveSubordinate(entry.getValue(), subNode.getKey(), tree, snapshot, context, resolutionContext, loaderContext);
+          this.resolveSubordinate(entry.getValue(), subNode.getKey(), tree, snapshot,
+              context, resolutionContext, loaderContext);
         });
       }
     } catch (final Exception e) {

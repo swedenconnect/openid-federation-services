@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.service.cache;
 
 import com.nimbusds.jose.shaded.gson.Gson;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
@@ -41,6 +42,8 @@ import se.swedenconnect.oidf.service.resolver.ResolverCacheTransformer;
 import se.swedenconnect.oidf.service.resolver.cache.RedisResolverCacheFactory;
 import se.swedenconnect.oidf.service.resolver.cache.ResolverRedisOperations;
 import se.swedenconnect.oidf.service.state.RedisFederationServiceState;
+
+import java.time.Duration;
 import se.swedenconnect.oidf.service.state.RedisServiceLock;
 import se.swedenconnect.oidf.service.state.ServiceLock;
 import se.swedenconnect.oidf.service.submodule.RequestResponseEntry;
@@ -56,6 +59,15 @@ import java.time.Clock;
 @ConditionalOnProperty(name = "federation.service.storage", havingValue = "redis")
 @Import(DataRedisAutoConfiguration.class)
 public class RedisCacheConfiguration {
+
+  @Value("${federation.service.scheduling.resolver-reload-rate:PT60M}")
+  private Duration resolverReloadRate;
+
+  private Duration cacheTtl() {
+    final Duration doubled = this.resolverReloadRate.multipliedBy(2);
+    final Duration minimum = Duration.ofMinutes(10);
+    return doubled.compareTo(minimum) > 0 ? doubled : minimum;
+  }
 
   @Bean
   CacheFactory redisCacheFactory(final RedisConnectionFactory factory, final Clock clock,
@@ -81,7 +93,7 @@ public class RedisCacheConfiguration {
       final RedisTemplate<String, ScrapedEntity> template,
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> stringRedisTemplate
   ) {
-    return new ResolverRedisOperations(template, stringRedisTemplate);
+    return new ResolverRedisOperations(template, stringRedisTemplate, cacheTtl());
   }
 
   @Bean
@@ -159,30 +171,30 @@ public class RedisCacheConfiguration {
   @Bean
   TrustMarkStatusCache trustMarkStatusCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisTrustMarkStatusCache(template);
+    return new RedisTrustMarkStatusCache(template, cacheTtl());
   }
 
   @Bean
   ResolverResponseCache redisResolverResponseCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisResolverResponseCache(template);
+    return new RedisResolverResponseCache(template, cacheTtl());
   }
 
   @Bean
   SubordinateFetchCache redisSubordinateFetchCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisSubordinateFetchCache(template);
+    return new RedisSubordinateFetchCache(template, cacheTtl());
   }
 
   @Bean
   TrustMarkCache redisTrustMarkCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisTrustMarkCache(template);
+    return new RedisTrustMarkCache(template, cacheTtl());
   }
 
   @Bean
   EntityConfigurationCache redisEntityConfigurationCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisEntityConfigurationCache(template);
+    return new RedisEntityConfigurationCache(template, cacheTtl());
   }
 }

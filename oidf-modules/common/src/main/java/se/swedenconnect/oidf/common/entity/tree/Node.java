@@ -119,10 +119,11 @@ public class Node<T> {
 
   /**
    * @param level         of the tree
-   * @param includeParent true if all parents of a search result should be included
-   * @param cacheSnapshot snapshot of a specific version of the cache to search upon
-   * @param visisted      nodes that has already been visited, in order to resolve cyclic graphs
-   * @param <T>           type
+   * @param includeParent    true if all parents of a search result should be included
+   * @param cacheSnapshot    snapshot of a specific version of the cache to search upon
+   * @param visisted         nodes that has already been visited, in order to resolve cyclic graphs
+   * @param stopOnFirstMatch true if the search should stop after finding the first match
+   * @param <T>              type
    */
   public record NodeSearchContext<T>(int level, boolean includeParent, CacheSnapshot<T> cacheSnapshot,
                                      Set<NodeKey> visisted, boolean stopOnFirstMatch) {
