@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.routing;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,7 @@ import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
+import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +45,7 @@ public class EntityRouter implements Router {
 
   private final EntityConfigurationFactory factory;
   private final RouteFactory routeFactory;
-  private final ScrapedEntityLookup lookup;
+  private final CacheSnapshotVersionLookup lookup;
   private final EntityConfigurationCache entityConfigurationCache;
   private final ObservationRegistry observationRegistry;
 
@@ -60,7 +61,7 @@ public class EntityRouter implements Router {
   public EntityRouter(
       final EntityConfigurationFactory factory,
       final RouteFactory routeFactory,
-      final ScrapedEntityLookup lookup,
+      final CacheSnapshotVersionLookup lookup,
       final EntityConfigurationCache entityConfigurationCache,
       final ObservationRegistry observationRegistry) {
     this.factory = factory;
@@ -78,6 +79,7 @@ public class EntityRouter implements Router {
           .reduce(p -> false, RequestPredicate::or)
           .test(request);
     }, request -> {
+      final Long snapshot = this.lookup.getLatestSnapshotVersion();
       final EntityRecord entityRecord = source.getAllEntities().stream()
           .filter(entity -> this.getRouteForEntity(entity)
               .test(request))
@@ -88,7 +90,7 @@ public class EntityRouter implements Router {
       if (observation != null) {
         observation.lowCardinalityKeyValue("endpoint", endpoint);
       }
-      return this.handleCacheControl(request, entityRecord.getEntityIdentifier())
+      return this.handleCacheControl(request, entityRecord.getEntityIdentifier(), snapshot)
           .map(response -> {
             if (observation != null) {
               observation.lowCardinalityKeyValue("cached", "true");
@@ -99,28 +101,24 @@ public class EntityRouter implements Router {
             if (observation != null) {
               observation.lowCardinalityKeyValue("cached", "false");
             }
-            return ServerResponse.ok()
-                .body(this.factory.createEntityConfiguration(entityRecord).getSignedStatement()
-                    .serialize());
+            final EntityStatement entityConfiguration = this.factory.createEntityConfiguration(entityRecord);
+            this.entityConfigurationCache.put(snapshot,entityRecord.getEntityIdentifier().getValue(),
+                entityConfiguration.getSignedStatement().serialize());
+            return ServerResponse.ok().body(entityConfiguration.getSignedStatement().serialize());
           });
     });
   }
 
-  private Optional<ServerResponse> handleCacheControl(final ServerRequest request, final EntityID entityId) {
+  private Optional<ServerResponse> handleCacheControl(final ServerRequest request,
+                                                      final EntityID entityId,
+                                                      final long snapshot) {
     final List<String> cacheControl = request.headers().header("cache-control");
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
-      final long snapshot = this.lookup.getLatestSnapshotVersion();
       final Optional<String> cached = this.entityConfigurationCache.get(snapshot, entityId.getValue());
       if (cached.isPresent()) {
         return cached.map(response -> ServerResponse.ok().body(response));
       }
-      return this.lookup.findByEntityId(entityId.getValue(), a -> true)
-          .filter(entity -> Objects.nonNull(entity.getEntityStatement()))
-          .map(entity -> {
-            final String response = entity.getEntityStatement().getSignedStatement().serialize();
-            this.entityConfigurationCache.put(snapshot, entityId.getValue(), response);
-            return ServerResponse.ok().body(response);
-          });
+      log.info("Cache miss! {}", entityId);
     }
     return Optional.empty();
   }

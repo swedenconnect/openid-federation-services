@@ -16,16 +16,7 @@
  */
 package se.swedenconnect.oidf.common.entity.tree.scraping;
 
-import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
 import se.swedenconnect.oidf.common.entity.tree.FederationTreeSource;
-import se.swedenconnect.oidf.common.entity.tree.SearchRequest;
-import se.swedenconnect.oidf.common.entity.tree.Tree;
-
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * Looks up scraped entities by entity ID across all trust anchor trees managed by the service.
@@ -35,7 +26,7 @@ import java.util.stream.Stream;
  *
  * @author Felix Hellman
  */
-public class ScrapedEntityLookup {
+public class CacheSnapshotVersionLookup {
 
   private final FederationTreeSource treeSource;
 
@@ -44,36 +35,8 @@ public class ScrapedEntityLookup {
    *
    * @param treeSource providing all managed trust anchor trees
    */
-  public ScrapedEntityLookup(final FederationTreeSource treeSource) {
+  public CacheSnapshotVersionLookup(final FederationTreeSource treeSource) {
     this.treeSource = treeSource;
-  }
-
-  /**
-   * Searches all managed trust anchor trees for an entity matching the given entity ID.
-   * Each tree is queried against its own current snapshot (deterministic state per tree).
-   * When the same entity appears in multiple trees, the most recently scraped instance is returned.
-   *
-   * @param entityId to search for
-   * @param matching predicate to filter results
-   * @return the most recently scraped matching entity, or empty if not found in any tree
-   */
-  public Optional<ScrapedEntity> findByEntityId(final String entityId, final Predicate<ScrapedEntity> matching) {
-    return this.treeSource.getTrees().stream()
-        .flatMap(tree -> {
-          final CacheSnapshot<ScrapedEntity> snapshot = tree.getCurrentSnapshot();
-          if (snapshot.getRoot() == null) {
-            return Stream.empty();
-          }
-          final SearchRequest<ScrapedEntity> request = new SearchRequest<>(
-              (entity, context) -> entity.getEntityID().getValue().equals(entityId),
-              false,
-              snapshot,
-              true
-          );
-          return tree.search(request).stream().map(Tree.SearchResult::getData);
-        })
-        .filter(matching)
-        .findFirst();
   }
 
   /**

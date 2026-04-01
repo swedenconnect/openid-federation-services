@@ -31,7 +31,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRe
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
+import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.routing.RequireParameters;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.Router;
@@ -53,7 +53,7 @@ public class TrustAnchorRouter implements Router {
   private final TrustAnchorFactory trustAnchorFactory;
   private final RouteFactory routeFactory;
   private final ServerResponseErrorHandler errorHandler;
-  private final ScrapedEntityLookup lookup;
+  private final CacheSnapshotVersionLookup lookup;
   private final SubordinateFetchCache fetchCache;
   private final ObservationRegistry observationRegistry;
 
@@ -70,7 +70,7 @@ public class TrustAnchorRouter implements Router {
       final TrustAnchorFactory trustAnchorFactory,
       final RouteFactory routeFactory,
       final ServerResponseErrorHandler errorHandler,
-      final ScrapedEntityLookup lookup,
+      final CacheSnapshotVersionLookup lookup,
       final SubordinateFetchCache fetchCache,
       final ObservationRegistry observationRegistry) {
 

@@ -21,7 +21,7 @@
   import org.springframework.context.annotation.Configuration;
   import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
   import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
-  import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
+  import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
   import se.swedenconnect.oidf.routing.RouteFactory;
   import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
   import se.swedenconnect.oidf.trustmarkissuer.starter.routing.TrustMarkIssuerRouter;
@@ -36,7 +36,7 @@
     @Bean
     TrustMarkIssuerRouter trustMarkIssuerRouter(final RouteFactory routeFactory, final TrustMarkIssuerFactory factory,
                                                 final ServerResponseErrorHandler handler,
-                                                final ScrapedEntityLookup lookup,
+                                                final CacheSnapshotVersionLookup lookup,
                                                 final TrustMarkStatusCache trustMarkStatusCache,
                                                 final TrustMarkCache trustMarkCache,
                                                 final ObservationRegistry observationRegistry) {

@@ -126,11 +126,11 @@ public class CacheTestCases {
     log.info("[entityConfigurationCache] Reference payload: {} KB",
         entityConfigurationReference.getSignedStatement().getPayload().toBytes().length / 1024.0);
 
-    IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
+    IntStream.range(0, TEST_END_EXCLUSIVE).forEach(i -> {
       final EntityStatement entityConfigurationResponse =
           clients.entity().getEntityConfiguration(TestFederationEntities.IM.OP);
       Assertions.assertEquals(entityConfigurationReference.getSignedStatement().serialize()
-          , entityConfigurationResponse.getSignedStatement().serialize());
+          , entityConfigurationResponse.getSignedStatement().serialize(), "Failed on iteration %d".formatted(i));
     });
   }
 

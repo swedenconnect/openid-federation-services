@@ -33,7 +33,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCac
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
+import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.routing.RequireParameters;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.Router;
@@ -58,7 +58,7 @@ public class TrustMarkIssuerRouter implements Router {
   private final RouteFactory routeFactory;
   private final TrustMarkIssuerFactory factory;
   private final ServerResponseErrorHandler errorHandler;
-  private final ScrapedEntityLookup lookup;
+  private final CacheSnapshotVersionLookup lookup;
   private final TrustMarkStatusCache trustMarkStatusCache;
   private final TrustMarkCache trustMarkCache;
   private final ObservationRegistry observationRegistry;
@@ -78,7 +78,7 @@ public class TrustMarkIssuerRouter implements Router {
       final RouteFactory routeFactory,
       final TrustMarkIssuerFactory factory,
       final ServerResponseErrorHandler errorHandler,
-      final ScrapedEntityLookup lookup,
+      final CacheSnapshotVersionLookup lookup,
       final TrustMarkStatusCache trustMarkStatusCache,
       final TrustMarkCache trustMarkCache,
       final ObservationRegistry observationRegistry) {

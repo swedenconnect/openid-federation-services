@@ -20,7 +20,7 @@ import io.micrometer.observation.ObservationRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
+import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.resolver.routing.ResolverRouter;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
@@ -38,7 +38,7 @@ public class FederationResolverRoutingConfiguration {
       final RouteFactory routeFactory,
       final ServerResponseErrorHandler errorHandler,
       final ResolverResponseCache resolverResponseCache,
-      final ScrapedEntityLookup lookup,
+      final CacheSnapshotVersionLookup lookup,
       final ObservationRegistry observationRegistry) {
     return new ResolverRouter(factory, routeFactory, errorHandler, resolverResponseCache, lookup, observationRegistry);
   }

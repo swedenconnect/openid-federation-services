@@ -30,7 +30,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCa
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
+import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 import se.swedenconnect.oidf.resolver.Resolver;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
@@ -53,7 +53,7 @@ public class ResolverRouter implements Router {
   private final RouteFactory routeFactory;
   private final ServerResponseErrorHandler errorHandler;
   private final ResolverResponseCache resolverResponseCache;
-  private final ScrapedEntityLookup lookup;
+  private final CacheSnapshotVersionLookup lookup;
   private final ObservationRegistry observationRegistry;
 
   /**
@@ -70,7 +70,7 @@ public class ResolverRouter implements Router {
                         final RouteFactory routeFactory,
                         final ServerResponseErrorHandler errorHandler,
                         final ResolverResponseCache resolverResponseCache,
-                        final ScrapedEntityLookup lookup,
+                        final CacheSnapshotVersionLookup lookup,
                         final ObservationRegistry observationRegistry) {
     this.resolverFactory = resolverFactory;
     this.routeFactory = routeFactory;

@@ -36,7 +36,7 @@ import se.swedenconnect.oidf.common.entity.jwt.JWKSetSignerFactory;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.common.entity.tree.FederationTreeSource;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntityLookup;
+import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.routing.ErrorHandler;
 import se.swedenconnect.oidf.routing.RouteFactory;
 import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
@@ -71,8 +71,8 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
-  ScrapedEntityLookup scrapedEntityLookup(final FederationTreeSource treeSource) {
-    return new ScrapedEntityLookup(treeSource);
+  CacheSnapshotVersionLookup scrapedEntityLookup(final FederationTreeSource treeSource) {
+    return new CacheSnapshotVersionLookup(treeSource);
   }
 
   @Bean
