@@ -4,6 +4,27 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.10.4
+
+**Date:** 2026-04-01
+
+* Made caching TTL and resolve time configurable
+* Fixed Redis namespace issue
+* Fixed slow entity-configuration cache for large federations
+* Added observations (metrics) for routes
+
+#### Performance Indicator
+
+Measured with Redis, 10000 parallel requests per scenario.
+
+| Scenario | Payload | Cached RPS | No-cache RPS | Speedup | Cached Mbit/s | No-cache Mbit/s |
+|---|---:|---:|---:|---:|---:|---:|
+| Entity Configuration | 3.36 KB | 2645.5 | 280.3 | 9.4x | 72.82 | 7.72 |
+| Resolve | 12.87 KB | 2717.4 | 209.0 | 13.0x | 286.50 | 22.04 |
+| Subordinate fetch | 0.69 KB | 3076.9 | 1908.4 | 1.6x | 17.39 | 10.79 |
+| Trust mark | 0.30 KB | 3125.0 | 606.4 | 5.2x | 7.68 | 1.49 |
+| Trust mark status | 2.58 KB | 1712.3 | 586.5 | 2.9x | 36.19 | 12.40 |
+
 ### Version 0.10.3
 
 **Date:** 2026-03-31

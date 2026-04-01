@@ -6,9 +6,10 @@ REPORT_DIR="$SCRIPT_DIR/oidf-services/target/failsafe-reports"
 SOURCE_FILE="$SCRIPT_DIR/oidf-services/src/test/java/se/swedenconnect/oidf/service/CacheTestCases.java"
 
 echo "=== Running Redis Cache Test Suite ==="
-mvn -f "$SCRIPT_DIR/pom.xml" verify \
+mvn clean -f "$SCRIPT_DIR/pom.xml" verify \
   -pl oidf-services -am \
-  -Dfailsafe.includes="**/LargeRedisRegistryCacheSuite.java"
+  -Dfailsafe.includes="**/LargeRedisRegistryCacheSuite.java" \
+  -Dfailsafe.excludes=""
 
 echo ""
 echo "=== Test Timings ==="
