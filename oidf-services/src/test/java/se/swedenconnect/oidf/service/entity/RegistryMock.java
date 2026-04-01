@@ -137,6 +137,36 @@ public class RegistryMock {
 
     // Patch entity records: add the same 500 entities
     final JsonArray entityArray = JsonParser.parseString(entityJson).getAsJsonArray();
+
+    // Add authority-hints to existing entities
+    final java.util.Map<String, String[]> authorityHintsMap = new java.util.HashMap<>();
+    authorityHintsMap.put("http://localhost:11111/im", new String[]{
+        "http://localhost:11111/anarchy/ta",
+        "http://localhost:11111/naming/ta",
+        "http://localhost:11111/trust_mark_issuer/ta",
+        "http://localhost:11111/path/ta",
+        "http://localhost:11111/entity_type/ta",
+        "http://localhost:11111/trust_mark_owner/ta"
+    });
+    authorityHintsMap.put("http://localhost:11111/im/im", new String[]{"http://localhost:11111/im"});
+    authorityHintsMap.put("http://localhost:11111/im/op", new String[]{"http://localhost:11111/im"});
+    authorityHintsMap.put("http://localhost:11111/im/tmi", new String[]{"http://localhost:11111/im"});
+    authorityHintsMap.put("http://localhost:11111/im/im/op", new String[]{"http://localhost:11111/im/im"});
+    authorityHintsMap.put("http://localhost:11111/im/im/rp", new String[]{"http://localhost:11111/im/im"});
+
+    for (int j = 0; j < entityArray.size(); j++) {
+      final JsonObject existing = entityArray.get(j).getAsJsonObject();
+      final String id = existing.get("entity-identifier").getAsString();
+      final String[] hints = authorityHintsMap.get(id);
+      if (hints != null) {
+        final JsonArray hintsArray = new JsonArray();
+        for (final String hint : hints) {
+          hintsArray.add(hint);
+        }
+        existing.add("authority-hints", hintsArray);
+      }
+    }
+
     for (int i = 0; i < 500; i++) {
       final JsonObject entity = new JsonObject();
       entity.addProperty("entity-identifier", "http://localhost:11111/im/subordinate-" + i);
@@ -146,6 +176,9 @@ public class RegistryMock {
       fedEntity.addProperty("organization_name", "Subordinate " + i);
       metadata.add("federation_entity", fedEntity);
       entity.add("metadata", metadata);
+      final JsonArray hintsArray = new JsonArray();
+      hintsArray.add("http://localhost:11111/im");
+      entity.add("authority-hints", hintsArray);
       entityArray.add(entity);
     }
 

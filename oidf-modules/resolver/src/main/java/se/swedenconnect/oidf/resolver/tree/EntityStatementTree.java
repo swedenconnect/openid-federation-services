@@ -18,23 +18,28 @@ package se.swedenconnect.oidf.resolver.tree;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
+import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.SearchRequest;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedIntermediate;
+import se.swedenconnect.oidf.resolver.tree.resolution.LoaderContext;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.SequencedSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -66,7 +71,7 @@ public class EntityStatementTree {
     // Commit to current version
     final CacheSnapshot<ScrapedEntity> snapshot = this.tree.getCurrentSnapshot();
     // Find the entity that matches our subject, include parents
-    final SearchRequest<ScrapedEntity> request = new SearchRequest<>(resolveRequest.asPredicate(), true, snapshot);
+    final SearchRequest<ScrapedEntity> request = new SearchRequest<>(resolveRequest.asPredicate(), true, snapshot, true);
     try {
       final SequencedSet<ScrapedEntity> reversed = this.tree.search(request).stream()
           //Sort by level in tree
@@ -145,8 +150,8 @@ public class EntityStatementTree {
    * @param loader              to use
    * @param trustAnchorEntityId to start resolution from
    */
-  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId) {
-    loader.resolveTree(trustAnchorEntityId, this.tree);
+  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId, final LoaderContext context) {
+    loader.resolveTree(trustAnchorEntityId, this.tree, context);
   }
 
   private boolean isIntermediate(final EntityStatement statement, final ResolveRequest request) {
@@ -178,6 +183,64 @@ public class EntityStatementTree {
    */
   public CacheSnapshot<ScrapedEntity> getCurrentSnapshot() {
     return this.tree.getCurrentSnapshot();
+  }
+
+  /**
+   * Attempts to build a trust chain by walking upward through the subject's authority hints rather
+   * than searching the full tree top-down. Each hop looks the hinted entity up in the current
+   * snapshot and verifies it holds a subordinate statement for the previous entity, recursing until
+   * the requested trust anchor is reached. Falls back to {@link #getTrustChain(ResolveRequest)}
+   * when authority hints are absent or do not form a complete path.
+   *
+   * @param request with subject and trust anchor
+   * @return resolved trust chain, or empty if authority hints cannot produce a complete path
+   */
+  public Optional<ResolverTrustChain> getTrustChainViaAuthorityHints(final ResolveRequest request) {
+    return this.findPathToTrustAnchor(request.subject(), request.trustAnchor())
+        .map(path -> this.resolverTrustChain(new LinkedHashSet<>(path)));
+  }
+
+  /**
+   * Recursively follows authority hints from {@code subjectId} upward until {@code trustAnchorId}
+   * is reached. Returns the path in leaf-to-root order, or empty if no valid path exists.
+   */
+  private Optional<List<ScrapedEntity>> findPathToTrustAnchor(
+      final String subjectId,
+      final String trustAnchorId) {
+
+    final ScrapedEntity node = this.tree.getNode(new NodeKey(subjectId, subjectId));
+    final List<String> path = this.reverseTraverse(node, trustAnchorId, List.of(subjectId));
+    if (!path.isEmpty() && path.getLast().equals(trustAnchorId)) {
+      final List<ScrapedEntity> entities = path.stream().map(entityId -> {
+        return this.tree.getNode(new NodeKey(entityId, entityId));
+      }).toList();
+      return Optional.of(entities);
+    }
+    return Optional.empty();
+  }
+
+  private List<String> reverseTraverse(
+      final ScrapedEntity node,
+      final String trustAnchor,
+      final List<String> path
+  ) {
+    if (node.getEntityStatement().getEntityID().getValue().equals(trustAnchor)) {
+      return path;
+    }
+    final List<EntityID> hints = node.getEntityStatement().getClaimsSet().getAuthorityHints();
+    if (Objects.isNull(hints)) {
+      return path;
+    }
+    for (final EntityID authorityHint : hints) {
+      final List<String> temp = new ArrayList<>(path);
+      temp.add(authorityHint.getValue());
+      final ScrapedEntity nextNode = this.tree.getNode(new NodeKey(authorityHint.getValue(), authorityHint.getValue()));
+      if (nextNode == null) {
+        continue;
+      }
+      return this.reverseTraverse(nextNode, trustAnchor, List.copyOf(temp));
+    }
+    return path;
   }
 
   /**

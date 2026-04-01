@@ -23,6 +23,9 @@ import java.util.function.BiPredicate;
  * @param predicate to find matching nodes for
  * @param includeParent true if the result should include all level of parents, false to only include matches.
  * @param snapshot version of the tree
+ * @param stopOnFirstMatch true if sibling subtrees should be skipped once any child subtree returns a match.
+ *                         Use for searches targeting a unique entity (e.g. resolve, entity lookup).
+ *                         Leave false for exhaustive searches (e.g. discovery).
  * @param <T> type of entity
  *
  * @author Felix Hellman
@@ -30,5 +33,16 @@ import java.util.function.BiPredicate;
 public record SearchRequest<T>(
     BiPredicate<T, Node.NodeSearchContext<T>> predicate,
     boolean includeParent,
-    CacheSnapshot<T> snapshot) {
+    CacheSnapshot<T> snapshot,
+    boolean stopOnFirstMatch) {
+
+  /**
+   * Convenience constructor that defaults {@code stopOnFirstMatch} to {@code false}.
+   */
+  public SearchRequest(
+      final BiPredicate<T, Node.NodeSearchContext<T>> predicate,
+      final boolean includeParent,
+      final CacheSnapshot<T> snapshot) {
+    this(predicate, includeParent, snapshot, false);
+  }
 }

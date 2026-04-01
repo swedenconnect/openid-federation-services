@@ -24,13 +24,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 
@@ -39,6 +36,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Wrapper for an entity statement in the resolver tree.
@@ -57,6 +55,7 @@ public class ScrapedEntity {
 
   // Base info
   private EntityStatement entityStatement;
+  @Builder.Default
   private Map<String, TrustMarkStatusResponse> trustMarkStatuses = new HashMap<>();
   //Roles
   private ScrapedIntermediate intermediate;
@@ -65,9 +64,8 @@ public class ScrapedEntity {
    * Resolves the entity statement using the provided federation client.
    *
    * @param client      the federation client to use for resolution
-   * @param trustAnchor entity configuration
    */
-  public void scrape(final FederationClient client, final EntityStatementWrapper trustAnchor) {
+  public void scrape(final FederationClient client) {
     log.debug("Resolving entity {}", this.entityID);
     this.entityStatement =
         client.entityConfiguration(
@@ -92,7 +90,7 @@ public class ScrapedEntity {
         .ifPresent(metadata -> {
           if (metadata.containsKey("federation_list_endpoint")) {
             log.debug("Entity {} is intermediate, resolving subordinates", this.entityID);
-            this.intermediate = new ScrapedIntermediate(new HashMap<>());
+            this.intermediate = new ScrapedIntermediate(new ConcurrentHashMap<>());
             this.intermediate.scrape(client, metadata);
           }
         });

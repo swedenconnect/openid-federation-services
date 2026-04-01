@@ -67,7 +67,8 @@ public class ScrapedEntityLookup {
           final SearchRequest<ScrapedEntity> request = new SearchRequest<>(
               (entity, context) -> entity.getEntityID().getValue().equals(entityId),
               false,
-              snapshot
+              snapshot,
+              true
           );
           return tree.search(request).stream().map(Tree.SearchResult::getData);
         })

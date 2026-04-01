@@ -91,6 +91,14 @@
     "entity-identifier": "http://localhost:11111/im",
     "jwks": "federation:359433581122628090150675142465804663870388233428",
     "ec-location": "http://localhost:11111/im/banan",
+    "authority-hints": [
+      "http://localhost:11111/anarchy/ta",
+      "http://localhost:11111/naming/ta",
+      "http://localhost:11111/trust_mark_issuer/ta",
+      "http://localhost:11111/path/ta",
+      "http://localhost:11111/entity_type/ta",
+      "http://localhost:11111/trust_mark_owner/ta"
+    ],
     "metadata": {
       "federation_entity": {
         "organization_name": "Authorization",
@@ -102,6 +110,7 @@
   {
     "entity-identifier": "http://localhost:11111/im/im",
     "jwks": "federation:359433581122628090150675142465804663870388233428",
+    "authority-hints": ["http://localhost:11111/im"],
     "metadata": {
       "federation_entity": {
         "organization_name": "Authorization",
@@ -124,6 +133,7 @@
   {
     "entity-identifier": "http://localhost:11111/im/op",
     "jwks": "federation:359433581122628090150675142465804663870388233428",
+    "authority-hints": ["http://localhost:11111/im"],
     "trust-mark-source": [
       {
         "issuer": "http://localhost:11111/im/tmi",
@@ -147,6 +157,7 @@
   {
     "entity-identifier": "http://localhost:11111/im/im/op",
     "jwks": "federation:359433581122628090150675142465804663870388233428",
+    "authority-hints": ["http://localhost:11111/im/im"],
     "metadata": {
       "federation_entity": {
         "organization_name": "Authorization"
@@ -159,6 +170,7 @@
   {
     "entity-identifier": "http://localhost:11111/im/im/rp",
     "jwks": "federation:359433581122628090150675142465804663870388233428",
+    "authority-hints": ["http://localhost:11111/im/im"],
     "metadata": {
       "federation_entity": {
         "organization_name": "Authorization"
@@ -261,6 +273,7 @@
   {
     "entity-identifier": "http://localhost:11111/im/tmi",
     "jwks": "federation:invalidkid",
+    "authority-hints": ["http://localhost:11111/im"],
     "metadata": {
       "federation_entity": {
         "organization_name": "Authorization",

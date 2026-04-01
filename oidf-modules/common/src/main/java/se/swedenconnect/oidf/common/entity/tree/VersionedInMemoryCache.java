@@ -61,7 +61,10 @@ public class VersionedInMemoryCache implements ResolverCache {
 
   @Override
   public List<Node<ScrapedEntity>> getChildren(final Node<ScrapedEntity> node, final long version) {
-    return Optional.ofNullable(this.childMap.get(this.getKey(node.getKey().getKey(), version))).orElseGet(List::of);
+    return Optional.ofNullable(this.dataMap.get(this.getKey(node.getKey().getKey(), version)))
+        .filter(scrape -> Objects.nonNull(scrape.getIntermediate()))
+        .map(scrape -> scrape.getIntermediate().subordinates().keySet().stream().map(key -> new Node<ScrapedEntity>(new NodeKey(key, key))).toList())
+        .orElseGet(List::of);
   }
 
   @Override

@@ -62,7 +62,7 @@ public class EntityStatementTreeLoaderFactory {
   public EntityStatementTreeLoader create(final ResolverProperties properties) {
     return new EntityStatementTreeLoader(this.client, this.executionStrategy,
         new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
-        this.errorContextFactory, properties.getUseCachedValue())
+        this.errorContextFactory)
         .withAdditionalPostHook(() -> this.publisher.publishEvent(
             new TreeUpdatedEvent(properties.getEntityIdentifier())
         ));

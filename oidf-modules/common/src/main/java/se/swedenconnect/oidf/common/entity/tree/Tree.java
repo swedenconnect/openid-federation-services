@@ -71,8 +71,13 @@ public class Tree<T> {
     }
     final HashSet<NodeKey> visisted = new HashSet<>(List.of(root.getKey()));
     final Node.NodeSearchContext<T> context =
-        new Node.NodeSearchContext<>(0, request.includeParent(), request.snapshot(), visisted);
+        new Node.NodeSearchContext<>(0, request.includeParent(), request.snapshot(), visisted,
+            request.stopOnFirstMatch());
     return root.search(request.predicate(), context);
+  }
+
+  public T getNode(final NodeKey key) {
+    return this.snapshotSource.snapshot().getData(key);
   }
 
   /**
@@ -80,7 +85,7 @@ public class Tree<T> {
    */
   public void visit(final VisitRequest<T> request) {
     final HashSet<NodeKey> visited = new HashSet<>();
-    final Node.NodeSearchContext<T> context = new Node.NodeSearchContext<>(0, false, request.snapshot(), visited);
+    final Node.NodeSearchContext<T> context = new Node.NodeSearchContext<>(0, false, request.snapshot(), visited, false);
     request.snapshot().getRoot()
         .visit(request.searchPredicate(), request.visitor(), context);
   }

@@ -76,7 +76,7 @@ public record NodeKey(String issuer, String subject) {
   public static NodeKey fromSignedJwt(final SignedJWT jwt) {
     try {
       return new NodeKey(
-          jwt.getJWTClaimsSet().getIssuer(),
+          jwt.getJWTClaimsSet().getSubject(),
           jwt.getJWTClaimsSet().getSubject()
       );
     } catch (final Exception e) {

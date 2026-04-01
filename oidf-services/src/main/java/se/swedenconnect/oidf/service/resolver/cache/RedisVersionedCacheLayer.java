@@ -20,6 +20,7 @@ import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
 import se.swedenconnect.oidf.common.entity.tree.Node;
+import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.ResolverCache;
 import se.swedenconnect.oidf.common.entity.tree.SnapshotSource;
 import se.swedenconnect.oidf.common.entity.tree.VersionedCacheLayer;
@@ -59,8 +60,13 @@ public class RedisVersionedCacheLayer implements ResolverCache {
 
   @Override
   public List<Node<ScrapedEntity>> getChildren(final Node<ScrapedEntity> parent, final long version) {
-    return this.resolverRedisOperations
-        .getChildren(new ResolverRedisOperations.ChildKey(parent, version, this.properties.getEntityIdentifier()));
+    final ScrapedEntity parentData = this.getData(parent.getKey().getKey(), version);
+    if (parentData != null && parentData.getIntermediate() != null) {
+      return parentData.getIntermediate().subordinates().keySet().stream()
+          .map(key -> new Node<ScrapedEntity>(new NodeKey(key, key)))
+          .toList();
+    }
+    return List.of();
   }
 
   @Override

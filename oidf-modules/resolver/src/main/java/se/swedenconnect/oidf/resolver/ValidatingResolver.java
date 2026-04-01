@@ -141,7 +141,8 @@ public class ValidatingResolver implements Resolver {
     }
 
 
-    final ResolverTrustChain chain = this.tree.getTrustChain(request);
+    final ResolverTrustChain chain = this.tree.getTrustChainViaAuthorityHints(request)
+        .orElseGet(() -> this.tree.getTrustChain(request));
     if (chain.getTrustChain().isEmpty()) {
       validationErrors.add(
           new NotFoundException("Resolver found no subject with requested EntityID:%s".formatted(request.subject()))

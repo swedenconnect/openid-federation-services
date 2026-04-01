@@ -67,6 +67,7 @@ public class LargeRedisRegistryCacheSuite {
         .sources(TestConfiguration.class)
         .profiles("entitytypes")
         .environment(mockEnvironment
+            .withProperty("logging.level.se.swedenconnect","INFO")
             .withProperty("server.port", "11111")
             .withProperty("management.server.port", "6001")
             .withProperty("spring.data.redis.url", redis.getRedisURI())

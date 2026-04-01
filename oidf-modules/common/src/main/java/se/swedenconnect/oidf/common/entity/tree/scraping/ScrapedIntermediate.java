@@ -24,8 +24,14 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Holds scraped subordinate entity statements for an intermediate entity.
@@ -36,6 +42,9 @@ import java.util.Map;
 @Slf4j
 public record ScrapedIntermediate(Map<String, SignedJWT> subordinates) {
 
+  private static final ExecutorService FETCH_EXECUTOR =
+      Executors.newFixedThreadPool(10);
+
   /**
    * Scrapes all subordinates of this intermediate from the federation.
    *
@@ -45,10 +54,22 @@ public record ScrapedIntermediate(Map<String, SignedJWT> subordinates) {
   public void scrape(final FederationClient client, final Map<String, Object> metadata) {
     final List<String> subordinates = client.subordinateListing(
         new FederationRequest<>(SubordinateListingRequest.requestAll(), metadata));
-    subordinates.forEach(sub -> {
-      log.debug("Resolving subordinate {}", sub);
-      final EntityStatement fetch = client.fetch(new FederationRequest<>(new FetchRequest(sub), metadata));
-      this.subordinates.put(sub, fetch.getSignedStatement());
-    });
+    final Map<String, SignedJWT> collect = subordinates.stream().parallel()
+        .map(sub -> {
+          return CompletableFuture.supplyAsync(() -> {
+            log.debug("Resolving subordinate {}", sub);
+            final EntityStatement fetch = client.fetch(new FederationRequest<>(new FetchRequest(sub), metadata));
+            return fetch;
+          });
+        })
+        .map(future -> {
+          try {
+            return future.get();
+          } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .collect(Collectors.toMap(kv -> kv.getEntityID().getValue(), EntityStatement::getSignedStatement));
+        this.subordinates.putAll(collect);
   }
 }
