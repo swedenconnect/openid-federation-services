@@ -10,12 +10,14 @@
 
 * Made caching TTL and resolve time configurable
 * Fixed Redis namespace issue
+* Fixed slow non-cached resolve responses for large federations
 * Fixed slow entity-configuration cache for large federations
 * Added observations (metrics) for routes
+* Changed performance indicator to run on a large federation due to performance issues on larger federations 
 
 #### Performance Indicator
 
-Measured with Redis, 10000 parallel requests per scenario.
+Measured with Redis, 10000 parallel requests per scenario. (Federation with over 500 nodes)
 
 | Scenario | Payload | Cached RPS | No-cache RPS | Speedup | Cached Mbit/s | No-cache Mbit/s |
 |---|---:|---:|---:|---:|---:|---:|
@@ -44,7 +46,7 @@ Measured with Redis, 10000 parallel requests per scenario.
 
 #### Performance Indicator
 
-Measured with Redis, 10000 parallel requests per scenario.
+Measured with Redis, 10000 parallel requests per scenario. (Small federation test)
 
 | Scenario | Payload | Cached RPS | No-cache RPS | Speedup | Cached Mbit/s | No-cache Mbit/s |
 |---|---:|---:|---:|---:|---:|---:|
