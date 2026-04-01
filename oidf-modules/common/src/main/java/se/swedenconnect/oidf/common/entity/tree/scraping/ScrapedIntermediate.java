@@ -60,7 +60,7 @@ public record ScrapedIntermediate(Map<String, SignedJWT> subordinates) {
             log.debug("Resolving subordinate {}", sub);
             final EntityStatement fetch = client.fetch(new FederationRequest<>(new FetchRequest(sub), metadata));
             return fetch;
-          });
+          }, FETCH_EXECUTOR);
         })
         .map(future -> {
           try {

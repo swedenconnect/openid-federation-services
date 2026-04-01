@@ -93,7 +93,7 @@ public class RedisCacheConfiguration {
       final RedisTemplate<String, ScrapedEntity> template,
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> stringRedisTemplate
   ) {
-    return new ResolverRedisOperations(template, stringRedisTemplate, cacheTtl());
+    return new ResolverRedisOperations(template, stringRedisTemplate, this.cacheTtl());
   }
 
   @Bean
@@ -171,30 +171,30 @@ public class RedisCacheConfiguration {
   @Bean
   TrustMarkStatusCache trustMarkStatusCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisTrustMarkStatusCache(template, cacheTtl());
+    return new RedisTrustMarkStatusCache(template, this.cacheTtl());
   }
 
   @Bean
   ResolverResponseCache redisResolverResponseCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisResolverResponseCache(template, cacheTtl());
+    return new RedisResolverResponseCache(template, this.cacheTtl());
   }
 
   @Bean
   SubordinateFetchCache redisSubordinateFetchCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisSubordinateFetchCache(template, cacheTtl());
+    return new RedisSubordinateFetchCache(template, this.cacheTtl());
   }
 
   @Bean
   TrustMarkCache redisTrustMarkCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisTrustMarkCache(template, cacheTtl());
+    return new RedisTrustMarkCache(template, this.cacheTtl());
   }
 
   @Bean
   EntityConfigurationCache redisEntityConfigurationCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
-    return new RedisEntityConfigurationCache(template, cacheTtl());
+    return new RedisEntityConfigurationCache(template, this.cacheTtl());
   }
 }

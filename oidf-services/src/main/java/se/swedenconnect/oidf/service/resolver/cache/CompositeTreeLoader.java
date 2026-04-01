@@ -19,7 +19,6 @@ package se.swedenconnect.oidf.service.resolver.cache;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
-import se.swedenconnect.oidf.resolver.tree.resolution.LoaderContext;
 
 /**
  * Manages loading of multiple resolver trees.
@@ -50,13 +49,12 @@ public class CompositeTreeLoader {
    * Load/Reloads all trees.
    */
   public void loadTree() {
-    final LoaderContext context = new LoaderContext();
-    this.source.getResolverProperties().parallelStream()
+    this.source.getResolverProperties().stream().parallel()
         .map(this.factory::create)
         .forEach(resolver -> {
           this.registry.getRegistration(resolver.getEntityId().getValue()).ifPresent(r -> {
             r.tree()
-                .load(r.loader(), r.properties().getTrustAnchor(), context);
+                .load(r.loader(), r.properties().getTrustAnchor());
           });
         });
   }

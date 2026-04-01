@@ -117,6 +117,42 @@ public class RegistryMock {
 
     // Patch module record: add 500 subordinates to the http://localhost:11111/im trust anchor entry
     final JsonObject moduleObject = JsonParser.parseString(moduleJson).getAsJsonObject();
+
+    // Keep only the resolvers, trust mark issuers, and trust anchors required by CacheTestCases
+    final java.util.Set<String> requiredResolvers = java.util.Set.of(
+        "http://localhost:11111/anarchy/resolver",
+        "http://localhost:11111/trust_mark_issuer/resolver"
+    );
+    final java.util.Set<String> requiredTrustMarkIssuers = java.util.Set.of(
+        "http://localhost:11111/im/tmi"
+    );
+    final java.util.Set<String> requiredTrustAnchors = java.util.Set.of(
+        "http://localhost:11111/anarchy/ta",
+        "http://localhost:11111/trust_mark_issuer/ta",
+        "http://localhost:11111/im",
+        "http://localhost:11111/im/im"
+    );
+    final JsonArray filteredResolvers = new JsonArray();
+    for (final com.nimbusds.jose.shaded.gson.JsonElement el : moduleObject.getAsJsonArray("resolvers")) {
+      if (requiredResolvers.contains(el.getAsJsonObject().get("entity-identifier").getAsString())) {
+        filteredResolvers.add(el);
+      }
+    }
+    moduleObject.add("resolvers", filteredResolvers);
+    final JsonArray filteredTrustMarkIssuers = new JsonArray();
+    for (final com.nimbusds.jose.shaded.gson.JsonElement el : moduleObject.getAsJsonArray("trust-mark-issuers")) {
+      if (requiredTrustMarkIssuers.contains(el.getAsJsonObject().get("entity-identifier").getAsString())) {
+        filteredTrustMarkIssuers.add(el);
+      }
+    }
+    moduleObject.add("trust-mark-issuers", filteredTrustMarkIssuers);
+    final JsonArray filteredTrustAnchors = new JsonArray();
+    for (final com.nimbusds.jose.shaded.gson.JsonElement el : moduleObject.getAsJsonArray("trust-anchors")) {
+      if (requiredTrustAnchors.contains(el.getAsJsonObject().get("entity-identifier").getAsString())) {
+        filteredTrustAnchors.add(el);
+      }
+    }
+    moduleObject.add("trust-anchors", filteredTrustAnchors);
     final JsonArray trustAnchors = moduleObject.getAsJsonArray("trust-anchors");
     JsonArray imSubordinates = null;
     JsonObject imSubordinateJwks = null;

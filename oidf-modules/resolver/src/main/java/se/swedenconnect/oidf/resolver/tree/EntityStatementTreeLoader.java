@@ -29,7 +29,6 @@ import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.ExecutionStrategy;
-import se.swedenconnect.oidf.resolver.tree.resolution.LoaderContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.ResolutionContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.StepExecutionError;
 import se.swedenconnect.oidf.resolver.tree.resolution.StepRecoveryStrategy;
@@ -116,16 +115,13 @@ public class EntityStatementTreeLoader {
    *
    * @param trustAnchorEntityId location of the root (trust-anchor)
    * @param tree                to add the nodes to
-   * @param loaderContext       for deduplicating scrape operations across the tree
    */
-  public void resolveTree(final String trustAnchorEntityId, final Tree<ScrapedEntity> tree,
-                          final LoaderContext loaderContext) {
+  public void resolveTree(final String trustAnchorEntityId, final Tree<ScrapedEntity> tree) {
     this.resolveTree(
         new NodeKey(trustAnchorEntityId, trustAnchorEntityId),
         tree,
         this.errorContextFactory.createEmpty(),
-        new ResolutionContext(),
-        loaderContext);
+        new ResolutionContext());
   }
 
 
@@ -133,12 +129,12 @@ public class EntityStatementTreeLoader {
       final NodeKey nodeKey,
       final Tree<ScrapedEntity> tree,
       final ErrorContext context,
-      final ResolutionContext resolutionContext,
-      final LoaderContext loaderContext) {
+      final ResolutionContext resolutionContext) {
 
     final Node<ScrapedEntity> root = new Node<>(nodeKey);
     final EntityID entityID = new EntityID(nodeKey.issuer());
-    final ScrapedEntity scrapedEntity = loaderContext.getOrLoad(entityID, this.client);
+    final ScrapedEntity scrapedEntity = ScrapedEntity.builder().entityID(entityID).build();
+    scrapedEntity.scrape(this.client);
     final EntityStatementWrapper wrapper =
         new EntityStatementWrapper(scrapedEntity.getEntityStatement().getSignedStatement());
     resolutionContext.setTrustAnchorEntityStatement(wrapper);
@@ -146,8 +142,8 @@ public class EntityStatementTreeLoader {
     final NodeKey key = root.getKey();
     this.executionStrategy.execute(() -> {
       if (scrapedEntity.getIntermediate() != null) {
-        scrapedEntity.getIntermediate().subordinates().entrySet().stream().parallel().forEach((entry) -> {
-          this.resolveSubordinate(entry.getValue(), key, tree, snapshot, context, resolutionContext, loaderContext);
+        scrapedEntity.getIntermediate().subordinates().entrySet().stream().forEach((entry) -> {
+          this.resolveSubordinate(entry.getValue(), key, tree, snapshot, context, resolutionContext);
         });
       }
     });
@@ -159,8 +155,7 @@ public class EntityStatementTreeLoader {
                           final Tree<ScrapedEntity> tree,
                           final CacheSnapshot<ScrapedEntity> snapshot,
                           final ErrorContext context,
-                          final ResolutionContext resolutionContext,
-                          final LoaderContext loaderContext) {
+                          final ResolutionContext resolutionContext) {
     try {
       final String subject = subordinateStatement.getJWTClaimsSet().getSubject();
       if (!resolutionContext.add(subject)) {
@@ -169,19 +164,19 @@ public class EntityStatementTreeLoader {
       final Node<ScrapedEntity> subNode = new Node<>(NodeKey.fromSignedJwt(subordinateStatement));
       final EntityID entityID = new EntityID(subject);
 
-      final ScrapedEntity entity = loaderContext.getOrLoad(entityID, this.client);
+      final ScrapedEntity entity = ScrapedEntity.builder().entityID(entityID).build();
+      entity.scrape(this.client);
       tree.addChild(subNode, subNode.getKey(), entity, snapshot);
       if (entity.getIntermediate() != null) {
-        entity.getIntermediate().subordinates().entrySet().stream().parallel().forEach(entry -> {
+        entity.getIntermediate().subordinates().entrySet().stream().forEach(entry -> {
           this.resolveSubordinate(entry.getValue(), subNode.getKey(), tree, snapshot,
-              context, resolutionContext, loaderContext);
+              context, resolutionContext);
         });
       }
     } catch (final Exception e) {
       this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey,
           (c) -> this.resolveSubordinate(
-              subordinateStatement, parentKey, tree, snapshot, c, resolutionContext,
-              loaderContext),
+              subordinateStatement, parentKey, tree, snapshot, c, resolutionContext),
           context, e
       );
     }

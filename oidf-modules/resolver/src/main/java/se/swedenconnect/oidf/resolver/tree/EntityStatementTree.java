@@ -31,7 +31,6 @@ import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedIntermediate;
-import se.swedenconnect.oidf.resolver.tree.resolution.LoaderContext;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -150,11 +149,9 @@ public class EntityStatementTree {
    *
    * @param loader              to use
    * @param trustAnchorEntityId to start resolution from
-   * @param context             loader context for deduplicating scrape operations
    */
-  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId,
-                   final LoaderContext context) {
-    loader.resolveTree(trustAnchorEntityId, this.tree, context);
+  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId) {
+    loader.resolveTree(trustAnchorEntityId, this.tree);
   }
 
   private boolean isIntermediate(final EntityStatement statement, final ResolveRequest request) {
