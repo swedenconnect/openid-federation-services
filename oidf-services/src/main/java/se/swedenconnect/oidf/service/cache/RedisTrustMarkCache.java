@@ -38,13 +38,17 @@ public class RedisTrustMarkCache implements TrustMarkCache {
 
   @Override
   public Optional<String> get(final long snapshot, final String trustMarkType, final String subject) {
-    final String key = "trust-mark:%d:%s:%s".formatted(snapshot, URLEncoder.encode(trustMarkType, StandardCharsets.UTF_8), URLEncoder.encode(subject, StandardCharsets.UTF_8));
+    final String key = "trust-mark:%d:%s:%s".formatted(snapshot,
+        URLEncoder.encode(trustMarkType, StandardCharsets.UTF_8),
+        URLEncoder.encode(subject, StandardCharsets.UTF_8));
     return Optional.ofNullable(this.template.opsForValue().get(key));
   }
 
   @Override
   public void put(final long snapshot, final String trustMarkType, final String subject, final String response) {
-    final String key = "trust-mark:%d:%s:%s".formatted(snapshot, URLEncoder.encode(trustMarkType, StandardCharsets.UTF_8), URLEncoder.encode(subject, StandardCharsets.UTF_8));
+    final String key = "trust-mark:%d:%s:%s".formatted(snapshot,
+        URLEncoder.encode(trustMarkType, StandardCharsets.UTF_8),
+        URLEncoder.encode(subject, StandardCharsets.UTF_8));
     this.template.opsForValue().set(key, response);
     this.template.expire(key, this.cacheTtl);
   }

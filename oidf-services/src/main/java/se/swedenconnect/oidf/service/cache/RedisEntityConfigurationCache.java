@@ -38,13 +38,15 @@ public class RedisEntityConfigurationCache implements EntityConfigurationCache {
 
   @Override
   public Optional<String> get(final long snapshot, final String entityId) {
-    final String key = "entity-configuration:%d:%s".formatted(snapshot, URLEncoder.encode(entityId, StandardCharsets.UTF_8));
+    final String key = "entity-configuration:%d:%s"
+        .formatted(snapshot, URLEncoder.encode(entityId, StandardCharsets.UTF_8));
     return Optional.ofNullable(this.template.opsForValue().get(key));
   }
 
   @Override
   public void put(final long snapshot, final String entityId, final String response) {
-    final String key = "entity-configuration:%d:%s".formatted(snapshot, URLEncoder.encode(entityId, StandardCharsets.UTF_8));
+    final String key = "entity-configuration:%d:%s"
+        .formatted(snapshot, URLEncoder.encode(entityId, StandardCharsets.UTF_8));
     this.template.opsForValue().set(key, response);
     this.template.expire(key, this.cacheTtl);
   }
