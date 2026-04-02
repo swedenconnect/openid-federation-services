@@ -36,8 +36,8 @@ import se.swedenconnect.oidf.routing.RouteFactory;
 public class FederationBaseRouteConfiguration {
   @Bean
   EntityRouter entityRouter(final EntityConfigurationFactory entityConfigurationFactory, final RouteFactory factory,
-                            final CacheSnapshotVersionLookup lookup, final EntityConfigurationCache entityConfigurationCache,
-                            final ObservationRegistry observationRegistry) {
+      final CacheSnapshotVersionLookup lookup, final EntityConfigurationCache entityConfigurationCache,
+      final ObservationRegistry observationRegistry) {
     return new EntityRouter(entityConfigurationFactory, factory, lookup, entityConfigurationCache, observationRegistry);
   }
 

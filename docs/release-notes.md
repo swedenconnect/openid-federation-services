@@ -4,6 +4,14 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.10.5
+
+**Date:** 2026-04-02
+
+* Fixed a bug with entity configuration caching (`CacheSnapshotVersionLookup` refactor)
+* Refactored node keys: removed unintended Redis namespace prefix and de-duplicated entity-id in node keys
+* Registry configuration is now reloaded periodically
+
 ### Version 0.10.4
 
 **Date:** 2026-04-01
