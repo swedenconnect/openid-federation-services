@@ -30,6 +30,7 @@ import org.springframework.mock.env.MockEnvironment;
 import org.testcontainers.utility.DockerImageName;
 import se.swedenconnect.oidf.service.Application;
 import se.swedenconnect.oidf.service.CacheTestCases;
+import se.swedenconnect.oidf.service.service.actuator.ActuatorTestCases;
 import se.swedenconnect.oidf.service.TestConfiguration;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
@@ -40,7 +41,8 @@ import java.util.Random;
 @Suite
 @SuiteDisplayName("Large Redis Registry Cache Test Suite")
 @SelectClasses(value = {
-    CacheTestCases.class
+    CacheTestCases.class,
+    ActuatorTestCases.class
 })
 public class LargeRedisRegistryCacheSuite {
 
