@@ -48,6 +48,7 @@ import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 import se.swedenconnect.oidf.service.state.NoOperationServiceLock;
 import se.swedenconnect.oidf.service.state.RegistryStateManager;
+import se.swedenconnect.oidf.service.state.RegistryStateTrigger;
 import se.swedenconnect.oidf.service.state.ResolverStateManager;
 import se.swedenconnect.oidf.service.state.ResolverStateTrigger;
 import se.swedenconnect.oidf.service.state.ServiceLock;
@@ -96,6 +97,12 @@ public class OpenIdFederationConfiguration {
   @Bean
   StateHashFactory stateHashFactory(final Gson gson) {
     return new StateHashFactory(gson);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "federation.service.scheduling.registry-trigger-enabled", matchIfMissing = true)
+  RegistryStateTrigger registryStateTrigger(final RegistryStateManager registryStateManager) {
+    return new RegistryStateTrigger(registryStateManager);
   }
 
   @Bean
