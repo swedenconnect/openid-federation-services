@@ -64,7 +64,7 @@ public class RedisCache<K extends Serializable, V> implements Cache<K, V> {
   @Override
   public boolean shouldRefresh(final K key) {
     return Optional.ofNullable(this.valueTemplate.opsForValue().get(key)).map(Expirable::getIssuedAt)
-        .map(iat -> iat.isAfter(Instant.now(this.clock).plus(1, ChronoUnit.HOURS)))
+        .map(iat -> iat.isBefore(Instant.now(this.clock).minus(1, ChronoUnit.HOURS)))
         .orElse(true);
   }
 }
