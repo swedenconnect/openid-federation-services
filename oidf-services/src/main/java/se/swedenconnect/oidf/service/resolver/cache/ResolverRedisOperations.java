@@ -21,6 +21,9 @@ import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -62,7 +65,7 @@ public class ResolverRedisOperations {
     if (Objects.nonNull(members)) {
       return members
           .stream()
-          .map(key -> new Node<ScrapedEntity>(NodeKey.parse(key)))
+          .map(key -> new Node<ScrapedEntity>(NodeKey.parse(decode(key))))
           .toList();
     }
     return List.of();
@@ -74,7 +77,7 @@ public class ResolverRedisOperations {
    * @param child node key
    */
   public void append(final ChildKey parent, final Node<ScrapedEntity> child) {
-    this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey().getKey());
+    this.stringTemplate.opsForSet().add(parent.getRedisKey(), encode(child.getKey().getKey()));
     this.stringTemplate.expire(parent.getRedisKey(), this.cacheTtl);
   }
 
@@ -107,7 +110,7 @@ public class ResolverRedisOperations {
     if (root == null) {
       return null;
     }
-    return new Node<>(NodeKey.parse(root));
+    return new Node<>(NodeKey.parse(decode(root)));
   }
 
   /**
@@ -116,7 +119,7 @@ public class ResolverRedisOperations {
    * @param root node key for root
    */
   public void setRoot(final RootKey key, final Node<ScrapedEntity> root) {
-    this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey().getKey());
+    this.stringTemplate.opsForValue().set(key.getRedisKey(), encode(root.getKey().getKey()));
     this.stringTemplate.expire(key.getRedisKey(), this.cacheTtl);
   }
 
@@ -128,7 +131,7 @@ public class ResolverRedisOperations {
    */
   public record EntityKey(String location, long version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:entity:%s".formatted(this.entityId, this.version, this.location);
+      return "%s:%d:entity:%s".formatted(encode(this.entityId), this.version, encode(this.location));
     }
   }
 
@@ -140,7 +143,7 @@ public class ResolverRedisOperations {
    */
   public record ChildKey(Node<ScrapedEntity> parent, long version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:children:%s".formatted(this.entityId, this.version, this.parent.getKey());
+      return "%s:%d:children:%s".formatted(encode(this.entityId), this.version, encode(this.parent.getKey().getKey()));
     }
   }
 
@@ -151,7 +154,15 @@ public class ResolverRedisOperations {
    */
   public record RootKey(long version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:root".formatted(this.entityId, this.version);
+      return "%s:%d:root".formatted(encode(this.entityId), this.version);
     }
+  }
+
+  static String encode(final String value) {
+    return URLEncoder.encode(value, StandardCharsets.UTF_8);
+  }
+
+  static String decode(final String value) {
+    return URLDecoder.decode(value, StandardCharsets.UTF_8);
   }
 }

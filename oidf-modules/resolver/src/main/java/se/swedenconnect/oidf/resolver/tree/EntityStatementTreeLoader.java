@@ -118,7 +118,7 @@ public class EntityStatementTreeLoader {
    */
   public void resolveTree(final String trustAnchorEntityId, final Tree<ScrapedEntity> tree) {
     this.resolveTree(
-        new NodeKey(trustAnchorEntityId, trustAnchorEntityId),
+        new NodeKey(trustAnchorEntityId),
         tree,
         this.errorContextFactory.createEmpty(),
         new ResolutionContext());
@@ -132,7 +132,7 @@ public class EntityStatementTreeLoader {
       final ResolutionContext resolutionContext) {
 
     final Node<ScrapedEntity> root = new Node<>(nodeKey);
-    final EntityID entityID = new EntityID(nodeKey.issuer());
+    final EntityID entityID = new EntityID(nodeKey.entityId());
     final ScrapedEntity scrapedEntity = ScrapedEntity.builder().entityID(entityID).build();
     scrapedEntity.scrape(this.client);
     final EntityStatementWrapper wrapper =

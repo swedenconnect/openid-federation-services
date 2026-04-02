@@ -208,11 +208,11 @@ public class EntityStatementTree {
       final String subjectId,
       final String trustAnchorId) {
 
-    final ScrapedEntity node = this.tree.getNode(new NodeKey(subjectId, subjectId));
+    final ScrapedEntity node = this.tree.getNode(new NodeKey(subjectId));
     final List<String> path = this.reverseTraverse(node, trustAnchorId, List.of(subjectId));
     if (!path.isEmpty() && path.getLast().equals(trustAnchorId)) {
       final List<ScrapedEntity> entities = path.stream().map(entityId -> {
-        return this.tree.getNode(new NodeKey(entityId, entityId));
+        return this.tree.getNode(new NodeKey(entityId));
       }).toList();
       return Optional.of(entities);
     }
@@ -234,7 +234,7 @@ public class EntityStatementTree {
     for (final EntityID authorityHint : hints) {
       final List<String> temp = new ArrayList<>(path);
       temp.add(authorityHint.getValue());
-      final ScrapedEntity nextNode = this.tree.getNode(new NodeKey(authorityHint.getValue(), authorityHint.getValue()));
+      final ScrapedEntity nextNode = this.tree.getNode(new NodeKey(authorityHint.getValue()));
       if (nextNode == null) {
         continue;
       }

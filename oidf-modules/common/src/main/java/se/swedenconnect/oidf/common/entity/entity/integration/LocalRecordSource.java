@@ -64,7 +64,7 @@ public class LocalRecordSource implements RecordSource {
   @Override
   public Optional<EntityRecord> getEntity(final NodeKey key) {
     return this.properties.entityRecords().stream()
-        .filter(er -> er.getEntityIdentifier().getValue().equals(key.issuer()))
+        .filter(er -> er.getEntityIdentifier().getValue().equals(key.entityId()))
         .findFirst();
   }
 

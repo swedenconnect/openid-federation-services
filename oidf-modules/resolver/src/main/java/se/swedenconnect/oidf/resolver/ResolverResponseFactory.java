@@ -125,7 +125,7 @@ public class ResolverResponseFactory {
                     .toList())
             .build();
     return this.signerFactory.createSigner(this.compositeRecordSource.getEntity(new NodeKey(
-            this.properties.getEntityIdentifier(), this.properties.getEntityIdentifier()
+            this.properties.getEntityIdentifier()
         )).get())
         .sign(new JOSEObjectType("resolve-response+jwt"), claims)
         .serialize();

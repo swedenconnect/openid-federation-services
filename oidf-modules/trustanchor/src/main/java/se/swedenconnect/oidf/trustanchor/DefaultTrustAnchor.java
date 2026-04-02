@@ -80,10 +80,7 @@ public class DefaultTrustAnchor implements TrustAnchor {
       throws InvalidIssuerException, NotFoundException {
     this.debugLogRequest(request);
     final EntityRecord issuer = this.source.getEntity(
-            new NodeKey(
-                this.properties.getEntityIdentifier().getValue(),
-                this.properties.getEntityIdentifier().getValue()
-            )
+            new NodeKey(this.properties.getEntityIdentifier().getValue())
         )
         .orElseThrow(
             () -> new InvalidIssuerException(

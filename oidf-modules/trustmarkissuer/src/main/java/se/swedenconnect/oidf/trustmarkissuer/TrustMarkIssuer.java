@@ -137,7 +137,7 @@ public class TrustMarkIssuer {
 
       String status = "active";
       final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
-      final Optional<EntityRecord> entity = this.source.getEntity(new NodeKey(entityIdentifier, entityIdentifier));
+      final Optional<EntityRecord> entity = this.source.getEntity(new NodeKey(entityIdentifier));
       if (!this.signer.verify(entity.get(), request.trustMark())) {
         status = "invalid";
       }
@@ -198,7 +198,7 @@ public class TrustMarkIssuer {
     final TrustMarkSubjectProperty trustMarkSubjectProperty = subject.get();
     try {
       final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
-      return this.signer.sign(this.source.getEntity(new NodeKey(entityIdentifier, entityIdentifier)).get(),
+      return this.signer.sign(this.source.getEntity(new NodeKey(entityIdentifier)).get(),
           this.trustMarkIssuerProperties, properties,
           trustMarkSubjectProperty).serialize();
     } catch (final ParseException | JOSEException e) {
