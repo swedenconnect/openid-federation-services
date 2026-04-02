@@ -20,6 +20,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -36,13 +38,13 @@ public class RedisTrustMarkCache implements TrustMarkCache {
 
   @Override
   public Optional<String> get(final long snapshot, final String trustMarkType, final String subject) {
-    final String key = "trust-mark:%d:%s:%s".formatted(snapshot, trustMarkType, subject);
+    final String key = "trust-mark:%d:%s:%s".formatted(snapshot, URLEncoder.encode(trustMarkType, StandardCharsets.UTF_8), URLEncoder.encode(subject, StandardCharsets.UTF_8));
     return Optional.ofNullable(this.template.opsForValue().get(key));
   }
 
   @Override
   public void put(final long snapshot, final String trustMarkType, final String subject, final String response) {
-    final String key = "trust-mark:%d:%s:%s".formatted(snapshot, trustMarkType, subject);
+    final String key = "trust-mark:%d:%s:%s".formatted(snapshot, URLEncoder.encode(trustMarkType, StandardCharsets.UTF_8), URLEncoder.encode(subject, StandardCharsets.UTF_8));
     this.template.opsForValue().set(key, response);
     this.template.expire(key, this.cacheTtl);
   }

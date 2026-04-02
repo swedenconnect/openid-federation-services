@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.service.resolver.cache;
 
 import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+
+import java.time.Instant;
 import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
 import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
@@ -95,10 +97,16 @@ public class RedisVersionedCacheLayer implements ResolverCache {
 
   @Override
   public long getCurrentVersion() {
-    final BoundValueOperations<String, Long> stringLongBoundValueOperations =
+    final BoundValueOperations<String, Long> ops =
         this.versionTemplate.boundValueOps("%s:tree:version".formatted(
             ResolverRedisOperations.encode(this.properties.getEntityIdentifier())));
-    return Optional.ofNullable(stringLongBoundValueOperations.get()).orElse(0L);
+    final Long stored = ops.get();
+    if (stored != null) {
+      return stored;
+    }
+    final long initialVersion = Instant.now().getEpochSecond();
+    ops.setIfAbsent(initialVersion);
+    return Optional.ofNullable(ops.get()).orElse(initialVersion);
   }
 
   @Override

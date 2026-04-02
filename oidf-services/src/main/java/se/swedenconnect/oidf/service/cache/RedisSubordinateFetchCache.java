@@ -21,6 +21,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -37,13 +39,13 @@ public class RedisSubordinateFetchCache implements SubordinateFetchCache {
 
   @Override
   public Optional<String> get(final long snapshot, final FetchRequest request) {
-    final String key = "subordinate-fetch:%d:%s".formatted(snapshot, request.subject());
+    final String key = "subordinate-fetch:%d:%s".formatted(snapshot, URLEncoder.encode(request.subject(), StandardCharsets.UTF_8));
     return Optional.ofNullable(this.template.opsForValue().get(key));
   }
 
   @Override
   public void put(final long snapshot, final FetchRequest request, final String response) {
-    final String key = "subordinate-fetch:%d:%s".formatted(snapshot, request.subject());
+    final String key = "subordinate-fetch:%d:%s".formatted(snapshot, URLEncoder.encode(request.subject(), StandardCharsets.UTF_8));
     this.template.opsForValue().set(key, response);
     this.template.expire(key, this.cacheTtl);
   }

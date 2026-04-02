@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.common.entity.tree;
 
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,8 @@ public class VersionedInMemoryCache implements ResolverCache {
   private final Map<String, ScrapedEntity> dataMap = new ConcurrentHashMap<>();
   private final Map<Long, Node<ScrapedEntity>> rootMap = new ConcurrentHashMap<>();
 
-  private final AtomicLong integer = new AtomicLong(0L);
-  private final AtomicLong pendingVersion = new AtomicLong(0L);
+  private final AtomicLong integer = new AtomicLong(Instant.now().getEpochSecond());
+  private final AtomicLong pendingVersion = new AtomicLong(Instant.now().getEpochSecond());
 
   @Override
   public void setData(final String key, final ScrapedEntity data, final long version) {
