@@ -4,6 +4,41 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.10.8
+
+**Date:** 2026-04-02
+
+* Registry is now reloaded from the registry after one hour instead of after the entity configuration's `exp` claim
+
+#### Performance Indicators
+
+Measured with Redis, 1000 requests per scenario. (Redis 7.4.7 via Testcontainers)
+
+**Test Timings:**
+
+| Test | Requests | Total (s) | RPS |
+|---|---:|---:|---:|
+| Resolve without cache (12.87 KB) | 1000 | 5.170 | 193.4 |
+| Entity Configuration without cache (3.36 KB) | 1000 | 4.257 | 234.9 |
+| Trust mark status without cache (2.58 KB) | 1000 | 1.921 | 520.6 |
+| Trust mark without cache (0.30 KB) | 1000 | 1.640 | 609.8 |
+| Subordinate fetch without cache (0.69 KB) | 1000 | 0.638 | 1567.4 |
+| Entity Configuration with cache (3.36 KB) | 1000 | 2.002 | 499.5 |
+| Resolve with cache (12.87 KB) | 1000 | 0.424 | 2358.5 |
+| Trust mark status with cache (2.58 KB) | 1000 | 0.318 | 3144.7 |
+| Subordinate fetch with cache (0.69 KB) | 1000 | 0.317 | 3154.6 |
+| Trust mark with cache (0.30 KB) | 1000 | 0.287 | 3484.3 |
+
+**Cache Performance Gain:**
+
+| Scenario | Payload | Cached RPS | No-cache RPS | Speedup | Cached Mbit/s | No-cache Mbit/s |
+|---|---:|---:|---:|---:|---:|---:|
+| Entity Configuration | 3.36 KB | 499.5 | 234.9 | 2.1x | 13.749 | 6.466 |
+| Resolve | 12.87 KB | 2358.5 | 193.4 | 12.2x | 248.658 | 20.393 |
+| Subordinate fetch | 0.69 KB | 3154.6 | 1567.4 | 2.0x | 17.831 | 8.860 |
+| Trust mark | 0.30 KB | 3484.3 | 609.8 | 5.7x | 8.563 | 1.499 |
+| Trust mark status | 2.58 KB | 3144.7 | 520.6 | 6.0x | 66.463 | 11.002 |
+
 ### Version 0.10.7
 
 **Date:** 2026-04-02
