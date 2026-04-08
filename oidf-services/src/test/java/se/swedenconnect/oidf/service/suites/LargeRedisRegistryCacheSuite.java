@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.service.suites;
 
 import com.redis.testcontainers.RedisContainer;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.platform.suite.api.AfterSuite;
 import org.junit.platform.suite.api.BeforeSuite;
 import org.junit.platform.suite.api.SelectClasses;
@@ -44,6 +46,7 @@ import java.util.Random;
     CacheTestCases.class,
     ActuatorTestCases.class
 })
+@Execution(ExecutionMode.CONCURRENT)
 public class LargeRedisRegistryCacheSuite {
 
   private static final RedisContainer redis = new RedisContainer(DockerImageName.parse("redis/redis-stack:latest"));
@@ -80,6 +83,7 @@ public class LargeRedisRegistryCacheSuite {
             .withProperty("federation.registry.integration.client.base-uri",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                 "/federationservice")
+            .withProperty("federation.routing.virtual-entity-routing.enabled", "true")
         )
         .profiles("integration-test")
         .run();

@@ -74,6 +74,14 @@ public class LocalRecordSource implements RecordSource {
   }
 
   @Override
+  public Optional<EntityRecord> getEntityByVirtualEntityId(final EntityID virtualEntityId) {
+    return this.properties.entityRecords().stream()
+        .filter(er -> er.getVirtualEntityId() != null
+            && er.getVirtualEntityId().getValue().equals(virtualEntityId.getValue()))
+        .findFirst();
+  }
+
+  @Override
   public List<TrustAnchorProperties.SubordinateListingProperty> findSubordinates(final String issuer) {
     return this.properties.trustAnchorProperties()
         .stream()

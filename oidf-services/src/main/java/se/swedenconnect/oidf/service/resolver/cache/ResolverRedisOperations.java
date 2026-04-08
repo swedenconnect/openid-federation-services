@@ -87,8 +87,8 @@ public class ResolverRedisOperations {
    * @param data to set
    */
   public void setData(final EntityKey key, final ScrapedEntity data) {
-    this.template.opsForValue().set(key.getRedisKey(), data);
-    this.template.expire(key.getRedisKey(), this.cacheTtl);
+    this.template.<String, ScrapedEntity>opsForHash().put(key.getHashKey(), key.getHashField(), data);
+    this.template.expire(key.getHashKey(), this.cacheTtl);
   }
 
   /**
@@ -97,7 +97,7 @@ public class ResolverRedisOperations {
    * @return value, can be null
    */
   public ScrapedEntity getData(final EntityKey key) {
-    return this.template.opsForValue().get(key.getRedisKey());
+    return this.template.<String, ScrapedEntity>opsForHash().get(key.getHashKey(), key.getHashField());
   }
 
   /**
@@ -124,14 +124,18 @@ public class ResolverRedisOperations {
   }
 
   /**
-   * Key for handling entities.
-   * @param location internal node key
+   * Key for handling entities stored in a hash.
+   * @param location internal node key (used as hash field)
    * @param version to which the entity belongs to
    * @param entityId to which module the data belongs to
    */
   public record EntityKey(String location, long version, String entityId) {
-    String getRedisKey() {
-      return "%s:%d:entity:%s".formatted(encode(this.entityId), this.version, encode(this.location));
+    String getHashKey() {
+      return "%s:%d:entities".formatted(encode(this.entityId), this.version);
+    }
+
+    String getHashField() {
+      return encode(this.location);
     }
   }
 

@@ -159,7 +159,7 @@
         "crit": [
           "ec_location"
         ],
-        "ec-location": "http://localhost:11111/im/banan"
+        "ec-location": "http://localhost:11111/im/banan/.well-known/openid-federation"
       }
     ]
   },

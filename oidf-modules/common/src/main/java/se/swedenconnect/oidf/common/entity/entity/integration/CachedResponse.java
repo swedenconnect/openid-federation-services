@@ -14,25 +14,19 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.common.entity.tree;
+package se.swedenconnect.oidf.common.entity.entity.integration;
+
+import java.io.Serializable;
 
 /**
- * A source from where cache snapshots can be created.
- * @param <T>
+ * Serializable response holder for use with {@link ModuleResponseCache}.
+ * Carries both the response body and the content type so caches can replay
+ * responses without losing HTTP semantics.
  *
+ * @param body        the serialized response body
+ * @param contentType the HTTP content-type of the response
+ * @param statusCode  the HTTP status code of the response
  * @author Felix Hellman
  */
-public interface SnapshotSource<T> {
-  /**
-   * @return snapshot of current version
-   */
-  CacheSnapshot<T> snapshot();
-
-  /**
-   * @param root node to add
-   * @param rootData to add
-   * @param version to use for the new snapshot
-   * @return snapshot of next version
-   */
-  CacheSnapshot<T> createNewSnapshot(final Node<T> root, final T rootData, final long version);
+public record CachedResponse(String body, String contentType, int statusCode) implements Serializable {
 }

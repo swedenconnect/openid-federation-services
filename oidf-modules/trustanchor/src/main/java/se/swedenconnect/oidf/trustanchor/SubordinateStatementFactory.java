@@ -81,11 +81,10 @@ public class SubordinateStatementFactory {
           metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
       );
 
-      Optional.ofNullable(subordinate.getEcLocation()).ifPresent(
-          location -> {
-            builder.claim("ec_location", location);
-          }
-      );
+      final String resolvedEcLocation = resolveEcLocation(subordinate);
+      if (resolvedEcLocation != null) {
+        builder.claim("ec_location", resolvedEcLocation);
+      }
 
       Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(
           metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
@@ -111,5 +110,34 @@ public class SubordinateStatementFactory {
     } catch (final Exception e) {
       throw new EntityStatementSignException("Failed to sign entity statement", e);
     }
+  }
+
+  private static String resolveEcLocation(final TrustAnchorProperties.SubordinateListingProperty subordinate) {
+    final String entityId = subordinate.getEntityIdentifier().getValue();
+    final String virtualEntityId = subordinate.getVirtualEntityId() != null
+        ? subordinate.getVirtualEntityId().getValue()
+        : null;
+
+    final String ecLocation = subordinate.getEcLocation();
+
+    if (ecLocation != null) {
+      if (ecLocation.startsWith("http://") || ecLocation.startsWith("https://")) {
+        return ecLocation;
+      }
+      if (ecLocation.startsWith("/") && virtualEntityId != null) {
+        return virtualEntityId + ecLocation;
+      }
+      if (ecLocation.startsWith("/")) {
+        return entityId + ecLocation;
+      }
+    }
+
+    // No ec_location set — if virtual entity ID differs from entity ID the subordinate
+    // is hosted under a different domain, so we must tell others where to find it.
+    if (virtualEntityId != null && !virtualEntityId.equals(entityId)) {
+      return virtualEntityId + "/.well-known/openid-federation";
+    }
+
+    return null;
   }
 }

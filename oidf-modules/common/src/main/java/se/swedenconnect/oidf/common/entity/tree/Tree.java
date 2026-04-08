@@ -53,10 +53,11 @@ public class Tree<T> {
    * Creates a new snapshot version with the given root.
    * @param node of the root
    * @param data of the root
+   * @param version to use for the new snapshot
    * @return snapshot of the next version
    */
-  public CacheSnapshot<T> addRoot(final Node<T> node, final T data) {
-    return this.snapshotSource.createNewSnapshot(node, data);
+  public CacheSnapshot<T> addRoot(final Node<T> node, final T data, final long version) {
+    return this.snapshotSource.createNewSnapshot(node, data, version);
   }
 
   /**

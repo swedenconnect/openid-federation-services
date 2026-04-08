@@ -61,6 +61,12 @@ public interface RecordSource {
   List<EntityRecord> getAllEntities();
 
   /**
+   * @param virtualEntityId virtual entity id to look up
+   * @return entity record if present
+   */
+  Optional<EntityRecord> getEntityByVirtualEntityId(final EntityID virtualEntityId);
+
+  /**
    * @param issuer who has subordinates
    * @return list of subordinates
    */

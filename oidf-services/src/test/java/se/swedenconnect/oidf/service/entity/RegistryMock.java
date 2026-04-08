@@ -206,6 +206,7 @@ public class RegistryMock {
     for (int i = 0; i < 500; i++) {
       final JsonObject entity = new JsonObject();
       entity.addProperty("entity-identifier", "http://localhost:11111/im/subordinate-" + i);
+      entity.addProperty("virtual-entity-id", "http://localhost:11111/im/subordinate-" + i);
       entity.addProperty("jwks", "federation:359433581122628090150675142465804663870388233428");
       final JsonObject metadata = new JsonObject();
       final JsonObject fedEntity = new JsonObject();
@@ -254,6 +255,7 @@ public class RegistryMock {
     final List<EntityRecord> municipalityEntities = List.of(
         EntityRecord.builder()
             .entityIdentifier(new EntityID(TestFederationEntities.IM.INTERMEDIATE.getValue() + "/dynamic"))
+            .virtualEntityId(new EntityID(TestFederationEntities.IM.INTERMEDIATE.getValue() + "/dynamic"))
             .jwks(new JWKSet(key))
             .build()
     );

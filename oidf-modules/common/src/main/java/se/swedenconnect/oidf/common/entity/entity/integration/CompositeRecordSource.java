@@ -86,6 +86,15 @@ public class CompositeRecordSource implements RecordSource {
   }
 
   @Override
+  public Optional<EntityRecord> getEntityByVirtualEntityId(final EntityID virtualEntityId) {
+    return this.recordSources.stream()
+        .map(s -> s.getEntityByVirtualEntityId(virtualEntityId))
+        .filter(Optional::isPresent)
+        .findFirst()
+        .orElse(Optional.empty());
+  }
+
+  @Override
   public List<TrustAnchorProperties.SubordinateListingProperty> findSubordinates(final String issuer) {
     return this.recordSources.stream()
         .flatMap(r -> r.findSubordinates(issuer).stream())

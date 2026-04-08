@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 public record ScrapedIntermediate(Map<String, SignedJWT> subordinates) {
 
   private static final ExecutorService FETCH_EXECUTOR =
-      Executors.newFixedThreadPool(10);
+      Executors.newVirtualThreadPerTaskExecutor();
 
   /**
    * Scrapes all subordinates of this intermediate from the federation.

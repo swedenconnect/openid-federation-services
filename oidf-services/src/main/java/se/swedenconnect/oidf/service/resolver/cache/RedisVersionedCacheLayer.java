@@ -130,8 +130,8 @@ public class RedisVersionedCacheLayer implements ResolverCache {
 
   @Override
   public CacheSnapshot<ScrapedEntity> createNewSnapshot(final Node<ScrapedEntity> root,
-                                                        final ScrapedEntity rootData) {
-    final long version = getNextVersion();
+                                                        final ScrapedEntity rootData,
+                                                        final long version) {
     this.versionTemplate
         .boundValueOps("%s:tree:pending-version".formatted(
             ResolverRedisOperations.encode(this.properties.getEntityIdentifier())))

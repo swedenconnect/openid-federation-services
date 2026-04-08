@@ -77,6 +77,7 @@ public class FederationRegistryConfiguration {
   }
 
   @Bean
+  @ConditionalOnMissingBean(CachedRecordSource.class)
   CachedRecordSource cachedRecordSource(final Cache<String, CompositeRecord> cache) {
     return new CachedRecordSource(cache);
   }

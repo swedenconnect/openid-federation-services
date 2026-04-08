@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.resolver;
 
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 
 /**
  * Event listener for cache operations.
@@ -36,6 +37,7 @@ public class CacheEventListener {
   }
 
   @EventListener
+  @Order(0)
   void handle(final TreeUpdatedEvent event) {
     this.registry.updateVersion(event.entityId());
   }

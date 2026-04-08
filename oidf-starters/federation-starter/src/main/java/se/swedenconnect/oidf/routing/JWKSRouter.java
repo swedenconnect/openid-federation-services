@@ -42,6 +42,7 @@ public class JWKSRouter implements Router {
   private final KeyRegistry registry;
 
   @Override
+  @Deprecated(forRemoval = true)
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
     route.GET("/jwks", handler -> {
       final Optional<JWK> defaultKey = this.registry.getDefaultKey();

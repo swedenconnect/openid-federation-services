@@ -25,6 +25,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.context.ApplicationContext;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
@@ -126,7 +128,7 @@ public class CacheTestCases {
     log.info("[entityConfigurationCache] Reference payload: {} KB",
         entityConfigurationReference.getSignedStatement().getPayload().toBytes().length / 1024.0);
 
-    IntStream.range(0, TEST_END_EXCLUSIVE).forEach(i -> {
+    IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
       final EntityStatement entityConfigurationResponse =
           clients.entity().getEntityConfiguration(TestFederationEntities.IM.OP);
       Assertions.assertEquals(entityConfigurationReference.getSignedStatement().serialize()

@@ -16,9 +16,11 @@
  */
 package se.swedenconnect.oidf.service.cache;
 
+import com.nimbusds.jose.shaded.gson.Gson;
 import lombok.AllArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
-import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.CachedResponse;
+import se.swedenconnect.oidf.common.entity.entity.integration.ModuleResponseCache;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -26,27 +28,29 @@ import java.time.Duration;
 import java.util.Optional;
 
 /**
- * Redis-backed implementation of {@link EntityConfigurationCache}.
+ * Redis-backed implementation of {@link ModuleResponseCache}.
  *
  * @author Felix Hellman
  */
 @AllArgsConstructor
-public class RedisEntityConfigurationCache implements EntityConfigurationCache {
+public class RedisModuleResponseCache implements ModuleResponseCache {
 
   private final RedisTemplate<String, String> template;
   private final Duration cacheTtl;
+  private final Gson gson;
 
   @Override
-  public Optional<String> get(final long snapshot, final String entityId) {
-    final String key = "entity-configuration:%d:%s"
-        .formatted(snapshot, URLEncoder.encode(entityId, StandardCharsets.UTF_8));
-    return Optional.ofNullable(this.template.opsForValue().get(key));
+  public Optional<CachedResponse> get(final long snapshot, final String requestUri) {
+    final String key = "module-response:%d:%s"
+        .formatted(snapshot, URLEncoder.encode(requestUri, StandardCharsets.UTF_8));
+    return Optional.ofNullable(this.template.opsForValue().get(key))
+        .map(json -> this.gson.fromJson(json, CachedResponse.class));
   }
 
   @Override
-  public void put(final long snapshot, final String entityId, final String response) {
-    final String key = "entity-configuration:%d:%s"
-        .formatted(snapshot, URLEncoder.encode(entityId, StandardCharsets.UTF_8));
-    this.template.opsForValue().set(key, response, this.cacheTtl);
+  public void put(final long snapshot, final String requestUri, final CachedResponse response) {
+    final String key = "module-response:%d:%s"
+        .formatted(snapshot, URLEncoder.encode(requestUri, StandardCharsets.UTF_8));
+    this.template.opsForValue().set(key, this.gson.toJson(response), this.cacheTtl);
   }
 }

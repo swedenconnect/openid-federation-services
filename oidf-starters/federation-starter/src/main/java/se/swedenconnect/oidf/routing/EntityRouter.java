@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.routing;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.function.RequestPredicate;
@@ -26,10 +27,12 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
+import se.swedenconnect.oidf.common.entity.entity.integration.CachedResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
+import se.swedenconnect.oidf.routing.ModuleRouter;
 
 import java.util.List;
 import java.util.Objects;
@@ -41,7 +44,7 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 @Slf4j
-public class EntityRouter implements Router {
+public class EntityRouter implements Router, ModuleRouter {
 
   private final EntityConfigurationFactory factory;
   private final RouteFactory routeFactory;
@@ -72,6 +75,7 @@ public class EntityRouter implements Router {
   }
 
   @Override
+  @Deprecated(forRemoval = true)
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
     route.GET(request -> {
       return source.getAllEntities().stream()
@@ -107,6 +111,31 @@ public class EntityRouter implements Router {
             return ServerResponse.ok().body(entityConfiguration.getSignedStatement().serialize());
           });
     });
+  }
+
+  @Override
+  public CachedResponse handleRequest(final ServerRequest request, final EntityRecord entity) {
+    final Observation observation = Observation.createNotStarted("oidf.entity.configuration", this.observationRegistry)
+        .lowCardinalityKeyValue("endpoint", "/.well-known/openid-federation")
+        .start();
+    try {
+      final EntityStatement entityConfiguration = this.factory.createEntityConfiguration(entity);
+      final String serialized = entityConfiguration.getSignedStatement().serialize();
+      return new CachedResponse(serialized, "application/entity-statement+jwt", 200);
+    } catch (final Exception e) {
+      observation.error(e);
+      throw e;
+    } finally {
+      observation.stop();
+    }
+  }
+
+  @Override
+  public boolean willHandleRequest(final ServerRequest request, final EntityRecord entity) {
+    return entity
+        .getEntityConfigurationEndpoints()
+        .stream()
+        .anyMatch(endpoint -> request.uri().toASCIIString().equalsIgnoreCase(endpoint));
   }
 
   private Optional<ServerResponse> handleCacheControl(final ServerRequest request,

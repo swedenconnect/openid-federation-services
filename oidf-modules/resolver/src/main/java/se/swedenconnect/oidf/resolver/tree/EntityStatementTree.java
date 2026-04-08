@@ -149,9 +149,10 @@ public class EntityStatementTree {
    *
    * @param loader              to use
    * @param trustAnchorEntityId to start resolution from
+   * @param snapshotId          shared snapshot version to use for this load
    */
-  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId) {
-    loader.resolveTree(trustAnchorEntityId, this.tree);
+  public void load(final EntityStatementTreeLoader loader, final String trustAnchorEntityId, final long snapshotId) {
+    loader.resolveTree(trustAnchorEntityId, this.tree, snapshotId);
   }
 
   private boolean isIntermediate(final EntityStatement statement, final ResolveRequest request) {
@@ -209,6 +210,9 @@ public class EntityStatementTree {
       final String trustAnchorId) {
 
     final ScrapedEntity node = this.tree.getNode(new NodeKey(subjectId));
+    if (node == null) {
+      return Optional.empty();
+    }
     final List<String> path = this.reverseTraverse(node, trustAnchorId, List.of(subjectId));
     if (!path.isEmpty() && path.getLast().equals(trustAnchorId)) {
       final List<ScrapedEntity> entities = path.stream().map(entityId -> {

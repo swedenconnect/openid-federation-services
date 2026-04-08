@@ -30,7 +30,7 @@
     <artifactId>common</artifactId>
 
     <properties>
-        <service-revision>0.10.8</service-revision>
+        <service-revision>0.11.0</service-revision>
     </properties>
 
     <dependencies>
