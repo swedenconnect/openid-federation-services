@@ -127,6 +127,9 @@ public class ActuatorTestCases {
       });
     });
 
+    final Set<String> nodeIds = new java.util.HashSet<>();
+    json.get("nodes").forEach(node -> nodeIds.add(node.get("id").asText()));
+
     json.get("edges").forEach(edge -> {
       assertTrue(edge.has("id") && edge.get("id").isTextual() && !edge.get("id").asText().isBlank(),
           "Each edge must have a non-blank string 'id' — got: " + edge);
@@ -134,6 +137,14 @@ public class ActuatorTestCases {
           "Each edge must have a non-blank string 'source' — got: " + edge);
       assertTrue(edge.has("target") && edge.get("target").isTextual() && !edge.get("target").asText().isBlank(),
           "Each edge must have a non-blank string 'target' — got: " + edge);
+
+      final String source = edge.get("source").asText();
+      assertTrue(nodeIds.contains(source),
+          "Edge source '" + source + "' has no matching node id — edge: " + edge);
+
+      final String target = edge.get("target").asText();
+      assertTrue(nodeIds.contains(target),
+          "Edge target '" + target + "' has no matching node id — edge: " + edge);
     });
   }
 

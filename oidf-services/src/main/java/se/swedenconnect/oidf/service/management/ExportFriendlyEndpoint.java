@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -222,6 +223,27 @@ public class ExportFriendlyEndpoint {
       return edgeJson;
     }).toList();
 
-    return ExportEndpoint.MAPPER.writeValueAsString(Map.of("nodes", nodes, "edges", edges));
+    final Set<String> nodeIds = nodes.stream()
+        .map(n -> (String) n.get("id"))
+        .collect(Collectors.toSet());
+
+    final List<Map<String, Object>> allNodes = new java.util.ArrayList<>(nodes);
+    edges.forEach(edge -> {
+      for (final String field : List.of("source", "target")) {
+        final String ref = (String) edge.get(field);
+        if (ref != null && nodeIds.add(ref)) {
+          allNodes.add(Map.of(
+              "id", ref,
+              "title", ref,
+              "color", "orange",
+              "icon", "exclamation-circle",
+              "nodeRadius", 24,
+              "subtitle", "unresolved"
+          ));
+        }
+      }
+    });
+
+    return ExportEndpoint.MAPPER.writeValueAsString(Map.of("nodes", allNodes, "edges", edges));
   }
 }
