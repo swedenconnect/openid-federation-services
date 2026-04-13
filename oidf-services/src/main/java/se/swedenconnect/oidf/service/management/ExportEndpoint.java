@@ -87,6 +87,29 @@ public class ExportEndpoint {
    * @param trustAnchor optional trust anchor entity identifier to select resolver, defaults to first available
    * @return map of nodes and edges
    */
+  /**
+   * Resolves the effective trust anchor, defaulting to the first available when null is supplied.
+   *
+   * @param trustAnchor optional trust anchor identifier
+   * @return the resolved trust anchor identifier
+   */
+  public String resolveEffectiveTrustAnchor(@Nullable final String trustAnchor) {
+    if (trustAnchor == null) {
+      return this.source.getResolverProperties().getFirst().getTrustAnchor();
+    }
+    return this.source.getResolverProperties().stream()
+        .filter(p -> trustAnchor.equals(p.getTrustAnchor()))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("No resolver found for trust anchor: " + trustAnchor))
+        .getTrustAnchor();
+  }
+
+  /**
+   * Returns nodes and edges for the given trust anchor.
+   *
+   * @param trustAnchor the trust anchor entity ID, or null to use the first available
+   * @return map with nodes and edges lists
+   */
   public Map<String, List<Map<String, Object>>> getNodesAndEdges(@Nullable final String trustAnchor) {
     final ResolverProperties properties = trustAnchor == null
         ? this.source.getResolverProperties().getFirst()

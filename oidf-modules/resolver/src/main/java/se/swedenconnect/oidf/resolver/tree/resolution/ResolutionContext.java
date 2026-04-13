@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Context for resolver resolution.
@@ -34,7 +35,7 @@ import java.util.Set;
  */
 @NoArgsConstructor
 public class ResolutionContext {
-  private final Set<String> visited = new HashSet<>();
+  private final Set<String> visited = ConcurrentHashMap.newKeySet();
   @Getter
   @Setter
   private EntityStatementWrapper trustAnchorEntityStatement;

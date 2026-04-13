@@ -120,6 +120,15 @@ public class CachedRecordSource implements RecordSource {
   }
 
   @Override
+  public Optional<EntityRecord> getEntityByVirtualEntityId(final EntityID virtualEntityId) {
+    return this.getRecord()
+        .flatMap(r -> r.getEntityRecords().getValue().stream()
+            .filter(er -> er.getVirtualEntityId() != null
+                && er.getVirtualEntityId().getValue().equals(virtualEntityId.getValue()))
+            .findFirst());
+  }
+
+  @Override
   public List<TrustAnchorProperties.SubordinateListingProperty> findSubordinates(final String issuer) {
     return this.getTrustAnchorProperties().stream()
         .filter(ta -> ta.getEntityIdentifier().getValue().equals(issuer))

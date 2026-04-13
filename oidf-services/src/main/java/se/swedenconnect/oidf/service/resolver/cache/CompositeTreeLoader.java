@@ -20,6 +20,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
 
+import java.time.Instant;
+
 /**
  * Manages loading of multiple resolver trees.
  *
@@ -49,12 +51,13 @@ public class CompositeTreeLoader {
    * Load/Reloads all trees.
    */
   public void loadTree() {
+    final long snapshotId = Instant.now().getEpochSecond();
     this.source.getResolverProperties().stream().parallel()
         .map(this.factory::create)
         .forEach(resolver -> {
           this.registry.getRegistration(resolver.getEntityId().getValue()).ifPresent(r -> {
             r.tree()
-                .load(r.loader(), r.properties().getTrustAnchor());
+                .load(r.loader(), r.properties().getTrustAnchor(), snapshotId);
           });
         });
   }

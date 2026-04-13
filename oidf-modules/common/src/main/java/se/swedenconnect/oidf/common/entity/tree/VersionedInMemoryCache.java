@@ -100,8 +100,8 @@ public class VersionedInMemoryCache implements ResolverCache {
   @Override
   public CacheSnapshot<ScrapedEntity> createNewSnapshot(
       final Node<ScrapedEntity> root,
-      final ScrapedEntity rootData) {
-    final long version = this.getNextVersion();
+      final ScrapedEntity rootData,
+      final long version) {
     this.pendingVersion.set(version);
     this.rootMap.put(version, root);
     this.setData(root.getKey().getKey(), rootData, version);

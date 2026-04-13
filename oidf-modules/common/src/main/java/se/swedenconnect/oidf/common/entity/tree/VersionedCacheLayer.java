@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.common.entity.tree;
 
-import java.time.Instant;
 import java.util.List;
 
 /**
@@ -69,13 +68,6 @@ public interface VersionedCacheLayer<T> {
    * @return the current tree index
    */
   long getCurrentVersion();
-
-  /**
-   * @return next tree index
-   */
-  default long getNextVersion() {
-    return Instant.now().getEpochSecond();
-  }
 
   /**
    * Moves current version index to next version index

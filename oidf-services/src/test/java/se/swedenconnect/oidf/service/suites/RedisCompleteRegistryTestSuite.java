@@ -94,6 +94,7 @@ public class RedisCompleteRegistryTestSuite {
             .withProperty("federation.registry.integration.client.base-uri",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                 "/federationservice")
+            .withProperty("federation.routing.virtual-entity-routing.enabled", "true")
         )
         .profiles("integration-test")
         .run();

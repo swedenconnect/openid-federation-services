@@ -19,11 +19,17 @@ package se.swedenconnect.oidf.service.management;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import se.swedenconnect.oidf.common.entity.entity.integration.CachedResponse;
+import se.swedenconnect.oidf.common.entity.entity.integration.ModuleResponseCache;
+import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -47,6 +53,8 @@ import java.util.stream.Collectors;
 @Component
 public class ExportFriendlyEndpoint {
   private final ExportEndpoint exportEndpoint;
+  private final ModuleResponseCache cache;
+  private final CacheSnapshotVersionLookup lookup;
 
   /**
    * Exports federation in grafana friendly format
@@ -56,6 +64,31 @@ public class ExportFriendlyEndpoint {
    */
   @ReadOperation
   public String getGrafanaFriendlyJson(@Nullable final String trustAnchor) throws JsonProcessingException {
+    final long snapshot = this.lookup.getLatestSnapshotVersion();
+    final String effectiveTrustAnchor = this.exportEndpoint.resolveEffectiveTrustAnchor(trustAnchor);
+    final String cacheKey = cacheKey(effectiveTrustAnchor);
+    final HttpServletRequest httpRequest =
+        ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+    final String cacheControl = httpRequest.getHeader("cache-control");
+    if (!"no-cache".equals(cacheControl)) {
+      final Optional<CachedResponse> cached = this.cache.get(snapshot, cacheKey);
+      if (cached.isPresent()) {
+        return cached.get().body();
+      }
+    }
+    final Map<String, List<Map<String, Object>>> nodesAndEdges =
+        this.exportEndpoint.getNodesAndEdges(effectiveTrustAnchor);
+    final String result = formatAsGrafana(nodesAndEdges);
+    this.cache.put(snapshot, cacheKey, new CachedResponse(result, "application/json", 200));
+    return result;
+  }
+
+  static String cacheKey(final String trustAnchor) {
+    return "export-grafana?trustAnchor=" + trustAnchor;
+  }
+
+  static String formatAsGrafana(final Map<String, List<Map<String, Object>>> nodesAndEdges)
+      throws JsonProcessingException {
     final Map<String, String> icons = Map.of(
         "tmi", "pen",
         "ta", "anchor",
@@ -66,10 +99,8 @@ public class ExportFriendlyEndpoint {
         "saml_service_provider", "user",
         "error", "exclamation-circle"
     );
-    final Map<String, List<Map<String, Object>>> nodesAndEdges = this.exportEndpoint.getNodesAndEdges(trustAnchor);
     final List<Map<String, String>> nodes = nodesAndEdges.get("nodes")
         .stream().map(node -> {
-          final Boolean verified = (Boolean) node.get("verifiedSelfStatement");
           final Map<String, Object> claims = (Map<String, Object>) node.get("claims");
           final String sub = (String) claims.get("sub");
           final String iss = (String) claims.get("iss");
@@ -93,7 +124,6 @@ public class ExportFriendlyEndpoint {
                 return null;
               })
               .orElse(null);
-
 
           final List<String> types = ((Map<String, Object>) claims.get("metadata")).entrySet().stream()
               .filter(f -> !"federation_entity".equals(f.getKey()))

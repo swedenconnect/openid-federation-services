@@ -16,9 +16,9 @@
  */
 package se.swedenconnect.oidf.configuration;
 
-import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
@@ -50,34 +50,35 @@ public class FederationRoutingConfiguration {
    * @param source
    * @param routers
    * @param registry
+   * @param virtualEntityRoutingEnabled when {@code true}, only {@link FederationBaseRouter} is used;
+   *                                    old per-module routes are disabled
    */
   public FederationRoutingConfiguration(
       final CompositeRecordSource source,
       final List<Router> routers,
-      final ObservationRegistry registry) {
+      final ObservationRegistry registry,
+      @Value("${federation.routing.virtual-entity-routing.enabled:false}")
+      final boolean virtualEntityRoutingEnabled) {
 
     this.source = source;
-    this.routers = routers;
+    this.routers = virtualEntityRoutingEnabled
+        ? routers.stream().filter(a -> a instanceof FederationBaseRouter).toList()
+        : routers;
     this.registry = registry;
   }
 
   @Bean
   RouterFunction<ServerResponse> federationEndpointRouter() {
     final RouterFunctions.Builder route = route();
-    this.routers.forEach(router -> router.evaluateEndpoints(this.source, route));
+    this.routers.stream()
+        .sorted((a, b) -> a instanceof FederationBaseRouter ? -1 : b instanceof FederationBaseRouter ? 1 : 0)
+        .forEach(router -> router.evaluateEndpoints(this.source, route));
     route.filter((request, next) -> {
-      final Observation observation = Observation.createNotStarted("router_request", this.registry)
-          .lowCardinalityKeyValue("uri", request.requestPath().value())
-          .lowCardinalityKeyValue("method", request.method().name())
-          .lowCardinalityKeyValue("exception", "none");
-      return Objects.requireNonNull(observation.observe(() -> {
         try {
           return next.handle(request);
         } catch (final Exception e) {
-          observation.lowCardinalityKeyValue("exception", e.getClass().getName());
           throw new RuntimeException(e);
         }
-      }));
     });
     return route.build();
   }

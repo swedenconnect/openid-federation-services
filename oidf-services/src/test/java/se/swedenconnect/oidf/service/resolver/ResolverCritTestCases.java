@@ -50,7 +50,7 @@ public class ResolverCritTestCases {
 
     final List<String> crit = (List<String>) trustChainEntryDifference.get("crit").leftValue();
     Assertions.assertEquals("ec_location", crit.getFirst());
-    Assertions.assertEquals("http://localhost:11111/im/banan", trustChainEntryDifference.get(
+    Assertions.assertEquals("http://localhost:11111/im/banan/.well-known/openid-federation", trustChainEntryDifference.get(
         "ec_location").leftValue());
   }
 

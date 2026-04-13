@@ -17,15 +17,21 @@
 package se.swedenconnect.oidf.configuration;
 
 import io.micrometer.observation.ObservationRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryModuleResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.ModuleResponseCache;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.routing.EntityRouter;
 import se.swedenconnect.oidf.routing.JWKSRouter;
+import se.swedenconnect.oidf.routing.ModuleRouter;
 import se.swedenconnect.oidf.routing.RouteFactory;
+
+import java.util.List;
 
 /**
  * Configuration for adding default routers.
@@ -44,5 +50,19 @@ public class FederationBaseRouteConfiguration {
   @Bean
   JWKSRouter jwksRouter(final KeyRegistry registry) {
     return new JWKSRouter(registry);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  ModuleResponseCache moduleResponseCache() {
+    return new InMemoryModuleResponseCache();
+  }
+
+  @Bean
+  FederationBaseRouter federationBaseRouter(
+      final List<ModuleRouter> moduleRouters,
+      final ModuleResponseCache moduleResponseCache,
+      final CacheSnapshotVersionLookup lookup) {
+    return new FederationBaseRouter(moduleRouters, moduleResponseCache, lookup);
   }
 }

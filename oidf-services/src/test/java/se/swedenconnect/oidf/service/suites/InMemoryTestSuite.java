@@ -44,7 +44,7 @@ import java.util.Random;
 
 @Slf4j
 @Suite
-@SuiteDisplayName("In Memory Test Suite")
+@SuiteDisplayName("In Memory Test Suite [federation.routing.virtual-entity-routing.enabled=false]")
 @SelectClasses(value = {
     ResolverConstraintTestCases.class,
     ResolverTrustMarkTestCases.class,

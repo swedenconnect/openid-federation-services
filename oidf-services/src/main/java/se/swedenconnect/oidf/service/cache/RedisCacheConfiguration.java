@@ -20,11 +20,16 @@ import com.nimbusds.jose.shaded.gson.Gson;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.Cache;
+import se.swedenconnect.oidf.common.entity.entity.integration.CachedRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.ModuleResponseCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -104,6 +109,8 @@ public class RedisCacheConfiguration {
     template.setConnectionFactory(factory);
     template.setValueSerializer(new ResolverEntitySerializer());
     template.setKeySerializer(keySerializer);
+    template.setHashKeySerializer(new StringRedisSerializer());
+    template.setHashValueSerializer(new ResolverEntitySerializer());
     template.afterPropertiesSet();
     return template;
   }
@@ -196,5 +203,41 @@ public class RedisCacheConfiguration {
   EntityConfigurationCache redisEntityConfigurationCache(
       @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template) {
     return new RedisEntityConfigurationCache(template, this.cacheTtl());
+  }
+
+  @Bean
+  ModuleResponseCache redisModuleResponseCache(
+      @Qualifier("redisCacheTemplate") final RedisTemplate<String, String> template,
+      final Gson gson) {
+    return new RedisModuleResponseCache(template, this.cacheTtl(), gson);
+  }
+
+  @Bean
+  @Qualifier("entityRecordHashTemplate")
+  RedisTemplate<String, String> entityRecordHashTemplate(
+      final RedisConnectionFactory factory,
+      final InstanceSpecificRedisKeySerializer keySerializer) {
+    final RedisTemplate<String, String> template = new RedisTemplate<>();
+    template.setConnectionFactory(factory);
+    template.setKeySerializer(keySerializer);
+    template.setHashKeySerializer(new StringRedisSerializer());
+    template.setHashValueSerializer(new StringRedisSerializer());
+    template.afterPropertiesSet();
+    return template;
+  }
+
+  @Bean
+  RedisEntityRecordIndex redisEntityRecordIndex(
+      @Qualifier("entityRecordHashTemplate") final RedisTemplate<String, String> template,
+      final Gson gson,
+      final Clock clock) {
+    return new RedisEntityRecordIndex(template, gson, clock);
+  }
+
+  @Bean
+  CachedRecordSource redisCachedRecordSource(
+      final Cache<String, CompositeRecord> cache,
+      final RedisEntityRecordIndex index) {
+    return new RedisCachedRecordSource(cache, index);
   }
 }

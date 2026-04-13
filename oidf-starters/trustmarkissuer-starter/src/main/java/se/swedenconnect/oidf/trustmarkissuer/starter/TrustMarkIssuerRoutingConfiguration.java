@@ -19,6 +19,7 @@
   import io.micrometer.observation.ObservationRegistry;
   import org.springframework.context.annotation.Bean;
   import org.springframework.context.annotation.Configuration;
+  import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
   import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
   import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
   import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
@@ -39,8 +40,9 @@
                                                 final CacheSnapshotVersionLookup lookup,
                                                 final TrustMarkStatusCache trustMarkStatusCache,
                                                 final TrustMarkCache trustMarkCache,
-                                                final ObservationRegistry observationRegistry) {
+                                                final ObservationRegistry observationRegistry,
+                                                final CompositeRecordSource source) {
       return new TrustMarkIssuerRouter(routeFactory, factory, handler, lookup, trustMarkStatusCache, trustMarkCache,
-          observationRegistry);
+          observationRegistry, source);
     }
   }

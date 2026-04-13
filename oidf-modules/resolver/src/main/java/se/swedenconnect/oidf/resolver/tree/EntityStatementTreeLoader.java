@@ -35,6 +35,9 @@ import se.swedenconnect.oidf.resolver.tree.resolution.StepRecoveryStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
@@ -70,6 +73,8 @@ public class EntityStatementTreeLoader {
      */
     FETCH_ENTITY_CONFIGURATION
   }
+
+  private static final ExecutorService RESOLUTION_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
 
   private final FederationClient client;
 
@@ -115,11 +120,13 @@ public class EntityStatementTreeLoader {
    *
    * @param trustAnchorEntityId location of the root (trust-anchor)
    * @param tree                to add the nodes to
+   * @param snapshotId          shared snapshot version to use for this load
    */
-  public void resolveTree(final String trustAnchorEntityId, final Tree<ScrapedEntity> tree) {
+  public void resolveTree(final String trustAnchorEntityId, final Tree<ScrapedEntity> tree, final long snapshotId) {
     this.resolveTree(
         new NodeKey(trustAnchorEntityId),
         tree,
+        snapshotId,
         this.errorContextFactory.createEmpty(),
         new ResolutionContext());
   }
@@ -128,6 +135,7 @@ public class EntityStatementTreeLoader {
   void resolveTree(
       final NodeKey nodeKey,
       final Tree<ScrapedEntity> tree,
+      final long snapshotId,
       final ErrorContext context,
       final ResolutionContext resolutionContext) {
 
@@ -138,13 +146,17 @@ public class EntityStatementTreeLoader {
     final EntityStatementWrapper wrapper =
         new EntityStatementWrapper(scrapedEntity.getEntityStatement().getSignedStatement());
     resolutionContext.setTrustAnchorEntityStatement(wrapper);
-    final CacheSnapshot<ScrapedEntity> snapshot = tree.addRoot(root, scrapedEntity);
+    final CacheSnapshot<ScrapedEntity> snapshot = tree.addRoot(root, scrapedEntity, snapshotId);
     final NodeKey key = root.getKey();
     this.executionStrategy.execute(() -> {
       if (scrapedEntity.getIntermediate() != null) {
-        scrapedEntity.getIntermediate().subordinates().entrySet().stream().forEach((entry) -> {
-          this.resolveSubordinate(entry.getValue(), key, tree, snapshot, context, resolutionContext);
-        });
+        final List<CompletableFuture<Void>> futures = scrapedEntity.getIntermediate().subordinates()
+            .entrySet().stream()
+            .map(entry -> CompletableFuture.runAsync(
+                () -> this.resolveSubordinate(entry.getValue(), key, tree, snapshot, context, resolutionContext),
+                RESOLUTION_EXECUTOR))
+            .toList();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
       }
     });
     this.postHooks.forEach(this.executionStrategy::finalize);
@@ -166,12 +178,16 @@ public class EntityStatementTreeLoader {
 
       final ScrapedEntity entity = ScrapedEntity.builder().entityID(entityID).build();
       entity.scrape(this.client);
-      tree.addChild(subNode, subNode.getKey(), entity, snapshot);
+      tree.addChild(subNode, parentKey, entity, snapshot);
       if (entity.getIntermediate() != null) {
-        entity.getIntermediate().subordinates().entrySet().stream().forEach(entry -> {
-          this.resolveSubordinate(entry.getValue(), subNode.getKey(), tree, snapshot,
-              context, resolutionContext);
-        });
+        final List<CompletableFuture<Void>> futures = entity.getIntermediate().subordinates()
+            .entrySet().stream()
+            .map(entry -> CompletableFuture.runAsync(
+                () -> this.resolveSubordinate(entry.getValue(), subNode.getKey(), tree, snapshot, context,
+                    resolutionContext),
+                RESOLUTION_EXECUTOR))
+            .toList();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
       }
     } catch (final Exception e) {
       this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey,

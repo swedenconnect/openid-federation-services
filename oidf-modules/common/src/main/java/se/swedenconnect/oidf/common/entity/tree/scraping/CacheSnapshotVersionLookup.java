@@ -40,14 +40,15 @@ public class CacheSnapshotVersionLookup {
   }
 
   /**
-   * Returns the highest current snapshot version across all managed trees.
+   * Returns the current snapshot version. Since all trees share the same snapshot ID, the version
+   * is read from the first available tree.
    *
-   * @return the latest snapshot version, or 0 if no trees are present
+   * @return the current snapshot version, or 0 if no trees are present
    */
   public Long getLatestSnapshotVersion() {
     return this.treeSource.getTrees().stream()
         .mapToLong(tree -> tree.getCurrentSnapshot().getVersion())
-        .max()
+        .findFirst()
         .orElse(0L);
   }
 }
