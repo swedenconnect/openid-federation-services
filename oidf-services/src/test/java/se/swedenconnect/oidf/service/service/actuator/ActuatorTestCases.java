@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.service.service.actuator;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.service.suites.Context;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -77,5 +80,18 @@ public class ActuatorTestCases {
     assertTrue(json.get("edges").isArray(), "'edges' should be an array");
     assertFalse(json.get("nodes").isEmpty(), "'nodes' should not be empty");
     assertFalse(json.get("edges").isEmpty(), "'edges' should not be empty");
+  }
+
+  @Test
+  void testDeadNodesContainsBrokenSubordinate() throws Exception {
+    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(Context.getManagementPort())).build();
+    final String body = client.get()
+        .uri("/actuator/dead-nodes?trustAnchor=http://localhost:11111/anarchy/ta")
+        .retrieve()
+        .body(String.class);
+    assertNotNull(body);
+    final List<String> deadNodes = new ObjectMapper().readValue(body, new TypeReference<>() {});
+    assertTrue(deadNodes.contains("http://localhost:11112/broken/subordinate"),
+        "Dead nodes should contain the broken subordinate");
   }
 }

@@ -40,6 +40,8 @@ public record DiscoveryRequest(String trustAnchor, List<String> types, List<Stri
   public BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>> asPredicate() {
 
     final List<BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>>> predicates = new ArrayList<>();
+    predicates.add((a, s) -> a != null);
+    predicates.add((a, s) -> a.getEntityStatement() != null);
 
     predicates.add((a, s) -> a.getEntityStatement().getClaimsSet().isSelfStatement());
 

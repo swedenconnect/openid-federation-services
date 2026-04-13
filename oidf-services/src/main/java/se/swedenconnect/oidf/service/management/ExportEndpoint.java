@@ -124,6 +124,7 @@ public class ExportEndpoint {
     tree.getAll()
         .stream()
         .map(Tree.SearchResult::getData)
+        .filter(Objects::nonNull)
         .peek(entity -> {
           if (Objects.nonNull(entity.getIntermediate())) {
             entity.getIntermediate().subordinates().values().forEach(jwt -> {

@@ -105,6 +105,10 @@
       {
         "entity-identifier": "http://localhost:11111/im/tmi",
         "jwks": "federation:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11112/broken/subordinate",
+        "jwks": "federation:sign-key-1"
       }
     ]
   },

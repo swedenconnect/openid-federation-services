@@ -65,6 +65,7 @@ public class TestFederationEntities {
     public static class NestedIM {
       public static EntityID INTERMEDIATE = new EntityID("http://localhost:11111/im/im");
       public static EntityID OP = new EntityID("http://localhost:11111/im/im/op");
+      public static EntityID RP = new EntityID("http://localhost:11111/im/im/rp");
     }
   }
 }

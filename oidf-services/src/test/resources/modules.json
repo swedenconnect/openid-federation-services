@@ -455,6 +455,23 @@
               }
             ]
           }
+        },
+        {
+          "entity-identifier": "http://localhost:11112/broken/subordinate",
+          "jwks": {
+            "keys": [
+              {
+                "kty": "RSA",
+                "x5t#S256": "2jznXeErnkn2Rf_3uDLcdn_INjEcDG8-HKLpoMhux1g",
+                "nbf": 1736846580,
+                "e": "AQAB",
+                "kid": "359433581122628090150675142465804663870388233428",
+                "exp": 2052206580,
+                "iat": 1736846580,
+                "n": "ybd6Pmojk2S2N0-9JOpLxAA5_IR77j_Ki_9GxS3CkmPxqbBbGFNeefkEKfe4_EeOCncBAxishgSIoYA1uTfQSyvkU3jCi6ZBj-ez_Uk6OvzeZCJx0hTMeMdnr804SbzPabljf8RWaZ9apdqJtxCf7UBkQtLNG9XmewMr-vF53BjgENPesx4UeXdtd3swNOrqb_OX7uVqhocaK5TzibivoQD4L6qtU5hXcKnX2fuDL7yYVc5jmKDGw_ExE-D1CsjhMhtT8ugVjQLuNC-yMaEf_qW4vFp91SOnDtn0kCvWaavvBznbjQK_5QsWYQKyzHfmZhPlsR0PGE6ucI4pjEsfrQ"
+              }
+            ]
+          }
         }
       ]
     },

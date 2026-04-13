@@ -41,6 +41,9 @@ public record ResolveRequest(String subject, String trustAnchor, String type, Bo
   public BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>> asPredicate() {
     final List<BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>>> predicates = new ArrayList<>();
 
+    predicates.add((a, s) -> a != null);
+    predicates.add((a, s) -> a.getEntityStatement() != null);
+
     predicates.add((a,s) -> a.getEntityStatement().getClaimsSet().isSelfStatement());
 
     if (Objects.nonNull(this.subject)) {
