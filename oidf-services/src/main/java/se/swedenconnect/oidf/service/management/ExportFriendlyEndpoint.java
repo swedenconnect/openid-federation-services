@@ -99,7 +99,7 @@ public class ExportFriendlyEndpoint {
         "saml_service_provider", "user",
         "error", "exclamation-circle"
     );
-    final List<Map<String, String>> nodes = nodesAndEdges.get("nodes")
+    final List<Map<String, Object>> nodes = nodesAndEdges.get("nodes")
         .stream().map(node -> {
           final Map<String, Object> claims = (Map<String, Object>) node.get("claims");
           final String sub = (String) claims.get("sub");
@@ -135,24 +135,25 @@ public class ExportFriendlyEndpoint {
           final String color =
               Map.of(true, "red", false, "green").get(errorsPresent);
 
-          final Map<String, String> nodeJson = new HashMap<>(Map.of(
+          final Map<String, Object> nodeJson = new HashMap<>(Map.of(
               "id", sub,
               "color", color,
               "title", sub,
-              "icon", "check-circle"
+              "icon", "check-circle",
+              "nodeRadius", 24
           ));
 
           Optional.ofNullable(node.get("metrics"))
-              .map(metrics -> (Map<String, String>) metrics)
+              .map(metrics -> (Map<String, Object>) metrics)
               .ifPresent(metrics -> {
                 if (!errorsPresent) {
-                  nodeJson.put("arc__success", String.valueOf(metrics.get("success")));
-                  nodeJson.put("arc__failure", String.valueOf(metrics.get("failure")));
+                  nodeJson.put("arc__success", metrics.get("success"));
+                  nodeJson.put("arc__failure", metrics.get("failure"));
                 } else {
-                  nodeJson.put("arc__validation", "1.0");
+                  nodeJson.put("arc__validation", 1.0);
                 }
-                nodeJson.put("mainstat", String.valueOf((Integer) node.get("mainstat")));
-                nodeJson.put("seconddarystat", String.valueOf((Integer) node.get("seconddarystat")));
+                nodeJson.put("mainstat", node.get("mainstat"));
+                nodeJson.put("seconddarystat", node.get("seconddarystat"));
               });
 
           Optional.ofNullable(evaluatedRole).ifPresent(role -> {
@@ -198,11 +199,11 @@ public class ExportFriendlyEndpoint {
           }
           return nodeJson;
         }).toList();
-    final List<Map<String, String>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
+    final List<Map<String, Object>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
       final Map<String, Object> claims = (Map<String, Object>) edge.get("claims");
       final String sub = (String) claims.get("sub");
       final String iss = (String) claims.get("iss");
-      final Map<String, String> edgeJson = new HashMap<>(Map.of(
+      final Map<String, Object> edgeJson = new HashMap<>(Map.of(
           "id", iss + "|" + sub,
           "source", iss,
           "target", sub
