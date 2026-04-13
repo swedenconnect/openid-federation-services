@@ -4,6 +4,53 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.11.1
+
+**Date:** 2026-04-13
+
+* Dead nodes are now filtered out from resolve, discovery, and export responses
+* Added new actuator endpoint (`/actuator/dead-nodes`) to list dead nodes in the federation
+
+#### Performance Indicators
+
+Measured with Redis, 1000 requests per scenario. (Redis 7.4.7 via Testcontainers, Apple M2 MacBook Air, 8-core, 24 GB RAM)
+
+**Test Timings:**
+
+| Test | Requests | Total (s) | RPS |
+|---|---:|---:|---:|
+| Resolve without cache (12.87 KB) | 1000 | 4.966 | 201.4 |
+| Entity Configuration without cache (3.36 KB) | 1000 | 3.489 | 286.6 |
+| Trust mark status without cache (2.58 KB) | 1000 | 1.778 | 562.4 |
+| Trust mark without cache (0.30 KB) | 1000 | 1.427 | 700.8 |
+| Subordinate fetch without cache (0.69 KB) | 1000 | 0.512 | 1953.1 |
+| Entity Configuration with cache (3.36 KB) | 1000 | 0.204 | 4902.0 |
+| Trust mark status with cache (2.58 KB) | 1000 | 0.196 | 5102.0 |
+| Resolve with cache (12.87 KB) | 1000 | 0.196 | 5102.0 |
+| Subordinate fetch with cache (0.69 KB) | 1000 | 0.190 | 5263.2 |
+| Trust mark with cache (0.30 KB) | 1000 | 0.170 | 5882.4 |
+
+**Cache Performance Gain:**
+
+| Scenario | Payload | Cached RPS | No-cache RPS | Speedup | Cached Mbit/s | No-cache Mbit/s |
+|---|---:|---:|---:|---:|---:|---:|
+| Entity Configuration | 3.36 KB | 4902.0 | 286.6 | 17.1x | 134.927 | 7.889 |
+| Resolve | 12.87 KB | 5102.0 | 201.4 | 25.3x | 537.913 | 21.231 |
+| Subordinate fetch | 0.69 KB | 5263.2 | 1953.1 | 2.7x | 29.750 | 11.040 |
+| Trust mark | 0.30 KB | 5882.4 | 700.8 | 8.4x | 14.456 | 1.722 |
+| Trust mark status | 2.58 KB | 5102.0 | 562.4 | 9.1x | 107.833 | 11.887 |
+
+### Version 0.11.0
+
+**Date:** 2026-04-13
+
+* Added virtual entity IDs — a single service instance can now expose multiple logical entity identities, each with its own routing, keys, and module configuration
+* Added `ModuleResponseCache` interface with in-memory and Redis implementations to cache module responses per entity ID
+* Added `RedisEntityRecordIndex` for Redis-backed entity record lookups
+* Added `GrafanaExportCacheWarmer` to pre-warm the export cache on startup
+* Introduced `FederationBaseRouter` and related routing infrastructure to support virtual entity ID dispatch
+* Added `CompositeRecordSource` and `LocalRecordSource` to compose entity record lookups across modules
+
 ### Version 0.10.8
 
 **Date:** 2026-04-02
@@ -12,7 +59,7 @@
 
 #### Performance Indicators
 
-Measured with Redis, 1000 requests per scenario. (Redis 7.4.7 via Testcontainers)
+Measured with Redis, 1000 requests per scenario. (Redis 7.4.7 via Testcontainers, Apple M2 MacBook Air, 8-core, 24 GB RAM)
 
 **Test Timings:**
 
@@ -47,7 +94,7 @@ Measured with Redis, 1000 requests per scenario. (Redis 7.4.7 via Testcontainers
 
 #### Performance Indicators
 
-Measured with Redis, 1000 requests per scenario. (Redis 7.4.7 via Testcontainers)
+Measured with Redis, 1000 requests per scenario. (Redis 7.4.7 via Testcontainers, Apple M2 MacBook Air, 8-core, 24 GB RAM)
 
 **Test Timings:**
 
@@ -103,7 +150,7 @@ Measured with Redis, 1000 requests per scenario. (Redis 7.4.7 via Testcontainers
 
 #### Performance Indicator
 
-Measured with Redis, 10000 parallel requests per scenario. (Federation with over 500 nodes)
+Measured with Redis, 10000 parallel requests per scenario. (Federation with over 500 nodes, Apple M2 MacBook Air, 8-core, 24 GB RAM)
 
 | Scenario | Payload | Cached RPS | No-cache RPS | Speedup | Cached Mbit/s | No-cache Mbit/s |
 |---|---:|---:|---:|---:|---:|---:|
@@ -132,7 +179,7 @@ Measured with Redis, 10000 parallel requests per scenario. (Federation with over
 
 #### Performance Indicator
 
-Measured with Redis, 10000 parallel requests per scenario. (Small federation test)
+Measured with Redis, 10000 parallel requests per scenario. (Small federation test, Apple M2 MacBook Air, 8-core, 24 GB RAM)
 
 | Scenario | Payload | Cached RPS | No-cache RPS | Speedup | Cached Mbit/s | No-cache Mbit/s |
 |---|---:|---:|---:|---:|---:|---:|
