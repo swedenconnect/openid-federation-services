@@ -99,7 +99,7 @@ public class ActuatorTestCases {
    */
   private static void assertValidNodeGraphData(final JsonNode json) {
     final Set<String> arcFields = Set.of("arc__success", "arc__failure", "arc__validation");
-    final Set<String> statFields = Set.of("mainstat", "seconddarystat");
+    final Set<String> statFields = Set.of("mainstat", "secondarystat");
 
     json.get("nodes").forEach(node -> {
       assertTrue(node.has("id") && node.get("id").isTextual() && !node.get("id").asText().isBlank(),

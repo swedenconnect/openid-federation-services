@@ -69,7 +69,7 @@ public class ExportStatement {
     Optional.ofNullable(this.total).ifPresent(tot -> {
       json.put("metrics", Map.of("total", tot, "success", this.success, "failure", this.failure));
       json.put("mainstat", this.successCount);
-      json.put("seconddarystat", this.failureCount);
+      json.put("secondarystat", this.failureCount);
     });
 
     return json;

@@ -154,7 +154,7 @@ public class ExportFriendlyEndpoint {
                   nodeJson.put("arc__validation", 1.0);
                 }
                 nodeJson.put("mainstat", node.get("mainstat"));
-                nodeJson.put("seconddarystat", node.get("seconddarystat"));
+                nodeJson.put("secondarystat", node.get("secondarystat"));
               });
 
           Optional.ofNullable(evaluatedRole).ifPresent(role -> {
