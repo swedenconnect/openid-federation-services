@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
+
+import java.util.List;
 
 /**
  * Configures key related settings.
@@ -70,7 +72,7 @@ public class FederationKeyConfiguration {
           final KeyProperty property = new KeyProperty();
           property.setKey(parsed);
           property.setAlias(key.name());
-          property.setMapping("public");
+          property.setMapping(List.of("public"));
           keyRegistry.register(property);
         });
 
@@ -78,7 +80,7 @@ public class FederationKeyConfiguration {
       list.forEach(key -> {
         keyRegistry.getKey("%s:%s".formatted(mapping, key)).orElseThrow(
             () -> {
-              final String message = "An unknown private key was mapped %s to %s, remove this mapping or load the key";
+              final String message = "An unknown private key %s was mapped to %s, remove this mapping or load the key";
               return new IllegalArgumentException(message.formatted(key, mapping));
             });
       });

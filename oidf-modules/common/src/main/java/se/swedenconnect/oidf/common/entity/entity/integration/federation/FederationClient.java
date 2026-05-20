@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.common.entity.entity.integration.federation;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 
 import java.util.List;
 
@@ -62,4 +63,12 @@ public interface FederationClient {
    * @return list of trust marked subjects
    */
   List<String> trustMarkedListing(final FederationRequest<TrustMarkListingRequest> request);
+
+  /**
+   * Checks whether a trust mark is currently active according to its issuer.
+   *
+   * @param request containing the trust mark JWT and issuer entity ID
+   * @return {@code true} if the trust mark status is "active", {@code false} otherwise
+   */
+  TrustMarkStatusResponse trustMarkStatus(final FederationRequest<FederationTrustMarkStatusRequest> request);
 }

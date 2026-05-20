@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public interface VersionedCacheLayer<T> {
    * @param version index of which tree to operate upon
    * @return list of children (keys)
    */
-  List<Node<T>> getChildren(final Node<T> parent, final int version);
+  List<Node<T>> getChildren(final Node<T> parent, final long version);
 
   /**
    * Adds a child node (key) to a parent.
@@ -39,7 +39,7 @@ public interface VersionedCacheLayer<T> {
    * @param parent subject of the addition
    * @param version index of which tree to operate upon
    */
-  void append(final Node<T> child, final Node<T> parent, final int version);
+  void append(final Node<T> child, final Node<T> parent, final long version);
 
   /**
    * Sets the value of a given entity.
@@ -47,14 +47,14 @@ public interface VersionedCacheLayer<T> {
    * @param data of the entity
    * @param version index of which tree to operate upon
    */
-  void setData(final String key, final T data, final int version);
+  void setData(final String key, final T data, final long version);
 
   /**
    * Gets the root node for a given tree.
    * @param version index of which tree to operate upon
    * @return root node
    */
-  Node<T> getRoot(int version);
+  Node<T> getRoot(long version);
 
   /**
    * Gets the entity from a key.
@@ -62,19 +62,12 @@ public interface VersionedCacheLayer<T> {
    * @param version index of which tree to operate upon
    * @return the entity
    */
-  T getData(final String key, final int version);
+  T getData(final String key, final long version);
 
   /**
    * @return the current tree index
    */
-  int getCurrentVersion();
-
-  /**
-   * @return next tree index
-   */
-  default int getNextVersion() {
-    return this.getCurrentVersion() + 1 % 100;
-  }
+  long getCurrentVersion();
 
   /**
    * Moves current version index to next version index

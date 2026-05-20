@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class ExportStatement {
     Optional.ofNullable(this.total).ifPresent(tot -> {
       json.put("metrics", Map.of("total", tot, "success", this.success, "failure", this.failure));
       json.put("mainstat", this.successCount);
-      json.put("seconddarystat", this.failureCount);
+      json.put("secondarystat", this.failureCount);
     });
 
     return json;

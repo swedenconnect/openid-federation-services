@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,17 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Factory class responsible for constructing resolver responses.
@@ -42,6 +47,7 @@ public class ResolverResponseFactory {
   private final ResolverProperties properties;
   private final SignerFactory signerFactory;
   private final CompositeRecordSource compositeRecordSource;
+  private static final SecureRandom rng = new SecureRandom();
 
   /**
    * Constructor.
@@ -72,12 +78,41 @@ public class ResolverResponseFactory {
    */
   public String sign(final ResolverResponse resolverResponse) throws ParseException, JOSEException {
     final Instant now = Instant.now(this.clock);
+
+    final Instant configuredExpiry = now.plus(Optional.ofNullable(this.properties.getResolveResponseDuration())
+        .orElse(Duration.ofDays(7)));
+
+    final Stream<Instant> chainExpiries = Optional.ofNullable(resolverResponse.trustChain())
+        .orElse(java.util.List.of())
+        .stream()
+        .map(es -> es.getClaimsSet().getExpirationTime())
+        .filter(Objects::nonNull)
+        .map(Date::toInstant);
+
+    final Stream<Instant> trustMarkExpiries = Optional.ofNullable(resolverResponse.trustMarkEntries())
+        .orElse(java.util.List.of())
+        .stream()
+        .map(tm -> {
+          try {
+            return tm.getTrustMark().getJWTClaimsSet().getExpirationTime();
+          } catch (final Exception e) {
+            return null;
+          }
+        })
+        .filter(Objects::nonNull)
+        .map(Date::toInstant);
+
+    final Instant responseExpiry = Stream.concat(Stream.of(configuredExpiry),
+            Stream.concat(chainExpiries, trustMarkExpiries))
+        .min(Comparator.naturalOrder())
+        .orElse(configuredExpiry);
+
     final JWTClaimsSet claims =
         new JWTClaimsSet.Builder(resolverResponse.entityStatement().getClaimsSet().toJWTClaimsSet())
             .issuer(this.properties.getEntityIdentifier())
             .issueTime(Date.from(now))
-            .expirationTime(Date.from(now.plus(Optional.ofNullable(this.properties.getResolveResponseDuration())
-                .orElse(Duration.ofDays(7)))))
+            .jwtID(new BigInteger(128, rng).toString(16))
+            .expirationTime(Date.from(responseExpiry))
             .claim("metadata", resolverResponse.metadata())
             .claim("trust_marks",
                 resolverResponse.trustMarkEntries().stream().map(trustMark -> {
@@ -90,7 +125,7 @@ public class ResolverResponseFactory {
                     .toList())
             .build();
     return this.signerFactory.createSigner(this.compositeRecordSource.getEntity(new NodeKey(
-            this.properties.getEntityIdentifier(), this.properties.getEntityIdentifier()
+            this.properties.getEntityIdentifier()
         )).get())
         .sign(new JOSEObjectType("resolve-response+jwt"), claims)
         .serialize();

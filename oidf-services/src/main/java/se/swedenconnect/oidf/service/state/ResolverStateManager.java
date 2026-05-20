@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.service.health.ReadyStateComponent;
 import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * Readystate component for loading resolvers.
@@ -64,8 +64,8 @@ public class ResolverStateManager extends ReadyStateComponent {
   /**
    * Trigger reload of this component.
    */
-  @Scheduled(fixedRate = 60, timeUnit = TimeUnit.MINUTES)
   public void reload() {
+    log.debug("Reload resolver triggered from cron");
     if (this.ready()) {
       //No need to execute cron job during startup
       this.reloadResolvers();
@@ -75,15 +75,20 @@ public class ResolverStateManager extends ReadyStateComponent {
   @EventListener
   void handle(final RegistryReadyEvent event) {
     try {
+      log.debug("Triggering reload resolvers from ready event");
       this.reloadResolvers();
     } finally {
+      log.debug("Resolver ready for traffic");
       this.markReady();
     }
   }
 
   @EventListener
   void handle(final RegistryLoadedEvent event) {
-    this.reloadResolvers();
+    if (this.ready()) {
+      log.debug("Triggering reload resolvers from loaded event");
+      this.reloadResolvers();
+    }
   }
 
   private void reloadResolvers() {
@@ -95,8 +100,9 @@ public class ResolverStateManager extends ReadyStateComponent {
         try {
           // --- Critical Section Start ---
           log.info("Start Tree load");
+          final Instant before = Instant.now();
           this.treeLoader.loadTree();
-          log.info("Tree loaded");
+          log.info("Tree loaded in {}", Duration.between(before, Instant.now()));
           // --- Critical Section End
         } finally {
           this.redisServiceLock.close(this.name());

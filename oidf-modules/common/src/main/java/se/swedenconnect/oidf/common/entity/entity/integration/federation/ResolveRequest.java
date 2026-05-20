@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package se.swedenconnect.oidf.common.entity.entity.integration.federation;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import se.swedenconnect.oidf.common.entity.tree.Node;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -38,16 +38,21 @@ public record ResolveRequest(String subject, String trustAnchor, String type, Bo
   /**
    * @return this request as a search predicate
    */
-  public BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>> asPredicate() {
-    final List<BiPredicate<EntityStatement, Node.NodeSearchContext<EntityStatement>>> predicates = new ArrayList<>();
+  public BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>> asPredicate() {
+    final List<BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>>> predicates = new ArrayList<>();
 
-    predicates.add((a,s) -> a.getClaimsSet().isSelfStatement());
+    predicates.add((a, s) -> a != null);
+    predicates.add((a, s) -> a.getEntityStatement() != null);
+
+    predicates.add((a,s) -> a.getEntityStatement().getClaimsSet().isSelfStatement());
 
     if (Objects.nonNull(this.subject)) {
-      predicates.add((a,s) -> a.getClaimsSet().getSubject().getValue().equalsIgnoreCase(this.subject));
+      predicates.add((a, s) -> a.getEntityStatement().getClaimsSet().getSubject().getValue()
+          .equalsIgnoreCase(this.subject));
     }
     if (Objects.nonNull(this.type)) {
-      predicates.add((a,s) -> Objects.nonNull(a.getClaimsSet().getMetadata(new EntityType(this.type))));
+      predicates.add((a, s) -> Objects.nonNull(
+          a.getEntityStatement().getClaimsSet().getMetadata(new EntityType(this.type))));
     }
 
     return predicates.stream().reduce((a,b) -> true, BiPredicate::and);

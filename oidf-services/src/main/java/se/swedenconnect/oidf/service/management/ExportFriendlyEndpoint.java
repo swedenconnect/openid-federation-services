@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,17 @@ package se.swedenconnect.oidf.service.management;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import se.swedenconnect.oidf.common.entity.entity.integration.CachedResponse;
+import se.swedenconnect.oidf.common.entity.entity.integration.ModuleResponseCache;
+import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -30,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -46,14 +54,42 @@ import java.util.stream.Collectors;
 @Component
 public class ExportFriendlyEndpoint {
   private final ExportEndpoint exportEndpoint;
+  private final ModuleResponseCache cache;
+  private final CacheSnapshotVersionLookup lookup;
 
   /**
    * Exports federation in grafana friendly format
+   * @param trustAnchor optional trust anchor entity identifier to select resolver, defaults to first available
    * @return json string
    * @throws JsonProcessingException
    */
   @ReadOperation
-  public String getGrafanaFriendlyJson() throws JsonProcessingException {
+  public String getGrafanaFriendlyJson(@Nullable final String trustAnchor) throws JsonProcessingException {
+    final long snapshot = this.lookup.getLatestSnapshotVersion();
+    final String effectiveTrustAnchor = this.exportEndpoint.resolveEffectiveTrustAnchor(trustAnchor);
+    final String cacheKey = cacheKey(effectiveTrustAnchor);
+    final HttpServletRequest httpRequest =
+        ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+    final String cacheControl = httpRequest.getHeader("cache-control");
+    if (!"no-cache".equals(cacheControl)) {
+      final Optional<CachedResponse> cached = this.cache.get(snapshot, cacheKey);
+      if (cached.isPresent()) {
+        return cached.get().body();
+      }
+    }
+    final Map<String, List<Map<String, Object>>> nodesAndEdges =
+        this.exportEndpoint.getNodesAndEdges(effectiveTrustAnchor);
+    final String result = formatAsGrafana(nodesAndEdges);
+    this.cache.put(snapshot, cacheKey, new CachedResponse(result, "application/json", 200));
+    return result;
+  }
+
+  static String cacheKey(final String trustAnchor) {
+    return "export-grafana?trustAnchor=" + trustAnchor;
+  }
+
+  static String formatAsGrafana(final Map<String, List<Map<String, Object>>> nodesAndEdges)
+      throws JsonProcessingException {
     final Map<String, String> icons = Map.of(
         "tmi", "pen",
         "ta", "anchor",
@@ -64,10 +100,8 @@ public class ExportFriendlyEndpoint {
         "saml_service_provider", "user",
         "error", "exclamation-circle"
     );
-    final Map<String, List<Map<String, Object>>> nodesAndEdges = this.exportEndpoint.getNodesAndEdges();
-    final List<Map<String, String>> nodes = nodesAndEdges.get("nodes")
+    final List<Map<String, Object>> nodes = nodesAndEdges.get("nodes")
         .stream().map(node -> {
-          final Boolean verified = (Boolean) node.get("verifiedSelfStatement");
           final Map<String, Object> claims = (Map<String, Object>) node.get("claims");
           final String sub = (String) claims.get("sub");
           final String iss = (String) claims.get("iss");
@@ -92,7 +126,6 @@ public class ExportFriendlyEndpoint {
               })
               .orElse(null);
 
-
           final List<String> types = ((Map<String, Object>) claims.get("metadata")).entrySet().stream()
               .filter(f -> !"federation_entity".equals(f.getKey()))
               .map(Map.Entry::getKey)
@@ -103,24 +136,25 @@ public class ExportFriendlyEndpoint {
           final String color =
               Map.of(true, "red", false, "green").get(errorsPresent);
 
-          final Map<String, String> nodeJson = new HashMap<>(Map.of(
+          final Map<String, Object> nodeJson = new HashMap<>(Map.of(
               "id", sub,
               "color", color,
               "title", sub,
-              "icon", "check-circle"
+              "icon", "check-circle",
+              "nodeRadius", 24
           ));
 
           Optional.ofNullable(node.get("metrics"))
-              .map(metrics -> (Map<String, String>) metrics)
+              .map(metrics -> (Map<String, Object>) metrics)
               .ifPresent(metrics -> {
                 if (!errorsPresent) {
-                  nodeJson.put("arc__success", String.valueOf(metrics.get("success")));
-                  nodeJson.put("arc__failure", String.valueOf(metrics.get("failure")));
+                  nodeJson.put("arc__success", metrics.get("success"));
+                  nodeJson.put("arc__failure", metrics.get("failure"));
                 } else {
-                  nodeJson.put("arc__validation", "1.0");
+                  nodeJson.put("arc__validation", 1.0);
                 }
-                nodeJson.put("mainstat", String.valueOf((Integer) node.get("mainstat")));
-                nodeJson.put("seconddarystat", String.valueOf((Integer) node.get("seconddarystat")));
+                nodeJson.put("mainstat", node.get("mainstat"));
+                nodeJson.put("secondarystat", node.get("secondarystat"));
               });
 
           Optional.ofNullable(evaluatedRole).ifPresent(role -> {
@@ -166,11 +200,11 @@ public class ExportFriendlyEndpoint {
           }
           return nodeJson;
         }).toList();
-    final List<Map<String, String>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
+    final List<Map<String, Object>> edges = nodesAndEdges.get("edges").stream().map(edge -> {
       final Map<String, Object> claims = (Map<String, Object>) edge.get("claims");
       final String sub = (String) claims.get("sub");
       final String iss = (String) claims.get("iss");
-      final Map<String, String> edgeJson = new HashMap<>(Map.of(
+      final Map<String, Object> edgeJson = new HashMap<>(Map.of(
           "id", iss + "|" + sub,
           "source", iss,
           "target", sub
@@ -189,6 +223,27 @@ public class ExportFriendlyEndpoint {
       return edgeJson;
     }).toList();
 
-    return ExportEndpoint.MAPPER.writeValueAsString(Map.of("nodes", nodes, "edges", edges));
+    final Set<String> nodeIds = nodes.stream()
+        .map(n -> (String) n.get("id"))
+        .collect(Collectors.toSet());
+
+    final List<Map<String, Object>> allNodes = new java.util.ArrayList<>(nodes);
+    edges.forEach(edge -> {
+      for (final String field : List.of("source", "target")) {
+        final String ref = (String) edge.get(field);
+        if (ref != null && nodeIds.add(ref)) {
+          allNodes.add(Map.of(
+              "id", ref,
+              "title", ref,
+              "color", "orange",
+              "icon", "exclamation-circle",
+              "nodeRadius", 24,
+              "subtitle", "unresolved"
+          ));
+        }
+      }
+    });
+
+    return ExportEndpoint.MAPPER.writeValueAsString(Map.of("nodes", allNodes, "edges", edges));
   }
 }

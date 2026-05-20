@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,8 @@ public class TrustAnchorProperties {
     private List<String> metadataPolicyCrit;
     @SerializedName("entity-identifier")
     private EntityID entityIdentifier;
+    @SerializedName("virtual-entity-id")
+    private EntityID virtualEntityId;
     @SerializedName("ec-location")
     private String ecLocation;
     @SerializedName("policy")

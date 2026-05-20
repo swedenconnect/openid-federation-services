@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,6 +148,7 @@ public class TrustMarkSigner {
         .claim("trust_mark", trustMark)
         .issueTime(new Date(Instant.now(this.clock).toEpochMilli()))
         .issuer(entity.getEntityIdentifier().getValue())
+        .jwtID(new BigInteger(128, rng).toString(16))
         .claim("status", status);
 
     try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.resolver;
 
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 
 /**
  * Event listener for cache operations.
@@ -36,6 +37,7 @@ public class CacheEventListener {
   }
 
   @EventListener
+  @Order(0)
   void handle(final TreeUpdatedEvent event) {
     this.registry.updateVersion(event.entityId());
   }

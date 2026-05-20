@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class EntityStatementTreeLoaderFactory {
   public EntityStatementTreeLoader create(final ResolverProperties properties) {
     return new EntityStatementTreeLoader(this.client, this.executionStrategy,
         new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
-        this.errorContextFactory, properties.getUseCachedValue())
+        this.errorContextFactory)
         .withAdditionalPostHook(() -> this.publisher.publishEvent(
             new TreeUpdatedEvent(properties.getEntityIdentifier())
         ));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package se.swedenconnect.oidf.service.configuration;
 
 import com.nimbusds.jose.shaded.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +29,16 @@ import se.swedenconnect.oidf.FederationServiceState;
 import se.swedenconnect.oidf.InMemoryFederationServiceState;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryEntityConfigurationCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemorySubordinateFetchCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryTrustMarkCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryTrustMarkStatusCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.ResolverResponseCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.SubordinateFetchCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkCache;
+import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkStatusCache;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.service.cache.managed.ManagedCacheFactory;
@@ -36,6 +48,9 @@ import se.swedenconnect.oidf.service.cache.managed.RequestResponseCacheFactory;
 import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 import se.swedenconnect.oidf.service.state.NoOperationServiceLock;
 import se.swedenconnect.oidf.service.state.RegistryStateManager;
+import se.swedenconnect.oidf.service.state.RegistryStateTrigger;
+import se.swedenconnect.oidf.service.state.ResolverStateManager;
+import se.swedenconnect.oidf.service.state.ResolverStateTrigger;
 import se.swedenconnect.oidf.service.state.ServiceLock;
 import se.swedenconnect.oidf.service.state.StateHashFactory;
 
@@ -44,6 +59,7 @@ import se.swedenconnect.oidf.service.state.StateHashFactory;
  *
  * @author Felix Hellman
  */
+@Slf4j
 @Configuration
 @EnableConfigurationProperties(FederationServiceProperties.class)
 public class OpenIdFederationConfiguration {
@@ -68,7 +84,7 @@ public class OpenIdFederationConfiguration {
       final ApplicationEventPublisher publisher,
       final FederationProperties properties,
       final StateHashFactory stateHashFactory
-      ) {
+  ) {
     return new RegistryStateManager(populator,
         state,
         lock,
@@ -81,6 +97,18 @@ public class OpenIdFederationConfiguration {
   @Bean
   StateHashFactory stateHashFactory(final Gson gson) {
     return new StateHashFactory(gson);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "federation.service.scheduling.registry-trigger-enabled", matchIfMissing = true)
+  RegistryStateTrigger registryStateTrigger(final RegistryStateManager registryStateManager) {
+    return new RegistryStateTrigger(registryStateManager);
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "federation.service.scheduling.resolver-trigger-enabled", matchIfMissing = true)
+  ResolverStateTrigger resolverStateTrigger(final ResolverStateManager resolverStateManager) {
+    return new ResolverStateTrigger(resolverStateManager);
   }
 
   @Bean
@@ -103,5 +131,45 @@ public class OpenIdFederationConfiguration {
   @Bean
   ManagedCacheRepository managedRedisCacheRepository(final ManagedCacheFactory cacheFactory) {
     return new ManagedCacheRepository(cacheFactory);
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  TrustMarkStatusCache inMemoryTrustMarkStatusCache() {
+    log.warn("Starting application with in memory implementation of TrustMarkStatusCache is not recommended." +
+             "See docs for more information");
+    return new InMemoryTrustMarkStatusCache();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  ResolverResponseCache inMemoryResolverResponseCache() {
+    log.warn("Starting application with in memory implementation of ResolverResponseCache is not recommended. " +
+             "See docs for more information");
+    return new InMemoryResolverResponseCache();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  SubordinateFetchCache inMemorySubordinateFetchCache() {
+    log.warn("Starting application with in memory implementation of SubordinateFetchCache is not recommended. " +
+             "See docs for more information");
+    return new InMemorySubordinateFetchCache();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  TrustMarkCache inMemoryTrustMarkCache() {
+    log.warn("Starting application with in memory implementation of TrustMarkCache is not recommended. " +
+             "See docs for more information");
+    return new InMemoryTrustMarkCache();
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  EntityConfigurationCache inMemoryEntityConfigurationCache() {
+    log.warn("Starting application with in memory implementation of EntityConfigurationCache is not recommended. " +
+             "See docs for more information");
+    return new InMemoryEntityConfigurationCache();
   }
 }

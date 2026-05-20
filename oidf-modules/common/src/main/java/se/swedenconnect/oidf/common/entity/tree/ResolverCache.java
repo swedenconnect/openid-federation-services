@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
  */
 package se.swedenconnect.oidf.common.entity.tree;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
 /**
  * Cache for Resolver.
  *
  * @author Felix Hellman
  */
-public interface ResolverCache extends SnapshotSource<EntityStatement>, VersionedCacheLayer<EntityStatement> {
+public interface ResolverCache extends SnapshotSource<ScrapedEntity>, VersionedCacheLayer<ScrapedEntity> {
 }

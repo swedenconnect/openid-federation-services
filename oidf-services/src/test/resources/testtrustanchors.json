@@ -47,7 +47,15 @@
         "entity-identifier": "http://localhost:11111/anarchy/resolver",
         "jwks": "federation:sign-key-1"
       }
-    ]
+    ],
+    "trust-mark-issuers": {
+      "http://localhost:11111/im/tmi/certified": [
+        "http://localhost:11111/im/tmi"
+      ],
+      "http://localhost:11111/im/tmi/accepted": [
+        "http://localhost:11111/im/tmi"
+      ]
+    }
   },
   {
     "entity-identifier": "http://localhost:11111/path/ta",
@@ -96,6 +104,10 @@
       },
       {
         "entity-identifier": "http://localhost:11111/im/tmi",
+        "jwks": "federation:sign-key-1"
+      },
+      {
+        "entity-identifier": "http://localhost:11112/broken/subordinate",
         "jwks": "federation:sign-key-1"
       }
     ]
@@ -151,7 +163,7 @@
         "crit": [
           "ec_location"
         ],
-        "ec-location": "http://localhost:11111/im/banan"
+        "ec-location": "http://localhost:11111/im/banan/.well-known/openid-federation"
       }
     ]
   },

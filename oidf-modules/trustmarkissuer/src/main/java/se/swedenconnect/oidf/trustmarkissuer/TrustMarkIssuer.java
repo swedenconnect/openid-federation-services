@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public class TrustMarkIssuer {
 
       String status = "active";
       final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
-      final Optional<EntityRecord> entity = this.source.getEntity(new NodeKey(entityIdentifier, entityIdentifier));
+      final Optional<EntityRecord> entity = this.source.getEntity(new NodeKey(entityIdentifier));
       if (!this.signer.verify(entity.get(), request.trustMark())) {
         status = "invalid";
       }
@@ -176,10 +176,16 @@ public class TrustMarkIssuer {
    */
   public String trustMark(final TrustMarkRequest request) throws ServerErrorException, NotFoundException {
 
+    final Optional<TrustMarkProperties> trustMarkProperties = this.trustMarkIssuerProperties.trustMarks().stream()
+        .filter(tm -> request.trustMarkType().equals(tm.getTrustMarkType().getTrustMarkType()))
+        .findFirst();
+    if (trustMarkProperties.isEmpty()) {
+      throw new NotFoundException("Trust mark type %s was not found for the trust mark issuer."
+          .formatted(request.trustMarkType())
+      );
+    }
     final TrustMarkProperties properties =
-        this.trustMarkIssuerProperties.trustMarks().stream()
-            .filter(tm -> request.trustMarkType().equals(tm.getTrustMarkType().getTrustMarkType()))
-            .findFirst()
+        trustMarkProperties
             .get();
 
     final Optional<TrustMarkSubjectProperty> subject = properties.getTrustMarkSubjects()
@@ -192,7 +198,7 @@ public class TrustMarkIssuer {
     final TrustMarkSubjectProperty trustMarkSubjectProperty = subject.get();
     try {
       final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
-      return this.signer.sign(this.source.getEntity(new NodeKey(entityIdentifier, entityIdentifier)).get(),
+      return this.signer.sign(this.source.getEntity(new NodeKey(entityIdentifier)).get(),
           this.trustMarkIssuerProperties, properties,
           trustMarkSubjectProperty).serialize();
     } catch (final ParseException | JOSEException e) {

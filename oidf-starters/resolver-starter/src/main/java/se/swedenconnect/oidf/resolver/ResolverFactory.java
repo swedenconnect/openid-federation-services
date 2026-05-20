@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,12 +50,12 @@ public class ResolverFactory {
   /**
    * Constructor.
    *
-   * @param resolverCacheFactory factory for creating snap resolver caches
-   * @param processor            to use for metadata
-   * @param treeLoaderFactory    to use for creating tree loaders
-   * @param registry             for caches
-   * @param signerFactory        to use
-   * @param transformers         functions to apply on resolver
+   * @param resolverCacheFactory  factory for creating snap resolver caches
+   * @param processor             to use for metadata
+   * @param treeLoaderFactory     to use for creating tree loaders
+   * @param registry              for caches
+   * @param signerFactory         to use
+   * @param transformers          functions to apply on resolver
    * @param compositeRecordSource to find entity
    */
   public ResolverFactory(

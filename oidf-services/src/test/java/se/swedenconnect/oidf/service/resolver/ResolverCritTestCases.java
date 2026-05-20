@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class ResolverCritTestCases {
 
     final List<String> crit = (List<String>) trustChainEntryDifference.get("crit").leftValue();
     Assertions.assertEquals("ec_location", crit.getFirst());
-    Assertions.assertEquals("http://localhost:11111/im/banan", trustChainEntryDifference.get(
+    Assertions.assertEquals("http://localhost:11111/im/banan/.well-known/openid-federation", trustChainEntryDifference.get(
         "ec_location").leftValue());
   }
 

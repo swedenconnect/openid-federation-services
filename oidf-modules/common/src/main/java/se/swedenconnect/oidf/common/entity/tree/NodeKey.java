@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,16 @@
  */
 package se.swedenconnect.oidf.common.entity.tree;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 /**
  * Class for representing a single node (key) in the resolver tree.
  *
- * @param issuer  part
- * @param subject part
+ * @param entityId the entity identifier
  * @author Felix Hellman
  */
-public record NodeKey(String issuer, String subject) {
-
-  /**
-   * @return true if issuer is equal to subject
-   */
-  public boolean isSelfStatement() {
-    return this.issuer.equals(this.subject);
-  }
+public record NodeKey(String entityId) {
 
   /**
    * Parses a string into a {@link NodeKey}
@@ -42,28 +34,28 @@ public record NodeKey(String issuer, String subject) {
    * @return new instance
    */
   public static NodeKey parse(final String key) {
-    final String[] split = key.split("!");
-    return new NodeKey(split[0], split[1]);
+    return new NodeKey(key);
   }
 
   /**
    * @return string representation of key
    */
   public String getKey() {
-    return "%s!%s".formatted(this.issuer, this.subject);
+    return this.entityId;
   }
 
   /**
-   * Creates a key from an entity statement.
+   * Creates a key from a signed JWT.
    *
-   * @param es to create key from
+   * @param jwt to create key from
    * @return new instance
    */
-  public static NodeKey fromEntityStatement(final EntityStatement es) {
-    return new NodeKey(
-        es.getClaimsSet().getIssuer().getValue(),
-        es.getClaimsSet().getSubject().getValue()
-    );
+  public static NodeKey fromSignedJwt(final SignedJWT jwt) {
+    try {
+      return new NodeKey(jwt.getJWTClaimsSet().getSubject());
+    } catch (final Exception e) {
+      throw new IllegalArgumentException("Failed to determine node key from signed jwt");
+    }
   }
 
   /**
@@ -73,10 +65,7 @@ public record NodeKey(String issuer, String subject) {
    * @return new instance
    */
   public static NodeKey fromEntityRecord(final EntityRecord record) {
-    return new NodeKey(
-        record.getEntityIdentifier().getValue(),
-        record.getEntityIdentifier().getValue()
-    );
+    return new NodeKey(record.getEntityIdentifier().getValue());
   }
 
   /**
@@ -84,9 +73,6 @@ public record NodeKey(String issuer, String subject) {
    * @return true if matches
    */
   public boolean matches(final EntityRecord record) {
-    final NodeKey key = NodeKey.fromEntityRecord(record);
-
-    return this.issuer.equals(key.issuer)
-           && this.subject.equals(key.subject);
+    return this.entityId.equals(NodeKey.fromEntityRecord(record).entityId());
   }
 }

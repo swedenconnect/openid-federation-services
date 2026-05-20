@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ class JsonRegistryLoaderTest {
     final KeyProperty property = new KeyProperty();
     property.setKey(generateKey());
     property.setAlias("sign-key-1");
-    property.setMapping("hosted");
+    property.setMapping(List.of("hosted"));
     registry.register(property);
     final JsonRegistryLoader jsonRegistryLoader =
         new JsonRegistryLoader(this.createGson(new JWKSKidReferenceLoader(registry)));

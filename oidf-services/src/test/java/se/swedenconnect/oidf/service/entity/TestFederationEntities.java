@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class TestFederationEntities {
     public static class NestedIM {
       public static EntityID INTERMEDIATE = new EntityID("http://localhost:11111/im/im");
       public static EntityID OP = new EntityID("http://localhost:11111/im/im/op");
+      public static EntityID RP = new EntityID("http://localhost:11111/im/im/rp");
     }
   }
 }

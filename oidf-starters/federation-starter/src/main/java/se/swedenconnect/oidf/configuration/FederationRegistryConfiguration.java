@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ public class FederationRegistryConfiguration {
   }
 
   @Bean
+  @ConditionalOnMissingBean(CachedRecordSource.class)
   CachedRecordSource cachedRecordSource(final Cache<String, CompositeRecord> cache) {
     return new CachedRecordSource(cache);
   }
@@ -112,6 +113,14 @@ public class FederationRegistryConfiguration {
   @Bean
   RestClientFactory restClientFactory(final SslBundles sslBundle, final ObservationRegistry registry) {
     return new RestClientFactory(sslBundle, registry);
+  }
+
+  @Bean
+  RestClient federationRestClient(final RestClientFactory restClientFactory,
+                                  final FederationProperties properties) {
+    return restClientFactory.create(properties.getResolver().getClient()).mutate()
+        .defaultHeader("cache-control", "no-cache")
+        .build();
   }
 
   @Bean

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@ import java.nio.charset.StandardCharsets;
  * @author Felix Hellman
  */
 public class ExpirableEntityStatementSerializer implements RedisSerializer<Expirable<EntityStatement>> {
-
-  private final RedisSerializer<EntityStatement> entityStatementSerializer = new EntityStatementSerializer();
 
   @Override
   public byte[] serialize(final Expirable<EntityStatement> value) throws SerializationException {

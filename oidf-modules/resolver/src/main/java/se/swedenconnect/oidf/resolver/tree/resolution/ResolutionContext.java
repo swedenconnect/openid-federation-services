@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,29 @@
  */
 package se.swedenconnect.oidf.resolver.tree.resolution;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Context for resolver resolution.
  *
  * @author Felix Hellman
  */
+@NoArgsConstructor
 public class ResolutionContext {
-  private final Set<String> visited = new HashSet<>();
+  private final Set<String> visited = ConcurrentHashMap.newKeySet();
+  @Getter
+  @Setter
+  private EntityStatementWrapper trustAnchorEntityStatement;
 
   /**
    * Adds an entity

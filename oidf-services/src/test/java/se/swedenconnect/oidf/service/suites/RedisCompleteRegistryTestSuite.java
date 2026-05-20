@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,13 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.mock.env.MockEnvironment;
 import org.testcontainers.utility.DockerImageName;
 import se.swedenconnect.oidf.service.Application;
+import se.swedenconnect.oidf.service.CacheTestCases;
 import se.swedenconnect.oidf.service.TestConfiguration;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
 import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverCritTestCases;
+import se.swedenconnect.oidf.service.resolver.ResolverDiscoveryTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverPolicyTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverTrustMarkTestCases;
 import se.swedenconnect.oidf.service.service.GeneralErrorHandlingTestCases;
@@ -49,6 +51,7 @@ import java.util.Random;
 @SelectClasses(value = {
     ResolverConstraintTestCases.class,
     ResolverTrustMarkTestCases.class,
+    ResolverDiscoveryTestCases.class,
     GeneralErrorHandlingTestCases.class,
     TrustMarkTestCases.class,
     TrustAnchorTestCases.class,
@@ -93,6 +96,7 @@ public class RedisCompleteRegistryTestSuite {
             .withProperty("federation.registry.integration.client.base-uri",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                 "/federationservice")
+            .withProperty("federation.routing.virtual-entity-routing.enabled", "true")
         )
         .profiles("integration-test")
         .run();

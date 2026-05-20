@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,14 +81,16 @@ public class KeyRegistry {
   public void register(final KeyProperty property) {
     try {
       if (Objects.nonNull(property.getMapping())) {
-        this.mappedKey.put(
-            "%s:%s".formatted(property.getMapping(), property.getKey().getKeyID()),
-            property.getKey()
-        );
-        this.mappedKey.put(
-            "%s:%s".formatted(property.getMapping(), property.getAlias()),
-            property.getKey()
-        );
+        property.getMapping().forEach(mapping -> {
+          this.mappedKey.put(
+              "%s:%s".formatted(mapping, property.getKey().getKeyID()),
+              property.getKey()
+          );
+          this.mappedKey.put(
+              "%s:%s".formatted(mapping, property.getAlias()),
+              property.getKey()
+          );
+        });
       }
     } catch (final Exception e) {
       throw new IllegalArgumentException("Failed to add key to registry ", e);

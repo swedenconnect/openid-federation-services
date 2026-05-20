@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +53,11 @@ public class Tree<T> {
    * Creates a new snapshot version with the given root.
    * @param node of the root
    * @param data of the root
+   * @param version to use for the new snapshot
    * @return snapshot of the next version
    */
-  public CacheSnapshot<T> addRoot(final Node<T> node, final T data) {
-    return this.snapshotSource.createNewSnapshot(node, data);
+  public CacheSnapshot<T> addRoot(final Node<T> node, final T data, final long version) {
+    return this.snapshotSource.createNewSnapshot(node, data, version);
   }
 
   /**
@@ -71,8 +72,17 @@ public class Tree<T> {
     }
     final HashSet<NodeKey> visisted = new HashSet<>(List.of(root.getKey()));
     final Node.NodeSearchContext<T> context =
-        new Node.NodeSearchContext<>(0, request.includeParent(), request.snapshot(), visisted);
+        new Node.NodeSearchContext<>(0, request.includeParent(), request.snapshot(), visisted,
+            request.stopOnFirstMatch());
     return root.search(request.predicate(), context);
+  }
+
+  /**
+   * @param key to look up
+   * @return node data for key
+   */
+  public T getNode(final NodeKey key) {
+    return this.snapshotSource.snapshot().getData(key);
   }
 
   /**
@@ -80,7 +90,8 @@ public class Tree<T> {
    */
   public void visit(final VisitRequest<T> request) {
     final HashSet<NodeKey> visited = new HashSet<>();
-    final Node.NodeSearchContext<T> context = new Node.NodeSearchContext<>(0, false, request.snapshot(), visited);
+    final Node.NodeSearchContext<T> context =
+        new Node.NodeSearchContext<>(0, false, request.snapshot(), visited, false);
     request.snapshot().getRoot()
         .visit(request.searchPredicate(), request.visitor(), context);
   }

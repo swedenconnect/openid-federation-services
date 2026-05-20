@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ public interface SnapshotSource<T> {
   /**
    * @param root node to add
    * @param rootData to add
+   * @param version to use for the new snapshot
    * @return snapshot of next version
    */
-  CacheSnapshot<T> createNewSnapshot(final Node<T> root, final T rootData);
+  CacheSnapshot<T> createNewSnapshot(final Node<T> root, final T rootData, final long version);
 }

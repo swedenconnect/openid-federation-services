@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,15 @@ public class CompositeRecordSource implements RecordSource {
     return this.recordSources.stream()
         .flatMap(r -> r.getAllEntities().stream())
         .toList();
+  }
+
+  @Override
+  public Optional<EntityRecord> getEntityByVirtualEntityId(final EntityID virtualEntityId) {
+    return this.recordSources.stream()
+        .map(s -> s.getEntityByVirtualEntityId(virtualEntityId))
+        .filter(Optional::isPresent)
+        .findFirst()
+        .orElse(Optional.empty());
   }
 
   @Override

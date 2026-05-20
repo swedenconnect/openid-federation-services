@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
 
 /**
  * Logical node implementation that holds a key for data located elsewhere.
@@ -81,17 +80,18 @@ public class Node<T> {
     if (searchPredicate.test(context.cacheSnapshot.getData(this.key), context)) {
       matches.add(new Tree.SearchResult<>(this, context));
     }
-    final List<Node<T>> children =
-        context.cacheSnapshot().getChildren(this);
+    final List<Node<T>> children = context.cacheSnapshot().getChildren(this);
 
-
-    final Set<Tree.SearchResult<T>> results =
-        children.stream()
-            .filter(child -> context.visisted.add(child.key))
-            .flatMap(child -> {
-              return child.search(searchPredicate, context.next()).stream();
-            })
-            .collect(Collectors.toSet());
+    final Set<Tree.SearchResult<T>> results = new HashSet<>();
+    for (final Node<T> child : children) {
+      if (!context.visisted.add(child.key)) {
+        continue;
+      }
+      results.addAll(child.search(searchPredicate, context.next()));
+      if (context.stopOnFirstMatch() && !results.isEmpty()) {
+        break;
+      }
+    }
 
     matches.addAll(results);
 
@@ -119,18 +119,20 @@ public class Node<T> {
 
   /**
    * @param level         of the tree
-   * @param includeParent true if all parents of a search result should be included
-   * @param cacheSnapshot snapshot of a specific version of the cache to search upon
-   * @param visisted      nodes that has already been visited, in order to resolve cyclic graphs
-   * @param <T>           type
+   * @param includeParent    true if all parents of a search result should be included
+   * @param cacheSnapshot    snapshot of a specific version of the cache to search upon
+   * @param visisted         nodes that has already been visited, in order to resolve cyclic graphs
+   * @param stopOnFirstMatch true if the search should stop after finding the first match
+   * @param <T>              type
    */
   public record NodeSearchContext<T>(int level, boolean includeParent, CacheSnapshot<T> cacheSnapshot,
-                                     Set<NodeKey> visisted) {
+                                     Set<NodeKey> visisted, boolean stopOnFirstMatch) {
     /**
      * @return node context for the next level of iteration
      */
     public NodeSearchContext<T> next() {
-      return new NodeSearchContext<>(this.level + 1, this.includeParent, this.cacheSnapshot, this.visisted);
+      return new NodeSearchContext<>(this.level + 1, this.includeParent, this.cacheSnapshot, this.visisted,
+          this.stopOnFirstMatch);
     }
   }
 

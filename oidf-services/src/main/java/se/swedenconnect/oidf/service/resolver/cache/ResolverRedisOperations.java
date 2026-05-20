@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2024-2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@
  */
 package se.swedenconnect.oidf.service.resolver.cache;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.core.RedisTemplate;
 import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -37,15 +40,19 @@ public class ResolverRedisOperations {
    * Constructor.
    * @param entityTemplate for handling entity statements
    * @param childTemplate for handling child listings
+   * @param cacheTtl time-to-live for cached entries
    */
-  public ResolverRedisOperations(final RedisTemplate<String, EntityStatement> entityTemplate,
-                                 final RedisTemplate<String, String> childTemplate) {
+  public ResolverRedisOperations(final RedisTemplate<String, ScrapedEntity> entityTemplate,
+                                 final RedisTemplate<String, String> childTemplate,
+                                 final Duration cacheTtl) {
     this.template = entityTemplate;
     this.stringTemplate = childTemplate;
+    this.cacheTtl = cacheTtl;
   }
 
-  private final RedisTemplate<String, EntityStatement> template;
+  private final RedisTemplate<String, ScrapedEntity> template;
   private final RedisTemplate<String, String> stringTemplate;
+  private final Duration cacheTtl;
 
   /**
    * Gets all children for an entity
@@ -53,12 +60,12 @@ public class ResolverRedisOperations {
    * @param childKey to search for
    * @return list of children, empty list if no children
    */
-  public List<Node<EntityStatement>> getChildren(final ChildKey childKey) {
+  public List<Node<ScrapedEntity>> getChildren(final ChildKey childKey) {
     final Set<String> members = this.stringTemplate.opsForSet().members(childKey.getRedisKey());
     if (Objects.nonNull(members)) {
       return members
           .stream()
-          .map(key -> new Node<EntityStatement>(NodeKey.parse(key)))
+          .map(key -> new Node<ScrapedEntity>(NodeKey.parse(decode(key))))
           .toList();
     }
     return List.of();
@@ -69,9 +76,9 @@ public class ResolverRedisOperations {
    * @param parent key
    * @param child node key
    */
-  public void append(final ChildKey parent, final Node<EntityStatement> child) {
-    this.stringTemplate.opsForSet().add(parent.getRedisKey(), child.getKey().getKey());
-    this.stringTemplate.expire(parent.getRedisKey(), Duration.ofHours(2));
+  public void append(final ChildKey parent, final Node<ScrapedEntity> child) {
+    this.stringTemplate.opsForSet().add(parent.getRedisKey(), encode(child.getKey().getKey()));
+    this.stringTemplate.expire(parent.getRedisKey(), this.cacheTtl);
   }
 
   /**
@@ -79,9 +86,9 @@ public class ResolverRedisOperations {
    * @param key to update for
    * @param data to set
    */
-  public void setData(final EntityKey key, final EntityStatement data) {
-    this.template.opsForValue().set(key.getRedisKey(), data);
-    this.template.expire(key.getRedisKey(), Duration.ofHours(2));
+  public void setData(final EntityKey key, final ScrapedEntity data) {
+    this.template.<String, ScrapedEntity>opsForHash().put(key.getHashKey(), key.getHashField(), data);
+    this.template.expire(key.getHashKey(), this.cacheTtl);
   }
 
   /**
@@ -89,8 +96,8 @@ public class ResolverRedisOperations {
    * @param key for value
    * @return value, can be null
    */
-  public EntityStatement getData(final EntityKey key) {
-    return this.template.opsForValue().get(key.getRedisKey());
+  public ScrapedEntity getData(final EntityKey key) {
+    return this.template.<String, ScrapedEntity>opsForHash().get(key.getHashKey(), key.getHashField());
   }
 
   /**
@@ -98,9 +105,12 @@ public class ResolverRedisOperations {
    * @param key for root
    * @return root node
    */
-  public Node<EntityStatement> getRoot(final RootKey key) {
+  public Node<ScrapedEntity> getRoot(final RootKey key) {
     final String root = this.stringTemplate.opsForValue().get(key.getRedisKey());
-    return new Node<>(NodeKey.parse(root));
+    if (root == null) {
+      return null;
+    }
+    return new Node<>(NodeKey.parse(decode(root)));
   }
 
   /**
@@ -108,20 +118,24 @@ public class ResolverRedisOperations {
    * @param key for the root node
    * @param root node key for root
    */
-  public void setRoot(final RootKey key, final Node<EntityStatement> root) {
-    this.stringTemplate.opsForValue().set(key.getRedisKey(), root.getKey().getKey());
-    this.stringTemplate.expire(key.getRedisKey(), Duration.ofHours(2));
+  public void setRoot(final RootKey key, final Node<ScrapedEntity> root) {
+    this.stringTemplate.opsForValue().set(key.getRedisKey(), encode(root.getKey().getKey()));
+    this.stringTemplate.expire(key.getRedisKey(), this.cacheTtl);
   }
 
   /**
-   * Key for handling entities.
-   * @param location internal node key
+   * Key for handling entities stored in a hash.
+   * @param location internal node key (used as hash field)
    * @param version to which the entity belongs to
    * @param entityId to which module the data belongs to
    */
-  public record EntityKey(String location, int version, String entityId) {
-    String getRedisKey() {
-      return "%s:%d:entity:%s".formatted(this.entityId, this.version, this.location);
+  public record EntityKey(String location, long version, String entityId) {
+    String getHashKey() {
+      return "%s:%d:entities".formatted(encode(this.entityId), this.version);
+    }
+
+    String getHashField() {
+      return encode(this.location);
     }
   }
 
@@ -131,9 +145,9 @@ public class ResolverRedisOperations {
    * @param version to which the child and parent belongs to
    * @param entityId to which module the data belongs to
    */
-  public record ChildKey(Node<EntityStatement> parent, int version, String entityId) {
+  public record ChildKey(Node<ScrapedEntity> parent, long version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:children:%s".formatted(this.entityId, this.version, this.parent.getKey());
+      return "%s:%d:children:%s".formatted(encode(this.entityId), this.version, encode(this.parent.getKey().getKey()));
     }
   }
 
@@ -142,9 +156,17 @@ public class ResolverRedisOperations {
    * @param version to which the root belongs to
    * @param entityId to which module the data belongs to
    */
-  public record RootKey(int version, String entityId) {
+  public record RootKey(long version, String entityId) {
     String getRedisKey() {
-      return "%s:%d:root".formatted(this.entityId, this.version);
+      return "%s:%d:root".formatted(encode(this.entityId), this.version);
     }
+  }
+
+  static String encode(final String value) {
+    return URLEncoder.encode(value, StandardCharsets.UTF_8);
+  }
+
+  static String decode(final String value) {
+    return URLDecoder.decode(value, StandardCharsets.UTF_8);
   }
 }
