@@ -123,7 +123,6 @@
         <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-otlp</artifactId>
-            <version>1.49.0</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
