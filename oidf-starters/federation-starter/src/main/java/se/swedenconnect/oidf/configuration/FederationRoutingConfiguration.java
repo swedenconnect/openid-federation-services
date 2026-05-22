@@ -28,6 +28,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.routing.Router;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import static org.springframework.web.servlet.function.RouterFunctions.route;
@@ -76,6 +77,8 @@ public class FederationRoutingConfiguration {
     route.filter((request, next) -> {
         try {
           return next.handle(request);
+        } catch (final NoSuchElementException e) {
+          return ServerResponse.notFound().build();
         } catch (final Exception e) {
           throw new RuntimeException(e);
         }
