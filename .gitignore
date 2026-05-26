@@ -50,3 +50,4 @@ out
 .flattened-pom.xml
 /**/.flattened-pom.xml
 .claude/
+build-snapshot.sh

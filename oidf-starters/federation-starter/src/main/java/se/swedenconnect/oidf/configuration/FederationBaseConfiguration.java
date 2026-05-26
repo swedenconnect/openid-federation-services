@@ -28,6 +28,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.FederationProperties;
 import se.swedenconnect.oidf.RestClientFederationClient;
+import se.swedenconnect.oidf.UptimeRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.LocalRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.RecordSource;
@@ -65,9 +66,16 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
+  UptimeRegistry uptimeRegistry() {
+    return new UptimeRegistry();
+  }
+
+  @Bean
   FederationClient federationClient(
-      @Qualifier("federationRestClient") final RestClient restClient, final MeterRegistry registry) {
-    return new RestClientFederationClient(restClient, registry);
+      @Qualifier("federationRestClient") final RestClient restClient,
+      final MeterRegistry registry,
+      final UptimeRegistry uptimeRegistry) {
+    return new RestClientFederationClient(restClient, registry, uptimeRegistry);
   }
 
   @Bean

@@ -144,18 +144,35 @@ public class ExportFriendlyEndpoint {
               "nodeRadius", 24
           ));
 
+          final Optional<Map<String, Object>> uptimeOpt = Optional.ofNullable(node.get("uptime"))
+              .map(u -> (Map<String, Object>) u);
+
           Optional.ofNullable(node.get("metrics"))
               .map(metrics -> (Map<String, Object>) metrics)
               .ifPresent(metrics -> {
                 if (!errorsPresent) {
-                  nodeJson.put("arc__success", metrics.get("success"));
-                  nodeJson.put("arc__failure", metrics.get("failure"));
+                  if (uptimeOpt.isPresent()) {
+                    final Map<String, Object> uptime = uptimeOpt.get();
+                    final double ratio = (double) uptime.get("ratio");
+                    nodeJson.put("arc__up", ratio);
+                    nodeJson.put("arc__down", 1.0 - ratio);
+                  } else {
+                    nodeJson.put("arc__success", metrics.get("success"));
+                    nodeJson.put("arc__failure", metrics.get("failure"));
+                  }
                 } else {
                   nodeJson.put("arc__validation", 1.0);
                 }
                 nodeJson.put("mainstat", node.get("mainstat"));
                 nodeJson.put("secondarystat", node.get("secondarystat"));
               });
+
+          uptimeOpt.ifPresent(uptime -> {
+            final double ratio = (double) uptime.get("ratio");
+            nodeJson.put("detail__uptime_percent", String.valueOf(Math.round(ratio * 100)));
+            nodeJson.put("detail__avg_response_ms", String.valueOf(uptime.get("avgResponseMs")));
+            nodeJson.put("detail__last_scraped", uptime.get("lastSeen").toString());
+          });
 
           Optional.ofNullable(evaluatedRole).ifPresent(role -> {
             Optional.ofNullable(icons.get(role)).ifPresent(icon -> {

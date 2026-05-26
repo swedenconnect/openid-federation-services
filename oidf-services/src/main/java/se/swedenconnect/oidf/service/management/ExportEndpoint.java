@@ -31,6 +31,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.w3c.dom.Entity;
+import se.swedenconnect.oidf.UptimeRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
@@ -58,6 +59,7 @@ public class ExportEndpoint {
   private final CompositeRecordSource source;
   private final ResolverFactory factory;
   private final MeterRegistry meterRegistry;
+  private final UptimeRegistry uptimeRegistry;
   /**
    * JSON mapper for serializing graphs
    */
@@ -153,16 +155,25 @@ public class ExportEndpoint {
         if (explain != null) {
           ss.withResolverExplanation(explain);
         }
+        final String entityId = ss.getEntityStatement().getEntityID().getValue();
         final double success = this.meterRegistry.counter("GET_entity_configuration", List.of(
-            Tag.of("entityId", ss.getEntityStatement().getEntityID().getValue()),
+            Tag.of("entityId", entityId),
             Tag.of("outcome", "success")
         )).count();
         final double failure = this.meterRegistry.counter("GET_entity_configuration", List.of(
-            Tag.of("entityId", ss.getEntityStatement().getEntityID().getValue()),
+            Tag.of("entityId", entityId),
             Tag.of("outcome", "failure")
         )).count();
         final double total = success + failure;
         ss.withMetrics(total, success, failure);
+
+        this.uptimeRegistry.uptimeRatio(entityId).ifPresent(ratio -> {
+          final String lastSeen = this.uptimeRegistry.getLastSeenReachable(entityId)
+              .map(java.time.Instant::toString)
+              .orElse(null);
+          final Long avgMs = this.uptimeRegistry.getAvgResponseMs(entityId).orElse(null);
+          ss.withUptimeData(ratio, lastSeen, avgMs);
+        });
       } catch (final Exception e) {
         log.error("Failed to add explanation to entity statement from resolver", e);
       }
