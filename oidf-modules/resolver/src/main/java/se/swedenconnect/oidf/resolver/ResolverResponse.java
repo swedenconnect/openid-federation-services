@@ -20,16 +20,18 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.Builder;
 import net.minidev.json.JSONObject;
+import se.swedenconnect.oidf.resolver.chain.ChainValidationError;
 
 import java.util.List;
 
 /**
  *
- * @param entityStatement of the resolved entity
- * @param metadata that has been processed by the policy
- * @param trustMarkEntries for the trust chain
- * @param trustChain for this response
- * @param validationErrors for this response
+ * @param entityStatement       of the resolved entity
+ * @param metadata              that has been processed by the policy
+ * @param trustMarkEntries      for the trust chain
+ * @param trustChain            for this response
+ * @param validationErrors      for this response
+ * @param typedValidationErrors typed chain validation errors with stable error codes
  *
  * @author Felix Hellman
  */
@@ -39,5 +41,6 @@ public record ResolverResponse(
     JSONObject metadata,
     List<TrustMarkEntry> trustMarkEntries,
     List<EntityStatement> trustChain,
-    List<Exception> validationErrors) {
+    List<Exception> validationErrors,
+    List<ChainValidationError> typedValidationErrors) {
 }

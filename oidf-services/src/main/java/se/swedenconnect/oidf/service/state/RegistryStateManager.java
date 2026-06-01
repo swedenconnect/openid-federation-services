@@ -72,7 +72,7 @@ public class RegistryStateManager extends ReadyStateComponent {
   @EventListener
   public RegistryReadyEvent init(final ApplicationStartedEvent event) {
     try {
-      this.reloadFromRegistry();
+      this.forceReload();
       return new RegistryReadyEvent();
     } finally {
       this.markReady();
@@ -87,6 +87,37 @@ public class RegistryStateManager extends ReadyStateComponent {
     if (this.ready()) {
       //No need to execute cron job during startup
       this.reloadFromRegistry();
+    }
+  }
+
+  /**
+   * Force reload from registry regardless of current state hash. Always publishes {@link RegistryLoadedEvent}
+   * if the lock can be acquired.
+   */
+  public void forceReload() {
+    log.debug("Forced federation reload triggered via notify endpoint");
+    if (this.serviceLock.acquireLock(this.name())) {
+      try {
+        if (this.properties.getRegistry().getIntegration().getEnabled()) {
+          try {
+            final CompositeRecord record = this.populator.reload();
+            try {
+              final String registrySha256 = this.hashFactory.hashState(record);
+              log.debug("Registry force-reloaded with hash {}", registrySha256);
+              this.state.updateRegistryState(registrySha256);
+            } catch (final Exception e) {
+              log.error("Failed to serialize state", e);
+            }
+          } catch (final Exception e) {
+            log.error("Failed to load from registry", e);
+          }
+        }
+        this.publisher.publishEvent(new RegistryLoadedEvent());
+      } finally {
+        this.serviceLock.close(this.name());
+      }
+    } else {
+      log.debug("Forced reload skipped, lock held by another instance");
     }
   }
 

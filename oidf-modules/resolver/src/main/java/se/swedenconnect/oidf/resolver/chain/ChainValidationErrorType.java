@@ -17,30 +17,24 @@
 package se.swedenconnect.oidf.resolver.chain;
 
 /**
- * Error class for chain validations.
+ * Stable machine-readable codes for chain validation failures.
  *
  * @author Felix Hellman
  */
-public class ChainValidationError extends RuntimeException {
-
-  private final ChainValidationErrorType errorType;
-
-  /**
-   * Constructor.
-   *
-   * @param errorType stable error code for this failure
-   * @param message   human-readable description
-   * @param cause     underlying exception, may be null
-   */
-  public ChainValidationError(final ChainValidationErrorType errorType, final String message, final Throwable cause) {
-    super(message, cause);
-    this.errorType = errorType;
-  }
-
-  /**
-   * @return stable machine-readable error type
-   */
-  public ChainValidationErrorType getErrorType() {
-    return this.errorType;
-  }
+public enum ChainValidationErrorType {
+  LEAF_SIGNATURE_INVALID,
+  LEAF_WRONG_JWK_KID,
+  LEAF_EXPIRED,
+  LEAF_NO_ISSUE_TIME,
+  LEAF_ISSUE_TIME_IN_FUTURE,
+  LEAF_NO_EXPIRATION_TIME,
+  TRUST_ANCHOR_INVALID,
+  CHAIN_LINK_SIGNATURE_INVALID,
+  STATEMENT_EXPIRED,
+  CHAIN_TOO_SHORT,
+  ENTITY_TYPE_CONSTRAINT_VIOLATION,
+  MAX_PATH_LENGTH_EXCEEDED,
+  NAMING_CONSTRAINT_EXCLUDED_VIOLATION,
+  NAMING_CONSTRAINT_PERMITTED_VIOLATION,
+  UNSUPPORTED_CRITICAL_CLAIMS,
 }

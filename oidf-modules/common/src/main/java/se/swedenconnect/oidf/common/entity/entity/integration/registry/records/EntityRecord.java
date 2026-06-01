@@ -160,7 +160,7 @@ public class EntityRecord implements Serializable {
         endpoints.add(entityID.getValue() + this.ecLocation);
       }
     }
-    endpoints.add(this.entityIdentifier.getValue() + "/.well-known/openid-federation");
+    endpoints.add(entityID.getValue() + "/.well-known/openid-federation");
     return endpoints;
   }
 

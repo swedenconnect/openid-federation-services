@@ -62,6 +62,10 @@ public class ChainValidator {
             .filter(stepResult -> !stepResult.valid())
             .toList();
 
+    final List<ChainValidationError> typedErrors = failedValidationSteps.stream()
+        .flatMap(s -> s.validationErrors().stream())
+        .toList();
+
     if (!failedValidationSteps.isEmpty()) {
       final Set<String> failedValidationStepNames =
           failedValidationSteps.stream().map(ChainValidationStepResult::name).collect(Collectors.toSet());
@@ -71,7 +75,7 @@ public class ChainValidator {
       errors.add(new InvalidTrustChainException(exceptionMessage));
     }
 
-    return new ChainValidationResult(chain, errors);
+    return new ChainValidationResult(chain, errors, typedErrors);
   }
 
   private static ChainValidationStepResult execute(final ChainValidationStep step, final List<EntityStatement> chain) {

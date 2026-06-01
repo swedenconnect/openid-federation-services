@@ -88,6 +88,20 @@ public class ExportFriendlyEndpoint {
     return "export-grafana?trustAnchor=" + trustAnchor;
   }
 
+  private static final Map<String, String> ERROR_TYPE_SUBTITLE = Map.ofEntries(
+      Map.entry("LEAF_WRONG_JWK_KID", "wrong kid"),
+      Map.entry("LEAF_SIGNATURE_INVALID", "invalid signature"),
+      Map.entry("LEAF_EXPIRED", "expired"),
+      Map.entry("TRUST_ANCHOR_INVALID", "trust anchor invalid"),
+      Map.entry("CHAIN_LINK_SIGNATURE_INVALID", "broken chain link"),
+      Map.entry("ENTITY_TYPE_CONSTRAINT_VIOLATION", "entity type constraint"),
+      Map.entry("MAX_PATH_LENGTH_EXCEEDED", "max path length exceeded"),
+      Map.entry("NAMING_CONSTRAINT_EXCLUDED_VIOLATION", "naming constraint"),
+      Map.entry("NAMING_CONSTRAINT_PERMITTED_VIOLATION", "naming constraint"),
+      Map.entry("UNSUPPORTED_CRITICAL_CLAIMS", "unsupported crit claim"),
+      Map.entry("CHAIN_TOO_SHORT", "chain too short")
+  );
+
   static String formatAsGrafana(final Map<String, List<Map<String, Object>>> nodesAndEdges)
       throws JsonProcessingException {
     final Map<String, String> icons = Map.of(
@@ -203,16 +217,29 @@ public class ExportFriendlyEndpoint {
           });
 
           if (errorsPresent) {
-            final AtomicInteger counter = new AtomicInteger();
-            explanation.forEach((a, b) -> {
-              nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()),
-                  b.entrySet().stream().map(Map.Entry::getValue).map(m -> {
-                    if (m.contains("messages:")) {
-                      return m.split("messages:")[1];
-                    }
-                    return m;
-                  }).collect(Collectors.joining(",")));
-            });
+            final boolean hasTypedErrors = explanation.values().stream().anyMatch(m -> m.containsKey("type"));
+            if (hasTypedErrors) {
+              final String errorType = explanation.values().stream()
+                  .map(m -> m.get("type"))
+                  .filter(Objects::nonNull)
+                  .findFirst()
+                  .orElse("unknown");
+              nodeJson.put("subtitle", ERROR_TYPE_SUBTITLE.getOrDefault(errorType, "validation error"));
+              final AtomicInteger counter = new AtomicInteger();
+              explanation.forEach((i, m) -> nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()),
+                  m.getOrDefault("type", "") + ": " + m.getOrDefault("message", "")));
+            } else {
+              final AtomicInteger counter = new AtomicInteger();
+              explanation.forEach((a, b) -> {
+                nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()),
+                    b.entrySet().stream().map(Map.Entry::getValue).map(m -> {
+                      if (m.contains("messages:")) {
+                        return m.split("messages:")[1];
+                      }
+                      return m;
+                    }).collect(Collectors.joining(",")));
+              });
+            }
             nodeJson.put("icon", icons.get("error"));
           }
           return nodeJson;

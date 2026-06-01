@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.resolver.chain;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
@@ -25,6 +26,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Validates the signatures of the chain.
@@ -50,21 +53,45 @@ public class SignatureValidationStep implements ChainValidationStep {
 
     //Verify leaf
     final EntityStatement leaf = chain.getFirst();
-    try {
-      Objects.requireNonNull(leaf.verifySignatureOfSelfStatement());
-    } catch (final Exception e) {
-      errors.add(new ChainValidationError("Invalid leaf statement", e));
+    final String headerKid = leaf.getSignedStatement().getHeader().getKeyID();
+    final JWKSet leafJwkSet = leaf.getClaimsSet().getJWKSet();
+    if (headerKid != null && leafJwkSet != null) {
+      final Set<String> jwksKids = leafJwkSet.getKeys().stream()
+          .map(JWK::getKeyID)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toSet());
+      if (!jwksKids.isEmpty() && !jwksKids.contains(headerKid)) {
+        errors.add(new ChainValidationError(
+            ChainValidationErrorType.LEAF_WRONG_JWK_KID,
+            "JWT header kid '" + headerKid + "' not in jwks (known: " + jwksKids + ")",
+            null));
+      } else {
+        try {
+          Objects.requireNonNull(leaf.verifySignatureOfSelfStatement());
+        } catch (final Exception e) {
+          errors.add(new ChainValidationError(ChainValidationErrorType.LEAF_SIGNATURE_INVALID,
+              "Invalid leaf statement: " + e.getMessage(), e));
+        }
+      }
+    } else {
+      try {
+        Objects.requireNonNull(leaf.verifySignatureOfSelfStatement());
+      } catch (final Exception e) {
+        errors.add(new ChainValidationError(ChainValidationErrorType.LEAF_SIGNATURE_INVALID,
+            "Invalid leaf statement: " + e.getMessage(), e));
+      }
     }
     try {
       verifyValidityTime(leaf);
     } catch (final Exception e) {
-      errors.add(new ChainValidationError("Leaf validity time has expired", e));
+      errors.add(new ChainValidationError(ChainValidationErrorType.LEAF_EXPIRED,
+          "Leaf validity time has expired", e));
     }
     //Verify TA
     try {
       this.verifyEntity(chain.getLast());
     } catch (final Exception e) {
-      errors.add(new ChainValidationError("TA is not valid", e));
+      errors.add(new ChainValidationError(ChainValidationErrorType.TRUST_ANCHOR_INVALID, "TA is not valid", e));
     }
 
     for (int i = 0; i < chain.size() - 1; i++) {
@@ -73,15 +100,14 @@ public class SignatureValidationStep implements ChainValidationStep {
       try {
         verifyLink(current, next);
       } catch (final Exception e) {
-        errors.add(new ChainValidationError("Failed to verify link between %s and %s"
-            .formatted(current.getEntityID(), next.getEntityID()), e));
+        errors.add(new ChainValidationError(ChainValidationErrorType.CHAIN_LINK_SIGNATURE_INVALID,
+            "Failed to verify link between %s and %s".formatted(current.getEntityID(), next.getEntityID()), e));
       }
       try {
         verifyValidityTime(current);
       } catch (final Exception e) {
-        errors.add(
-            new ChainValidationError("Failed to verify validity time of %s".formatted(current.getEntityID()), e)
-        );
+        errors.add(new ChainValidationError(ChainValidationErrorType.STATEMENT_EXPIRED,
+            "Failed to verify validity time of %s".formatted(current.getEntityID()), e));
       }
     }
 
