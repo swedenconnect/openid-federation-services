@@ -43,19 +43,23 @@ All lines should print `OK`. Exit code `0` on full pass, non-zero if any fail.
 
 ```bash
 # Trust Anchor
-curl http://localhost:8080/ta
+curl http://localhost:8080/ta/.well-known/openid-federation
 
 # Intermediate
-curl http://localhost:8080/im
+curl http://localhost:8080/im/.well-known/openid-federation
+
 
 # OpenID Provider
-curl http://localhost:8080/op
+curl http://localhost:8080/op/.well-known/openid-federation
+
 
 # Relying Party
-curl http://localhost:8080/rp
+curl http://localhost:8080/rp/.well-known/openid-federation
+
 
 # Resolver
-curl http://localhost:8080/resolver
+curl http://localhost:8080/resolver/.well-known/openid-federation
+
 ```
 
 **Subordinate Listing**
