@@ -25,6 +25,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -124,12 +125,14 @@ public class FederationRegistryConfiguration {
   }
 
   @Bean
+  @ConditionalOnProperty(name = "federation.registry.integration.enabled", havingValue = "true")
   RestClient registryRestClient(final RestClientFactory restClientFactory,
                                 final FederationProperties properties) {
     return restClientFactory.create(properties.getRegistry().getIntegration().getClient());
   }
 
   @Bean
+  @ConditionalOnProperty(name = "federation.registry.integration.enabled", havingValue = "true")
   RecordRegistryIntegration recordRegistryIntegration(
       final RegistryVerifier verifier,
       @Qualifier("registryRestClient") final RestClient restClient) {

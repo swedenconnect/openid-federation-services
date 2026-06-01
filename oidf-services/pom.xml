@@ -259,6 +259,14 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <include>application.yml</include>
+                    <include>application-demo.yml</include>
+                </includes>
+            </resource>
+            <resource>
+                <filtering>false</filtering>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>demo/**</include>
                 </includes>
             </resource>
         </resources>

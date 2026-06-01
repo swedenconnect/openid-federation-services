@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.FederationServiceState;
 import se.swedenconnect.oidf.InMemoryFederationServiceState;
 import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryEntityConfigurationCache;
 import se.swedenconnect.oidf.common.entity.entity.integration.InMemoryResolverResponseCache;
@@ -63,6 +64,12 @@ import se.swedenconnect.oidf.service.state.StateHashFactory;
 @Configuration
 @EnableConfigurationProperties(FederationServiceProperties.class)
 public class OpenIdFederationConfiguration {
+
+  @Bean
+  @ConditionalOnMissingBean(RecordRegistryIntegration.class)
+  RecordRegistryIntegration throwingRecordRegistryIntegration() {
+    return new ThrowingRecordRegistryIntegration();
+  }
 
   @Bean
   @ConditionalOnMissingBean

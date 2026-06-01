@@ -1,0 +1,8 @@
+[
+  {
+    "entity-identifier": "http://localhost:8080/resolver",
+    "trust-anchor": "http://localhost:8080/ta",
+    "trusted-keys": "federation:demo-federation-key",
+    "resolve-response-duration": "1H"
+  }
+]

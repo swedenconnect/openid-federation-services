@@ -1,0 +1,72 @@
+server:
+  port: 8080
+
+management:
+  tracing:
+    enabled: false
+    sampling:
+      probability: 0.0
+  otlp:
+    metrics:
+      export:
+        enabled: false
+    tracing:
+      export:
+        enabled: false
+
+logging:
+  structured:
+    format:
+      console:
+  level:
+    ROOT: INFO
+    se.swedenconnect: DEBUG
+
+credential:
+  bundles:
+    keystore:
+      demo-federation-key-store:
+        location: classpath:demo/signkey.p12
+        password: changeit
+        type: JKS
+      demo-hosted-key-store:
+        location: classpath:demo/signkey-2.p12
+        password: changeit
+        type: JKS
+    jks:
+      demo-federation-key:
+        store-reference: demo-federation-key-store
+        name: "Demo Federation Key"
+        key:
+          alias: 1
+          key-password: changeit
+      demo-hosted-key:
+        store-reference: demo-hosted-key-store
+        name: "Demo Hosted Key"
+        key:
+          alias: 1
+          key-password: changeit
+
+federation:
+  keys:
+    kid-algorithm: serial
+    mapping:
+      federation:
+        - "demo-federation-key"
+      hosted:
+        - "demo-hosted-key"
+  service:
+    storage: memory
+  routing:
+    enabled: true
+    mode: IGNORING
+  resolver:
+    client:
+      name: demo-resolver-client
+  registry:
+    integration:
+      enabled: false
+  local-registry:
+    trust-anchors: "classpath:demo/trust-anchors.json"
+    resolvers: "classpath:demo/resolvers.json"
+    entities: "classpath:demo/entities.json"
