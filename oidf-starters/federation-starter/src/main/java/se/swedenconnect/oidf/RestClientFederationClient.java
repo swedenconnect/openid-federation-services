@@ -47,21 +47,27 @@ import java.util.Optional;
 public class RestClientFederationClient implements FederationClient {
   private final RestClient client;
   private final MeterRegistry registry;
+  private final UptimeRegistry uptimeRegistry;
 
   /**
    * @param client to use for requests
    * @param registry for metrics
+   * @param uptimeRegistry for per-cycle uptime tracking
    */
   public RestClientFederationClient(
       final RestClient client,
-      final MeterRegistry registry
+      final MeterRegistry registry,
+      final UptimeRegistry uptimeRegistry
   ) {
     this.client = client;
     this.registry = registry;
+    this.uptimeRegistry = uptimeRegistry;
   }
 
   @Override
   public EntityStatement entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
+    final String entityId = request.parameters().entityID().getValue();
+    final long startNanos = System.nanoTime();
     final String jwt = Optional.ofNullable(request.parameters().ecLocation())
         .map(location -> {
           if (location.startsWith("data:application/entity-statement+jwt,")) {
@@ -84,21 +90,27 @@ public class RestClientFederationClient implements FederationClient {
         );
     try {
       this.registry.counter("GET_entity_configuration", List.of(
-          Tag.of("entityId", request.parameters().entityID().getValue()),
+          Tag.of("entityId", entityId),
           Tag.of("outcome", "success")
       )).increment();
-      return EntityStatement.parse(jwt);
+      final EntityStatement result = EntityStatement.parse(jwt);
+      final long responseTimeMs = (System.nanoTime() - startNanos) / 1_000_000;
+      this.uptimeRegistry.record(entityId, true);
+      this.uptimeRegistry.recordSuccess(entityId, responseTimeMs);
+      return result;
     } catch (final ParseException e) {
       this.registry.counter("GET_entity_configuration", List.of(
-          Tag.of("entityId", request.parameters().entityID().getValue()),
+          Tag.of("entityId", entityId),
           Tag.of("outcome", "failure")
       )).increment();
+      this.uptimeRegistry.record(entityId, false);
       throw new RuntimeException(e);
     } catch (final Exception e) {
       this.registry.counter("GET_entity_configuration", List.of(
-          Tag.of("entityId", request.parameters().entityID().getValue()),
+          Tag.of("entityId", entityId),
           Tag.of("outcome", "failure")
       )).increment();
+      this.uptimeRegistry.record(entityId, false);
       throw e;
     }
   }

@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.configuration;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -39,6 +40,7 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class FederationBaseRouter implements Router {
 
   private final List<ModuleRouter> moduleRouters;
@@ -112,8 +114,11 @@ public class FederationBaseRouter implements Router {
     } else {
       virtualEntityId = requestUri.substring(0, requestUri.lastIndexOf('/'));
     }
-    return source.getEntityByVirtualEntityId(new EntityID(virtualEntityId)).or(() -> {
+    log.debug("FederationBaseRouter lookup requestUri={} virtualEntityId={}", requestUri, virtualEntityId);
+    final Optional<EntityRecord> entity = source.getEntityByVirtualEntityId(new EntityID(virtualEntityId)).or(() -> {
       return source.getEntity(new NodeKey(virtualEntityId));
     });
+    log.debug("FederationBaseRouter entity found={}", entity.isPresent());
+    return entity;
   }
 }

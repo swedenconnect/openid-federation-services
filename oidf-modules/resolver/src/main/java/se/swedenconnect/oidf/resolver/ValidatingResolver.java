@@ -27,6 +27,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidTrustAnchorException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
+import se.swedenconnect.oidf.resolver.chain.ChainValidationError;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationResult;
 import se.swedenconnect.oidf.resolver.chain.ChainValidator;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
@@ -85,16 +86,20 @@ public class ValidatingResolver implements Resolver {
     final HashMap<Integer, Map<String, String>> explanation = new HashMap<>();
     final AtomicInteger counter = new AtomicInteger();
     final ResolverResponse resolverResponse = this.internalResolve(request);
-    Optional.ofNullable(resolverResponse.validationErrors())
-        .ifPresent(validationErrors -> {
-          validationErrors
-              .forEach(error -> {
-                explanation.put(
-                    counter.getAndIncrement(),
-                    Map.of(error.getClass().getCanonicalName(), error.getMessage())
-                );
-              });
-        });
+    final List<ChainValidationError> typedErrors = Optional.ofNullable(resolverResponse.typedValidationErrors())
+        .orElse(List.of());
+    if (!typedErrors.isEmpty()) {
+      typedErrors.forEach(error -> explanation.put(counter.getAndIncrement(), Map.of(
+          "type", error.getErrorType().name(),
+          "message", error.getMessage()
+      )));
+    } else {
+      Optional.ofNullable(resolverResponse.validationErrors())
+          .ifPresent(validationErrors -> validationErrors.forEach(error ->
+              explanation.put(counter.getAndIncrement(),
+                  Map.of(error.getClass().getCanonicalName(), error.getMessage()))
+          ));
+    }
     return explanation;
   }
 
@@ -179,6 +184,7 @@ public class ValidatingResolver implements Resolver {
         .trustMarkEntries(trustMarkEntries)
         .trustChain(trustChainList)
         .validationErrors(validationErrors)
+        .typedValidationErrors(chainValidationResult != null ? chainValidationResult.typedErrors() : List.of())
         .build();
   }
 

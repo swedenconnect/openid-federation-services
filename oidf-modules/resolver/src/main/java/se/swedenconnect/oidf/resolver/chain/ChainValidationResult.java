@@ -23,10 +23,21 @@ import java.util.List;
 /**
  * Response type for {@link ChainValidator} containing the trustchain of a given subject.
  *
- * @param chain that has been validated
- * @param errors for this chain validation
+ * @param chain       that has been validated
+ * @param errors      for this chain validation
+ * @param typedErrors individual typed errors from chain validation steps
  * @author Felix Hellman
  */
-public record ChainValidationResult(List<EntityStatement> chain, List<Exception> errors) {
+public record ChainValidationResult(List<EntityStatement> chain, List<Exception> errors,
+                                    List<ChainValidationError> typedErrors) {
 
+  /**
+   * Compact constructor for callers that have no typed errors.
+   *
+   * @param chain  that has been validated
+   * @param errors for this chain validation
+   */
+  public ChainValidationResult(final List<EntityStatement> chain, final List<Exception> errors) {
+    this(chain, errors, List.of());
+  }
 }

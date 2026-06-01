@@ -55,10 +55,10 @@ public class PropertyRegistry {
    */
   public LocalRegistryProperties toProperty() {
     return new LocalRegistryProperties(
-        this.trustMarkIssuers,
-        this.trustAnchors,
-        this.resolvers,
-        this.entities
+        Objects.requireNonNullElse(this.trustMarkIssuers, List.of()),
+        Objects.requireNonNullElse(this.trustAnchors, List.of()),
+        Objects.requireNonNullElse(this.resolvers, List.of()),
+        Objects.requireNonNullElse(this.entities, List.of())
     );
   }
 
@@ -67,39 +67,45 @@ public class PropertyRegistry {
    * @param key of parent
    */
   public void validate(final String key) {
-    this.resolvers.forEach(r -> {
-      final String entityIdentifier = r.getEntityIdentifier();
-      if (!this.entityExists(entityIdentifier)) {
-        throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
-            .formatted(
-                key, "resolvers",
-                entityIdentifier,
-                key, "entities"
-            ));
-      }
-    });
-    this.trustAnchors.forEach(r -> {
-      final String entityIdentifier = r.getEntityIdentifier().getValue();
-      if (!this.entityExists(entityIdentifier)) {
-        throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
-            .formatted(
-                key, "trust-anchors",
-                entityIdentifier,
-                key, "entities"
-            ));
-      }
-    });
-    this.trustMarkIssuers.forEach(r -> {
-      final String entityIdentifier = r.entityIdentifier().getValue();
-      if (!this.entityExists(entityIdentifier)) {
-        throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
-            .formatted(
-                key, "trust-mark-issuers",
-                entityIdentifier,
-                key, "entities"
-            ));
-      }
-    });
+    if (Objects.nonNull(this.resolvers)) {
+      this.resolvers.forEach(r -> {
+        final String entityIdentifier = r.getEntityIdentifier();
+        if (!this.entityExists(entityIdentifier)) {
+          throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
+              .formatted(
+                  key, "resolvers",
+                  entityIdentifier,
+                  key, "entities"
+              ));
+        }
+      });
+    }
+    if (Objects.nonNull(this.trustAnchors)) {
+      this.trustAnchors.forEach(r -> {
+        final String entityIdentifier = r.getEntityIdentifier().getValue();
+        if (!this.entityExists(entityIdentifier)) {
+          throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
+              .formatted(
+                  key, "trust-anchors",
+                  entityIdentifier,
+                  key, "entities"
+              ));
+        }
+      });
+    }
+    if (Objects.nonNull(this.trustMarkIssuers)) {
+      this.trustMarkIssuers.forEach(r -> {
+        final String entityIdentifier = r.entityIdentifier().getValue();
+        if (!this.entityExists(entityIdentifier)) {
+          throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
+              .formatted(
+                  key, "trust-mark-issuers",
+                  entityIdentifier,
+                  key, "entities"
+              ));
+        }
+      });
+    }
   }
 
   private boolean entityExists(final String entityId) {

@@ -16,6 +16,8 @@
  */
 package se.swedenconnect.oidf.common.entity.tree.scraping;
 
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
@@ -36,7 +38,10 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Wrapper for an entity statement in the resolver tree.
@@ -71,6 +76,17 @@ public class ScrapedEntity {
         client.entityConfiguration(
             new FederationRequest<>(new EntityConfigurationRequest(this.entityID, this.ecLocation))
         );
+    final String headerKid = this.entityStatement.getSignedStatement().getHeader().getKeyID();
+    final JWKSet jwkSet = this.entityStatement.getClaimsSet().getJWKSet();
+    if (headerKid != null && jwkSet != null) {
+      final Set<String> jwksKids = jwkSet.getKeys().stream()
+          .map(JWK::getKeyID)
+          .filter(Objects::nonNull)
+          .collect(Collectors.toSet());
+      if (!jwksKids.isEmpty() && !jwksKids.contains(headerKid)) {
+        throw new WrongJwkKidException(this.entityID.getValue(), headerKid, jwksKids);
+      }
+    }
     final EntityStatementWrapper wrapper = new EntityStatementWrapper(this.entityStatement.getSignedStatement());
     final List<SignedJWT> trustMarks = wrapper.getTrustMarks();
     trustMarks.forEach(trustMark -> {

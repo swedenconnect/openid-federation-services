@@ -175,8 +175,9 @@ public class EntityStatementTreeLoader {
       }
       final Node<ScrapedEntity> subNode = new Node<>(NodeKey.fromSignedJwt(subordinateStatement));
       final EntityID entityID = new EntityID(subject);
+      final String ecLocation = (String) subordinateStatement.getJWTClaimsSet().getClaim("ec_location");
 
-      final ScrapedEntity entity = ScrapedEntity.builder().entityID(entityID).build();
+      final ScrapedEntity entity = ScrapedEntity.builder().entityID(entityID).ecLocation(ecLocation).build();
       entity.scrape(this.client);
       tree.addChild(subNode, parentKey, entity, snapshot);
       if (entity.getIntermediate() != null) {

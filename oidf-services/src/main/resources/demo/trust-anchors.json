@@ -1,0 +1,24 @@
+[
+  {
+    "entity-identifier": "http://localhost:8080/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:8080/im",
+        "jwks": "federation:demo-federation-key"
+      }
+    ]
+  },
+  {
+    "entity-identifier": "http://localhost:8080/im",
+    "subordinates": [
+      {
+        "entity-identifier": "http://localhost:8080/op",
+        "jwks": "hosted:demo-hosted-key"
+      },
+      {
+        "entity-identifier": "http://localhost:8080/rp",
+        "jwks": "hosted:demo-hosted-key"
+      }
+    ]
+  }
+]

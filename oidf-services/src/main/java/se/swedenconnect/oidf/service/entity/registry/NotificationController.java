@@ -16,35 +16,40 @@
  */
 package se.swedenconnect.oidf.service.entity.registry;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.common.entity.entity.RecordVerificationException;
-import se.swedenconnect.oidf.common.entity.entity.integration.CacheRecordPopulator;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
+import se.swedenconnect.oidf.service.state.RegistryStateManager;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Controller responsible for taking action on notifications.
  *
  * @author Felix Hellman
  */
+@Slf4j
 @RestController
 public class NotificationController {
 
-  private final CacheRecordPopulator populator;
   private final RegistryVerifier registryVerifier;
+  private final RegistryStateManager registryStateManager;
+  private final AtomicBoolean hasPending = new AtomicBoolean(false);
 
   /**
    * Constructor.
-   * @param populator to notify
    * @param registryVerifier to verify notifications with
+   * @param registryStateManager to trigger forced reload
    */
   public NotificationController(
-      final CacheRecordPopulator populator,
-      final RegistryVerifier registryVerifier) {
-    this.populator = populator;
+      final RegistryVerifier registryVerifier,
+      final RegistryStateManager registryStateManager) {
     this.registryVerifier = registryVerifier;
+    this.registryStateManager = registryStateManager;
   }
 
   /**
@@ -56,9 +61,27 @@ public class NotificationController {
   public void notify(@RequestBody final String body) throws InvalidRequestException {
     try {
       this.registryVerifier.verifyNotification(body);
-      this.populator.notifyPopulator();
+      log.debug("Notification verified, triggering forced federation reload");
+      if (this.hasPending.compareAndSet(false, true)) {
+        Thread.ofVirtual().start(() -> {
+          try {
+            Thread.sleep(1000);
+          } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+          }
+          try {
+            this.registryStateManager.forceReload();
+          } finally {
+            this.hasPending.set(false);
+          }
+        });
+      } else {
+        log.debug("Reload already pending, notification coalesced");
+      }
     } catch (final RecordVerificationException e) {
       throw new InvalidRequestException("Could not verify notification");
     }
   }
+
 }

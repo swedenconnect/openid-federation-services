@@ -46,6 +46,9 @@ public class ExportStatement {
   private Double total;
   private Integer successCount;
   private Integer failureCount;
+  private Double uptimeWindow;
+  private String lastSeenReachable;
+  private Long avgResponseMs;
 
   /**
    * @return json object
@@ -72,6 +75,14 @@ public class ExportStatement {
       json.put("secondarystat", this.failureCount);
     });
 
+    Optional.ofNullable(this.uptimeWindow).ifPresent(w -> {
+      json.put("uptime", Map.of(
+          "ratio", w,
+          "lastSeen", this.lastSeenReachable != null ? this.lastSeenReachable : "never",
+          "avgResponseMs", this.avgResponseMs != null ? this.avgResponseMs : 0L
+      ));
+    });
+
     return json;
   }
 
@@ -82,6 +93,24 @@ public class ExportStatement {
    */
   public ExportStatement withResolverExplanation(final Map<Integer, Map<String, String>> explanation) {
     this.explanation = explanation;
+    return this;
+  }
+
+  /**
+   * Add sliding-window uptime data to this node.
+   *
+   * @param uptimeWindow    ratio of successful fetches in the last N cycles (0.0–1.0)
+   * @param lastSeenReachable ISO-8601 timestamp of last successful fetch, or null
+   * @param avgResponseMs   exponential moving average response time in ms, or null
+   * @return this
+   */
+  public ExportStatement withUptimeData(
+      final double uptimeWindow,
+      final String lastSeenReachable,
+      final Long avgResponseMs) {
+    this.uptimeWindow = uptimeWindow;
+    this.lastSeenReachable = lastSeenReachable;
+    this.avgResponseMs = avgResponseMs;
     return this;
   }
 

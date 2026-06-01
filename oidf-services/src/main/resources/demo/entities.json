@@ -1,0 +1,61 @@
+[
+  {
+    "entity-identifier": "http://localhost:8080/ta",
+    "virtual-entity-id": "http://localhost:8080/ta",
+    "jwks": "federation:demo-federation-key",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Demo Trust Anchor",
+        "federation_fetch_endpoint": "http://localhost:8080/ta/fetch",
+        "federation_list_endpoint": "http://localhost:8080/ta/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:8080/im",
+    "virtual-entity-id": "http://localhost:8080/im",
+    "jwks": "federation:demo-federation-key",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Demo Intermediate",
+        "federation_fetch_endpoint": "http://localhost:8080/im/fetch",
+        "federation_list_endpoint": "http://localhost:8080/im/subordinate_listing"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:8080/op",
+    "virtual-entity-id": "http://localhost:8080/op",
+    "jwks": "hosted:demo-hosted-key",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Demo OpenID Provider"
+      },
+      "openid_provider": {
+        "issuer": "http://localhost:8080/op"
+      }
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:8080/rp",
+    "virtual-entity-id": "http://localhost:8080/rp",
+    "jwks": "hosted:demo-hosted-key",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Demo Relying Party"
+      },
+      "relying_party": {}
+    }
+  },
+  {
+    "entity-identifier": "http://localhost:8080/resolver",
+    "virtual-entity-id": "http://localhost:8080/resolver",
+    "jwks": "federation:demo-federation-key",
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Demo Resolver",
+        "federation_resolve_endpoint": "http://localhost:8080/resolver/resolve"
+      }
+    }
+  }
+]

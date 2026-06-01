@@ -58,6 +58,8 @@ public class CachedRecordSource implements RecordSource {
    */
   public void addRecord(final CompositeRecord record) {
     this.cache.add("record", new Expirable<>(record.getExpiration(), record.getIssuedAt(), record));
+    this.localRecord = record;
+    this.localRecordFetchedAt = Instant.now();
   }
 
   private Optional<CompositeRecord> getRecord() {
