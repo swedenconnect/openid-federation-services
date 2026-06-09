@@ -16,46 +16,47 @@
  */
 package se.swedenconnect.oidf.service.cache;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
 import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Implementation of {@link RedisSerializer} for {@link EntityStatement}
+ * Implementation of {@link RedisSerializer} for {@link SignedJWT}
  *
  * @author Felix Hellman
  */
-public class ExpirableEntityStatementSerializer implements RedisSerializer<Expirable<EntityStatement>> {
+public class ExpirableEntityStatementSerializer implements RedisSerializer<Expirable<SignedJWT>> {
 
   @Override
-  public byte[] serialize(final Expirable<EntityStatement> value) throws SerializationException {
+  public byte[] serialize(final Expirable<SignedJWT> value) throws SerializationException {
     if (value == null) {
       return null;
     }
     //Serialize signed statement to JWT
-    final String data = value.getValue().getSignedStatement().serialize();
+    final String data = value.getValue().serialize();
     return data.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override
-  public Expirable<EntityStatement> deserialize(final byte[] bytes) throws SerializationException {
+  public Expirable<SignedJWT> deserialize(final byte[] bytes) throws SerializationException {
     if (bytes == null) {
       return null;
     }
     try {
-      final EntityStatement entityStatement = EntityStatement.parse(new String(bytes, Charset.defaultCharset()));
+      final SignedJWT entityStatement = SignedJWT.parse(new String(bytes, Charset.defaultCharset()));
+      final com.nimbusds.jwt.JWTClaimsSet claims = EntityStatementClaims.claims(entityStatement);
       return new Expirable<>(
-          entityStatement.getClaimsSet().getExpirationTime().toInstant(),
-          entityStatement.getClaimsSet().getIssueTime().toInstant(),
+          claims.getExpirationTime().toInstant(),
+          claims.getIssueTime().toInstant(),
           entityStatement
       );
     }
-    catch (final ParseException e) {
+    catch (final java.text.ParseException e) {
       throw new RuntimeException(e);
     }
   }

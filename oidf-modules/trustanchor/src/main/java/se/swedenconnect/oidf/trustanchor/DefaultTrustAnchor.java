@@ -16,9 +16,7 @@
  */
 package se.swedenconnect.oidf.trustanchor;
 
-import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
@@ -31,6 +29,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.util.List;
@@ -126,8 +125,8 @@ public class DefaultTrustAnchor implements TrustAnchor {
         })
         .map(this.federationClient::entityConfiguration)
         .filter(request.toPredicate())
-        .map(EntityStatement::getEntityID)
-        .map(Identifier::getValue)
+        .map(EntityStatementClaims::getEntityID)
+        .map(EntityID::getValue)
         .toList();
     if (list.isEmpty()) {
       throw new NotFoundException("No subordinates found");

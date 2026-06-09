@@ -16,7 +16,7 @@
  */
 package se.swedenconnect.oidf.common.entity.entity;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 /**
@@ -29,5 +29,5 @@ public interface EntityConfigurationFactory {
    * @param record to create subject from
    * @return entity statement
    */
-  EntityStatement createEntityConfiguration(final EntityRecord record);
+  SignedJWT createEntityConfiguration(final EntityRecord record);
 }

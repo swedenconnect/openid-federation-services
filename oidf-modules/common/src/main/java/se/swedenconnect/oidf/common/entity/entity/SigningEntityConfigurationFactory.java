@@ -19,10 +19,7 @@ package se.swedenconnect.oidf.common.entity.entity;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
@@ -30,6 +27,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSourceProperty;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -63,7 +61,7 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
   }
 
   @Override
-  public EntityStatement createEntityConfiguration(final EntityRecord record) {
+  public SignedJWT createEntityConfiguration(final EntityRecord record) {
     try {
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
       this.customizers.forEach(c -> c.customize(record, builder));
@@ -93,8 +91,8 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
             .toList();
         builder.claim("trust_marks", trustMarks.stream().map(TrustMarkEntry::toJSONObject).toList());
       }
-      return EntityStatement.sign(new EntityStatementClaimsSet(builder.build()), record.getJwks().getKeys().getFirst());
-    } catch (JOSEException | ParseException e) {
+      return EntityStatementClaims.sign(builder.build(), record.getJwks().getKeys().getFirst());
+    } catch (final JOSEException e) {
       throw new IllegalArgumentException("Failed to sign entity configuration", e);
     }
   }

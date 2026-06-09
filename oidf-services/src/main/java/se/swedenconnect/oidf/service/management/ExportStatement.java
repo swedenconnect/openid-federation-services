@@ -16,8 +16,9 @@
  */
 package se.swedenconnect.oidf.service.management;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.Getter;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,12 +35,12 @@ public class ExportStatement {
    * Constructor.
    * @param entityStatement
    */
-  public ExportStatement(final EntityStatement entityStatement) {
+  public ExportStatement(final SignedJWT entityStatement) {
     this.entityStatement = entityStatement;
   }
 
   @Getter
-  private final EntityStatement entityStatement;
+  private final SignedJWT entityStatement;
   private Map<Integer, Map<String, String>> explanation;
   private Double success;
   private Double failure;
@@ -55,11 +56,11 @@ public class ExportStatement {
    */
   public Map<String, Object> toJsonObject() {
     final HashMap<String, Object> json = new HashMap<>();
-    json.put("entityId", this.entityStatement.getEntityID().getValue());
-    json.put("claims", this.entityStatement.getClaimsSet().toJSONObject());
-    if (this.entityStatement.getClaimsSet().isSelfStatement()) {
+    json.put("entityId", EntityStatementClaims.getEntityID(this.entityStatement).getValue());
+    json.put("claims", EntityStatementClaims.claims(this.entityStatement).toJSONObject());
+    if (EntityStatementClaims.isSelfStatement(this.entityStatement)) {
       try {
-        this.entityStatement.verifySignatureOfSelfStatement();
+        EntityStatementClaims.verifySignatureOfSelfStatement(this.entityStatement);
         json.put("verifiedSelfStatement", true);
       } catch (final Exception e) {
         json.put("verifiedSelfStatement", false);

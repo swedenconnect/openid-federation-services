@@ -27,12 +27,11 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 
 import java.security.Key;
@@ -65,18 +64,20 @@ public class TrustMarkCollector {
    * @param chain the resolved trust chain including the leaf entity
    * @return list of valid trust mark entries
    */
-  public static List<TrustMarkEntry> collectSubjectTrustMarks(final ResolverTrustChain chain) {
-    final List<EntityStatement> trustChain = chain.getTrustChain().stream().toList();
-    final EntityStatement leafStatement = trustChain.getFirst();
-    final EntityStatement trustAnchor = trustChain.getLast();
-    if (leafStatement.getClaimsSet().getTrustMarks() == null) {
+  public static List<TrustMarkEntry> collectSubjectTrustMarks(final ResolverTrustChain chain)
+      throws java.text.ParseException {
+    final List<SignedJWT> trustChain = chain.getTrustChain().stream().toList();
+    final SignedJWT leafStatement = trustChain.getFirst();
+    final SignedJWT trustAnchor = trustChain.getLast();
+    if (EntityStatementClaims.getTrustMarks(leafStatement) == null) {
       return List.of();
     }
-    final EntityStatement superiorStatement = trustChain.get(2);
-    final String subject = leafStatement.getClaimsSet().getSubject().getValue();
+    final SignedJWT superiorStatement = trustChain.get(2);
+    final String subject = EntityStatementClaims.claims(leafStatement).getSubject();
 
     final List<TrustMarkEntry> trustMarks = TrustMarkCollector.parseTrustMark(leafStatement);
-    final JSONObject trustMarkOwners = trustAnchor.getClaimsSet().getJSONObjectClaim("trust_mark_owners");
+    final Map<String, Object> trustMarkOwners =
+        EntityStatementClaims.claims(trustAnchor).getJSONObjectClaim("trust_mark_owners");
     trustMarkOwners.keySet().forEach(key -> {
       trustMarks.stream().filter(k -> k.getID().getValue().equals(key))
           .forEach(tm -> {
@@ -96,7 +97,7 @@ public class TrustMarkCollector {
           });
 
     });
-    if (superiorStatement.getClaimsSet().getSubject().getValue().equals(subject)) {
+    if (EntityStatementClaims.claims(superiorStatement).getSubject().equals(subject)) {
       // If the superior statement is issued for the subject,
       // then collect any trust marks not present in the leaf statement
       final List<TrustMarkEntry> superiorStatementTrustMarks = TrustMarkCollector.parseTrustMark(superiorStatement);
@@ -107,7 +108,7 @@ public class TrustMarkCollector {
     }
 
 
-    final JSONObject trustMarkIssuer = trustAnchor.getClaimsSet()
+    final Map<String, Object> trustMarkIssuer = EntityStatementClaims.claims(trustAnchor)
         .getJSONObjectClaim("trust_mark_issuers");
     List<TrustMarkEntry> filtered = trustMarks;
     if (Objects.nonNull(trustMarkIssuer)) {
@@ -144,15 +145,16 @@ public class TrustMarkCollector {
     }).toList();
   }
 
-  private static Map<Identifier, List<Issuer>> getTrustMarkToIssuersMap(final JSONObject trustMarkIssuer) {
+  @SuppressWarnings("unchecked")
+  private static Map<Identifier, List<Issuer>> getTrustMarkToIssuersMap(final Map<String, Object> trustMarkIssuer) {
     return trustMarkIssuer
         .entrySet()
         .stream()
         .collect(Collectors.toMap(kv -> new Identifier(kv.getKey()),
-            kv -> ((JSONArray) kv.getValue())
+            kv -> ((List<Object>) kv.getValue())
                 .stream()
-                .map(JSONObject.class::cast)
-                .map(value -> new Issuer(value.getAsString("value")))
+                .map(value -> (Map<String, Object>) value)
+                .map(value -> new Issuer((String) value.get("value")))
                 .toList()));
   }
 
@@ -172,10 +174,11 @@ public class TrustMarkCollector {
     return issuers.contains(new Issuer(issuer));
   }
 
-  private static List<TrustMarkEntry> parseTrustMark(final EntityStatement entity) {
-    final JSONArray trustMarks = entity.getClaimsSet().getJSONArrayClaim("trust_marks");
-    return trustMarks.stream().toList().stream()
-        .map(JSONObject.class::cast)
+  @SuppressWarnings("unchecked")
+  private static List<TrustMarkEntry> parseTrustMark(final SignedJWT entity) throws java.text.ParseException {
+    final List<Object> trustMarks = EntityStatementClaims.claims(entity).getListClaim("trust_marks");
+    return trustMarks.stream()
+        .map(o -> new JSONObject((Map<String, Object>) o))
         .map(json -> {
           try {
             return TrustMarkEntry.parse(json);

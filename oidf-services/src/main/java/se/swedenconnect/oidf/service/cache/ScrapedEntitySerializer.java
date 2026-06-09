@@ -26,9 +26,7 @@ import com.nimbusds.jose.shaded.gson.JsonPrimitive;
 import com.nimbusds.jose.shaded.gson.JsonSerializationContext;
 import com.nimbusds.jose.shaded.gson.JsonSerializer;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
 import se.swedenconnect.oidf.common.entity.entity.integration.EntityIdentifierDeserializer;
@@ -55,7 +53,6 @@ public class ScrapedEntitySerializer implements RedisSerializer<ScrapedEntity> {
     this.gson = new GsonBuilder()
         .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
         .registerTypeAdapter(Instant.class, new InstantDeserializer())
-        .registerTypeAdapter(EntityStatement.class, new EntityStatementAdapter())
         .registerTypeAdapter(SignedJWT.class, new SignedJWTAdapter())
         .create();
   }
@@ -74,28 +71,6 @@ public class ScrapedEntitySerializer implements RedisSerializer<ScrapedEntity> {
       return null;
     }
     return this.gson.fromJson(new String(bytes, StandardCharsets.UTF_8), ScrapedEntity.class);
-  }
-
-  private static class EntityStatementAdapter
-      implements JsonSerializer<EntityStatement>, JsonDeserializer<EntityStatement> {
-
-    @Override
-    public JsonElement serialize(
-        final EntityStatement src, final Type typeOfSrc, final JsonSerializationContext context) {
-      return new JsonPrimitive(src.getSignedStatement().serialize());
-    }
-
-    @Override
-    public EntityStatement deserialize(
-        final JsonElement json, final Type typeOfT, final JsonDeserializationContext context)
-        throws JsonParseException {
-      try {
-        return EntityStatement.parse(json.getAsString());
-      }
-      catch (final ParseException e) {
-        throw new JsonParseException(e);
-      }
-    }
   }
 
   private static class SignedJWTAdapter

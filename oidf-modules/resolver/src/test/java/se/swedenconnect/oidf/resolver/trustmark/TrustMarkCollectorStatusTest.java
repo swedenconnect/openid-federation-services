@@ -26,7 +26,6 @@ import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -56,15 +55,15 @@ class TrustMarkCollectorStatusTest {
     final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
     final String trustMarkJwt = buildTrustMarkJwt(key);
 
-    final EntityStatement leafStatement = buildEntityStatementWithTrustMark(key, trustMarkJwt);
-    final EntityStatement superiorStatement = buildEntityStatementWithoutTrustMarks();
-    final EntityStatement trustAnchor = buildTrustAnchorStatement(key);
+    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt);
+    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
+    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
 
     final ScrapedEntity leafEntity = ScrapedEntity.builder()
         .entityID(new EntityID(SUBJECT))
         .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("inactive"), false)))
         .build();
-    final Set<EntityStatement> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
     final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
     final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
 
@@ -79,15 +78,15 @@ class TrustMarkCollectorStatusTest {
     final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
     final String trustMarkJwt = buildTrustMarkJwt(key);
 
-    final EntityStatement leafStatement = buildEntityStatementWithTrustMark(key, trustMarkJwt);
-    final EntityStatement superiorStatement = buildEntityStatementWithoutTrustMarks();
-    final EntityStatement trustAnchor = buildTrustAnchorStatement(key);
+    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt);
+    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
+    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
 
     final ScrapedEntity leafEntity = ScrapedEntity.builder()
         .entityID(new EntityID(SUBJECT))
         .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
         .build();
-    final Set<EntityStatement> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
     final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
     final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
 
@@ -102,15 +101,15 @@ class TrustMarkCollectorStatusTest {
     final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
     final String trustMarkJwt = buildTrustMarkJwt(key);
 
-    final EntityStatement leafStatement = buildEntityStatementWithTrustMark(key, trustMarkJwt);
-    final EntityStatement superiorStatement = buildEntityStatementWithoutTrustMarks();
-    final EntityStatement trustAnchor = buildTrustAnchorStatement(key);
+    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt);
+    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
+    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
 
     final ScrapedEntity leafEntity = ScrapedEntity.builder()
         .entityID(new EntityID(SUBJECT))
         .trustMarkStatuses(Map.of())
         .build();
-    final Set<EntityStatement> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
     final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
     final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
 
@@ -134,7 +133,7 @@ class TrustMarkCollectorStatusTest {
     return jwt.serialize();
   }
 
-  private EntityStatement buildEntityStatementWithTrustMark(final JWK key, final String trustMarkJwt)
+  private SignedJWT buildSignedJWTWithTrustMark(final JWK key, final String trustMarkJwt)
       throws Exception {
     final JSONObject trustMarkEntry = new JSONObject();
     trustMarkEntry.put("id", TRUST_MARK_TYPE);
@@ -165,10 +164,10 @@ class TrustMarkCollectorStatusTest {
 
     final SignedJWT jwt = new SignedJWT(header, claims);
     jwt.sign(new RSASSASigner(key.toRSAKey()));
-    return EntityStatement.parse(jwt.serialize());
+    return jwt;
   }
 
-  private EntityStatement buildEntityStatementWithoutTrustMarks() throws Exception {
+  private SignedJWT buildSignedJWTWithoutTrustMarks() throws Exception {
     final JWK key = new RSAKeyGenerator(2048).keyID("superior-key").generate();
     final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
         .type(new JOSEObjectType("entity-statement+jwt"))
@@ -186,7 +185,7 @@ class TrustMarkCollectorStatusTest {
 
     final SignedJWT jwt = new SignedJWT(header, claims);
     jwt.sign(new RSASSASigner(key.toRSAKey()));
-    return EntityStatement.parse(jwt.serialize());
+    return jwt;
   }
 
   private SignedJWT buildStatusJwt(final String status) throws Exception {
@@ -202,7 +201,7 @@ class TrustMarkCollectorStatusTest {
     return jwt;
   }
 
-  private EntityStatement buildTrustAnchorStatement(final JWK ownerKey) throws Exception {
+  private SignedJWT buildTrustAnchorStatement(final JWK ownerKey) throws Exception {
     final JWK taKey = new RSAKeyGenerator(2048).keyID("ta-key").generate();
     final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
         .type(new JOSEObjectType("entity-statement+jwt"))
@@ -241,6 +240,6 @@ class TrustMarkCollectorStatusTest {
 
     final SignedJWT jwt = new SignedJWT(header, claims);
     jwt.sign(new RSASSASigner(taKey.toRSAKey()));
-    return EntityStatement.parse(jwt.serialize());
+    return jwt;
   }
 }

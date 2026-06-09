@@ -51,3 +51,4 @@ out
 /**/.flattened-pom.xml
 .claude/
 build-snapshot.sh
+tmp/

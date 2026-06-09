@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.nimbusds.oauth2.sdk.ParseException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import lombok.AllArgsConstructor;
@@ -29,12 +28,11 @@ import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import org.w3c.dom.Entity;
 import se.swedenconnect.oidf.UptimeRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
@@ -129,19 +127,14 @@ public class ExportEndpoint {
         .filter(Objects::nonNull)
         .peek(entity -> {
           if (Objects.nonNull(entity.getIntermediate())) {
-            entity.getIntermediate().subordinates().values().forEach(jwt -> {
-              try {
-                subordinateStatements.add(new ExportStatement(EntityStatement.parse(jwt)));
-              } catch (final ParseException e) {
-                throw new RuntimeException(e);
-              }
-            });
+            entity.getIntermediate().subordinates().values().forEach(jwt ->
+                subordinateStatements.add(new ExportStatement(jwt)));
           }
         })
         .map(resolverEntity -> resolverEntity.getEntityStatement())
-        .peek(es -> es.getClaimsSet().toJSONObject())
+        .peek(es -> EntityStatementClaims.claims(es).toJSONObject())
         .forEach(es -> {
-          if (es.getClaimsSet().isSelfStatement()) {
+          if (EntityStatementClaims.isSelfStatement(es)) {
             selfStatements.add(new ExportStatement(es));
           } else {
             subordinateStatements.add(new ExportStatement(es));
@@ -151,11 +144,12 @@ public class ExportEndpoint {
     selfStatements.forEach(ss -> {
       try {
         final Map<Integer, Map<String, String>> explain = this.factory.create(properties).explain(new ResolveRequest(
-            ss.getEntityStatement().getEntityID().getValue(), properties.getTrustAnchor(), null, true));
+            EntityStatementClaims.getEntityID(ss.getEntityStatement()).getValue(), properties.getTrustAnchor(), null,
+            true));
         if (explain != null) {
           ss.withResolverExplanation(explain);
         }
-        final String entityId = ss.getEntityStatement().getEntityID().getValue();
+        final String entityId = EntityStatementClaims.getEntityID(ss.getEntityStatement()).getValue();
         final double success = this.meterRegistry.counter("GET_entity_configuration", List.of(
             Tag.of("entityId", entityId),
             Tag.of("outcome", "success")

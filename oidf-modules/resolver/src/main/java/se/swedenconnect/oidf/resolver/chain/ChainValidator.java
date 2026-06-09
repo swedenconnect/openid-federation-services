@@ -16,7 +16,7 @@
  */
 package se.swedenconnect.oidf.resolver.chain;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import se.swedenconnect.oidf.common.entity.exception.InvalidTrustChainException;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class ChainValidator {
    * @return a validation result if the chain passed validation
    * @throws InvalidTrustChainException if validation fails
    */
-  public ChainValidationResult validate(final List<EntityStatement> chain) throws InvalidTrustChainException {
+  public ChainValidationResult validate(final List<SignedJWT> chain) throws InvalidTrustChainException {
     // Check that chain has at least length = 3
     final List<Exception> errors = new ArrayList<>();
     if (chain.size() < 3) {
@@ -78,7 +78,7 @@ public class ChainValidator {
     return new ChainValidationResult(chain, errors, typedErrors);
   }
 
-  private static ChainValidationStepResult execute(final ChainValidationStep step, final List<EntityStatement> chain) {
+  private static ChainValidationStepResult execute(final ChainValidationStep step, final List<SignedJWT> chain) {
     final String name = step.getClass().getCanonicalName();
     try {
       final List<ChainValidationError> validate = step.validate(chain);

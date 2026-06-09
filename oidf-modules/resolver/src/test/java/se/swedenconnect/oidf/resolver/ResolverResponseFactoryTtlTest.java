@@ -24,7 +24,6 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -93,11 +92,11 @@ class ResolverResponseFactoryTtlTest {
 
     // Chain with one entity expiring in 1 day
     final Instant shortExpiry = now.plus(Duration.ofDays(1));
-    final EntityStatement shortExpiryEs = buildEntityStatement(key, ENTITY_ID, ENTITY_ID, shortExpiry);
+    final SignedJWT shortExpiryEs = buildEntityStatement(key, ENTITY_ID, ENTITY_ID, shortExpiry);
 
     // Chain with another entity expiring in 30 days
     final Instant longExpiry = now.plus(Duration.ofDays(30));
-    final EntityStatement longExpiryEs = buildEntityStatement(key, "https://example.com/ta",
+    final SignedJWT longExpiryEs = buildEntityStatement(key, "https://example.com/ta",
         "https://example.com/ta", longExpiry);
 
     final ArgumentCaptor<JWTClaimsSet> claimsCaptor = ArgumentCaptor.forClass(JWTClaimsSet.class);
@@ -132,7 +131,7 @@ class ResolverResponseFactoryTtlTest {
 
     // Chain with entities expiring in 30 days (longer than default 7 days)
     final Instant longExpiry = now.plus(Duration.ofDays(30));
-    final EntityStatement longExpiryEs = buildEntityStatement(key, ENTITY_ID, ENTITY_ID, longExpiry);
+    final SignedJWT longExpiryEs = buildEntityStatement(key, ENTITY_ID, ENTITY_ID, longExpiry);
 
     final ArgumentCaptor<JWTClaimsSet> claimsCaptor = ArgumentCaptor.forClass(JWTClaimsSet.class);
     final SignedJWT mockJwt = buildSignedJwt(key, ENTITY_ID, ENTITY_ID, longExpiry);
@@ -160,10 +159,9 @@ class ResolverResponseFactoryTtlTest {
         "TTL should use default 7 days when chain exp is longer, but was: " + actualDuration.toDays() + " days");
   }
 
-  private EntityStatement buildEntityStatement(final JWK key, final String issuer, final String subject,
-                                               final Instant expiry) throws Exception {
-    final SignedJWT jwt = buildSignedJwt(key, issuer, subject, expiry);
-    return EntityStatement.parse(jwt.serialize());
+  private SignedJWT buildEntityStatement(final JWK key, final String issuer, final String subject,
+                                         final Instant expiry) throws Exception {
+    return buildSignedJwt(key, issuer, subject, expiry);
   }
 
   private SignedJWT buildSignedJwt(final JWK key, final String issuer, final String subject,

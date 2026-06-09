@@ -16,8 +16,8 @@
  */
 package se.swedenconnect.oidf.routing;
 
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
@@ -105,10 +105,10 @@ public class EntityRouter implements Router, ModuleRouter {
             if (observation != null) {
               observation.lowCardinalityKeyValue("cached", "false");
             }
-            final EntityStatement entityConfiguration = this.factory.createEntityConfiguration(entityRecord);
+            final SignedJWT entityConfiguration = this.factory.createEntityConfiguration(entityRecord);
             this.entityConfigurationCache.put(snapshot,entityRecord.getEntityIdentifier().getValue(),
-                entityConfiguration.getSignedStatement().serialize());
-            return ServerResponse.ok().body(entityConfiguration.getSignedStatement().serialize());
+                entityConfiguration.serialize());
+            return ServerResponse.ok().body(entityConfiguration.serialize());
           });
     });
   }
@@ -119,8 +119,8 @@ public class EntityRouter implements Router, ModuleRouter {
         .lowCardinalityKeyValue("endpoint", "/.well-known/openid-federation")
         .start();
     try {
-      final EntityStatement entityConfiguration = this.factory.createEntityConfiguration(entity);
-      final String serialized = entityConfiguration.getSignedStatement().serialize();
+      final SignedJWT entityConfiguration = this.factory.createEntityConfiguration(entity);
+      final String serialized = entityConfiguration.serialize();
       return new CachedResponse(serialized, "application/entity-statement+jwt", 200);
     } catch (final Exception e) {
       observation.error(e);
