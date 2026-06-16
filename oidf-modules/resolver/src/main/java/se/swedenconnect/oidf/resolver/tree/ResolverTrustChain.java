@@ -16,7 +16,7 @@
  */
 package se.swedenconnect.oidf.resolver.tree;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
@@ -31,6 +31,6 @@ import java.util.Set;
 @Getter
 @AllArgsConstructor
 public class ResolverTrustChain {
-  private final Set<EntityStatement> trustChain;
+  private final Set<SignedJWT> trustChain;
   private final ScrapedEntity leafEntity;
 }

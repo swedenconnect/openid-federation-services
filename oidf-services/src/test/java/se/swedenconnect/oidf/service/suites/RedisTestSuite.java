@@ -37,6 +37,7 @@ import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverCritTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverDiscoveryTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverPolicyTestCases;
+import se.swedenconnect.oidf.service.resolver.ResolverSamlSpTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverTrustMarkTestCases;
 import se.swedenconnect.oidf.service.service.GeneralErrorHandlingTestCases;
 import se.swedenconnect.oidf.service.service.actuator.ActuatorTestCases;
@@ -57,7 +58,8 @@ import java.util.Random;
     TrustAnchorTestCases.class,
     ActuatorTestCases.class,
     ResolverPolicyTestCases.class,
-    ResolverCritTestCases.class
+    ResolverCritTestCases.class,
+    ResolverSamlSpTestCases.class
 })
 public class RedisTestSuite {
 
@@ -89,7 +91,7 @@ public class RedisTestSuite {
             .withProperty("management.server.port", "6001")
             .withProperty("spring.data.redis.url", redis.getRedisURI())
             .withProperty("federation.registration.integeration.enabled", "false")
-            .withProperty("federation.registry.integration.endpoints.base-path",
+            .withProperty("federation.registry.integration.client.base-uri",
                 "http://localhost:%d/api/v1".formatted(registryMock.getPort()) +
                 "/federationservice")
             .withProperty("federation.routing.virtual-entity-routing.enabled", "true")

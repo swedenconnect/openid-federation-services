@@ -16,8 +16,8 @@
  */
 package se.swedenconnect.oidf.service.service.testclient;
 
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.web.client.RestClient;
 
 public class EntityClient {
@@ -27,12 +27,12 @@ public class EntityClient {
     this.client = client;
   }
 
-  public EntityStatement getEntityConfiguration(final EntityID entity) {
+  public SignedJWT getEntityConfiguration(final EntityID entity) {
     try {
     final String body = client.get().uri(entity.getValue() + "/.well-known/openid-federation")
         .retrieve()
         .body(String.class);
-    return EntityStatement.parse(body);
+    return SignedJWT.parse(body);
     } catch (final Exception e) {
       throw new RuntimeException("Failed to fetch entity configuration for entity %s".formatted(entity.getValue()));
     }

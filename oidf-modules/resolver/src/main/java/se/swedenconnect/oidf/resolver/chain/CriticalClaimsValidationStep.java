@@ -16,7 +16,8 @@
  */
 package se.swedenconnect.oidf.resolver.chain;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -45,18 +46,24 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
   );
 
   @Override
-  public List<ChainValidationError> validate(final List<EntityStatement> chain) {
+  public List<ChainValidationError> validate(final List<SignedJWT> chain) {
     final ArrayList<ChainValidationError> errors = new ArrayList<>();
     chain
         .forEach(es -> {
-          Optional.ofNullable(es.getClaimsSet().getCriticalExtensionClaims())
+          Optional.ofNullable(EntityStatementClaims.getCriticalExtensionClaims(es))
               .filter(crit -> !crit.isEmpty())
               .ifPresent(crit -> {
                 if (!new HashSet<>(crit).containsAll(SUPPORTED_CRITICAL_CLAIMS)) {
                   throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");
                 }
               });
-          Optional.ofNullable(es.getClaimsSet().getStringListClaim("metadata_policy_crit"))
+          final List<String> metadataPolicyCrit;
+          try {
+            metadataPolicyCrit = EntityStatementClaims.claims(es).getStringListClaim("metadata_policy_crit");
+          } catch (final java.text.ParseException e) {
+            throw new IllegalStateException("Failed to parse metadata_policy_crit claim", e);
+          }
+          Optional.ofNullable(metadataPolicyCrit)
               .filter(critMetadata -> !critMetadata.isEmpty())
               .ifPresent(critMetadata -> {
                 if (!new HashSet<>(critMetadata).containsAll(SUPPORTED_METADATA_CLAIMS)) {

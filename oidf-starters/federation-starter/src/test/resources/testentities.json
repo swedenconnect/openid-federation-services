@@ -305,6 +305,70 @@
     }
   },
   {
+    "entity-identifier": "http://localhost:11111/im/saml-sp",
+    "virtual-entity-id": "http://localhost:11111/im/sp",
+    "jwks": "hosted:sign-key-1",
+    "authority-hints": ["http://localhost:11111/im"],
+    "metadata": {
+      "federation_entity": {
+        "organization_name": "Example Organization"
+      },
+      "saml_service_provider": {
+        "organization_display_name": "Example Organization",
+        "display_name#sv": "Example Organization",
+        "single_logout_services": [
+          {
+            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+            "location": "http://localhost:11111/im/sp/slo/post"
+          }
+        ],
+        "organization_display_name#en": "Example Organization",
+        "description": "Example Organization",
+        "organization_display_name#sv": "Example Organization",
+        "organization_name#en": "Example Organization",
+        "organization_name#sv": "Example Organization",
+        "want_assertions_signed": true,
+        "description#sv": "Example Organization",
+        "organization_url": "https://example.com/",
+        "logo_uris": [
+          {
+            "uri": "http://localhost:11111/im/sp/logo.png"
+          }
+        ],
+        "entity_categories": [
+          "http://id.elegnamnden.se/ec/1.0/loa3-pnr",
+          "http://id.elegnamnden.se/ec/1.0/eidas-naturalperson",
+          "http://id.elegnamnden.se/st/1.0/public-sector-sp"
+        ],
+        "organization_name": "Example Organization",
+        "display_name": "Example Organization",
+        "organization_url#sv": "https://example.com/",
+        "name_id_formats": [
+          "urn:oasis:names:tc:SAML:2.0:nameid-format:transient"
+        ],
+        "assertion_consumer_services": [
+          {
+            "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+            "index": 1,
+            "location": "http://localhost:11111/im/sp/sso/post",
+            "is_default": true
+          }
+        ],
+        "authn_requests_signed": true,
+        "organization_url#en": "https://example.com/",
+        "description#en": "Example Organization",
+        "display_name#en": "Example Organization",
+        "contacts": [
+          {
+            "email_addresses": ["contact@example.com"],
+            "contact_type": "technical"
+          }
+        ],
+        "organization_number": "00000000000"
+      }
+    }
+  },
+  {
     "entity-identifier": "http://localhost:11111/im/tmi",
     "virtual-entity-id": "http://localhost:11111/im/tmi",
     "jwks": "hosted:sign-key-1",

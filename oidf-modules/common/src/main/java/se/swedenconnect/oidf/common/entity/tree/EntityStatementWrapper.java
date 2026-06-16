@@ -17,11 +17,9 @@
 package se.swedenconnect.oidf.common.entity.tree;
 
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import javax.swing.text.html.parser.Entity;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
@@ -38,19 +36,6 @@ public class EntityStatementWrapper {
 
   @Getter
   private final SignedJWT entityStatement;
-
-  /**
-   * Parses and returns the entity statement from the underlying signed JWT.
-   *
-   * @return parsed entity statement
-   */
-  public EntityStatement getEntityStatement() {
-    try {
-      return EntityStatement.parse(this.entityStatement);
-    } catch (final com.nimbusds.oauth2.sdk.ParseException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   /**
    * Returns trust marks from the underlying entity statement.

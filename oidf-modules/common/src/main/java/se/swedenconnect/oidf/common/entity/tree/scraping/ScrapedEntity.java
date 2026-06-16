@@ -20,7 +20,6 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +30,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 
 import java.text.ParseException;
@@ -59,7 +59,7 @@ public class ScrapedEntity {
   private String ecLocation;
 
   // Base info
-  private EntityStatement entityStatement;
+  private SignedJWT entityStatement;
   @Builder.Default
   private Map<String, TrustMarkStatusResponse> trustMarkStatuses = new HashMap<>();
   //Roles
@@ -72,12 +72,13 @@ public class ScrapedEntity {
    */
   public void scrape(final FederationClient client) {
     log.debug("Resolving entity {}", this.entityID);
-    this.entityStatement =
+    final SignedJWT entityConfiguration =
         client.entityConfiguration(
             new FederationRequest<>(new EntityConfigurationRequest(this.entityID, this.ecLocation))
         );
-    final String headerKid = this.entityStatement.getSignedStatement().getHeader().getKeyID();
-    final JWKSet jwkSet = this.entityStatement.getClaimsSet().getJWKSet();
+    this.entityStatement = entityConfiguration;
+    final String headerKid = this.entityStatement.getHeader().getKeyID();
+    final JWKSet jwkSet = EntityStatementClaims.getJWKSet(this.entityStatement);
     if (headerKid != null && jwkSet != null) {
       final Set<String> jwksKids = jwkSet.getKeys().stream()
           .map(JWK::getKeyID)
@@ -87,16 +88,17 @@ public class ScrapedEntity {
         throw new WrongJwkKidException(this.entityID.getValue(), headerKid, jwksKids);
       }
     }
-    final EntityStatementWrapper wrapper = new EntityStatementWrapper(this.entityStatement.getSignedStatement());
+    final EntityStatementWrapper wrapper = new EntityStatementWrapper(this.entityStatement);
     final List<SignedJWT> trustMarks = wrapper.getTrustMarks();
     trustMarks.forEach(trustMark -> {
       try {
+        final String trustMarkType = trustMark.getJWTClaimsSet().getStringClaim("trust_mark_type");
+        log.debug("Resolving trust mark status for {} of type {}", this.entityID, trustMarkType);
         final TrustMarkStatusResponse trustMarkStatus = client.trustMarkStatus(
             new FederationRequest<>(
                 new FederationTrustMarkStatusRequest(trustMark.serialize(), trustMark.getJWTClaimsSet().getIssuer())
             )
         );
-        final String trustMarkType = trustMark.getJWTClaimsSet().getStringClaim("trust_mark_type");
         this.trustMarkStatuses.put(trustMarkType, trustMarkStatus);
       } catch (final ParseException e) {
         throw new RuntimeException(e);

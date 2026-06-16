@@ -17,14 +17,8 @@
 package se.swedenconnect.oidf.trustanchor;
 
 import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
@@ -59,7 +53,7 @@ public class SubordinateStatementFactory {
   /**
    * Creates a signed entity statement from the issuer.
    *
-   * @param issuer  to create the statement from
+   * @param issuer      to create the statement from
    * @param subordinate to create statement for
    * @return a signed entity statement
    */

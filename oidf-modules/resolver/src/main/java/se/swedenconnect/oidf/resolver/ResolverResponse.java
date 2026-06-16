@@ -16,7 +16,7 @@
  */
 package se.swedenconnect.oidf.resolver;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.Builder;
 import net.minidev.json.JSONObject;
@@ -37,10 +37,10 @@ import java.util.List;
  */
 @Builder
 public record ResolverResponse(
-    EntityStatement entityStatement,
+    SignedJWT entityStatement,
     JSONObject metadata,
     List<TrustMarkEntry> trustMarkEntries,
-    List<EntityStatement> trustChain,
+    List<SignedJWT> trustChain,
     List<Exception> validationErrors,
     List<ChainValidationError> typedValidationErrors) {
 }

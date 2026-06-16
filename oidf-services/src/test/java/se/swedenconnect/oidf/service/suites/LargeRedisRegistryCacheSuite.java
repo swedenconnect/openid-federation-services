@@ -67,7 +67,7 @@ public class LargeRedisRegistryCacheSuite {
       throw new RuntimeException(e);
     }
     final MockEnvironment mockEnvironment = new MockEnvironment();
-    configurableApplicationContext = new SpringApplicationBuilder()
+    final SpringApplicationBuilder builder = new SpringApplicationBuilder()
         .sources(Application.class)
         .sources(TestConfiguration.class)
         .profiles("entitytypes")
@@ -85,9 +85,9 @@ public class LargeRedisRegistryCacheSuite {
                 "/federationservice")
             .withProperty("federation.routing.virtual-entity-routing.enabled", "true")
         )
-        .profiles("integration-test")
-        .run();
+        .profiles("integration-test");
     mockEnvironment.setProperty("federation.local-registry", "{}");
+    configurableApplicationContext = builder.run();
 
     ThreadLocal<ApplicationContext> threadLocalValue = new ThreadLocal<>();
     threadLocalValue.set(configurableApplicationContext);

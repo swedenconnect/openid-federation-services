@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.service;
 
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -123,32 +122,32 @@ public class CacheTestCases {
   @Test
   @DisplayName("Entity Configuration 1000 times with cache (3.36 KB)")
   void entityConfigurationCache(final FederationClients clients) {
-    final EntityStatement entityConfigurationReference =
+    final SignedJWT entityConfigurationReference =
         clients.entity().getEntityConfiguration(TestFederationEntities.IM.OP);
     log.info("[entityConfigurationCache] Reference payload: {} KB",
-        entityConfigurationReference.getSignedStatement().getPayload().toBytes().length / 1024.0);
+        entityConfigurationReference.getPayload().toBytes().length / 1024.0);
 
     IntStream.range(0, TEST_END_EXCLUSIVE).parallel().forEach(i -> {
-      final EntityStatement entityConfigurationResponse =
+      final SignedJWT entityConfigurationResponse =
           clients.entity().getEntityConfiguration(TestFederationEntities.IM.OP);
-      Assertions.assertEquals(entityConfigurationReference.getSignedStatement().serialize()
-          , entityConfigurationResponse.getSignedStatement().serialize(), "Failed on iteration %d".formatted(i));
+      Assertions.assertEquals(entityConfigurationReference.serialize()
+          , entityConfigurationResponse.serialize(), "Failed on iteration %d".formatted(i));
     });
   }
 
   @Test
   @DisplayName("Entity Configuration 1000 times with no cache (3.36 KB)")
   void entityConfigurationNoCache(final FederationClients clients) {
-    final EntityStatement entityConfigurationReference =
+    final SignedJWT entityConfigurationReference =
         clients.disableCaching().entity().getEntityConfiguration(TestFederationEntities.IM.OP);
     log.info("[entityConfigurationNoCache] Reference payload: {} KB",
-        entityConfigurationReference.getSignedStatement().getPayload().toBytes().length / 1024.0);
+        entityConfigurationReference.getPayload().toBytes().length / 1024.0);
 
     IntStream.range(0, NO_CACHE_TEST_END_EXCLUSIVE).parallel().forEach(i -> {
-      final EntityStatement entityConfigurationResponse =
+      final SignedJWT entityConfigurationResponse =
           clients.disableCaching().entity().getEntityConfiguration(TestFederationEntities.IM.OP);
-      Assertions.assertNotEquals(entityConfigurationReference.getSignedStatement().serialize()
-          , entityConfigurationResponse.getSignedStatement().serialize());
+      Assertions.assertNotEquals(entityConfigurationReference.serialize()
+          , entityConfigurationResponse.serialize());
     });
   }
 

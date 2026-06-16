@@ -17,9 +17,9 @@
 package se.swedenconnect.oidf.resolver;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
@@ -134,15 +134,10 @@ public class ValidatingResolver implements Resolver {
 
     if (request.trustAnchor().equals(request.subject())) {
       final ResolverTrustChain chain = this.tree.getTrustChain(request);
-      try {
-        final EntityStatement es =
-            EntityStatement.parse(chain.getTrustChain().stream().findFirst().get().getSignedStatement());
-        return ResolverResponse.builder()
-            .entityStatement(es)
-            .build();
-      } catch (final ParseException e) {
-        throw new RuntimeException(e);
-      }
+      final SignedJWT es = chain.getTrustChain().stream().findFirst().get();
+      return ResolverResponse.builder()
+          .entityStatement(es)
+          .build();
     }
 
 
@@ -154,7 +149,7 @@ public class ValidatingResolver implements Resolver {
       );
     }
     ChainValidationResult chainValidationResult = null;
-    final List<EntityStatement> trustChainList = chain.getTrustChain().stream().toList();
+    final List<SignedJWT> trustChainList = chain.getTrustChain().stream().toList();
     try {
       chainValidationResult = this.validator.validate(trustChainList);
       validationErrors.addAll(chainValidationResult.errors());
@@ -176,7 +171,7 @@ public class ValidatingResolver implements Resolver {
       validationErrors.add(e);
     }
 
-    final EntityStatement leaf = chainValidationResult.chain().getFirst();
+    final SignedJWT leaf = chainValidationResult.chain().getFirst();
 
     return ResolverResponse.builder()
         .entityStatement(leaf)

@@ -17,6 +17,8 @@
 package se.swedenconnect.oidf.resolver;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
@@ -43,7 +45,7 @@ public record DiscoveryRequest(String trustAnchor, List<String> types, List<Stri
     predicates.add((a, s) -> a != null);
     predicates.add((a, s) -> a.getEntityStatement() != null);
 
-    predicates.add((a, s) -> a.getEntityStatement().getClaimsSet().isSelfStatement());
+    predicates.add((a, s) -> EntityStatementClaims.isSelfStatement(a.getEntityStatement()));
 
     if (Objects.isNull(this.trustAnchor)) {
       throw new IllegalArgumentException("Trust anchor parameter can not be null");
@@ -51,16 +53,18 @@ public record DiscoveryRequest(String trustAnchor, List<String> types, List<Stri
 
     if (Objects.nonNull(this.types) && !this.types.isEmpty()) {
       predicates.add((a, s) -> this.types.stream()
-          .anyMatch(type -> Objects.nonNull(a.getEntityStatement().getClaimsSet().getMetadata(new EntityType(type)))));
+          .anyMatch(type -> Objects.nonNull(
+              EntityStatementClaims.getMetadata(a.getEntityStatement(), new EntityType(type)))));
     }
 
     if (Objects.nonNull(this.trustMarkTypes) && !this.trustMarkTypes.isEmpty()) {
       predicates.add((a, s) -> {
-        if (Objects.isNull(a.getEntityStatement().getClaimsSet().getTrustMarks())) {
+        final List<TrustMarkEntry> trustMarks = EntityStatementClaims.getTrustMarks(a.getEntityStatement());
+        if (Objects.isNull(trustMarks)) {
           //We requested trust marks but there is none in this entity statement
           return false;
         }
-        return a.getEntityStatement().getClaimsSet().getTrustMarks().stream()
+        return trustMarks.stream()
             .anyMatch(tmp -> this.trustMarkTypes.contains(tmp.getID().getValue()));
       });
     }

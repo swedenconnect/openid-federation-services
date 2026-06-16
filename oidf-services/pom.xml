@@ -245,6 +245,13 @@
             <version>${service-revision}</version>
         </dependency>
         <dependency>
+            <groupId>se.swedenconnect.oidf</groupId>
+            <artifactId>resolver</artifactId>
+            <version>${service-revision}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite</artifactId>
             <version>1.14.2</version>
@@ -402,8 +409,16 @@
                 </executions>
             </plugin>
             <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <api.version>1.44</api.version>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.5.4</version>
                 <configuration>
                     <systemPropertyVariables>
                         <api.version>1.44</api.version>

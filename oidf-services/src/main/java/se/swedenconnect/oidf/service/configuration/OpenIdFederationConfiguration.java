@@ -66,7 +66,7 @@ import se.swedenconnect.oidf.service.state.StateHashFactory;
 public class OpenIdFederationConfiguration {
 
   @Bean
-  @ConditionalOnMissingBean(RecordRegistryIntegration.class)
+  @ConditionalOnProperty(name = "federation.registry.integration.enabled", havingValue = "false", matchIfMissing = true)
   RecordRegistryIntegration throwingRecordRegistryIntegration() {
     return new ThrowingRecordRegistryIntegration();
   }
