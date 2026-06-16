@@ -29,7 +29,7 @@
     <artifactId>trustanchor</artifactId>
 
     <properties>
-        <service-revision>0.11.9-SNAPSHOT</service-revision>
+        <service-revision>0.11.9</service-revision>
     </properties>
 
     <dependencies>
