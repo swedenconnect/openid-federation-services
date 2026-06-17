@@ -17,14 +17,13 @@
 package se.swedenconnect.oidf.resolver.tree;
 
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.SearchRequest;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
@@ -93,7 +92,7 @@ public class EntityStatementTree {
     // leaf --> subordinateStatement --> (node --> subordinateStatement [repeated]) --> root
     //3. Remove all nodes in the chain that is not leaf or root
     final List<ScrapedEntity> entityList = new ArrayList<>(entities);
-    final LinkedHashSet<EntityStatement> chain = new LinkedHashSet<>();
+    final LinkedHashSet<SignedJWT> chain = new LinkedHashSet<>();
 
     // Add leaf entity configuration
     chain.add(entityList.getFirst().getEntityStatement());
@@ -118,11 +117,7 @@ public class EntityStatementTree {
                 .formatted(parent.getEntityID().getValue(), child.getEntityID().getValue()));
       }
 
-      try {
-        chain.add(EntityStatement.parse(subJWT));
-      } catch (final ParseException e) {
-        throw new IllegalStateException("Failed to parse subordinate statement", e);
-      }
+      chain.add(subJWT);
     }
 
     // Add root (trust anchor) entity configuration
@@ -140,7 +135,7 @@ public class EntityStatementTree {
   public List<String> discovery(final DiscoveryRequest discoveryRequest) {
     return this.tree.search(new SearchRequest<>(discoveryRequest.asPredicate(), false, this.tree.getCurrentSnapshot()))
         .stream()
-        .map(n -> n.getData().getEntityStatement().getEntityID().getValue())
+        .map(n -> EntityStatementClaims.getEntityID(n.getData().getEntityStatement()).getValue())
         .toList();
   }
 
@@ -155,19 +150,19 @@ public class EntityStatementTree {
     loader.resolveTree(trustAnchorEntityId, this.tree, snapshotId);
   }
 
-  private boolean isIntermediate(final EntityStatement statement, final ResolveRequest request) {
-    if (statement.getEntityID().getValue().equals(request.subject())) {
+  private boolean isIntermediate(final SignedJWT statement, final ResolveRequest request) {
+    if (EntityStatementClaims.getEntityID(statement).getValue().equals(request.subject())) {
       //The target is an intermediate, but is also the intended search target
       return false;
     }
-    if (!statement.getClaimsSet().isSelfStatement()) {
+    if (!EntityStatementClaims.isSelfStatement(statement)) {
       return false;
     }
-    if (statement.getEntityID().getValue().equalsIgnoreCase(request.trustAnchor())) {
+    if (EntityStatementClaims.getEntityID(statement).getValue().equalsIgnoreCase(request.trustAnchor())) {
       //This statment is the trust anchor and is not an intermediate
       return false;
     }
-    final JSONObject metadata = statement.getClaimsSet().getMetadata(EntityType.FEDERATION_ENTITY);
+    final JSONObject metadata = EntityStatementClaims.getMetadata(statement, EntityType.FEDERATION_ENTITY);
     //Intermediates and trust anchors MUST have a federation_fetch_endpoint
     return Objects.nonNull(metadata) && metadata.containsKey("federation_fetch_endpoint");
   }
@@ -228,10 +223,10 @@ public class EntityStatementTree {
       final String trustAnchor,
       final List<String> path
   ) {
-    if (node.getEntityStatement().getEntityID().getValue().equals(trustAnchor)) {
+    if (EntityStatementClaims.getEntityID(node.getEntityStatement()).getValue().equals(trustAnchor)) {
       return path;
     }
-    final List<EntityID> hints = node.getEntityStatement().getClaimsSet().getAuthorityHints();
+    final List<EntityID> hints = EntityStatementClaims.getAuthorityHints(node.getEntityStatement());
     if (Objects.isNull(hints)) {
       return path;
     }

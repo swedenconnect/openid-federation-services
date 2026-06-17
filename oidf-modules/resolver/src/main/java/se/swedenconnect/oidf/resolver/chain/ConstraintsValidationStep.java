@@ -18,17 +18,15 @@ package se.swedenconnect.oidf.resolver.chain;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.oauth2.sdk.id.Identifier;
-import com.nimbusds.openid.connect.sdk.claims.CommonClaimsSet;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
-import net.minidev.json.JSONObject;
+import com.nimbusds.jwt.SignedJWT;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -46,13 +44,14 @@ import java.util.Set;
  */
 public class ConstraintsValidationStep implements ChainValidationStep {
   @Override
-  public List<ChainValidationError> validate(final List<EntityStatement> chain) {
+  public List<ChainValidationError> validate(final List<SignedJWT> chain) {
     final ArrayList<ChainValidationError> errors = new ArrayList<>();
     try {
       for (int x = chain.size() - 1; x >= 0; x--) {
-        final EntityStatement current = chain.get(x);
+        final SignedJWT current = chain.get(x);
         //TODO check parent is self statement
-        final JSONObject jsonConstraints = current.getClaimsSet().getJSONObjectClaim("constraints");
+        final Map<String, Object> jsonConstraints =
+            EntityStatementClaims.claims(current).getJSONObjectClaim("constraints");
         if (Objects.nonNull(jsonConstraints)) {
           final ConstraintRecord constraints = ConstraintRecord.fromJson(jsonConstraints);
           this.verifySubordinates(constraints, chain.subList(0, x));
@@ -66,21 +65,22 @@ public class ConstraintsValidationStep implements ChainValidationStep {
 
   private void verifySubordinates(
       final ConstraintRecord constraints,
-      final List<EntityStatement> subordinateStatements) throws BadJOSEException, JOSEException {
+      final List<SignedJWT> subordinateStatements)
+      throws BadJOSEException, JOSEException, java.text.ParseException {
 
     if (subordinateStatements.isEmpty()) {
       return;
     }
 
-    final EntityStatement leafStatement = subordinateStatements.getFirst();
+    final SignedJWT leafStatement = subordinateStatements.getFirst();
 
     //If allowedLeafEntityTypes is empty we implicitly allow all types
     final Set<String> allowedLeafEntityTypes = Optional.ofNullable(constraints.getAllowedEntityTypes())
         .map(HashSet::new)
         .orElse(new HashSet<>());
     if (!allowedLeafEntityTypes.isEmpty()) {
-      final EntityStatementClaimsSet claimsSet = leafStatement.getClaimsSet();
-      final JSONObject metadataClaim = claimsSet.getJSONObjectClaim("metadata");
+      final Map<String, Object> metadataClaim =
+          EntityStatementClaims.claims(leafStatement).getJSONObjectClaim("metadata");
       if (Objects.nonNull(metadataClaim)) {
         final HashMap<String, Object> tmpMetadata = new HashMap<>(metadataClaim);
         //This implementation allows federation_entity implicitly
@@ -100,8 +100,8 @@ public class ConstraintsValidationStep implements ChainValidationStep {
     // Check max path length = the number of allowed intermediates
     int intermediateCount = subordinateStatements.size();
 
-    if (leafStatement.getClaimsSet().isSelfStatement() && Objects.nonNull(
-        leafStatement.verifySignatureOfSelfStatement())) {
+    if (EntityStatementClaims.isSelfStatement(leafStatement) && Objects.nonNull(
+        EntityStatementClaims.verifySignatureOfSelfStatement(leafStatement))) {
       // This implementation allows a chain to end with an Entity Statement.
       // If the last statement is selfsigned it is not counted as an Intermediate Entity statement
       intermediateCount -= 1;
@@ -115,9 +115,7 @@ public class ConstraintsValidationStep implements ChainValidationStep {
 
 
     final List<String> subjectEntityIdentifiers = subordinateStatements.stream()
-        .map(EntityStatement::getClaimsSet)
-        .map(CommonClaimsSet::getSubject)
-        .map(Identifier::getValue)
+        .map(es -> EntityStatementClaims.claims(es).getSubject())
         .toList();
 
     if (Objects.nonNull(constraints.getNaming())) {

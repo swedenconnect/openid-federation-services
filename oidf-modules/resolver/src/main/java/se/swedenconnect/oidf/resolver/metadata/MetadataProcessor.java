@@ -16,13 +16,14 @@
  */
 package se.swedenconnect.oidf.resolver.metadata;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.PolicyOperationCombinationValidator;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.PolicyOperationFactory;
 import net.minidev.json.JSONObject;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.List;
 import java.util.Objects;
@@ -52,27 +53,19 @@ public class MetadataProcessor {
    * @param chain to process
    * @return final metadata object
    */
-  public JSONObject processMetadata(final List<EntityStatement> chain) {
+  public JSONObject processMetadata(final List<SignedJWT> chain) {
     try {
-      final EntityStatement leafNode = chain.getFirst();
+      final SignedJWT leafNode = chain.getFirst();
 
-      final List<String> metadataType = leafNode.getClaimsSet()
+      final List<String> metadataType = EntityStatementClaims.claims(leafNode)
           .getJSONObjectClaim("metadata")
           .keySet()
           .stream()
           .toList();
 
       final List<MetadataPolicy> metadataPolicies = chain.stream()
-          .flatMap(entity -> {
-              return metadataType.stream().map(mdt -> {
-                try {
-                  return entity.getClaimsSet().getMetadataPolicy(new EntityType(mdt));
-                }
-                catch (final PolicyViolationException e) {
-                  throw new IllegalArgumentException(e);
-                }
-              });
-          })
+          .flatMap(entity -> metadataType.stream()
+              .map(mdt -> EntityStatementClaims.getMetadataPolicy(entity, new EntityType(mdt))))
           .filter(Objects::nonNull)
           .toList();
 
@@ -84,7 +77,7 @@ public class MetadataProcessor {
       final JSONObject result = new JSONObject();
       metadataType.forEach(type -> {
         try {
-          result.put(type, metadataPolicy.apply(leafNode.getClaimsSet().getMetadata(new EntityType(type))));
+          result.put(type, metadataPolicy.apply(EntityStatementClaims.getMetadata(leafNode, new EntityType(type))));
         }
         catch (final PolicyViolationException e) {
           throw new RuntimeException(e);
@@ -92,7 +85,7 @@ public class MetadataProcessor {
       });
       return result;
     }
-    catch (final PolicyViolationException | com.nimbusds.oauth2.sdk.ParseException e) {
+    catch (final PolicyViolationException | com.nimbusds.oauth2.sdk.ParseException | java.text.ParseException e) {
       throw new IllegalArgumentException("Failed to validate/parse policy", e);
     }
   }

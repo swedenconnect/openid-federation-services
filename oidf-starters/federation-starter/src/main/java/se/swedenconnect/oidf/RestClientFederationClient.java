@@ -17,8 +17,6 @@
 package se.swedenconnect.oidf;
 
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +63,7 @@ public class RestClientFederationClient implements FederationClient {
   }
 
   @Override
-  public EntityStatement entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
+  public SignedJWT entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
     final String entityId = request.parameters().entityID().getValue();
     final long startNanos = System.nanoTime();
     final String jwt = Optional.ofNullable(request.parameters().ecLocation())
@@ -93,12 +91,12 @@ public class RestClientFederationClient implements FederationClient {
           Tag.of("entityId", entityId),
           Tag.of("outcome", "success")
       )).increment();
-      final EntityStatement result = EntityStatement.parse(jwt);
+      final SignedJWT result = SignedJWT.parse(jwt);
       final long responseTimeMs = (System.nanoTime() - startNanos) / 1_000_000;
       this.uptimeRegistry.record(entityId, true);
       this.uptimeRegistry.recordSuccess(entityId, responseTimeMs);
       return result;
-    } catch (final ParseException e) {
+    } catch (final java.text.ParseException e) {
       this.registry.counter("GET_entity_configuration", List.of(
           Tag.of("entityId", entityId),
           Tag.of("outcome", "failure")
@@ -116,23 +114,27 @@ public class RestClientFederationClient implements FederationClient {
   }
 
   @Override
-  public EntityStatement fetch(final FederationRequest<FetchRequest> request) {
+  public SignedJWT fetch(final FederationRequest<FetchRequest> request) {
     final String url = Optional.ofNullable(request.federationEntityMetadata().get("federation_fetch_endpoint"))
         .filter(u -> u instanceof String)
         .map(String.class::cast)
         .orElseThrow();
-    final String body = this.client.mutate().baseUrl(url).build()
-        .get()
-        .uri(builder -> builder
-            .queryParam("sub", request.parameters()
-                .subject())
-            .build())
-        .retrieve()
-        .body(String.class);
     try {
-      return EntityStatement.parse(body);
-    } catch (final ParseException e) {
+      final String body = this.client.mutate().baseUrl(url).build()
+          .get()
+          .uri(builder -> builder
+              .queryParam("sub", request.parameters()
+                  .subject())
+              .build())
+          .retrieve()
+          .body(String.class);
+      return SignedJWT.parse(body);
+    } catch (final java.text.ParseException e) {
+      log.error("Failed to parse entity statement for fetch request {}", request, e);
       throw new RegistryResponseException("Failed to fetch entity statement", e);
+    } catch (final Exception e) {
+      log.error("Failed to fetch entity statement for request {}", request, e);
+      throw e;
     }
   }
 
@@ -143,10 +145,15 @@ public class RestClientFederationClient implements FederationClient {
         .map(String.class::cast)
         .orElseThrow();
 
-    return (List<String>) this.client.mutate().baseUrl(url).build()
-        .get()
-        .retrieve()
-        .body(List.class);
+    try {
+      return (List<String>) this.client.mutate().baseUrl(url).build()
+          .get()
+          .retrieve()
+          .body(List.class);
+    } catch (final Exception e) {
+      log.error("Failed to fetch subordinate listing for request {}", request, e);
+      throw e;
+    }
   }
 
   @Override
@@ -198,17 +205,17 @@ public class RestClientFederationClient implements FederationClient {
         .filter(p -> p instanceof String)
         .map(String.class::cast)
         .orElseGet(() -> request.parameters().trustMarkIssuer() + "/trust_mark_status");
-    final String body = this.client.mutate().baseUrl(path).build()
-        .get()
-        .uri(builder -> builder
-            .queryParam("trust_mark", request.parameters().trustMarkJwt())
-            .build())
-        .retrieve()
-        .body(String.class);
     try {
+      final String body = this.client.mutate().baseUrl(path).build()
+          .get()
+          .uri(builder -> builder
+              .queryParam("trust_mark", request.parameters().trustMarkJwt())
+              .build())
+          .retrieve()
+          .body(String.class);
       return new TrustMarkStatusResponse(SignedJWT.parse(body), false);
-    } catch (final java.text.ParseException e) {
-      log.error("Failed to get Trust Mark Status for Trust Mark Request {}", request);
+    } catch (final Exception e) {
+      log.error("Failed to get Trust Mark Status for Trust Mark Request {}", request, e);
       return new TrustMarkStatusResponse(null, true);
     }
   }

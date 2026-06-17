@@ -16,7 +16,7 @@
  */
 package se.swedenconnect.oidf.resolver.chain;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 
 import java.util.List;
 
@@ -31,5 +31,5 @@ public interface ChainValidationStep {
    * @param chain to validate
    * @return validation errors
    */
-  List<ChainValidationError> validate(final List<EntityStatement> chain);
+  List<ChainValidationError> validate(final List<SignedJWT> chain);
 }

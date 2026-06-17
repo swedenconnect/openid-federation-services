@@ -17,20 +17,20 @@
 package se.swedenconnect.oidf.common.entity.tree.scraping;
 
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
-import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -54,11 +54,12 @@ public record ScrapedIntermediate(Map<String, SignedJWT> subordinates) {
   public void scrape(final FederationClient client, final Map<String, Object> metadata) {
     final List<String> subordinates = client.subordinateListing(
         new FederationRequest<>(SubordinateListingRequest.requestAll(), metadata));
+    log.debug("Fetched subordinate listing with {} entries", subordinates.size());
     final Map<String, SignedJWT> collect = subordinates.stream().parallel()
         .map(sub -> {
           return CompletableFuture.supplyAsync(() -> {
             log.debug("Resolving subordinate {}", sub);
-            final EntityStatement fetch = client.fetch(new FederationRequest<>(new FetchRequest(sub), metadata));
+            final SignedJWT fetch = client.fetch(new FederationRequest<>(new FetchRequest(sub), metadata));
             return fetch;
           }, FETCH_EXECUTOR);
         })
@@ -69,7 +70,7 @@ public record ScrapedIntermediate(Map<String, SignedJWT> subordinates) {
             throw new RuntimeException(e);
           }
         })
-        .collect(Collectors.toMap(kv -> kv.getEntityID().getValue(), EntityStatement::getSignedStatement));
+        .collect(Collectors.toMap(kv -> EntityStatementClaims.getEntityID(kv).getValue(), Function.identity()));
         this.subordinates.putAll(collect);
   }
 }

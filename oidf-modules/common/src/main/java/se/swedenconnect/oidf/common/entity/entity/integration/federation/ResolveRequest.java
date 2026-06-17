@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.common.entity.entity.integration.federation;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
@@ -44,15 +45,15 @@ public record ResolveRequest(String subject, String trustAnchor, String type, Bo
     predicates.add((a, s) -> a != null);
     predicates.add((a, s) -> a.getEntityStatement() != null);
 
-    predicates.add((a,s) -> a.getEntityStatement().getClaimsSet().isSelfStatement());
+    predicates.add((a,s) -> EntityStatementClaims.isSelfStatement(a.getEntityStatement()));
 
     if (Objects.nonNull(this.subject)) {
-      predicates.add((a, s) -> a.getEntityStatement().getClaimsSet().getSubject().getValue()
+      predicates.add((a, s) -> EntityStatementClaims.claims(a.getEntityStatement()).getSubject()
           .equalsIgnoreCase(this.subject));
     }
     if (Objects.nonNull(this.type)) {
       predicates.add((a, s) -> Objects.nonNull(
-          a.getEntityStatement().getClaimsSet().getMetadata(new EntityType(this.type))));
+          EntityStatementClaims.getMetadata(a.getEntityStatement(), new EntityType(this.type))));
     }
 
     return predicates.stream().reduce((a,b) -> true, BiPredicate::and);

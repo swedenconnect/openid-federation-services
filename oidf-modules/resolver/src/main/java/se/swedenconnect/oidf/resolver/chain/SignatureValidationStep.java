@@ -20,8 +20,10 @@ import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,13 +50,13 @@ public class SignatureValidationStep implements ChainValidationStep {
   }
 
   @Override
-  public List<ChainValidationError> validate(final List<EntityStatement> chain) {
+  public List<ChainValidationError> validate(final List<SignedJWT> chain) {
     final ArrayList<ChainValidationError> errors = new ArrayList<>();
 
     //Verify leaf
-    final EntityStatement leaf = chain.getFirst();
-    final String headerKid = leaf.getSignedStatement().getHeader().getKeyID();
-    final JWKSet leafJwkSet = leaf.getClaimsSet().getJWKSet();
+    final SignedJWT leaf = chain.getFirst();
+    final String headerKid = leaf.getHeader().getKeyID();
+    final JWKSet leafJwkSet = EntityStatementClaims.getJWKSet(leaf);
     if (headerKid != null && leafJwkSet != null) {
       final Set<String> jwksKids = leafJwkSet.getKeys().stream()
           .map(JWK::getKeyID)
@@ -67,7 +69,7 @@ public class SignatureValidationStep implements ChainValidationStep {
             null));
       } else {
         try {
-          Objects.requireNonNull(leaf.verifySignatureOfSelfStatement());
+          Objects.requireNonNull(EntityStatementClaims.verifySignatureOfSelfStatement(leaf));
         } catch (final Exception e) {
           errors.add(new ChainValidationError(ChainValidationErrorType.LEAF_SIGNATURE_INVALID,
               "Invalid leaf statement: " + e.getMessage(), e));
@@ -75,7 +77,7 @@ public class SignatureValidationStep implements ChainValidationStep {
       }
     } else {
       try {
-        Objects.requireNonNull(leaf.verifySignatureOfSelfStatement());
+        Objects.requireNonNull(EntityStatementClaims.verifySignatureOfSelfStatement(leaf));
       } catch (final Exception e) {
         errors.add(new ChainValidationError(ChainValidationErrorType.LEAF_SIGNATURE_INVALID,
             "Invalid leaf statement: " + e.getMessage(), e));
@@ -95,61 +97,64 @@ public class SignatureValidationStep implements ChainValidationStep {
     }
 
     for (int i = 0; i < chain.size() - 1; i++) {
-      final EntityStatement current = chain.get(i);
-      final EntityStatement next = chain.get(i + 1);
+      final SignedJWT current = chain.get(i);
+      final SignedJWT next = chain.get(i + 1);
       try {
         verifyLink(current, next);
       } catch (final Exception e) {
         errors.add(new ChainValidationError(ChainValidationErrorType.CHAIN_LINK_SIGNATURE_INVALID,
-            "Failed to verify link between %s and %s".formatted(current.getEntityID(), next.getEntityID()), e));
+            "Failed to verify link between %s and %s".formatted(
+                EntityStatementClaims.getEntityID(current), EntityStatementClaims.getEntityID(next)), e));
       }
       try {
         verifyValidityTime(current);
       } catch (final Exception e) {
         errors.add(new ChainValidationError(ChainValidationErrorType.STATEMENT_EXPIRED,
-            "Failed to verify validity time of %s".formatted(current.getEntityID()), e));
+            "Failed to verify validity time of %s".formatted(EntityStatementClaims.getEntityID(current)), e));
       }
     }
 
     return errors;
   }
 
-  private static void verifyLink(final EntityStatement current, final EntityStatement next)
-      throws BadJOSEException, JOSEException {
-    final String currentIssuer = current.getClaimsSet().getIssuer().getValue();
-    final String nextSubject = next.getClaimsSet().getSubject().getValue();
+  private static void verifyLink(final SignedJWT current, final SignedJWT next)
+      throws BadJOSEException, JOSEException, ParseException {
+    final String currentIssuer = current.getJWTClaimsSet().getIssuer();
+    final String nextSubject = next.getJWTClaimsSet().getSubject();
     if (!currentIssuer.equals(nextSubject)) {
       throw new IllegalArgumentException(
           "Current issuer:%s is not same as next subject:%s".formatted(currentIssuer, nextSubject)
       );
     }
-    current.verifySignature(next.getClaimsSet().getJWKSet());
+    EntityStatementClaims.verifySignature(current, EntityStatementClaims.getJWKSet(next));
   }
 
-  private void verifyEntity(final EntityStatement entity) throws BadJOSEException, JOSEException {
-    entity.verifySignature(this.trustedKeys);
+  private void verifyEntity(final SignedJWT entity) throws BadJOSEException, JOSEException, ParseException {
+    EntityStatementClaims.verifySignature(entity, this.trustedKeys);
     // Verify that TA is selfsigned
-    entity.verifySignature(entity.getClaimsSet().getJWKSet());
+    EntityStatementClaims.verifySignature(entity, EntityStatementClaims.getJWKSet(entity));
     // Verify validity time
     verifyValidityTime(entity);
   }
 
-  private static void verifyValidityTime(final EntityStatement entityStatement) {
+  private static void verifyValidityTime(final SignedJWT entityStatement) throws ParseException {
 
-    if (entityStatement.getClaimsSet().getIssueTime() == null) {
+    final com.nimbusds.jwt.JWTClaimsSet claimsSet = entityStatement.getJWTClaimsSet();
+
+    if (claimsSet.getIssueTime() == null) {
       throw new IllegalArgumentException("Entity Statement has no issue time");
     }
 
-    if (entityStatement.getClaimsSet().getExpirationTime() == null) {
+    if (claimsSet.getExpirationTime() == null) {
       throw new IllegalArgumentException("Entity Statement has no expiration time");
     }
 
-    final Instant issueTime = Instant.ofEpochMilli(entityStatement.getClaimsSet().getIssueTime().getTime());
+    final Instant issueTime = Instant.ofEpochMilli(claimsSet.getIssueTime().getTime());
     if (Instant.now().isBefore(issueTime.minusSeconds(15))) {
       throw new IllegalArgumentException("Entity Statement issue time is in the future");
     }
 
-    final Instant expirationTime = Instant.ofEpochMilli(entityStatement.getClaimsSet().getExpirationTime().getTime());
+    final Instant expirationTime = Instant.ofEpochMilli(claimsSet.getExpirationTime().getTime());
     if (Instant.now().isAfter(expirationTime)) {
       throw new IllegalArgumentException("Entity Statement has expired");
     }

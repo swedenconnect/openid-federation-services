@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.resolver.tree.resolution;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

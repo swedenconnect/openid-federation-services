@@ -139,12 +139,14 @@ public class EntityStatementTreeLoader {
       final ErrorContext context,
       final ResolutionContext resolutionContext) {
 
+    log.debug("TreeLoader resolving root {}", nodeKey.getKey());
     final Node<ScrapedEntity> root = new Node<>(nodeKey);
     final EntityID entityID = new EntityID(nodeKey.entityId());
     final ScrapedEntity scrapedEntity = ScrapedEntity.builder().entityID(entityID).build();
     scrapedEntity.scrape(this.client);
+    log.debug("TreeLoader scraped root {}", nodeKey.getKey());
     final EntityStatementWrapper wrapper =
-        new EntityStatementWrapper(scrapedEntity.getEntityStatement().getSignedStatement());
+        new EntityStatementWrapper(scrapedEntity.getEntityStatement());
     resolutionContext.setTrustAnchorEntityStatement(wrapper);
     final CacheSnapshot<ScrapedEntity> snapshot = tree.addRoot(root, scrapedEntity, snapshotId);
     final NodeKey key = root.getKey();
@@ -156,9 +158,13 @@ public class EntityStatementTreeLoader {
                 () -> this.resolveSubordinate(entry.getValue(), key, tree, snapshot, context, resolutionContext),
                 RESOLUTION_EXECUTOR))
             .toList();
+        log.debug("TreeLoader root {} has {} subordinates to resolve", nodeKey.getKey(), futures.size());
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+      } else {
+        log.debug("TreeLoader root {} has no subordinates", nodeKey.getKey());
       }
     });
+    log.debug("TreeLoader finished resolving root {}, running post hooks", nodeKey.getKey());
     this.postHooks.forEach(this.executionStrategy::finalize);
   }
 
@@ -170,7 +176,9 @@ public class EntityStatementTreeLoader {
                           final ResolutionContext resolutionContext) {
     try {
       final String subject = subordinateStatement.getJWTClaimsSet().getSubject();
+      log.debug("TreeLoader resolving subordinate {} of {}", subject, parentKey.getKey());
       if (!resolutionContext.add(subject)) {
+        log.debug("TreeLoader skipping already visited subordinate {}", subject);
         return;
       }
       final Node<ScrapedEntity> subNode = new Node<>(NodeKey.fromSignedJwt(subordinateStatement));
@@ -179,6 +187,7 @@ public class EntityStatementTreeLoader {
 
       final ScrapedEntity entity = ScrapedEntity.builder().entityID(entityID).ecLocation(ecLocation).build();
       entity.scrape(this.client);
+      log.debug("TreeLoader scraped subordinate {}", subject);
       tree.addChild(subNode, parentKey, entity, snapshot);
       if (entity.getIntermediate() != null) {
         final List<CompletableFuture<Void>> futures = entity.getIntermediate().subordinates()
@@ -188,7 +197,10 @@ public class EntityStatementTreeLoader {
                     resolutionContext),
                 RESOLUTION_EXECUTOR))
             .toList();
+        log.debug("TreeLoader subordinate {} has {} subordinates to resolve", subject, futures.size());
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+      } else {
+        log.debug("TreeLoader subordinate {} has no further subordinates", subject);
       }
     } catch (final Exception e) {
       this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey,

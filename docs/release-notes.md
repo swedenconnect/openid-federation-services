@@ -4,6 +4,55 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.11.9
+
+**Date:** 2026-06-16
+
+* Faster state reload — state is now reloaded more aggressively to reduce stale data windows
+* Relaxed metadata type validation to accept a wider range of conformant metadata structures
+* Added uptime metrics via actuator
+* Added typed chain validation error codes for more actionable error reporting
+* Added a demo federation for local development and testing
+* Fixed typo in README quickstart
+
+### Version 0.11.8
+
+**Date:** 2026-05-22
+
+* Fixed resolver returning 500 instead of 404 when a subordinate cannot be found
+
+### Version 0.11.6
+
+**Date:** 2026-05-22
+
+* Fixed tracing configuration
+
+### Version 0.11.5
+
+**Date:** 2026-05-21
+
+* Fixed convergence error in resolver
+
+### Version 0.11.4
+
+**Date:** 2026-05-20
+
+* Added distributed tracing support (OpenTelemetry / Spring Boot Actuator tracing)
+* Added trace logs throughout the federation resolution pipeline
+* Fixed typo in Grafana export
+
+### Version 0.11.3
+
+**Date:** 2026-04-13
+
+* Fixed Grafana export to include unresolved nodes
+
+### Version 0.11.2
+
+**Date:** 2026-04-13
+
+* Fixed Grafana export: added `nodeRadius` to exported node data
+
 ### Version 0.11.1
 
 **Date:** 2026-04-13

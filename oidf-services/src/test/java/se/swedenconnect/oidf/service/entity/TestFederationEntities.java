@@ -61,6 +61,7 @@ public class TestFederationEntities {
     public static EntityID INTERMEDIATE = new EntityID("http://localhost:11111/im");
     public static EntityID TRUST_MARK_ISSUER = new EntityID("http://localhost:11111/im/tmi");
     public static EntityID OP = new EntityID("http://localhost:11111/im/op");
+    public static EntityID SP = new EntityID("http://localhost:11111/im/saml-sp");
 
     public static class NestedIM {
       public static EntityID INTERMEDIATE = new EntityID("http://localhost:11111/im/im");

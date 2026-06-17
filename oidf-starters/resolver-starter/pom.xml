@@ -36,7 +36,7 @@
         <maven.compiler.target>25</maven.compiler.target>
         <maven.compiler.release>25</maven.compiler.release>
         <java.version>25</java.version>
-        <service-revision>0.11.9-SNAPSHOT</service-revision>
+        <service-revision>0.11.9</service-revision>
     </properties>
 
     <dependencies>

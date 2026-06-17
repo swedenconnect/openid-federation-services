@@ -29,8 +29,25 @@
     <artifactId>resolver</artifactId>
 
     <properties>
-        <service-revision>0.11.9-SNAPSHOT</service-revision>
+        <service-revision>0.11.9</service-revision>
     </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>

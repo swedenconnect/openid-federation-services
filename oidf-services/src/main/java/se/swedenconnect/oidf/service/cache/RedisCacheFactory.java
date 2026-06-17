@@ -17,7 +17,7 @@
 package se.swedenconnect.oidf.service.cache;
 
 import com.nimbusds.jose.shaded.gson.Gson;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -63,7 +63,7 @@ public class RedisCacheFactory implements CacheFactory {
     this.gson = gson;
 
     this.serializerMap = Map.of(
-        EntityStatement.class, new ExpirableEntityStatementSerializer(),
+        SignedJWT.class, new ExpirableEntityStatementSerializer(),
         CompositeRecord.class, new RedisCompositeRecordSerializer(this.gson)
     );
   }

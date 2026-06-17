@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.common.entity.entity.integration.federation;
 
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 
 import java.util.List;
@@ -30,15 +29,15 @@ import java.util.List;
 public interface FederationClient {
   /**
    * @param request for entity configuration
-   * @return entity configuration
+   * @return entity configuration as a signed JWT
    */
-  EntityStatement entityConfiguration(final FederationRequest<EntityConfigurationRequest> request);
+  SignedJWT entityConfiguration(final FederationRequest<EntityConfigurationRequest> request);
 
   /**
    * @param request for subordinate statement
    * @return entity statement with subordinate statement
    */
-  EntityStatement fetch(final FederationRequest<FetchRequest> request);
+  SignedJWT fetch(final FederationRequest<FetchRequest> request);
 
   /**
    * @param request for subordinate listing

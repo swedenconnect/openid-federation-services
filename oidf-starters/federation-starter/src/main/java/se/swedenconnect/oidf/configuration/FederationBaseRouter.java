@@ -115,10 +115,16 @@ public class FederationBaseRouter implements Router {
       virtualEntityId = requestUri.substring(0, requestUri.lastIndexOf('/'));
     }
     log.debug("FederationBaseRouter lookup requestUri={} virtualEntityId={}", requestUri, virtualEntityId);
-    final Optional<EntityRecord> entity = source.getEntityByVirtualEntityId(new EntityID(virtualEntityId)).or(() -> {
-      return source.getEntity(new NodeKey(virtualEntityId));
-    });
+    final Optional<EntityRecord> entity = source.getEntityByVirtualEntityId(new EntityID(virtualEntityId))
+        .or(() -> source.getEntity(new NodeKey(virtualEntityId)))
+        .or(() -> this.findEntityByEcLocation(source, requestUri));
     log.debug("FederationBaseRouter entity found={}", entity.isPresent());
     return entity;
+  }
+
+  private Optional<EntityRecord> findEntityByEcLocation(final CompositeRecordSource source, final String requestUri) {
+    return source.getAllEntities().stream()
+        .filter(record -> record.getEntityConfigurationEndpoints().stream().anyMatch(requestUri::equalsIgnoreCase))
+        .findFirst();
   }
 }

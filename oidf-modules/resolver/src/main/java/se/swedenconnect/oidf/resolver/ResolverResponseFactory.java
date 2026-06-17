@@ -19,10 +19,12 @@ package se.swedenconnect.oidf.resolver;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.math.BigInteger;
@@ -85,7 +87,7 @@ public class ResolverResponseFactory {
     final Stream<Instant> chainExpiries = Optional.ofNullable(resolverResponse.trustChain())
         .orElse(java.util.List.of())
         .stream()
-        .map(es -> es.getClaimsSet().getExpirationTime())
+        .map(es -> EntityStatementClaims.claims(es).getExpirationTime())
         .filter(Objects::nonNull)
         .map(Date::toInstant);
 
@@ -108,7 +110,7 @@ public class ResolverResponseFactory {
         .orElse(configuredExpiry);
 
     final JWTClaimsSet claims =
-        new JWTClaimsSet.Builder(resolverResponse.entityStatement().getClaimsSet().toJWTClaimsSet())
+        new JWTClaimsSet.Builder(EntityStatementClaims.claims(resolverResponse.entityStatement()))
             .issuer(this.properties.getEntityIdentifier())
             .issueTime(Date.from(now))
             .jwtID(new BigInteger(128, rng).toString(16))
@@ -121,7 +123,7 @@ public class ResolverResponseFactory {
                     })
                     .toList())
             .claim("trust_chain",
-                resolverResponse.trustChain().stream().map(statement -> statement.getSignedStatement().serialize())
+                resolverResponse.trustChain().stream().map(SignedJWT::serialize)
                     .toList())
             .build();
     return this.signerFactory.createSigner(this.compositeRecordSource.getEntity(new NodeKey(

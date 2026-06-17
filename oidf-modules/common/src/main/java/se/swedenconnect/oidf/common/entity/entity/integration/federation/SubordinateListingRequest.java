@@ -16,9 +16,10 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.federation;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import com.nimbusds.openid.connect.sdk.federation.entities.FederationEntityMetadata;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -54,19 +55,19 @@ public record SubordinateListingRequest(String entityType, Boolean trustMarked, 
   }
 
   /**
-   * Converts the request into an {@link EntityStatement} predicate
+   * Converts the request into a {@link SignedJWT} predicate
    * @return request as predicate
    */
-  public Predicate<EntityStatement> toPredicate() {
-    final List<Predicate<EntityStatement>> predicates = new ArrayList<>();
+  public Predicate<SignedJWT> toPredicate() {
+    final List<Predicate<SignedJWT>> predicates = new ArrayList<>();
 
     Optional.ofNullable(this.entityType).ifPresent(type -> {
-      predicates.add(es -> Objects.nonNull(es.getClaimsSet().getMetadata(new EntityType(type))));
+      predicates.add(es -> Objects.nonNull(EntityStatementClaims.getMetadata(es, new EntityType(type))));
     });
 
     Optional.ofNullable(this.trustMarkType).ifPresent(tmid -> {
-      final Predicate<EntityStatement> predicate =
-          es -> es.getClaimsSet().getTrustMarks().stream()
+      final Predicate<SignedJWT> predicate =
+          es -> EntityStatementClaims.getTrustMarks(es).stream()
               .anyMatch(tme -> tme.getID().getValue().equals(tmid));
       predicates.add(predicate);
     });
@@ -74,12 +75,13 @@ public record SubordinateListingRequest(String entityType, Boolean trustMarked, 
     Optional.ofNullable(this.trustMarked).ifPresent(marked -> {
       if (marked) {
         predicates.add(es -> {
-          return Objects.nonNull(es.getClaimsSet().getTrustMarks())
-              && !es.getClaimsSet().getTrustMarks().isEmpty();
+          return Objects.nonNull(EntityStatementClaims.getTrustMarks(es))
+              && !EntityStatementClaims.getTrustMarks(es).isEmpty();
         });
       } else {
         predicates.add(es -> {
-          return Objects.isNull(es.getClaimsSet().getTrustMarks()) || es.getClaimsSet().getTrustMarks().isEmpty();
+          return Objects.isNull(EntityStatementClaims.getTrustMarks(es))
+              || EntityStatementClaims.getTrustMarks(es).isEmpty();
         });
       }
     });
@@ -87,13 +89,15 @@ public record SubordinateListingRequest(String entityType, Boolean trustMarked, 
     Optional.ofNullable(this.intermediate).ifPresent(intermediate -> {
       if (intermediate) {
         predicates.add(es -> {
-          final FederationEntityMetadata federationEntityMetadata = es.getClaimsSet().getFederationEntityMetadata();
+          final FederationEntityMetadata federationEntityMetadata =
+              EntityStatementClaims.getFederationEntityMetadata(es);
           return Objects.nonNull(federationEntityMetadata.getFederationFetchEndpointURI())
               && Objects.nonNull(federationEntityMetadata.getFederationListEndpointURI());
         });
       } else {
         predicates.add(es -> {
-          final FederationEntityMetadata federationEntityMetadata = es.getClaimsSet().getFederationEntityMetadata();
+          final FederationEntityMetadata federationEntityMetadata =
+              EntityStatementClaims.getFederationEntityMetadata(es);
           return Objects.isNull(federationEntityMetadata.getFederationFetchEndpointURI())
               && Objects.isNull(federationEntityMetadata.getFederationListEndpointURI());
         });

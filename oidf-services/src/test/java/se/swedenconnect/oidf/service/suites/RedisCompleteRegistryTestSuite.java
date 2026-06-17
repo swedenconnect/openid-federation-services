@@ -37,6 +37,7 @@ import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverCritTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverDiscoveryTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverPolicyTestCases;
+import se.swedenconnect.oidf.service.resolver.ResolverSamlSpTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverTrustMarkTestCases;
 import se.swedenconnect.oidf.service.service.GeneralErrorHandlingTestCases;
 import se.swedenconnect.oidf.service.service.actuator.ActuatorTestCases;
@@ -57,7 +58,8 @@ import java.util.Random;
     TrustAnchorTestCases.class,
     ActuatorTestCases.class,
     ResolverPolicyTestCases.class,
-    ResolverCritTestCases.class
+    ResolverCritTestCases.class,
+    ResolverSamlSpTestCases.class
 })
 public class RedisCompleteRegistryTestSuite {
 
@@ -81,7 +83,7 @@ public class RedisCompleteRegistryTestSuite {
       throw new RuntimeException(e);
     }
     final MockEnvironment mockEnvironment = new MockEnvironment();
-    configurableApplicationContext = new SpringApplicationBuilder()
+    final SpringApplicationBuilder builder = new SpringApplicationBuilder()
         .sources(Application.class)
         .sources(TestConfiguration.class)
         .profiles("entitytypes")
@@ -98,9 +100,9 @@ public class RedisCompleteRegistryTestSuite {
                 "/federationservice")
             .withProperty("federation.routing.virtual-entity-routing.enabled", "true")
         )
-        .profiles("integration-test")
-        .run();
+        .profiles("integration-test");
     mockEnvironment.setProperty("federation.local-registry", "{}");
+    configurableApplicationContext = builder.run();
 
     ThreadLocal<ApplicationContext> threadLocalValue = new ThreadLocal<>();
     threadLocalValue.set(configurableApplicationContext);
