@@ -4,6 +4,15 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.11.10
+
+**Date:** 2026-06-18
+
+* Fixed duplicate keys in `/jwks` response — keys registered under both an alias and their key ID were previously returned twice
+* Added `name` claim to `/jwks` JWT response containing the configured alias names for federation and hosted keys
+* `JWKSRouter` is now active when virtual entity routing is enabled
+* Added integration tests for the `/jwks` endpoint across all test suites
+
 ### Version 0.11.9
 
 **Date:** 2026-06-16

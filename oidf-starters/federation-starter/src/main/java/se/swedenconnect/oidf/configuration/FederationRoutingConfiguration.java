@@ -25,6 +25,7 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.routing.JWKSRouter;
 import se.swedenconnect.oidf.routing.Router;
 
 import java.util.List;
@@ -51,7 +52,8 @@ public class FederationRoutingConfiguration {
    * @param source
    * @param routers
    * @param registry
-   * @param virtualEntityRoutingEnabled when {@code true}, only {@link FederationBaseRouter} is used;
+   * @param virtualEntityRoutingEnabled when {@code true}, only {@link FederationBaseRouter} and
+   *                                    {@link se.swedenconnect.oidf.routing.JWKSRouter} are used;
    *                                    old per-module routes are disabled
    */
   public FederationRoutingConfiguration(
@@ -63,7 +65,7 @@ public class FederationRoutingConfiguration {
 
     this.source = source;
     this.routers = virtualEntityRoutingEnabled
-        ? routers.stream().filter(a -> a instanceof FederationBaseRouter).toList()
+        ? routers.stream().filter(a -> a instanceof FederationBaseRouter || a instanceof JWKSRouter).toList()
         : routers;
     this.registry = registry;
   }
