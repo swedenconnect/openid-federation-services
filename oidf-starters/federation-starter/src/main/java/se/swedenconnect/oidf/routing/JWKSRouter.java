@@ -28,6 +28,9 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.common.entity.jwt.JWKFederationSigner;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -42,7 +45,6 @@ public class JWKSRouter implements Router {
   private final KeyRegistry registry;
 
   @Override
-  @Deprecated(forRemoval = true)
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
     route.GET("/jwks", handler -> {
       final Optional<JWK> defaultKey = this.registry.getDefaultKey();
@@ -53,13 +55,14 @@ public class JWKSRouter implements Router {
       final Map<String, JWKSet> mappedPublicKeys = this.registry.getMappedPublicKeys();
       final JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder();
       Optional.ofNullable(mappedPublicKeys.get("federation")).ifPresent(fed -> {
-            builder.claim("federation", fed.toPublicJWKSet().toJSONObject() );
+            builder.claim("federation", fed.toPublicJWKSet().toJSONObject());
           }
       );
       Optional.ofNullable(mappedPublicKeys.get("hosted")).ifPresent(hosted -> {
             builder.claim("hosted", hosted.toPublicJWKSet().toJSONObject() );
           }
       );
+      builder.claim("name", this.registry.getPublicKeyNames());
       final SignedJWT signedJwt = signer.sign(JOSEObjectType.JWT, builder.build());
       return ServerResponse.ok().body(signedJwt.serialize());
     });

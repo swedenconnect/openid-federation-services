@@ -104,12 +104,16 @@ public class KeyRegistry {
   public Map<String, JWKSet> getMappedPublicKeys() {
     final List<JWK> federationKeys = this.mappedKey.entrySet().stream()
         .filter((kv) -> kv.getKey().startsWith("federation:"))
+        //Filter on key id so we don't get the same key for alias + keyid
+        .filter(kv -> kv.getKey().endsWith(kv.getValue().getKeyID()))
         .map(Map.Entry::getValue)
         .map(JWK::toPublicJWK)
         .toList();
 
     final List<JWK> hostedKeys = this.mappedKey.entrySet().stream()
         .filter((kv) -> kv.getKey().startsWith("hosted:"))
+        //Filter on key id so we don't get the same key for alias + keyid
+        .filter(kv -> kv.getKey().endsWith(kv.getValue().getKeyID()))
         .map(Map.Entry::getValue)
         .map(JWK::toPublicJWK)
         .toList();
@@ -118,6 +122,32 @@ public class KeyRegistry {
         "hosted", new JWKSet(hostedKeys),
         "federation", new JWKSet(federationKeys)
         );
+  }
+
+  /**
+   * Gets the public key alias names grouped by usage.
+   *
+   * @return a map with keys "hosted" and "federation" mapping to their respective key alias names
+   */
+  public Map<String, List<String>> getPublicKeyNames() {
+    final List<String> federationKeyNames = this.mappedKey.entrySet().stream()
+        .filter((kv) -> kv.getKey().startsWith("federation:"))
+        //Filter the keys that do not contain kid so we can extract alias.
+        .filter(kv -> !kv.getKey().endsWith(kv.getValue().getKeyID()))
+        .map(Map.Entry::getKey)
+        .toList();
+
+    final List<String> hostedKeyNames = this.mappedKey.entrySet().stream()
+        .filter((kv) -> kv.getKey().startsWith("hosted:"))
+
+        .filter(kv -> !kv.getKey().endsWith(kv.getValue().getKeyID()))
+        .map(Map.Entry::getKey)
+        .toList();
+
+    return Map.of(
+        "hosted", hostedKeyNames,
+        "federation", federationKeyNames
+    );
   }
 
   /**
