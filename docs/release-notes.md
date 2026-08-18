@@ -4,6 +4,18 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.11.11
+
+**Date:** 2026-08-18
+
+* Fixed `NullPointerException` in subordinate listing filters when an entity configuration has no `trust_marks` or no `federation_entity` metadata
+* Filtered subordinate listings now skip subordinates whose entity configuration cannot be fetched instead of failing the whole listing
+* Filtered subordinate listings now return an empty list instead of 404 when no subordinate matches
+* Fixed `NullPointerException` in trust mark collection when the trust anchor has no `trust_mark_owners` or a chain statement has no `trust_marks`
+* Fixed `NullPointerException` in key configuration when a key mapping (`federation`/`hosted`) is not configured
+* Resolver `/discovery` is now served under the entity identifier for entities without a virtual entity id, and matching ignores query parameters
+* Added tests for resolver routing and trust mark collection edge cases
+
 ### Version 0.11.10
 
 **Date:** 2026-06-18

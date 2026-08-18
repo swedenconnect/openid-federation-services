@@ -46,7 +46,9 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CachedResponse;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Responsible for matching requests for any resolver module.
@@ -258,8 +260,11 @@ public class ResolverRouter implements Router, ModuleRouter {
   }
 
   private boolean isDiscoveryEndpoint(final ServerRequest request, final EntityRecord entity) {
-    return entity.getVirtualEntityId() != null
-        && request.uri().toASCIIString().contains(entity.getVirtualEntityId().getValue())
-        && request.path().endsWith("/discovery");
+    final String requestUri = request.uri().toASCIIString().split("\\?")[0];
+    // Entities without a virtual entity id are served under their entity identifier, same as /resolve
+    return Stream.of(entity.getVirtualEntityId(), entity.getEntityIdentifier())
+        .filter(Objects::nonNull)
+        .map(EntityID::getValue)
+        .anyMatch(base -> requestUri.equals(base + "/discovery"));
   }
 }

@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.trustanchor;
 
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
@@ -34,6 +35,7 @@ import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -115,23 +117,26 @@ public class DefaultTrustAnchor implements TrustAnchor {
       return subordinates.stream().map(e -> e.getEntityIdentifier().getValue()).toList();
     }
 
-    final List<String> list = subordinates.stream().toList()
-        .stream()
-        .map(entity -> {
-          final EntityID entityID = entity.getEntityIdentifier();
-          return new FederationRequest<>(
-              new EntityConfigurationRequest(entityID, entity.getEcLocation()),
-              Map.of());
-        })
-        .map(this.federationClient::entityConfiguration)
+    return subordinates.stream()
+        .map(this::entityConfigurationOrNull)
+        .filter(Objects::nonNull)
         .filter(request.toPredicate())
         .map(EntityStatementClaims::getEntityID)
         .map(EntityID::getValue)
         .toList();
-    if (list.isEmpty()) {
-      throw new NotFoundException("No subordinates found");
+  }
+
+  private SignedJWT entityConfigurationOrNull(final TrustAnchorProperties.SubordinateListingProperty entity) {
+    final EntityID entityID = entity.getEntityIdentifier();
+    try {
+      return this.federationClient.entityConfiguration(new FederationRequest<>(
+          new EntityConfigurationRequest(entityID, entity.getEcLocation()),
+          Map.of()));
+    } catch (final Exception e) {
+      log.warn("Skipping subordinate {} in filtered listing, entity configuration unavailable",
+          entityID.getValue(), e);
+      return null;
     }
-    return list;
   }
 
   @Override
