@@ -14,9 +14,9 @@ When building a resolve tree, the service:
 
 ## Scheduled Recomputation
 
-The resolve tree is recomputed on a fixed schedule (default: every 60 minutes), controlled by:
+The resolve tree is recomputed on a fixed schedule (default: every 10 minutes), controlled by:
 
-- `federation.service.scheduling.resolver-reload-rate` — reload interval (ISO-8601 duration, default `PT60M`)
+- `federation.service.scheduling.resolver-reload-rate` — reload interval (ISO-8601 duration, default `PT10M`)
 - `federation.service.scheduling.resolver-trigger-enabled` — set to `false` to disable the scheduled trigger
 
 Each reload produces a new snapshot version, replacing the previous one.

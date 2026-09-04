@@ -4,6 +4,14 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.11.12
+
+**Date:** 2026-09-04
+
+* Failed resolution steps no longer retry against the tree that is currently being built — a failing branch is left out of the snapshot and picked up by the next scheduled tree load instead
+* Removed the `StepRecoveryStrategy` / `ScheduledStepRecoveryStrategy` retry mechanism and the `step-retry-time` resolver property
+* Default resolver reload rate (`federation.service.scheduling.resolver-reload-rate`) changed from `PT60M` to `PT10M`
+
 ### Version 0.11.11
 
 **Date:** 2026-08-18
