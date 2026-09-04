@@ -49,9 +49,7 @@ import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.metadata.OIDFPolicyOperationFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTreeLoader;
-import se.swedenconnect.oidf.resolver.tree.resolution.AtomicIntegerErrorContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.DFSExecution;
-import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 import se.swedenconnect.oidf.service.cache.ResolverEntitySerializer;
 import se.swedenconnect.oidf.service.resolver.cache.RedisVersionedCacheLayer;
@@ -129,8 +127,7 @@ class ValidatingResolverRedisTreeTest {
         TA_ID,
         Duration.ofDays(7),
         new JWKSet(entities.taKey.toPublicJWK()),
-        "https://resolver.example.com",
-        Duration.ofSeconds(5)
+        "https://resolver.example.com"
     );
 
     final ResolverRedisOperations operations = new ResolverRedisOperations(
@@ -141,20 +138,13 @@ class ValidatingResolverRedisTreeTest {
 
     final Tree<ScrapedEntity> tree = new Tree<>(cache);
 
-    final ErrorContextFactory errorContextFactory = new ErrorContextFactory() {
-      @Override
-      public ErrorContext create(final NodeKey key, final EntityStatementTreeLoader.StepName stepName) {
-        return new AtomicIntegerErrorContext();
-      }
-
-      @Override
-      public ErrorContext createEmpty() {
-        return new AtomicIntegerErrorContext();
-      }
+    // Steps are no longer retried, so surface any failure here instead of letting the load finish partial.
+    final ErrorContextFactory errorContextFactory = (key, stepName) -> {
+      throw new IllegalStateException("Step %s failed for %s".formatted(stepName, key.getKey()));
     };
 
     final EntityStatementTreeLoader loader = new EntityStatementTreeLoader(
-        client, new DFSExecution(), error -> { throw error; }, errorContextFactory);
+        client, new DFSExecution(), errorContextFactory);
 
     loader.resolveTree(TA_ID, tree, 1L);
     cache.useNextVersion();

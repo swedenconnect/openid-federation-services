@@ -22,9 +22,6 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTreeLoader;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.ExecutionStrategy;
-import se.swedenconnect.oidf.resolver.tree.resolution.ScheduledStepRecoveryStrategy;
-
-import java.util.concurrent.Executors;
 
 /**
  * Entity statement tree factory class.
@@ -60,9 +57,7 @@ public class EntityStatementTreeLoaderFactory {
    * @return new instance of a tree loader
    */
   public EntityStatementTreeLoader create(final ResolverProperties properties) {
-    return new EntityStatementTreeLoader(this.client, this.executionStrategy,
-        new ScheduledStepRecoveryStrategy(Executors.newSingleThreadScheduledExecutor(), properties),
-        this.errorContextFactory)
+    return new EntityStatementTreeLoader(this.client, this.executionStrategy, this.errorContextFactory)
         .withAdditionalPostHook(() -> this.publisher.publishEvent(
             new TreeUpdatedEvent(properties.getEntityIdentifier())
         ));

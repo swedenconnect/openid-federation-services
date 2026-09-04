@@ -65,7 +65,7 @@ import java.time.Clock;
 @Import(DataRedisAutoConfiguration.class)
 public class RedisCacheConfiguration {
 
-  @Value("${federation.service.scheduling.resolver-reload-rate:PT60M}")
+  @Value("${federation.service.scheduling.resolver-reload-rate:PT10M}")
   private Duration resolverReloadRate;
 
   private Duration cacheTtl() {

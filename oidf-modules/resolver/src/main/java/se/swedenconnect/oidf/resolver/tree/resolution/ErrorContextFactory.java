@@ -34,9 +34,4 @@ public interface ErrorContextFactory {
    * @return new instance of context
    */
   ErrorContext create(final NodeKey key, final EntityStatementTreeLoader.StepName stepName);
-
-  /**
-   * @return empty context
-   */
-  ErrorContext createEmpty();
 }

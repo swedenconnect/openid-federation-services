@@ -16,8 +16,6 @@
  */
 package se.swedenconnect.oidf.resolver.tree.resolution;
 
-import java.util.function.Supplier;
-
 /**
  * Error context for keeping track of number of failures for a step.
  *
@@ -34,22 +32,4 @@ public interface ErrorContext {
    * @return nr of errors
    */
   int getErrorCount();
-
-  /**
-   * @return true if nr of errors is equal to 0
-   */
-  default boolean isEmpty() {
-    return this.getErrorCount() == 0;
-  }
-
-  /**
-   * @param supplier of error context if missing
-   * @return context
-   */
-  default ErrorContext orElseGet(Supplier<ErrorContext> supplier) {
-    if (this.isEmpty()) {
-      return supplier.get();
-    }
-    return this;
-  }
 }

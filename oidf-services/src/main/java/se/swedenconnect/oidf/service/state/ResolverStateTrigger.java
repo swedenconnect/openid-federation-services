@@ -22,7 +22,7 @@ import org.springframework.scheduling.annotation.Scheduled;
  * Scheduled trigger for {@link ResolverStateManager}. Can be disabled via
  * {@code federation.service.scheduling.resolver-trigger-enabled=false}.
  * The reload rate can be configured via
- * {@code federation.service.scheduling.resolver-reload-rate} (ISO 8601 duration, default PT60M).
+ * {@code federation.service.scheduling.resolver-reload-rate} (ISO 8601 duration, default PT10M).
  *
  * @author Felix Hellman
  */
@@ -42,7 +42,7 @@ public class ResolverStateTrigger {
   /**
    * Trigger reload of resolver state on a fixed schedule.
    */
-  @Scheduled(fixedRateString = "${federation.service.scheduling.resolver-reload-rate:PT60M}")
+  @Scheduled(fixedRateString = "${federation.service.scheduling.resolver-reload-rate:PT10M}")
   public void reload() {
     this.resolverStateManager.reload();
   }
