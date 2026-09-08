@@ -4,6 +4,14 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.11.13
+
+**Date:** 2026-09-08
+
+* `/trust_mark_status` is now served over `POST` with parameters encoded as `application/x-www-form-urlencoded`, as required by section 8.4.1 of OpenID Federation 1.0. `GET` with query parameters is still accepted for backwards compatibility
+* `FederationClient` now sends Trust Mark Status requests over `POST`
+* Module routing now rejects non-`GET` requests for endpoints that are specified as `GET` only
+
 ### Version 0.11.12
 
 **Date:** 2026-09-04

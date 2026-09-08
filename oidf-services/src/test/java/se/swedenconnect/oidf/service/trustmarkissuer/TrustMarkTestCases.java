@@ -97,6 +97,23 @@ public class TrustMarkTestCases {
   }
 
   @Test
+  public void testTrustMarkStatusActiveUsingGet(final FederationClients clients) throws ParseException {
+
+    final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(
+        TestFederationEntities.IM.TRUST_MARK_ISSUER,
+        TRUST_MARK_ID,
+        TestFederationEntities.IM.OP
+    );
+
+    final String statusJwt = clients.anarchy().trustMark()
+        .trustMarkStatusUsingGet(
+            TestFederationEntities.IM.TRUST_MARK_ISSUER,
+            trustMark.serialize()
+        );
+    Assertions.assertEquals("active", SignedJWT.parse(statusJwt).getJWTClaimsSet().getStringClaim("status"));
+  }
+
+  @Test
   public void testTrustMarkStatusInvalid(final FederationClients clients) throws ParseException {
 
     final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(

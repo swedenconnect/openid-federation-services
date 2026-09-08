@@ -21,6 +21,7 @@ import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.nimbusds.jose.shaded.gson.Gson;
+import org.springframework.http.HttpMethod;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -136,7 +137,8 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
 
   @Override
   public boolean willHandleRequest(final ServerRequest request, final EntityRecord entity) {
-    return this.isFetchEndpoint(request, entity) || this.isSubordinateListingEndpoint(request, entity);
+    return HttpMethod.GET.equals(request.method())
+           && (this.isFetchEndpoint(request, entity) || this.isSubordinateListingEndpoint(request, entity));
   }
 
   private boolean isFetchEndpoint(final ServerRequest request, final EntityRecord entity) {

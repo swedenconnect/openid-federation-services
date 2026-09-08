@@ -20,6 +20,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.function.ServerRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
@@ -71,6 +72,7 @@ class ResolverRouterTest {
   private static ServerRequest request(final String uri) {
     final ServerRequest request = Mockito.mock(ServerRequest.class);
     Mockito.when(request.uri()).thenReturn(URI.create(uri));
+    Mockito.when(request.method()).thenReturn(HttpMethod.GET);
     return request;
   }
 

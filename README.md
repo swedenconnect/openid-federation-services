@@ -200,15 +200,19 @@ Each module _has_ to belong to a given entity that is present in properties or r
 
 #### Trust Mark Status
 
-`GET /trust_mark_status`
+`POST /trust_mark_status`
 
-*Query Parameters*
+Request body encoded as `application/x-www-form-urlencoded`.
+`GET /trust_mark_status` with the same parameter as a query parameter is still accepted for backwards
+compatibility, but POST is what the specification requires.
 
-| Required | Name          | Description                                                    |
-|----------|---------------|----------------------------------------------------------------|
-| Yes      | trust_mark_type | Trust Mark identifier                                          |
-| Yes      | sub           | The subject for which the Trust Mark is issued to              |
-| No       | iat           | Seconds Since the Epoch. Time when this Trust Mark was issued. |
+*Parameters*
+
+| Required | Name       | Description                       |
+|----------|------------|-----------------------------------|
+| Yes      | trust_mark | The Trust Mark to be validated    |
+
+Response: `200` with content type `application/trust-mark-status-response+jwt`.
 
 #### Trust Mark Listing
 

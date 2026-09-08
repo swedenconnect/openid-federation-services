@@ -20,6 +20,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -250,6 +251,9 @@ public class ResolverRouter implements Router, ModuleRouter {
 
   @Override
   public boolean willHandleRequest(final ServerRequest request, final EntityRecord entity) {
+    if (!HttpMethod.GET.equals(request.method())) {
+      return false;
+    }
     final Optional<String> resolveEndpoint = entity.getFederationResolveEndpoint();
     return resolveEndpoint.filter(s -> this.isResolveEndpoint(request, s)
                                        || this.isDiscoveryEndpoint(request, entity)).isPresent();

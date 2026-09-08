@@ -33,7 +33,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <credentials-support.version>2.1.2</credentials-support.version>
-        <service-revision>0.11.12</service-revision>
+        <service-revision>0.11.13</service-revision>
         <spring.boot.version>4.1.1</spring.boot.version>
         <!-- Overrides the Spring Boot managed version; 11.0.25 fixes the Tomcat advisories
              GHSA-9xv2-5v5q-p794, GHSA-gcx9-497g-6cp6 and GHSA-h3x4-894j-xpx5. -->
