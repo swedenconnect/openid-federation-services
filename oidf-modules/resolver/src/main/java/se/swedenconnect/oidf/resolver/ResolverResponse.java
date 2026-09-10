@@ -23,6 +23,7 @@ import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationError;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -43,4 +44,14 @@ public record ResolverResponse(
     List<SignedJWT> trustChain,
     List<Exception> validationErrors,
     List<ChainValidationError> typedValidationErrors) {
+
+  /**
+   * Compact constructor, normalizes absent list components into empty lists.
+   */
+  public ResolverResponse {
+    trustMarkEntries = Optional.ofNullable(trustMarkEntries).orElseGet(List::of);
+    trustChain = Optional.ofNullable(trustChain).orElseGet(List::of);
+    validationErrors = Optional.ofNullable(validationErrors).orElseGet(List::of);
+    typedValidationErrors = Optional.ofNullable(typedValidationErrors).orElseGet(List::of);
+  }
 }

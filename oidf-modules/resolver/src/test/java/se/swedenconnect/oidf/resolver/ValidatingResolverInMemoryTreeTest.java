@@ -21,11 +21,13 @@ import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolic
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
+import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.common.entity.tree.VersionedInMemoryCache;
@@ -46,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static se.swedenconnect.oidf.resolver.TestEntitiesFactory.IM_ID;
 import static se.swedenconnect.oidf.resolver.TestEntitiesFactory.LEAF_ID;
@@ -142,6 +145,33 @@ class ValidatingResolverInMemoryTreeTest {
     final String result = resolver.resolve(request);
 
     assertNotNull(result);
+  }
+
+  @Test
+  void resolveTrustAnchorAsSubjectDoesNotProduceNullLists() throws Exception {
+    when(factory.sign(any())).thenReturn("mock-signed-resolve-response");
+
+    final ResolveRequest request = new ResolveRequest(TA_ID, TA_ID, null, false);
+    final String result = resolver.resolve(request);
+
+    assertNotNull(result);
+
+    final ArgumentCaptor<ResolverResponse> captor = ArgumentCaptor.forClass(ResolverResponse.class);
+    verify(factory).sign(captor.capture());
+    final ResolverResponse response = captor.getValue();
+
+    assertNotNull(response.validationErrors());
+    assertNotNull(response.trustChain());
+    assertNotNull(response.trustMarkEntries());
+    assertNotNull(response.typedValidationErrors());
+    assertFalse(response.trustChain().isEmpty());
+  }
+
+  @Test
+  void resolveTrustAnchorAsSubjectWithUnmatchedTypeIsReportedAsError() {
+    final ResolveRequest request = new ResolveRequest(TA_ID, TA_ID, "openid_relying_party", false);
+
+    assertThrows(NotFoundException.class, () -> resolver.resolve(request));
   }
 
   @Test

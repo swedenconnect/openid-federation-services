@@ -94,6 +94,10 @@ public class EntityStatementTree {
     final List<ScrapedEntity> entityList = new ArrayList<>(entities);
     final LinkedHashSet<SignedJWT> chain = new LinkedHashSet<>();
 
+    if (entityList.isEmpty()) {
+      return new ResolverTrustChain(chain, null);
+    }
+
     // Add leaf entity configuration
     chain.add(entityList.getFirst().getEntityStatement());
 
