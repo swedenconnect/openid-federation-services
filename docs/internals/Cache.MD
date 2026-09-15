@@ -1,3 +1,5 @@
+![Sweden Connect](../images/sweden-connect.png)
+
 # Cache
 
 ## Overview
