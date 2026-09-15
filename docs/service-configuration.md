@@ -1,3 +1,5 @@
+![Sweden Connect](images/sweden-connect.png)
+
 # Service Configuration
 
 The openid-federation service is configured in two layers
@@ -10,6 +12,13 @@ The openid-federation service is configured in two layers
     - Each individual instance of a module are called submodules.
     - Submodules can be configured either via application properties (needs restart) or
       via [REST-API](https://github.com/swedenconnect/oidf-entity-registry) registry.
+
+---
+
+New to this service? Read [Demo Mode Configuration](service-configuration-demo.md) first — it walks
+through `application-demo.yml` and the three demo JSON files (entities, trust anchors, policy,
+constraints, resolver) property by property, as a worked example of everything documented below. For how
+to actually run the demo, see [Getting Started (Demo Mode)](demo.md).
 
 ---
 
@@ -66,16 +75,39 @@ Keys loaded from `federation.keys.additional-keys[*]` will be available using th
 | `storage`        | Storage backend (`memory` or `redis`) | String | memory  |
 | `redis.key-name` | Redis namespace / key                 | String | –       |
 
+`federation.service.scheduling.*`
+
+Background jobs that keep cached state fresh. Useful to disable in tests (see
+`application-integration-test.yml`, which turns both triggers off so tests control reloads explicitly).
+
+| Property                    | Description                                                              | Type     | Default |
+|------------------------------|---------------------------------------------------------------------------|----------|---------|
+| `registry-trigger-enabled`   | Poll the registry for state changes once a minute (managed mode only)    | Boolean  | true    |
+| `resolver-trigger-enabled`   | Periodically rebuild resolver state/cache                                | Boolean  | true    |
+| `resolver-reload-rate`       | Interval between resolver state rebuilds (ISO‑8601 duration)             | Duration | PT10M   |
+
 ---
 
 ## 2.3 Routing
 
 `federation.routing.*`
 
-| Property  | Description                     | Type    | Default |
-|-----------|---------------------------------|---------|---------|
-| `enabled` | Enable internal routing support | Boolean | false   |
-| `mode`    | Routing mode                    | String  | –       |
+| Property         | Description                                                | Type           | Default |
+|------------------|-------------------------------------------------------------|----------------|---------|
+| `enabled`        | Enable internal routing support                             | Boolean        | false   |
+| `mode`           | Routing mode — see below                                    | String         | –       |
+| `allowed-domains` | Domains accepted when `mode` is `STRICT`                    | List\<URI\>    | –       |
+
+`mode` must be one of:
+
+| Value     | Behavior                                                                                     |
+|-----------|-----------------------------------------------------------------------------------------------|
+| `STRICT`  | Enforces the host portion of the route; required for hosting entities across multiple domains behind one instance. `allowed-domains` is mandatory in this mode. |
+| `RELAXED` | Accepts any host, but does not validate it.                                                  |
+| `IGNORING`| Ignores the host portion of the route entirely (used by the demo, which only ever runs on `localhost`). |
+
+Routing dispatches an incoming request path to the correct virtual entity — see
+[Routing](internals/Routing.MD) for the resolution algorithm.
 
 ---
 
@@ -129,12 +161,9 @@ federation.local-registry.*
 | `trust-mark-issuers` | Mapping of trust mark IDs to allowed issuers | Map    |
 | `trust-mark-owners`  | Trust mark ownership configuration           | List   |
 
-Subordinates may define:
-
-* `jwks`
-* `constraints` (naming, path length, entity types, etc.)
-* `policy`
-* `crit` and ec_location
+See [Demo Mode Configuration → `trust-anchors.json`](service-configuration-demo.md#trust-anchorsjson--the-trust-hierarchy)
+for the full list of properties a subordinate entry supports, including worked examples of `policy` and
+`constraints`.
 
 ---
 
@@ -185,6 +214,22 @@ Entities define federation metadata, trust mark sources, and may represent trust
 
 ---
 
+## 2.6 Resolver HTTP Client
+
+`federation.resolver.client.*`
+
+The REST client the service's Resolver module uses to fetch entity configurations and subordinate
+statements from other federation participants over HTTPS while walking a trust chain. Same shape as
+[`federation.registry.integration.client`](#24-registry-integration):
+
+| Property                  | Description                                                       | Type   |
+|----------------------------|---------------------------------------------------------------------|--------|
+| `name`                    | Logical name of the client                                         | String |
+| `trust-store-bundle-name` | Trust store bundle used to validate TLS server certs               | String |
+| `base-uri`                | Not used for this client — startup fails validation if this is set | String |
+
+---
+
 ## Reference Configuration
 
 Some properties can be configured by reference, this means that we can optionally substitute the object structure with something else. E.g. A file, or
@@ -222,3 +267,38 @@ E.g.
 > "public:359433581122628090150675142465804663870388233428" Loads the public key for kid 359433581122628090150675142465804663870388233428
 > 
 > "federation:sign-key-1" Loads the keypair that is mapped for federation use.
+
+---
+
+## Management, Health and Observability
+
+These are plain Spring Boot Actuator settings, not openid-federation-specific properties, but a
+developer starting the service up needs them to know where to look:
+
+| Property                        | Default (`application.yml`) | Purpose                                                        |
+|----------------------------------|------------------------------|------------------------------------------------------------------|
+| `server.port`                    | 8000 (8080 in `demo`)       | The federation endpoints themselves (`/ta`, `/resolver`, …)     |
+| `management.server.port`         | 8081                        | A **separate** port for actuator endpoints, kept off the public traffic port |
+| `management.endpoints.web.exposure.include` | `*`               | All actuator endpoints are exposed on the management port       |
+
+Notable actuator endpoints:
+
+* `GET http://localhost:8081/actuator/ready` — a custom endpoint (not a standard Spring Boot one) that
+  reports whether the service is ready for traffic. In [managed mode](#24-registry-integration),
+  configuration is fetched from the registry *after* startup, so the service will not be ready
+  immediately — orchestration tooling (Kubernetes readiness probes, load balancers) should poll this
+  instead of assuming readiness at process start. It returns non-200 while any
+  `ReadyStateComponent` reports not-ready.
+* `GET http://localhost:8081/actuator/health` — standard Spring Boot liveness/health check.
+* `GET http://localhost:8081/actuator/prometheus` — Prometheus-formatted metrics (enabled by default via
+  `management.prometheus.metrics.export.enabled: true`), tagged with `application_name` /
+  `application_version`.
+* Tracing is exported over OTLP to `management.opentelemetry.tracing.export.otlp.endpoint`, which
+  defaults to `${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}` — point that environment
+  variable at your collector, or override `management.tracing.sampling.probability` (default `1.0`, i.e.
+  trace everything) to reduce volume. The `demo` profile disables tracing and OTLP export entirely, since
+  there is normally no collector running locally.
+
+Since the demo runs both ports on `localhost`, actuator endpoints are reachable at
+`http://localhost:8081/actuator/*` while the federation service itself answers on
+`http://localhost:8080/*` (see the [example requests in the README](../README.md#example-requests)).

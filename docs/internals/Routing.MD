@@ -1,3 +1,5 @@
+![Sweden Connect](../images/sweden-connect.png)
+
 # Routing
 
 This service can host multiple virtual OpenID Federation entities. This document explains how incoming requests are routed to the correct entity.
