@@ -1,3 +1,5 @@
+![Sweden Connect](images/sweden-connect.png)
+
 # Build
 
 To build the project image the following can be run in the services directory
