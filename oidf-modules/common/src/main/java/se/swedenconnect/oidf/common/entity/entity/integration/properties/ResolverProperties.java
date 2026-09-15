@@ -45,28 +45,23 @@ public final class ResolverProperties {
   private JWKSet trustedKeys;
   @SerializedName("entity-identifier")
   private String entityIdentifier;
-  @SerializedName("step-retry-time")
-  private Duration stepRetryTime;
 
   /**
    * @param trustAnchor The trust anchor used by this resolve entity
    * @param resolveResponseDuration The validity duration of issued resolve responses
    * @param trustedKeys Keys trusted by this resolver to validate Entity Statement chains
    * @param entityIdentifier for the resolver
-   * @param stepRetryTime time to wait before retrying a step that has failed
    *
    */
   public ResolverProperties(
       final String trustAnchor,
       final Duration resolveResponseDuration,
       final JWKSet trustedKeys,
-      final String entityIdentifier,
-      final Duration stepRetryTime) {
+      final String entityIdentifier) {
     this.trustAnchor = trustAnchor;
     this.resolveResponseDuration = resolveResponseDuration;
     this.trustedKeys = trustedKeys;
     this.entityIdentifier = entityIdentifier;
-    this.stepRetryTime = stepRetryTime;
   }
 }
 

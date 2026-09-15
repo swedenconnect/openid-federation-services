@@ -36,7 +36,7 @@
         <maven.compiler.target>25</maven.compiler.target>
         <maven.compiler.release>25</maven.compiler.release>
         <java.version>25</java.version>
-        <service-revision>0.11.10</service-revision>
+        <service-revision>0.11.13</service-revision>
     </properties>
 
     <dependencies>
@@ -77,12 +77,10 @@
         <dependency>
             <groupId>se.swedenconnect.security</groupId>
             <artifactId>credentials-support-spring-boot-starter</artifactId>
-            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.security</groupId>
             <artifactId>credentials-support-nimbus</artifactId>
-            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -91,7 +89,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
-            <version>3.5.7</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

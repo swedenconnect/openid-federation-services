@@ -18,7 +18,10 @@ package se.swedenconnect.oidf.configuration;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.web.servlet.function.HandlerFunction;
+import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -32,7 +35,9 @@ import se.swedenconnect.oidf.routing.ModuleRouter;
 import se.swedenconnect.oidf.routing.Router;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Base router that dispatches incoming requests to the appropriate {@link ModuleRouter}
@@ -66,14 +71,15 @@ public class FederationBaseRouter implements Router {
   @Override
   @Deprecated(forRemoval = true)
   public void evaluateEndpoints(final CompositeRecordSource source, final RouterFunctions.Builder route) {
-    route.GET(request -> {
+    final RequestPredicate predicate = request -> {
       final Optional<EntityRecord> entity = this.findEntityForRequest(source, request);
       return entity.isPresent()
           && this.moduleRouters.stream().anyMatch(router -> router.willHandleRequest(request, entity.get()));
-    }, request -> {
-      final String requestUri = request.uri().toASCIIString();
+    };
+    final HandlerFunction<ServerResponse> handler = request -> {
+      final String cacheKey = this.cacheKey(request);
       final long snapshot = this.lookup.getLatestSnapshotVersion();
-      final Optional<CachedResponse> cached = this.handleCacheControl(request, snapshot, requestUri);
+      final Optional<CachedResponse> cached = this.handleCacheControl(request, snapshot, cacheKey);
       if (cached.isPresent()) {
         return this.toServerResponse(cached.get());
       }
@@ -84,10 +90,31 @@ public class FederationBaseRouter implements Router {
           .get();
       final CachedResponse response = module.handleRequest(request, entity);
       if (response.statusCode() >= 200 && response.statusCode() < 300) {
-        this.cache.put(snapshot, requestUri, response);
+        this.cache.put(snapshot, cacheKey, response);
       }
       return this.toServerResponse(response);
-    });
+    };
+    route.GET(predicate, handler);
+    // POST is used by the Trust Mark Status endpoint, see section 8.4.1 of OpenID Federation 1.0.
+    route.POST(predicate, handler);
+  }
+
+  /**
+   * Request URI is not a unique key for a POST request, since its parameters are sent in the body.
+   *
+   * @param request to create a cache key for
+   * @return cache key
+   */
+  private String cacheKey(final ServerRequest request) {
+    final String requestUri = request.uri().toASCIIString();
+    if (!HttpMethod.POST.equals(request.method())) {
+      return requestUri;
+    }
+    final String parameters = request.params().entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .map(entry -> "%s=%s".formatted(entry.getKey(), String.join(",", entry.getValue())))
+        .collect(Collectors.joining("&"));
+    return "POST %s?%s".formatted(requestUri, parameters);
   }
 
   private ServerResponse toServerResponse(final CachedResponse response) {
@@ -97,10 +124,10 @@ public class FederationBaseRouter implements Router {
   }
 
   private Optional<CachedResponse> handleCacheControl(
-      final ServerRequest request, final long snapshot, final String requestUri) {
+      final ServerRequest request, final long snapshot, final String cacheKey) {
     final List<String> cacheControl = request.headers().header("cache-control");
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
-      return this.cache.get(snapshot, requestUri);
+      return this.cache.get(snapshot, cacheKey);
     }
     return Optional.empty();
   }

@@ -4,6 +4,34 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 
+### Version 0.11.13
+
+**Date:** 2026-09-08
+
+* `/trust_mark_status` is now served over `POST` with parameters encoded as `application/x-www-form-urlencoded`, as required by section 8.4.1 of OpenID Federation 1.0. `GET` with query parameters is still accepted for backwards compatibility
+* `FederationClient` now sends Trust Mark Status requests over `POST`
+* Module routing now rejects non-`GET` requests for endpoints that are specified as `GET` only
+
+### Version 0.11.12
+
+**Date:** 2026-09-04
+
+* Failed resolution steps no longer retry against the tree that is currently being built — a failing branch is left out of the snapshot and picked up by the next scheduled tree load instead
+* Removed the `StepRecoveryStrategy` / `ScheduledStepRecoveryStrategy` retry mechanism and the `step-retry-time` resolver property
+* Default resolver reload rate (`federation.service.scheduling.resolver-reload-rate`) changed from `PT60M` to `PT10M`
+
+### Version 0.11.11
+
+**Date:** 2026-08-18
+
+* Fixed `NullPointerException` in subordinate listing filters when an entity configuration has no `trust_marks` or no `federation_entity` metadata
+* Filtered subordinate listings now skip subordinates whose entity configuration cannot be fetched instead of failing the whole listing
+* Filtered subordinate listings now return an empty list instead of 404 when no subordinate matches
+* Fixed `NullPointerException` in trust mark collection when the trust anchor has no `trust_mark_owners` or a chain statement has no `trust_marks`
+* Fixed `NullPointerException` in key configuration when a key mapping (`federation`/`hosted`) is not configured
+* Resolver `/discovery` is now served under the entity identifier for entities without a virtual entity id, and matching ignores query parameters
+* Added tests for resolver routing and trust mark collection edge cases
+
 ### Version 0.11.10
 
 **Date:** 2026-06-18

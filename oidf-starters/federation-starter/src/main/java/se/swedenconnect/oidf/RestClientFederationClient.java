@@ -20,6 +20,9 @@ import com.nimbusds.jwt.SignedJWT;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
@@ -206,11 +209,13 @@ public class RestClientFederationClient implements FederationClient {
         .map(String.class::cast)
         .orElseGet(() -> request.parameters().trustMarkIssuer() + "/trust_mark_status");
     try {
+      final MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+      form.add("trust_mark", request.parameters().trustMarkJwt());
       final String body = this.client.mutate().baseUrl(path).build()
-          .get()
-          .uri(builder -> builder
-              .queryParam("trust_mark", request.parameters().trustMarkJwt())
-              .build())
+          .post()
+          .uri(builder -> builder.build())
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(form)
           .retrieve()
           .body(String.class);
       return new TrustMarkStatusResponse(SignedJWT.parse(body), false);

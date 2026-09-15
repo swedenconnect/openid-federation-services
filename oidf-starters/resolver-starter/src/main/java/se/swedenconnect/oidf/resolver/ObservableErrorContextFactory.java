@@ -49,12 +49,6 @@ public class ObservableErrorContextFactory implements ErrorContextFactory {
   public ErrorContext create(final NodeKey key, final EntityStatementTreeLoader.StepName stepName) {
     final List<Tag> tags = List.of(Tag.of("key", key.getKey()), Tag.of("step", stepName.name()));
     final Counter counter = this.registry.counter("resolver_tree_step_failure", tags);
-    return new ObservableErrorContext(new AtomicIntegerErrorContext(),counter);
-  }
-
-  @Override
-  public ErrorContext createEmpty() {
-    //No need to associate counter with empty context
-    return new AtomicIntegerErrorContext();
+    return new ObservableErrorContext(new AtomicIntegerErrorContext(), counter);
   }
 }

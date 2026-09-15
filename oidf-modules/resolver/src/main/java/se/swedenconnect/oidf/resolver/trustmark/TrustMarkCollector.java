@@ -77,7 +77,8 @@ public class TrustMarkCollector {
 
     final List<TrustMarkEntry> trustMarks = TrustMarkCollector.parseTrustMark(leafStatement);
     final Map<String, Object> trustMarkOwners =
-        EntityStatementClaims.claims(trustAnchor).getJSONObjectClaim("trust_mark_owners");
+        Optional.ofNullable(EntityStatementClaims.claims(trustAnchor).getJSONObjectClaim("trust_mark_owners"))
+            .orElseGet(Map::of);
     trustMarkOwners.keySet().forEach(key -> {
       trustMarks.stream().filter(k -> k.getID().getValue().equals(key))
           .forEach(tm -> {
@@ -176,7 +177,8 @@ public class TrustMarkCollector {
 
   @SuppressWarnings("unchecked")
   private static List<TrustMarkEntry> parseTrustMark(final SignedJWT entity) throws java.text.ParseException {
-    final List<Object> trustMarks = EntityStatementClaims.claims(entity).getListClaim("trust_marks");
+    final List<Object> trustMarks =
+        Optional.ofNullable(EntityStatementClaims.claims(entity).getListClaim("trust_marks")).orElseGet(List::of);
     return trustMarks.stream()
         .map(o -> new JSONObject((Map<String, Object>) o))
         .map(json -> {

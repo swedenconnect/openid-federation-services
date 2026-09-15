@@ -21,6 +21,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
+import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
@@ -47,6 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public class ValidatingResolver implements Resolver {
 
   private final ResolverProperties resolverProperties;
@@ -134,9 +136,26 @@ public class ValidatingResolver implements Resolver {
 
     if (request.trustAnchor().equals(request.subject())) {
       final ResolverTrustChain chain = this.tree.getTrustChain(request);
-      final SignedJWT es = chain.getTrustChain().stream().findFirst().get();
+      final List<SignedJWT> selfChain = chain.getTrustChain().stream().toList();
+      if (selfChain.isEmpty()) {
+        validationErrors.add(
+            new NotFoundException("Resolver found no subject with requested EntityID:%s".formatted(request.subject()))
+        );
+        return ResolverResponse.builder()
+            .validationErrors(validationErrors)
+            .build();
+      }
+      JSONObject selfMetadata = null;
+      try {
+        selfMetadata = this.processor.processMetadata(selfChain);
+      } catch (final Exception e) {
+        log.debug("Could not process metadata for self resolved entity:{}", request.subject(), e);
+      }
       return ResolverResponse.builder()
-          .entityStatement(es)
+          .entityStatement(selfChain.getFirst())
+          .metadata(selfMetadata)
+          .trustChain(selfChain)
+          .validationErrors(validationErrors)
           .build();
     }
 
@@ -171,6 +190,15 @@ public class ValidatingResolver implements Resolver {
       validationErrors.add(e);
     }
 
+    if (chainValidationResult == null || chainValidationResult.chain().isEmpty()) {
+      return ResolverResponse.builder()
+          .metadata(processedMetadata)
+          .trustMarkEntries(trustMarkEntries)
+          .trustChain(trustChainList)
+          .validationErrors(validationErrors)
+          .build();
+    }
+
     final SignedJWT leaf = chainValidationResult.chain().getFirst();
 
     return ResolverResponse.builder()
@@ -179,7 +207,7 @@ public class ValidatingResolver implements Resolver {
         .trustMarkEntries(trustMarkEntries)
         .trustChain(trustChainList)
         .validationErrors(validationErrors)
-        .typedValidationErrors(chainValidationResult != null ? chainValidationResult.typedErrors() : List.of())
+        .typedValidationErrors(chainValidationResult.typedErrors())
         .build();
   }
 

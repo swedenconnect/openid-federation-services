@@ -21,6 +21,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
@@ -105,6 +106,8 @@ public class TrustMarkIssuerRouter implements Router, ModuleRouter {
             request -> this.handleTrustMarkRequest(source, request))
         .GET(this.getRequestPredicate(source, "/trust_mark_status"),
             request -> this.handleTrustMarkStatus(source, request))
+        .POST(this.getRequestPredicate(source, "/trust_mark_status"),
+            request -> this.handleTrustMarkStatus(source, request))
         .GET(this.getRequestPredicate(source, "/trust_mark_listing"),
             request -> this.handleTrustMarkListing(source, request));
   }
@@ -165,19 +168,26 @@ public class TrustMarkIssuerRouter implements Router, ModuleRouter {
   }
 
   private boolean isTrustMarkEndpoint(final ServerRequest request, final EntityRecord entity) {
-    return entity.getFederationTrustMarkEndpoint()
+    return HttpMethod.GET.equals(request.method()) && entity.getFederationTrustMarkEndpoint()
         .map(ep -> request.uri().toASCIIString().split("\\?")[0].equals(ep))
         .orElse(false);
   }
 
+  /**
+   * The Trust Mark Status request is specified as an HTTP POST with the parameters encoded in
+   * application/x-www-form-urlencoded format, see section 8.4.1 of OpenID Federation 1.0.
+   * GET is still accepted for backwards compatibility.
+   */
   private boolean isTrustMarkStatusEndpoint(final ServerRequest request, final EntityRecord entity) {
-    return entity.getFederationTrustMarkStatusEndpoint()
+    final boolean supportedMethod = HttpMethod.POST.equals(request.method())
+                                    || HttpMethod.GET.equals(request.method());
+    return supportedMethod && entity.getFederationTrustMarkStatusEndpoint()
         .map(ep -> request.uri().toASCIIString().split("\\?")[0].equals(ep))
         .orElse(false);
   }
 
   private boolean isTrustMarkListingEndpoint(final ServerRequest request, final EntityRecord entity) {
-    return entity.getFederationTrustMarkListingEndpoint()
+    return HttpMethod.GET.equals(request.method()) && entity.getFederationTrustMarkListingEndpoint()
         .map(ep -> request.uri().toASCIIString().split("\\?")[0].equals(ep))
         .orElse(false);
   }

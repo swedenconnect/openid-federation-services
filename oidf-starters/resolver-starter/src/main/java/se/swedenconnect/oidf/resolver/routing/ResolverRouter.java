@@ -20,6 +20,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -46,7 +47,9 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CachedResponse;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Responsible for matching requests for any resolver module.
@@ -248,6 +251,9 @@ public class ResolverRouter implements Router, ModuleRouter {
 
   @Override
   public boolean willHandleRequest(final ServerRequest request, final EntityRecord entity) {
+    if (!HttpMethod.GET.equals(request.method())) {
+      return false;
+    }
     final Optional<String> resolveEndpoint = entity.getFederationResolveEndpoint();
     return resolveEndpoint.filter(s -> this.isResolveEndpoint(request, s)
                                        || this.isDiscoveryEndpoint(request, entity)).isPresent();
@@ -258,8 +264,11 @@ public class ResolverRouter implements Router, ModuleRouter {
   }
 
   private boolean isDiscoveryEndpoint(final ServerRequest request, final EntityRecord entity) {
-    return entity.getVirtualEntityId() != null
-        && request.uri().toASCIIString().contains(entity.getVirtualEntityId().getValue())
-        && request.path().endsWith("/discovery");
+    final String requestUri = request.uri().toASCIIString().split("\\?")[0];
+    // Entities without a virtual entity id are served under their entity identifier, same as /resolve
+    return Stream.of(entity.getVirtualEntityId(), entity.getEntityIdentifier())
+        .filter(Objects::nonNull)
+        .map(EntityID::getValue)
+        .anyMatch(base -> requestUri.equals(base + "/discovery"));
   }
 }

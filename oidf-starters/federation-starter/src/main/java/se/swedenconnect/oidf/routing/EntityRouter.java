@@ -22,6 +22,7 @@ import io.micrometer.observation.Observation;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -132,7 +133,8 @@ public class EntityRouter implements Router, ModuleRouter {
 
   @Override
   public boolean willHandleRequest(final ServerRequest request, final EntityRecord entity) {
-    return entity
+    return HttpMethod.GET.equals(request.method())
+           && entity
         .getEntityConfigurationEndpoints()
         .stream()
         .anyMatch(endpoint -> request.uri().toASCIIString().equalsIgnoreCase(endpoint));

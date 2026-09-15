@@ -30,15 +30,12 @@ import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.ExecutionStrategy;
 import se.swedenconnect.oidf.resolver.tree.resolution.ResolutionContext;
-import se.swedenconnect.oidf.resolver.tree.resolution.StepExecutionError;
-import se.swedenconnect.oidf.resolver.tree.resolution.StepRecoveryStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 /**
  * Responsible for populating and creating a new (logical) tree.
@@ -80,8 +77,6 @@ public class EntityStatementTreeLoader {
 
   private final ExecutionStrategy executionStrategy;
 
-  private final StepRecoveryStrategy recoveryStrategy;
-
   private final ErrorContextFactory errorContextFactory;
 
   private final List<Runnable> postHooks = new ArrayList<>();
@@ -89,18 +84,15 @@ public class EntityStatementTreeLoader {
   /**
    * @param client              to use for fetching statements
    * @param executionStrategy   to use when iterating through the federation
-   * @param recoveryStrategy    to use when recovering from a failed step
    * @param errorContextFactory to use when creating new error contexts
    */
   public EntityStatementTreeLoader(
       final FederationClient client,
       final ExecutionStrategy executionStrategy,
-      final StepRecoveryStrategy recoveryStrategy,
       final ErrorContextFactory errorContextFactory) {
 
     this.client = client;
     this.executionStrategy = executionStrategy;
-    this.recoveryStrategy = recoveryStrategy;
     this.errorContextFactory = errorContextFactory;
   }
 
@@ -127,7 +119,6 @@ public class EntityStatementTreeLoader {
         new NodeKey(trustAnchorEntityId),
         tree,
         snapshotId,
-        this.errorContextFactory.createEmpty(),
         new ResolutionContext());
   }
 
@@ -136,7 +127,6 @@ public class EntityStatementTreeLoader {
       final NodeKey nodeKey,
       final Tree<ScrapedEntity> tree,
       final long snapshotId,
-      final ErrorContext context,
       final ResolutionContext resolutionContext) {
 
     log.debug("TreeLoader resolving root {}", nodeKey.getKey());
@@ -155,7 +145,7 @@ public class EntityStatementTreeLoader {
         final List<CompletableFuture<Void>> futures = scrapedEntity.getIntermediate().subordinates()
             .entrySet().stream()
             .map(entry -> CompletableFuture.runAsync(
-                () -> this.resolveSubordinate(entry.getValue(), key, tree, snapshot, context, resolutionContext),
+                () -> this.resolveSubordinate(entry.getValue(), key, tree, snapshot, resolutionContext),
                 RESOLUTION_EXECUTOR))
             .toList();
         log.debug("TreeLoader root {} has {} subordinates to resolve", nodeKey.getKey(), futures.size());
@@ -172,7 +162,6 @@ public class EntityStatementTreeLoader {
                           final NodeKey parentKey,
                           final Tree<ScrapedEntity> tree,
                           final CacheSnapshot<ScrapedEntity> snapshot,
-                          final ErrorContext context,
                           final ResolutionContext resolutionContext) {
     try {
       final String subject = subordinateStatement.getJWTClaimsSet().getSubject();
@@ -193,7 +182,7 @@ public class EntityStatementTreeLoader {
         final List<CompletableFuture<Void>> futures = entity.getIntermediate().subordinates()
             .entrySet().stream()
             .map(entry -> CompletableFuture.runAsync(
-                () -> this.resolveSubordinate(entry.getValue(), subNode.getKey(), tree, snapshot, context,
+                () -> this.resolveSubordinate(entry.getValue(), subNode.getKey(), tree, snapshot,
                     resolutionContext),
                 RESOLUTION_EXECUTOR))
             .toList();
@@ -203,29 +192,27 @@ public class EntityStatementTreeLoader {
         log.debug("TreeLoader subordinate {} has no further subordinates", subject);
       }
     } catch (final Exception e) {
-      this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey,
-          (c) -> this.resolveSubordinate(
-              subordinateStatement, parentKey, tree, snapshot, c, resolutionContext),
-          context, e
-      );
+      this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey, e);
     }
   }
 
+  /**
+   * Records a failed step. The failing branch is left out of the snapshot being built; it is picked up
+   * again by the next scheduled tree load rather than retried against the current one.
+   *
+   * @param stepName of the step that failed
+   * @param node     the step was executing for
+   * @param e        cause of the failure
+   */
   void handleError(
       final StepName stepName,
       final NodeKey node,
-      final Consumer<ErrorContext> step,
-      final ErrorContext context,
       final Exception e
   ) {
     log.error("TreeLoader {} {} failed with exception {} enable trace log for more details", node.getKey(),
         stepName.name(),
         e.getClass().getCanonicalName());
     log.trace("TreeLoader {} {} failed: ", node.getKey(), stepName.name(), e);
-    final StepExecutionError error = new StepExecutionError(
-        "%s_%s".formatted(stepName, node.getKey()),
-        step,
-        context.orElseGet(() -> this.errorContextFactory.create(node, stepName)));
-    this.recoveryStrategy.handle(error);
+    this.errorContextFactory.create(node, stepName).increment();
   }
 }

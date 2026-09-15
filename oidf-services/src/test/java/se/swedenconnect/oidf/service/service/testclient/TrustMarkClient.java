@@ -20,6 +20,9 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -70,7 +73,10 @@ public class TrustMarkClient {
     }
   }
 
-  public String trustMarkStatus(
+  /**
+   * Trust Mark Status over GET, kept for verifying backwards compatibility.
+   */
+  public String trustMarkStatusUsingGet(
       final EntityID trustMarkIssuer,
       final String trustMark) {
     try {
@@ -78,7 +84,24 @@ public class TrustMarkClient {
       builder.append("trust_mark=%s".formatted(trustMark));
       return client.get()
           .uri(trustMarkIssuer.getValue() + builder)
-          .header("content-type", "application/json")
+          .retrieve()
+          .body(String.class);
+    } catch (final Exception e) {
+      throw new RuntimeException("Failed to get trust mark status for trust mark issuer %s"
+          .formatted(trustMarkIssuer.getValue()), e);
+    }
+  }
+
+  public String trustMarkStatus(
+      final EntityID trustMarkIssuer,
+      final String trustMark) {
+    try {
+      final MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+      form.add("trust_mark", trustMark);
+      return client.post()
+          .uri(trustMarkIssuer.getValue() + "/trust_mark_status")
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(form)
           .retrieve()
           .body(String.class);
     } catch (final Exception e) {

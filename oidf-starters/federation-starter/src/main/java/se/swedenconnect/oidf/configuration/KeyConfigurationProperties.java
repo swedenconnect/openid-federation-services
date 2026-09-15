@@ -87,6 +87,9 @@ public class KeyConfigurationProperties {
   }
 
   private boolean isMappedKey(final String kid, final String alias, final String mapping) {
+    if (!this.getMapping().containsKey(mapping)) {
+      return false;
+    }
     return this.getMapping().get(mapping).contains(kid) ||
            this.getMapping().get(mapping).contains(alias);
   }
