@@ -12,14 +12,29 @@ in managed mode against the
 
 ## Documentation
 
+### Getting Started
+
+- [Getting Started (Demo Mode)](demo.md) — Start here. Run the self-contained demo federation and
+  try out the API with example `curl` requests.
+
+### API Reference
+
+- [API Reference](api-reference.md) — Endpoint-by-endpoint reference for the TrustAnchor/Intermediate,
+  TrustMark and Resolver modules (`subordinate_listing`, `fetch`, `trust_mark`, `resolve`, `discovery`,
+  …).
+
 ### Configuration
 
-- [Demo Mode](demo-mode.md) — Start here. A worked walkthrough of the demo profile's
-  `application-demo.yml` and its three JSON files (entities, trust anchors, policies,
+- [Demo Mode Configuration](service-configuration-demo.md) — A worked walkthrough of the demo
+  profile's `application-demo.yml` and its three JSON files (entities, trust anchors, policies,
   constraints, resolver).
 
 - [Service Configuration](service-configuration.md) — Full property reference for
   standalone (local-registry) and managed (registry-backed) mode.
+
+- [Using OIDF Registry for Configuration](oidf-registry.md) — Running in managed mode against the
+  [OpenID Federation Registry](https://github.com/swedenconnect/openid-federation-registry),
+  instance groups, and readiness at startup.
 
 ### Internals
 
@@ -28,6 +43,9 @@ in managed mode against the
 
 - [Cache](internals/Cache.MD) — The layered caching model used when building the resolve tree,
   including the snapshot layer and scheduled recomputation.
+
+- [Building a Release Docker Image](internals/docker-release.md) — How snapshot and versioned
+  Docker images are built and published to `ghcr.io` by the GitHub Actions workflows.
 
 ### Build
 
