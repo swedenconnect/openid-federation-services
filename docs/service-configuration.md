@@ -15,9 +15,10 @@ The openid-federation service is configured in two layers
 
 ---
 
-New to this service? Read [Demo Mode](demo-mode.md) first — it walks through `application-demo.yml` and
-the three demo JSON files (entities, trust anchors, policy, constraints, resolver) property by property,
-as a worked example of everything documented below.
+New to this service? Read [Demo Mode Configuration](service-configuration-demo.md) first — it walks
+through `application-demo.yml` and the three demo JSON files (entities, trust anchors, policy,
+constraints, resolver) property by property, as a worked example of everything documented below. For how
+to actually run the demo, see [Getting Started (Demo Mode)](demo.md).
 
 ---
 
@@ -160,8 +161,8 @@ federation.local-registry.*
 | `trust-mark-issuers` | Mapping of trust mark IDs to allowed issuers | Map    |
 | `trust-mark-owners`  | Trust mark ownership configuration           | List   |
 
-See [Demo Mode → `trust-anchors.json`](demo-mode.md#trust-anchorsjson--the-trust-hierarchy) for the full
-list of properties a subordinate entry supports, including worked examples of `policy` and
+See [Demo Mode Configuration → `trust-anchors.json`](service-configuration-demo.md#trust-anchorsjson--the-trust-hierarchy)
+for the full list of properties a subordinate entry supports, including worked examples of `policy` and
 `constraints`.
 
 ---

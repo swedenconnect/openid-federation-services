@@ -1,9 +1,11 @@
 ![Sweden Connect](images/sweden-connect.png)
 
-# Demo Mode
+# Demo Mode Configuration
 
 The fastest way to understand the configuration model is to read the `demo` Spring profile, since it
-exercises every configuration layer at once. It is activated by `./run-demo.sh`, which is equivalent to:
+exercises every configuration layer at once. For how to start it up and try it out, see
+[Getting Started (Demo Mode)](demo.md); this page instead walks through *why* it is configured the way
+it is. It is activated by `./run-demo.sh`, which is equivalent to:
 
 ```bash
 mvn -pl oidf-services spring-boot:run -Dspring-boot.run.profiles=demo
