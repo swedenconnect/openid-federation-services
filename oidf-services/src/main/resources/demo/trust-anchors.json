@@ -13,7 +13,22 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:8080/op",
-        "jwks": "hosted:demo-hosted-key"
+        "jwks": "hosted:demo-hosted-key",
+        "policy": {
+          "id": "MyID",
+          "policy": {
+            "metadata-policy":{
+              "oauth_client":{
+                "organization_identifier":{
+                  "value": "urn:glue:iso6523:0007:2021006552"
+                },
+                "organization_name":{
+                  "value": "E-hälsomyndigheten"
+                }
+              }
+            }
+          }
+        }
       },
       {
         "entity-identifier": "http://localhost:8080/rp",

@@ -88,6 +88,9 @@ public class SubordinateStatementFactory {
           .flatMap(policy -> Optional.ofNullable(policy.getPolicy()))
           .ifPresent(policyRecord -> builder.claim("metadata_policy", policyRecord));
 
+      Optional.ofNullable(subordinate.getMetadata())
+          .ifPresent(metadata -> builder.claim("metadata", metadata));
+
       builder.claim("jwks", subordinate.getJwks().toJSONObject(true));
 
       final JWTClaimsSet jwtClaimsSet = builder
