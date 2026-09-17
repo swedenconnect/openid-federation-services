@@ -29,7 +29,7 @@
     <artifactId>resolver</artifactId>
 
     <properties>
-        <service-revision>0.11.14</service-revision>
+        <service-revision>0.11.15-SNAPSHOT</service-revision>
     </properties>
 
     <build>
