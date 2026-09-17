@@ -2,7 +2,13 @@
 
 # Release Notes
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+## Version 0.11.14
+
+**Date:** 2026-09-17
+
+* Metadata can now be set on subordinate statement, as specified in OpenID Federation 1.0 Section 3.1.1 – "Claims that MUST or MAY Appear in both Entity Configurations and Subordinate Statements"
 
 ### Version 0.11.13
 
