@@ -13,26 +13,29 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:8080/op",
+        "jwks": "hosted:demo-hosted-key"
+      },
+      {
+        "entity-identifier": "http://localhost:8080/rp",
         "jwks": "hosted:demo-hosted-key",
+        "metadata": {
+          "relying_party": {
+            "organization_identifier": "urn:glue:iso6523:0007:2021006552",
+            "organization_name": "Myndigheten för digital förvaltning"
+          }
+        },
         "policy": {
-          "id": "MyID",
+          "id": "MyUltimatePolicy",
           "policy": {
-            "metadata-policy":{
-              "oauth_client":{
-                "organization_identifier":{
-                  "value": "urn:glue:iso6523:0007:2021006552"
-                },
-                "organization_name":{
-                  "value": "E-hälsomyndigheten"
+            "relying_party": {
+              "relying_party": {
+                "display_name": {
+                  "value": "Digg"
                 }
               }
             }
           }
         }
-      },
-      {
-        "entity-identifier": "http://localhost:8080/rp",
-        "jwks": "hosted:demo-hosted-key"
       }
     ]
   }
