@@ -74,10 +74,18 @@ public class MetadataProcessor {
       final MetadataPolicy metadataPolicy =
           MetadataPolicy.parse(combinedMetadataPolicy.toJSONObject(), this.operationFactory, this.combinationValidator);
 
+      // chain.get(1), if present, is the immediate superior's subordinate statement about the leaf -
+      // the only statement whose "metadata" claim is in scope for the leaf, per spec ("Immediate Subordinate").
+      final SignedJWT immediateSuperiorStatement = chain.size() > 1 ? chain.get(1) : null;
+
       final JSONObject result = new JSONObject();
       metadataType.forEach(type -> {
         try {
-          result.put(type, metadataPolicy.apply(EntityStatementClaims.getMetadata(leafNode, new EntityType(type))));
+          final JSONObject baseMetadata = mergeSubordinateMetadata(
+              EntityStatementClaims.getMetadata(leafNode, new EntityType(type)),
+              immediateSuperiorStatement,
+              type);
+          result.put(type, metadataPolicy.apply(baseMetadata));
         }
         catch (final PolicyViolationException e) {
           throw new RuntimeException(e);
@@ -88,5 +96,23 @@ public class MetadataProcessor {
     catch (final PolicyViolationException | com.nimbusds.oauth2.sdk.ParseException | java.text.ParseException e) {
       throw new IllegalArgumentException("Failed to validate/parse policy", e);
     }
+  }
+
+  private static JSONObject mergeSubordinateMetadata(
+      final JSONObject leafMetadata, final SignedJWT immediateSuperiorStatement, final String type) {
+    if (immediateSuperiorStatement == null) {
+      return leafMetadata;
+    }
+    final JSONObject superiorMetadata =
+        EntityStatementClaims.getMetadata(immediateSuperiorStatement, new EntityType(type));
+    if (superiorMetadata == null) {
+      return leafMetadata;
+    }
+    final JSONObject merged = new JSONObject();
+    if (leafMetadata != null) {
+      merged.putAll(leafMetadata);
+    }
+    merged.putAll(superiorMetadata);
+    return merged;
   }
 }
