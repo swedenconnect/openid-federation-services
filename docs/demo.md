@@ -84,8 +84,8 @@ curl "http://localhost:8080/ta/fetch?sub=http://localhost:8080/im"
 # IM's statement about OP
 curl "http://localhost:8080/im/fetch?sub=http://localhost:8080/op"
 
-# IM's statement about RP
-curl "http://localhost:8080/im/fetch?sub=http://localhost:8080/rp"
+# IM's statement about RP (formatted as JSON)
+curl -s "http://localhost:8080/im/fetch?sub=http://localhost:8080/rp" 
 ```
 
 **Resolve**

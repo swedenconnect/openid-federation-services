@@ -183,6 +183,7 @@ A subordinate entry supports:
 | `entity-identifier`     | Entity ID of the subordinate                                                     | String            |
 | `virtual-entity-id`     | Overrides the entity ID used inside the statement, if different                  | String            |
 | `jwks`                  | Key(s) the subordinate signs its own entity configuration with                   | Object/reference  |
+| `metadata`              | Metadata asserted directly in the subordinate statement's `metadata` claim       | Object            |
 | `policy`                | [Metadata policy](#policy) applied to this subordinate's metadata on resolve     | Object/reference  |
 | `constraints`           | [Trust chain constraints](#constraints) enforced below this subordinate          | Object            |
 | `crit`                  | Critical claims the subordinate statement must assert support for               | List\<String\>    |
