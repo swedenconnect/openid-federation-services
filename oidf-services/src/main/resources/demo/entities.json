@@ -41,10 +41,10 @@
     "virtual-entity-id": "http://localhost:8080/rp",
     "jwks": "hosted:demo-hosted-key",
     "metadata": {
-      "federation_entity": {
-        "organization_name": "Demo Relying Party"
-      },
-      "relying_party": {}
+      "relying_party": {
+        "organization_name": "DIGG Myndigheten för digital förvaltning",
+        "description": "This is a RP that tests the metadata_policy"
+      }
     }
   },
   {

@@ -119,6 +119,8 @@ public class TrustAnchorProperties {
     private JWKSet jwks;
     @SerializedName("constraints")
     private ConstraintRecord constraints;
+    @SerializedName("metadata")
+    private Map<String, Object> metadata;
 
     /**
      * Create SubordinateListingProperty from entityId
