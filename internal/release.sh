@@ -98,13 +98,31 @@ case "$PUSH_ANSWER" in
 esac
 
 echo
-echo "== Next steps (run manually after the branch has been reviewed and merged into main) =="
-echo "Tag the release and push the tag:"
-echo "  git tag v$VERSION"
-echo "  git push $REMOTE v$VERSION"
-echo
-echo "Move the pom files to the next development version:"
-echo "  mvn versions:set-property -Dproperty=service-revision -DnewVersion=$NEXT_DEV_VERSION -DgenerateBackupPoms=false"
+echo "== Tagging =="
+echo "Open a pull request from '$BRANCH' into main, get it reviewed, and merge it."
+read -r -p "Press Enter once '$BRANCH' has been merged into main (or Ctrl+C to abort here) ..." _
+
+if git show-ref --verify --quiet "refs/tags/v$VERSION" || git ls-remote --exit-code --tags "$REMOTE" "v$VERSION" >/dev/null 2>&1; then
+  echo "Tag 'v$VERSION' already exists locally or on $REMOTE." >&2
+  exit 1
+fi
+
+echo "Checking out main and pulling latest ..."
+git checkout main
+git pull "$REMOTE" main
+
+echo "Tagging v$VERSION and pushing the tag ..."
+git tag "v$VERSION"
+git push "$REMOTE" "v$VERSION"
 
 echo
-echo "Done. Version: $VERSION, branch: $BRANCH"
+echo "== Next development version =="
+echo "Setting service-revision to $NEXT_DEV_VERSION in all pom.xml files ..."
+mvn versions:set-property -Dproperty=service-revision -DnewVersion="$NEXT_DEV_VERSION" -DgenerateBackupPoms=false
+
+git add -- '**/pom.xml' pom.xml
+git commit -m "choir: new version"
+git push "$REMOTE" main
+
+echo
+echo "Done. Released version: $VERSION (tag v$VERSION), main is now on $NEXT_DEV_VERSION."
