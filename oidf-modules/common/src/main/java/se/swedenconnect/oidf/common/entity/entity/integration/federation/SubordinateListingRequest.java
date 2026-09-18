@@ -51,7 +51,10 @@ public record SubordinateListingRequest(List<String> entityType, Boolean trustMa
    * @return true if any parameter is set
    */
   public boolean requiresFiltering() {
-    return Stream.of(this.entityType, this.trustMarkType, this.trustMarked, this.intermediate)
+    if (Objects.nonNull(this.entityType) && !this.entityType.isEmpty()) {
+      return true;
+    }
+    return Stream.of(this.trustMarkType, this.trustMarked, this.intermediate)
         .anyMatch(Objects::nonNull);
   }
 
