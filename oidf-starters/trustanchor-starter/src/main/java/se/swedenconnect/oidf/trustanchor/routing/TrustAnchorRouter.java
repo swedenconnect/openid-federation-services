@@ -120,7 +120,7 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
       }
       final MultiValueMap<String, String> params = request.params();
       final java.util.List<String> listing = trustAnchor.subordinateListing(new SubordinateListingRequest(
-          params.getFirst("entity_type"),
+          params.get("entity_type"),
           Optional.ofNullable(params.getFirst("trust_marked")).map(Boolean::parseBoolean).orElse(null),
           params.getFirst("trust_mark_type"),
           Optional.ofNullable(params.getFirst("intermediate")).map(Boolean::parseBoolean).orElse(null)
@@ -202,7 +202,7 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
       final MultiValueMap<String, String> params = request.params();
       this.tagObservation("/subordinate_listing", false);
       return ServerResponse.ok().body(trustAnchor.subordinateListing(new SubordinateListingRequest(
-          params.getFirst("entity_type"),
+          params.get("entity_type"),
           Optional.ofNullable(params.getFirst("trust_marked"))
               .map(Boolean::parseBoolean)
               .orElse(null),

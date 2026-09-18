@@ -54,6 +54,10 @@ public class FederationClients {
     return new TrustAnchorClient(this.client, TestFederationEntities.IM.INTERMEDIATE);
   }
 
+  public TrustAnchorClient nestedIntermediate() {
+    return new TrustAnchorClient(this.client, TestFederationEntities.IM.NestedIM.INTERMEDIATE);
+  }
+
   public ResolverDifferentiator policy() {
     return new ResolverDifferentiator(this.client,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,

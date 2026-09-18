@@ -55,7 +55,7 @@ server:
 logging:
   level:
     ROOT: INFO
-    se.swedenconnect: DEBUG
+    se.swedenconnect: INFO
 
 federation:
   keys:
