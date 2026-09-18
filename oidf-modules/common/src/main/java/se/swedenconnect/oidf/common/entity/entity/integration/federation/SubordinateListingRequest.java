@@ -37,7 +37,7 @@ import java.util.stream.Stream;
  * @param intermediate
  * @author Felix Hellman
  */
-public record SubordinateListingRequest(String entityType, Boolean trustMarked, String trustMarkType,
+public record SubordinateListingRequest(List<String> entityType, Boolean trustMarked, String trustMarkType,
     Boolean intermediate) implements Serializable {
 
   /**
@@ -51,7 +51,10 @@ public record SubordinateListingRequest(String entityType, Boolean trustMarked, 
    * @return true if any parameter is set
    */
   public boolean requiresFiltering() {
-    return Stream.of(this.entityType, this.trustMarkType, this.trustMarked, this.intermediate)
+    if (Objects.nonNull(this.entityType) && !this.entityType.isEmpty()) {
+      return true;
+    }
+    return Stream.of(this.trustMarkType, this.trustMarked, this.intermediate)
         .anyMatch(Objects::nonNull);
   }
 
@@ -62,9 +65,10 @@ public record SubordinateListingRequest(String entityType, Boolean trustMarked, 
   public Predicate<SignedJWT> toPredicate() {
     final List<Predicate<SignedJWT>> predicates = new ArrayList<>();
 
-    Optional.ofNullable(this.entityType).ifPresent(type -> {
-      predicates.add(es -> Objects.nonNull(EntityStatementClaims.getMetadata(es, new EntityType(type))));
-    });
+    if (Objects.nonNull(this.entityType) && !this.entityType.isEmpty()) {
+      predicates.add(es -> this.entityType.stream()
+          .anyMatch(type -> Objects.nonNull(EntityStatementClaims.getMetadata(es, new EntityType(type)))));
+    }
 
     Optional.ofNullable(this.trustMarkType).ifPresent(tmid -> {
       final Predicate<SignedJWT> predicate =
