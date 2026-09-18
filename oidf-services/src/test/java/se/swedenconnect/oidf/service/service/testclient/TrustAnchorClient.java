@@ -23,6 +23,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Subordi
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class TrustAnchorClient {
@@ -38,13 +39,16 @@ public class TrustAnchorClient {
 
   public List<String> subordinateListing(final SubordinateListingRequest request) {
     return client.mutate().baseUrl(trustAnchor.getValue()).build().get()
-        .uri(uriBuilder -> uriBuilder.path("/subordinate_listing")
-            .queryParamIfPresent("trust_marked", Optional.ofNullable(request.trustMarked()))
-            .queryParamIfPresent("trust_mark_type", Optional.ofNullable(request.trustMarkType()))
-            .queryParamIfPresent("intermediate", Optional.ofNullable(request.intermediate()))
-            .queryParamIfPresent("entity_type", Optional.ofNullable(request.entityType()))
-            .build()
-        )
+        .uri(uriBuilder -> {
+          uriBuilder.path("/subordinate_listing")
+              .queryParamIfPresent("trust_marked", Optional.ofNullable(request.trustMarked()))
+              .queryParamIfPresent("trust_mark_type", Optional.ofNullable(request.trustMarkType()))
+              .queryParamIfPresent("intermediate", Optional.ofNullable(request.intermediate()));
+          if (Objects.nonNull(request.entityType()) && !request.entityType().isEmpty()) {
+            uriBuilder.queryParam("entity_type", request.entityType());
+          }
+          return uriBuilder.build();
+        })
         .retrieve()
         .toEntity(List.class)
         .getBody();

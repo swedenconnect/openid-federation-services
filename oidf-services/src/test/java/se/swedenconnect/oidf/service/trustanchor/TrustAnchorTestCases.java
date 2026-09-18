@@ -82,6 +82,34 @@ public class TrustAnchorTestCases {
   }
 
   @Test
+  @DisplayName("Subordinate listing filtered by single entity_type : 200")
+  void testSubordinateListingFilteredBySingleEntityType(final FederationClients clients) {
+    final TrustAnchorClient client = clients.nestedIntermediate();
+
+    final List<String> openidProviders =
+        client.subordinateListing(new SubordinateListingRequest(List.of("openid_provider"), null, null, null));
+    Assertions.assertTrue(openidProviders.contains(TestFederationEntities.IM.NestedIM.OP.getValue()));
+    Assertions.assertFalse(openidProviders.contains(TestFederationEntities.IM.NestedIM.RP.getValue()));
+
+    final List<String> relyingParties =
+        client.subordinateListing(new SubordinateListingRequest(List.of("relying_party"), null, null, null));
+    Assertions.assertTrue(relyingParties.contains(TestFederationEntities.IM.NestedIM.RP.getValue()));
+    Assertions.assertFalse(relyingParties.contains(TestFederationEntities.IM.NestedIM.OP.getValue()));
+  }
+
+  @Test
+  @DisplayName("Subordinate listing filtered by multiple entity_type parameters returns the union : 200")
+  void testSubordinateListingFilteredByMultipleEntityTypes(final FederationClients clients) {
+    final TrustAnchorClient client = clients.nestedIntermediate();
+
+    final List<String> union = client.subordinateListing(
+        new SubordinateListingRequest(List.of("openid_provider", "relying_party"), null, null, null));
+
+    Assertions.assertTrue(union.contains(TestFederationEntities.IM.NestedIM.OP.getValue()));
+    Assertions.assertTrue(union.contains(TestFederationEntities.IM.NestedIM.RP.getValue()));
+  }
+
+  @Test
   @DisplayName("Fetch non-existing subject : 404")
   void fetchFailsWhenInvalidEntityId(final FederationClients clients) {
     final TrustAnchorClient client = clients.anarchy().trustAnchor();
