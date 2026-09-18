@@ -4,7 +4,14 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Version 0.11.14
+## Version 0.11.15
+
+**Date:** 2026-09-18
+
+* Fixed Subordinate Listing not handling multiple `entity_type` query parameters correctly — repeated `entity_type` values now return the union of matching Entity Types, as required by OpenID Federation 1.0 Section 8.2.1, instead of only the first value
+* Fixed a bug where an unfiltered subordinate listing request (no query parameters) could incorrectly trigger per-subordinate entity configuration fetches, silently dropping subordinates whose entity configuration could not be fetched from the (otherwise unfiltered) result
+
+### Version 0.11.14
 
 **Date:** 2026-09-17
 
