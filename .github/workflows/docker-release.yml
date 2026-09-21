@@ -54,6 +54,11 @@ jobs:
           mvn versions:set-property -DgenerateBackupPoms=false -Dproperty=$REVISION_PROPERTY \
           -DnewVersion=$NEW_VERSION --no-transfer-progress
 
+      - name: Install dependencies
+        run: mvn clean install --no-transfer-progress
+        env:
+          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
+
       - name: Publish image
         run: |
           DOCKER_REPO=ghcr.io mvn clean install jib:build -Ddocker.repository=ghcr.io --no-transfer-progress

@@ -8,7 +8,7 @@ How to cut a release of OpenID Federation Services.
 - Push access to `origin`.
 - Maven installed and able to build the project locally.
 
-## 1. Prepare the release branch
+## Run the release script
 
 Run the release script from the repository root:
 
@@ -27,40 +27,11 @@ The script will:
 7. Pause and remind you to update [`docs/release-notes.md`](../docs/release-notes.md) with the changes in this release — do this now, before continuing.
 8. Commit the version bump and release notes as `choir: Prepare release X.Y.Z`.
 9. Ask whether to push the branch to `origin`.
-10. Print the follow-up commands for tagging and bumping to the next development version (see below) — these are printed only, not run automatically.
+10. Pause again and wait for you to open a pull request from `release_X_Y_Z` into `main`, get it reviewed, and merge it. Press Enter once it's merged (or Ctrl+C to abort here — nothing below this point has run yet).
+11. Check out `main`, pull the latest, tag the merge commit `vX.Y.Z`, and push the tag to `origin`. Pushing the tag triggers the Docker release workflow (`.github/workflows/release.yml` → `docker-release.yml`).
+12. Bump `service-revision` in every `pom.xml` to the next patch version with a `-SNAPSHOT` suffix, commit as `choir: new version`, and push directly to `main`.
 
-## 2. Open a pull request
-
-Open a PR from `release_X_Y_Z` into `main`. Get it reviewed and merged like any other change.
-
-## 3. Tag the release
-
-After the release branch is merged into `main`, tag the merge commit on `main` and push the tag:
-
-```
-git checkout main
-git pull
-git tag vX.Y.Z
-git push origin vX.Y.Z
-```
-
-Tagging the release triggers the publish/Docker release workflows (see `.github/workflows/publish.yml` and `.github/workflows/docker-release.yml`).
-
-## 4. Bump to the next development version
-
-Still on `main`, move the `service-revision` property in every `pom.xml` to the next patch version with a `-SNAPSHOT` suffix:
-
-```
-mvn versions:set-property -Dproperty=service-revision -DnewVersion=X.Y.(Z+1)-SNAPSHOT -DgenerateBackupPoms=false
-```
-
-Commit and push this directly to `main` (or via a small PR, per team preference), e.g.:
-
-```
-git add -- '**/pom.xml' pom.xml
-git commit -m "choir: new version"
-git push origin main
-```
+That's the whole release — nothing to run manually afterward.
 
 ## Version scheme
 
@@ -70,6 +41,8 @@ git push origin main
 
 ## Troubleshooting
 
-- **"Arbetskatalogen har ospårade eller ändrade filer"** — the script refuses to start with a dirty working tree. Commit, stash, or clean up first.
-- **"Branchen ... finns redan"** — a `release_X_Y_Z` branch already exists locally or on `origin`. Delete it or pick a different version.
-- If `mvn clean install` fails, fix the issue on the release branch, commit, and re-run `mvn versions:set-property` / `mvn clean install` manually — no need to restart the whole script.
+- **"Working tree has untracked or modified files"** — the script refuses to start with a dirty working tree. Commit, stash, or clean up first.
+- **"Branch ... already exists"** — a `release_X_Y_Z` branch already exists locally or on `origin`. Delete it or pick a different version.
+- **"Tag ... already exists"** — `vX.Y.Z` is already tagged locally or on `origin`. This shouldn't happen unless a release was already cut for that version, or a previous run of the script got interrupted after tagging.
+- If `mvn clean install` fails during step 6, fix the issue on the release branch, commit, and re-run `mvn versions:set-property` / `mvn clean install` manually — no need to restart the whole script.
+- If the script is interrupted after the branch was merged but before tagging (step 11–12), you can safely re-run `./internal/release.sh` from `main`: since `release_X_Y_Z` already exists it will fail fast at branch creation, so instead run the tag/version-bump commands shown in step 11–12 above by hand.
