@@ -19,6 +19,15 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
+CURRENT_BRANCH="$(git branch --show-current)"
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "This script must be run from 'main' (currently on '$CURRENT_BRANCH')." >&2
+  exit 1
+fi
+
+echo "Pulling latest changes on main ..."
+git pull "$REMOTE" main
+
 echo "Fetching tags from $REMOTE ..."
 git fetch --tags --quiet "$REMOTE" || echo "Warning: could not fetch tags from $REMOTE, using local tags."
 
