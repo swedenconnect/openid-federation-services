@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 #
 # Prepares a release branch: works out the next version from existing git tags,
-# lets you confirm or override it, creates a release_<version> branch, bumps
-# the service-revision property in all pom.xml files, builds the project,
-# commits, and pushes the branch to origin.
+# lets you confirm or override it, creates a release_<version> branch, sets the
+# version in all pom.xml files, builds the project, commits, and pushes the
+# branch to origin. Once the branch is merged it tags main and opens the next
+# snapshot version.
+#
+# Publishing to Maven Central is not done here, see internal/release.md.
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -71,8 +74,8 @@ fi
 echo "Creating branch '$BRANCH' from '$(git branch --show-current)' ..."
 git checkout -b "$BRANCH"
 
-echo "Setting service-revision to $VERSION in all pom.xml files ..."
-mvn versions:set-property -Dproperty=service-revision -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+echo "Setting the version to $VERSION in all pom.xml files ..."
+mvn versions:set -DnewVersion="$VERSION" -DprocessAllModules=true -DgenerateBackupPoms=false
 
 echo "Building the project ..."
 mvn clean install
@@ -112,13 +115,28 @@ git checkout main
 git pull "$REMOTE" main
 
 echo "Tagging v$VERSION and pushing the tag ..."
-git tag "v$VERSION"
+git tag -a "v$VERSION" -m "Version $VERSION"
 git push "$REMOTE" "v$VERSION"
 
 echo
+echo "== Publishing to Maven Central =="
+echo "This is NOT done by this script. Publish by hand from the tagged commit:"
+echo
+echo "    git checkout v$VERSION"
+echo "    mvn -Prelease clean deploy"
+echo
+echo "It needs a Central portal token as the server 'central' in ~/.m2/settings.xml and a"
+echo "published GPG key. Central is immutable, so verify first with:"
+echo
+echo "    mvn -Prelease -Dgpg.skip=true clean verify"
+echo
+echo "See internal/release.md for the details."
+read -r -p "Press Enter to continue with the next development version ..." _
+
+echo
 echo "== Next development version =="
-echo "Setting service-revision to $NEXT_DEV_VERSION in all pom.xml files ..."
-mvn versions:set-property -Dproperty=service-revision -DnewVersion="$NEXT_DEV_VERSION" -DgenerateBackupPoms=false
+echo "Setting the version to $NEXT_DEV_VERSION in all pom.xml files ..."
+mvn versions:set -DnewVersion="$NEXT_DEV_VERSION" -DprocessAllModules=true -DgenerateBackupPoms=false
 
 git add -- '**/pom.xml' pom.xml
 git commit -m "choir: new version"
@@ -126,3 +144,4 @@ git push "$REMOTE" main
 
 echo
 echo "Done. Released version: $VERSION (tag v$VERSION), main is now on $NEXT_DEV_VERSION."
+echo "Remember the Maven Central deploy from the v$VERSION tag, if it has not been run yet."

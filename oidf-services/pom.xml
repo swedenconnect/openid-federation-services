@@ -28,7 +28,7 @@
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-parent</artifactId>
-        <version>${service-revision}</version>
+        <version>0.11.16-SNAPSHOT</version>
     </parent>
 
     <licenses>
@@ -97,7 +97,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <java.version>25</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <service-revision>0.11.16-SNAPSHOT</service-revision>
+        <!-- The deployable application. It is built and installed, but never published. -->
         <maven.deploy.skip>true</maven.deploy.skip>
         <spring.boot.version>4.1.1</spring.boot.version>
         <credentials.support.version>2.1.2</credentials.support.version>
@@ -174,17 +174,17 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>resolver-starter</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustanchor-starter</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustmarkissuer-starter</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -236,12 +236,12 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>common</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>resolver</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
@@ -273,34 +273,8 @@
         </resources>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.1.0</version>
-                <executions>
-                    <execution>
-                        <id>flatten</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>flatten</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>flatten.clean</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>clean</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <updatePomFile>true</updatePomFile>
-                    <flattenMode>ossrh</flattenMode>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.1</version>
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
@@ -345,10 +319,9 @@
                         <image>amazoncorretto:25</image>
                     </from>
                     <to>
-                        <image>${DOCKER_REPO}/swedenconnect/openid-federation-services</image>
-                        <tags>
-                            <tag>${project.version}</tag>
-                        </tags>
+                        <!-- Tagged with the version only, "latest" is added by the release
+                             workflow (-Djib.to.tags=latest) -->
+                        <image>${DOCKER_REPO}/swedenconnect/openid-federation-services:${project.version}</image>
                     </to>
                     <container>
                         <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
@@ -412,7 +385,6 @@
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.4</version>
                 <configuration>
                     <systemPropertyVariables>
                         <api.version>1.44</api.version>

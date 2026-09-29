@@ -19,18 +19,19 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <name>OIDF :: Modules :: Trust Anchor</name>
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-modules</artifactId>
-        <version>${service-revision}</version>
+        <version>0.11.16-SNAPSHOT</version>
     </parent>
 
     <artifactId>trustanchor</artifactId>
+    <packaging>jar</packaging>
 
-    <properties>
-        <service-revision>0.11.16-SNAPSHOT</service-revision>
-    </properties>
+    <name>OIDF :: Modules :: Trust Anchor</name>
+    <description>OpenID Federation Trust Anchor and Intermediate: subordinate listings and issuance
+        of subordinate statements</description>
+    <url>https://docs.swedenconnect.se/openid-federation-services</url>
 
     <dependencies>
         <dependency>
@@ -42,7 +43,7 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>common</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

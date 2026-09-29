@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright 2024-2026 Sweden Connect
   ~
@@ -14,21 +15,22 @@
   ~ limitations under the License.
   ~
   -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-starters</artifactId>
-        <version>${service-revision}</version>
+        <version>0.11.16-SNAPSHOT</version>
     </parent>
 
     <artifactId>federation-starter</artifactId>
     <packaging>jar</packaging>
 
     <name>OpenID Federation :: Starter :: Federation</name>
-    <url>http://maven.apache.org</url>
+    <description>Spring Boot starter holding the base configuration shared by all OpenID Federation
+        entities: property binding, key handling, registry integration and request routing</description>
+    <url>https://docs.swedenconnect.se/openid-federation-services</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -36,7 +38,6 @@
         <maven.compiler.target>25</maven.compiler.target>
         <maven.compiler.release>25</maven.compiler.release>
         <java.version>25</java.version>
-        <service-revision>0.11.16-SNAPSHOT</service-revision>
     </properties>
 
     <dependencies>
@@ -53,7 +54,7 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>common</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -64,7 +65,7 @@
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>trustanchor</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

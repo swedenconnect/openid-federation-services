@@ -22,23 +22,22 @@
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-parent</artifactId>
-        <version>${service-revision}</version>
+        <version>0.11.16-SNAPSHOT</version>
     </parent>
 
     <artifactId>oidf-modules</artifactId>
-    <name>OIDF :: Modules</name>
-
     <packaging>pom</packaging>
+
+    <name>OIDF :: Modules</name>
+    <description>Parent POM for the framework independent OpenID Federation modules</description>
+    <url>https://docs.swedenconnect.se/openid-federation-services</url>
+
     <modules>
         <module>common</module>
         <module>resolver</module>
         <module>trustmarkissuer</module>
         <module>trustanchor</module>
     </modules>
-
-    <properties>
-        <service-revision>0.11.16-SNAPSHOT</service-revision>
-    </properties>
 
     <dependencies>
         <dependency>
