@@ -33,6 +33,18 @@
         records, record sources, caches, the federation tree and entity statement signing</description>
     <url>https://docs.swedenconnect.se/openid-federation-services</url>
 
+    <!--
+      Built for Java 21, unlike the rest of the reactor, which targets 25. This module is the one
+      that is consumed on its own, so keeping its bytecode at 21 lets projects that have not moved
+      past Java 21 depend on it. The build itself still runs on JDK 25.
+    -->
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.mockito</groupId>

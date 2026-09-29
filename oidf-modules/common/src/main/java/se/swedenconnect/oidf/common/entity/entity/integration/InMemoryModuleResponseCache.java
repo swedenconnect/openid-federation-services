@@ -37,6 +37,6 @@ public class InMemoryModuleResponseCache implements ModuleResponseCache {
 
   @Override
   public void put(final long snapshot, final String requestUri, final CachedResponse response) {
-    this.cache.computeIfAbsent(snapshot, _ -> new ConcurrentHashMap<>()).put(requestUri, response);
+    this.cache.computeIfAbsent(snapshot, key -> new ConcurrentHashMap<>()).put(requestUri, response);
   }
 }
