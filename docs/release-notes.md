@@ -4,6 +4,19 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+## Version 0.11.17
+
+**Date:** _not yet released_
+
+*
+
+## Version 0.11.16
+
+**Date:** 2026-09-29
+
+* Project artifacts are now published to Maven central.
+* The oidf-modules/common library is built using Java 21. 
+
 ## Version 0.11.15
 
 **Date:** 2026-09-18
