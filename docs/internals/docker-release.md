@@ -6,27 +6,63 @@
 
 -----
 
-Every push to `main` triggers the [`publish.yml`](../../.github/workflows/publish.yml) GitHub Actions
-workflow, which builds and publishes a **snapshot** Docker image to the GitHub Container Registry
-(`ghcr.io`). This image always carries whatever version is currently set in `pom.xml`'s
-`service-revision` property (for example `0.11.13`).
+The service is shipped as a Docker image in the GitHub Container Registry (`ghcr.io`), built from
+the `oidf-services` module with jib. Two workflows publish it, and neither one changes the Maven
+version: the version in the POMs is what the image is tagged with.
 
-To publish a **versioned release** image, push a git tag matching `v<version>`, for example:
+## Snapshot images
+
+Every push to `main` triggers
+[`docker-snapshot.yml`](../../.github/workflows/docker-snapshot.yml), which publishes an image
+tagged with the version in the POMs, for example `0.11.16-SNAPSHOT`.
+
+When `main` holds a release version (no `-SNAPSHOT` suffix), nothing is published, so a release
+image is never overwritten by a later commit.
+
+## Release images
+
+To publish a versioned release image:
+
+1. Set the release version in the POMs, e.g. `0.11.16`, and get the change onto `main`:
+
+   ```bash
+   mvn versions:set -DnewVersion=0.11.16 -DprocessAllModules=true -DgenerateBackupPoms=false
+   ```
+
+2. Push an annotated git tag named `v` followed by that version:
+
+   ```bash
+   git tag -a v0.11.16 -m "Version 0.11.16"
+   git push origin v0.11.16
+   ```
+
+3. Set the next snapshot version in the POMs, e.g. `0.11.17-SNAPSHOT`.
+
+In practice all three steps are driven by [`internal/release.sh`](../../internal/release.sh), see
+[internal/release.md](../../internal/release.md).
+
+Pushing a tag of the form `v*` triggers
+[`docker-release.yml`](../../.github/workflows/docker-release.yml), which:
+
+1. Checks that the tag matches the version in the POMs (`v0.11.16` &harr; `0.11.16`) and that the
+   version is not a snapshot. If either check fails, the workflow fails and nothing is published.
+2. Builds the reactor and publishes a Docker image to `ghcr.io` tagged with the version and with
+   `latest`.
+
+The same tag also triggers [`github-release.yml`](../../.github/workflows/github-release.yml),
+which creates a GitHub release pointing at the release notes. It builds nothing and attaches no
+assets.
+
+The tag name must start with `v`. Tags that do not match this pattern trigger neither workflow.
+
+## Building an image locally
 
 ```bash
-git tag v0.0.0
-git push origin v0.0.0
+mvn clean compile jib:dockerBuild@local -Djib.from.platforms=linux/amd64
 ```
 
-Pushing a tag of the form `v*` triggers [`release.yml`](../../.github/workflows/release.yml), which calls
-the reusable [`docker-release.yml`](../../.github/workflows/docker-release.yml) workflow. It:
-
-1. Sets the `service-revision` Maven property to the tag name with the leading `v` stripped
-   (`v0.0.3` &rarr; `0.0.3`).
-2. Builds `oidf-services` and publishes a Docker image to `ghcr.io` tagged with that version.
-
-The tag name must start with `v` (e.g. `v1.2.0`, `v0.0.3-rc1`) — tags that do not match this pattern will
-not trigger a release build.
+Use `linux/arm64` instead for an ARM image. The local build tags the image `local/oidf-services`
+and pushes nothing.
 
 -----
 

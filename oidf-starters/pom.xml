@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright 2024-2026 Sweden Connect
   ~
@@ -14,15 +15,22 @@
   ~ limitations under the License.
   ~
   -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-parent</artifactId>
-        <version>${service-revision}</version>
+        <version>0.11.16-SNAPSHOT</version>
     </parent>
+
+    <artifactId>oidf-starters</artifactId>
+    <packaging>pom</packaging>
+
+    <name>OpenID Federation :: Starter :: Parent</name>
+    <description>Parent POM for the OpenID Federation Spring Boot starters</description>
+    <url>https://docs.swedenconnect.se/openid-federation-services</url>
+
     <modules>
         <module>federation-starter</module>
         <module>trustanchor-starter</module>
@@ -31,26 +39,18 @@
     </modules>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <maven.compiler.release>25</maven.compiler.release>
         <java.version>25</java.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <service-revision>0.11.16-SNAPSHOT</service-revision>
-        <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 
-    <artifactId>oidf-starters</artifactId>
-    <packaging>pom</packaging>
-
-    <name>OpenID Federation :: Starter :: Parent</name>
-    <url>http://maven.apache.org</url>
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.1</version>
                 <configuration>
                     <annotationProcessorPaths>
                         <path>

@@ -15,28 +15,29 @@
   ~ limitations under the License.
   ~
   -->
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <name>OIDF :: Modules :: Trust Mark Issuer</name>
-
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-modules</artifactId>
-        <version>${service-revision}</version>
+        <version>0.11.16-SNAPSHOT</version>
     </parent>
 
-    <properties>
-        <service-revision>0.11.16-SNAPSHOT</service-revision>
-    </properties>
+    <artifactId>trustmarkissuer</artifactId>
+    <packaging>jar</packaging>
+
+    <name>OIDF :: Modules :: Trust Mark Issuer</name>
+    <description>OpenID Federation Trust Mark Issuer: trust mark issuance, delegation and
+        status</description>
+    <url>https://docs.swedenconnect.se/openid-federation-services</url>
 
     <dependencies>
         <dependency>
             <groupId>se.swedenconnect.oidf</groupId>
             <artifactId>common</artifactId>
-            <version>${service-revision}</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -51,7 +52,5 @@
             <version>5.15.2</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
-    <artifactId>trustmarkissuer</artifactId>
 </project>

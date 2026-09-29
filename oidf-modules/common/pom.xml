@@ -15,7 +15,6 @@
   ~ limitations under the License.
   ~
   -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -23,15 +22,16 @@
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-modules</artifactId>
-        <version>${service-revision}</version>
+        <version>0.11.16-SNAPSHOT</version>
     </parent>
 
-    <name>OIDF :: Modules :: Common</name>
     <artifactId>common</artifactId>
+    <packaging>jar</packaging>
 
-    <properties>
-        <service-revision>0.11.16-SNAPSHOT</service-revision>
-    </properties>
+    <name>OIDF :: Modules :: Common</name>
+    <description>Shared building blocks for the OpenID Federation Services: entity and registry
+        records, record sources, caches, the federation tree and entity statement signing</description>
+    <url>https://docs.swedenconnect.se/openid-federation-services</url>
 
     <dependencies>
         <dependency>

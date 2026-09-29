@@ -1,13 +1,12 @@
-# Publishes the Docker image of a release when a version tag is pushed.
+# Publishes a snapshot Docker image, tagged with the Maven version (e.g. 0.11.16-SNAPSHOT), on every push to main.
 #
-# The Maven version is set manually and committed before tagging, so the tag must match it: the tag v0.11.16 requires
-# the version 0.11.16 in the POMs. The image is tagged with the version and with latest.
-name: Release Docker image
+# Nothing is published when main holds a release version, so a release image is never overwritten by later commits.
+name: Snapshot Docker image
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 # Narrowed to what building and pushing the image requires.
 permissions:
@@ -15,8 +14,8 @@ permissions:
   packages: write
 
 jobs:
-  publish:
-    name: Publish Docker image
+  publish-snapshot-ghcr:
+    name: Publish snapshot Docker image
     runs-on: ubuntu-latest
 
     steps:
@@ -28,21 +27,19 @@ jobs:
           java-version: '25'
           cache: 'maven'
 
-      - name: Check that the tag matches the Maven version
-        env:
-          TAG: ${{ github.ref_name }}
+      - name: Check for a snapshot version
+        id: version
         run: |
           VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout --no-transfer-progress)
           if [[ "${VERSION}" == *-SNAPSHOT ]]; then
-            echo "::error::The Maven version ${VERSION} is a snapshot - set the release version in the POMs before tagging"
-            exit 1
-          fi
-          if [[ "${TAG}" != "v${VERSION}" ]]; then
-            echo "::error::The tag ${TAG} does not match the Maven version ${VERSION} - expected the tag v${VERSION}"
-            exit 1
+            echo "snapshot=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "::notice::The Maven version ${VERSION} is not a snapshot - no snapshot image is published"
+            echo "snapshot=false" >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Login to GitHub Container Registry
+        if: steps.version.outputs.snapshot == 'true'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -52,13 +49,15 @@ jobs:
       # This is a multi-module build, so the reactor modules the service depends on have to be
       # installed before the image is built from oidf-services alone.
       - name: Install the reactor modules
+        if: steps.version.outputs.snapshot == 'true'
         run: mvn clean install --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
 
       - name: Build and publish image
+        if: steps.version.outputs.snapshot == 'true'
         working-directory: oidf-services
         env:
           DOCKER_REPO: ghcr.io
           GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
-        run: mvn clean package jib:build -Djib.to.tags=latest --no-transfer-progress
+        run: mvn clean package jib:build --no-transfer-progress
