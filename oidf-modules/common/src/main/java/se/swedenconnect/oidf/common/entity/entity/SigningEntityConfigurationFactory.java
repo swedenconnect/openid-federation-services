@@ -70,7 +70,12 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
       builder.issueTime(Date.from(Instant.now()));
       builder.expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)));
       builder.claim("metadata", record.getMetadata());
-      builder.claim("authority_hints", record.getAuthorityHints());
+      if (Objects.nonNull(record.getAuthorityHints()) && !record.getAuthorityHints().isEmpty()) {
+        builder.claim("authority_hints", record.getAuthorityHints());
+      }
+      if (Objects.nonNull(record.getCrit()) && !record.getCrit().isEmpty()) {
+        builder.claim("crit", record.getCrit());
+      }
       builder.claim("jwks", record.getJwks().toPublicJWKSet().toJSONObject());
       final List<TrustMarkSourceProperty> trustMarkSourceProperties = record.getTrustMarkSource();
       if (Objects.nonNull(trustMarkSourceProperties)) {
