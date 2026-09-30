@@ -23,7 +23,7 @@ image is never overwritten by a later commit.
 
 To publish a versioned release image:
 
-1. Set the release version in the POMs, e.g. `0.11.16`, and get the change onto `main`:
+1. Set the release version in the POMs, e.g. `0.11.16`, and commit it:
 
    ```bash
    mvn versions:set -DnewVersion=0.11.16 -DprocessAllModules=true -DgenerateBackupPoms=false
