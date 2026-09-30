@@ -67,22 +67,18 @@ public class SubordinateStatementFactory {
             builder.claim("constraints", constraint.toJson());
           });
 
-      Optional.ofNullable(subordinate.getCrit()).ifPresent(
-          crit -> builder.claim("crit", crit)
-      );
+      Optional.ofNullable(subordinate.getCrit())
+          .filter(crit -> !crit.isEmpty())
+          .ifPresent(crit -> builder.claim("crit", crit));
 
-      Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(
-          metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
-      );
+      Optional.ofNullable(subordinate.getMetadataPolicyCrit())
+          .filter(metadataPolicyCrit -> !metadataPolicyCrit.isEmpty())
+          .ifPresent(metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit));
 
       final String resolvedEcLocation = resolveEcLocation(subordinate);
       if (resolvedEcLocation != null) {
         builder.claim("ec_location", resolvedEcLocation);
       }
-
-      Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(
-          metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
-      );
 
       Optional.ofNullable(subordinate.getPolicy())
           .flatMap(policy -> Optional.ofNullable(policy.getPolicy()))
