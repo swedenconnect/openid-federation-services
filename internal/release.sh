@@ -37,6 +37,42 @@ next_snapshot_version() {
   echo "$(suggest_next_version "$1")-SNAPSHOT"
 }
 
+# Prints the message of the commit that holds the given release version.
+release_commit_message() {
+  echo "build: $1 release"
+}
+
+# Prints the message of the commit that opens the next snapshot version after the given release.
+bump_commit_message() {
+  echo "build: bump version after $1"
+}
+
+# Adds a section for the given coming version at the top of the given release notes file, above the
+# first "## Version" heading, with the date set to not yet released. If there is no such heading the
+# section is added at the end. If the file already has a section for that version it is left as it is.
+add_release_notes_section() {
+  local version="$1" file="$2" tmp
+  if grep -qxF "## Version $version" "$file"; then
+    return 0
+  fi
+  tmp="$(mktemp)"
+  awk -v version="$version" '
+    function section() {
+      print "## Version " version
+      print ""
+      print "**Date:** _not yet released_"
+      print ""
+      print "*"
+      print ""
+    }
+    !done && /^## Version / { section(); done = 1 }
+    { print; last = $0 }
+    END { if (!done) { if (last != "") print ""; section() } }
+  ' "$file" > "$tmp"
+  cat "$tmp" > "$file"
+  rm -f "$tmp"
+}
+
 # Prints the branch the release is made on. From main that is a new release/X_Y_Z branch, from any
 # other branch it is that branch, which is then used as it is.
 release_branch_for() {
@@ -154,7 +190,7 @@ main() {
   read -r -p "Press Enter once the release notes are updated (or Ctrl+C to stop here) ..." _
 
   git add -- '**/pom.xml' pom.xml docs/release-notes.md
-  git commit -m "choir: Prepare release $version"
+  git commit -m "$(release_commit_message "$version")"
 
   echo "Pushing '$branch' to $REMOTE ..."
   git push -u "$REMOTE" "$branch"
@@ -199,8 +235,11 @@ main() {
   echo "Setting the version to $next_version in every pom.xml ..."
   mvn versions:set -DnewVersion="$next_version" -DprocessAllModules=true -DgenerateBackupPoms=false
 
-  git add -- '**/pom.xml' pom.xml
-  git commit -m "choir: new version"
+  echo "Adding version ${next_version%-SNAPSHOT} to docs/release-notes.md ..."
+  add_release_notes_section "${next_version%-SNAPSHOT}" docs/release-notes.md
+
+  git add -- '**/pom.xml' pom.xml docs/release-notes.md
+  git commit -m "$(bump_commit_message "$version")"
   git push "$REMOTE" "$branch"
 
   echo

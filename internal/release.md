@@ -44,7 +44,7 @@ It does the whole release in one run:
 7. Builds and tests with `mvn clean install`.
 8. Stops and asks you to write the release notes for this version in
    [`docs/release-notes.md`](../docs/release-notes.md). Do that now, then press Enter.
-9. Commits the version and the release notes as `choir: Prepare release X.Y.Z`, and pushes the
+9. Commits the version and the release notes as `build: X.Y.Z release`, and pushes the
    branch to `origin`.
 10. Asks whether to create the tag and push it, and says that this starts publishing and that a
     published version cannot be removed or replaced. If you say no the script stops here. The
@@ -56,7 +56,9 @@ It does the whole release in one run:
     release workflow ([`docker-release.yml`](../.github/workflows/docker-release.yml)) and the
     GitHub release workflow ([`github-release.yml`](../.github/workflows/github-release.yml)). It
     prints where to follow the Maven Central run.
-12. Sets the next snapshot version, commits it as `choir: new version`, and pushes the branch.
+12. Sets the next snapshot version, adds a section for the coming version at the top of
+    `docs/release-notes.md` with the date `_not yet released_`, commits both as
+    `build: bump version after X.Y.Z`, and pushes the branch.
 13. Tells you to open a pull request from the branch into `main`.
 
 Only three points wait for you: the version, the release notes, and the question before tagging.
@@ -64,8 +66,8 @@ Only three points wait for you: the version, the release notes, and the question
 Only the new tag is pushed, with `git push origin vX.Y.Z`. Nothing pushes all tags, so a tag you
 happen to have locally cannot start a release workflow by accident.
 
-[`internal/release-test.sh`](release-test.sh) tests the script: how it picks the version and the
-branch, and that each check stops it before anything is changed.
+[`internal/test-scripts/release-test.sh`](test-scripts/release-test.sh) tests the script: how it
+picks the version and the branch, and that each check stops it before anything is changed.
 
 ## Which branch the release is made on
 
@@ -136,7 +138,8 @@ it yourself before tagging:
 
 It reads the version of every `pom.xml` in the project, skips the modules that are not published,
 and lists every module that does not match instead of stopping at the first one.
-[`internal/check-release-version-test.sh`](check-release-version-test.sh) tests it.
+[`internal/test-scripts/check-release-version-test.sh`](test-scripts/check-release-version-test.sh)
+tests it.
 
 ### What the `release` profile does
 
@@ -288,14 +291,21 @@ The release is published, or is being published. What is left is the next snapsh
 pull request. From the release branch:
 
 ```bash
-mvn versions:set -DnewVersion=X.Y.Z-SNAPSHOT -DprocessAllModules=true -DgenerateBackupPoms=false
-git add -- '**/pom.xml' pom.xml
-git commit -m "choir: new version"
+mvn versions:set -DnewVersion=<next>-SNAPSHOT -DprocessAllModules=true -DgenerateBackupPoms=false
+# Add this section to the top of docs/release-notes.md, above the latest version:
+#
+#   ## Version <next>
+#
+#   **Date:** _not yet released_
+#
+#   *
+git add -- '**/pom.xml' pom.xml docs/release-notes.md
+git commit -m "build: bump version after X.Y.Z"
 git push origin <branch>
 ```
 
-Use the released version with the last number raised by one, so `0.11.17-SNAPSHOT` after releasing
-`0.11.16`. Then open the pull request into `main` and merge it with "Create a merge commit".
+X.Y.Z is the released version and `<next>` is that version with the last number raised by one, so
+`0.11.17-SNAPSHOT` after releasing `0.11.16`. Then open the pull request into `main` and merge it with "Create a merge commit".
 
 ### A workflow failed
 

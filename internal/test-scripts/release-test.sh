@@ -7,11 +7,11 @@
 # the PATH, so nothing reaches the real origin and no real tag is made.
 #
 # Usage:
-#     internal/release-test.sh
+#     internal/test-scripts/release-test.sh
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RELEASE="${HERE}/release.sh"
+RELEASE="${HERE}/../release.sh"
 
 # shellcheck source=release.sh
 source "$RELEASE"
@@ -65,6 +65,13 @@ equals "the next version after a nine carries into two digits" "1.2.10" "$(sugge
 equals "the next version also works without the v" "0.1.1" "$(suggest_next_version 0.1.0)"
 equals "the next snapshot version" "0.11.17-SNAPSHOT" "$(next_snapshot_version 0.11.16)"
 
+echo
+echo "== Commit messages =="
+
+equals "the release commit message" "build: 0.11.17 release" "$(release_commit_message 0.11.17)"
+equals "the bump commit message names the released version" "build: bump version after 0.11.17" \
+  "$(bump_commit_message 0.11.17)"
+
 accepted "three numbers are a version" "0.11.16"
 accepted "two digits in a number are a version" "1.2.10"
 rejected "two numbers are not a version" "0.11"
@@ -73,6 +80,26 @@ rejected "a tag is not a version" "v0.11.16"
 rejected "a snapshot is not a version" "0.11.16-SNAPSHOT"
 rejected "empty is not a version" ""
 rejected "a letter is not a version" "0.11.x"
+
+echo
+echo "== Release notes for the coming version =="
+
+NOTES_HEADER=$'# Release notes\n\n'
+NEW_SECTION=$'## Version 0.1.2\n\n**Date:** _not yet released_\n\n*\n\n'
+OLD_SECTION=$'## Version 0.1.1\n\n**Date:** 2026-09-30\n\n* A fix.\n'
+
+notes="${WORK}/notes.md"
+printf '%s' "${NOTES_HEADER}${OLD_SECTION}" > "$notes"
+add_release_notes_section 0.1.2 "$notes"
+equals "the section is added above the latest version" "${NOTES_HEADER}${NEW_SECTION}${OLD_SECTION}x" \
+  "$(cat "$notes"; printf x)"
+equals "the section is not added twice" "${NOTES_HEADER}${NEW_SECTION}${OLD_SECTION}x" \
+  "$(add_release_notes_section 0.1.2 "$notes"; cat "$notes"; printf x)"
+
+printf '%s' "$NOTES_HEADER" > "$notes"
+add_release_notes_section 0.1.2 "$notes"
+equals "with no version yet the section is added at the end" "${NOTES_HEADER}${NEW_SECTION}x" \
+  "$(cat "$notes"; printf x)"
 
 echo
 echo "== Choosing the branch =="
@@ -120,7 +147,7 @@ MVN
     mkdir docs modules
     printf '<project><version>0.1.0-SNAPSHOT</version></project>\n' > pom.xml
     printf '<project><version>0.1.0-SNAPSHOT</version></project>\n' > modules/pom.xml
-    printf '# Release notes\n' > docs/release-notes.md
+    printf '# Release notes\n\n## Version 0.1.0\n\n**Date:** 2026-01-01\n\n* First.\n' > docs/release-notes.md
     git add -A
     git commit --quiet -m "First commit"
     git remote add origin "$dir/origin.git"
@@ -178,8 +205,12 @@ status=$?
 equals "from main: the script succeeds" "0" "$status"
 equals "from main: the release branch is checked out" "release/0_1_1" "$(in_work "$dir" git branch --show-current)"
 equals "from main: the release is tagged" "v0.1.1" "$(in_work "$dir" git tag -l v0.1.1)"
-equals "from main: the tag is on the release commit" "choir: Prepare release 0.1.1" \
+equals "from main: the tag is on the release commit" "build: 0.1.1 release" \
   "$(in_work "$dir" git log -1 --format=%s v0.1.1)"
+equals "from main: the branch ends with the bump commit" "build: bump version after 0.1.1" \
+  "$(in_work "$dir" git log -1 --format=%s release/0_1_1)"
+equals "from main: the bump commit follows the release commit" "$(in_work "$dir" git rev-parse v0.1.1^{commit})" \
+  "$(in_work "$dir" git rev-parse release/0_1_1~1)"
 equals "from main: the branch is pushed" "release/0_1_1" \
   "$(in_work "$dir" git ls-remote --heads origin release/0_1_1 | awk '{print $2}' | sed 's|refs/heads/||')"
 equals "from main: the tag is pushed" "v0.1.1" \
@@ -190,6 +221,11 @@ equals "from main: the branch is left on the next snapshot version" \
   "<project><version>0.1.2-SNAPSHOT</version></project>" "$(in_work "$dir" cat pom.xml)"
 equals "from main: the module poms are committed too" \
   "<project><version>0.1.1</version></project>" "$(in_work "$dir" git show v0.1.1:modules/pom.xml)"
+equals "from main: the bump commit adds the coming version to the release notes" \
+  $'## Version 0.1.2\n\n**Date:** _not yet released_\n\n*\n\n## Version 0.1.0' \
+  "$(in_work "$dir" git show release/0_1_1:docs/release-notes.md | sed -n '3,9p')"
+equals "from main: the release commit has no section for the coming version" "" \
+  "$(in_work "$dir" git show v0.1.1:docs/release-notes.md | grep -F 'Version 0.1.2')"
 equals "from main: main is untouched" "First commit" "$(in_work "$dir" git log -1 --format=%s main)"
 contains "from main: the merge is explained" "$dir/output" "Create a merge"
 contains "from main: the workflow run is pointed at" "$dir/output" "maven-central-deploy.yml"

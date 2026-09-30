@@ -6,11 +6,11 @@
 # runs the real thing against this repository, which covers reading the versions out of the POMs.
 #
 # Usage:
-#     internal/check-release-version-test.sh
+#     internal/test-scripts/check-release-version-test.sh
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CHECK="${HERE}/check-release-version.sh"
+CHECK="${HERE}/../check-release-version.sh"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
@@ -90,7 +90,7 @@ expect "a missing tag is a usage error" 2 "Usage:" ""
 
 echo
 echo "Reading the versions out of the POMs of this repository (needs Maven) ..."
-POM_VERSION="$(mvn -q --no-transfer-progress -f "${HERE}/../pom.xml" -Dexpression=project.version -DforceStdout help:evaluate)"
+POM_VERSION="$(mvn -q --no-transfer-progress -f "${HERE}/../../pom.xml" -Dexpression=project.version -DforceStdout help:evaluate)"
 if [ "${POM_VERSION%-SNAPSHOT}" != "$POM_VERSION" ]; then
   expect "this repository, on a snapshot version, is rejected" 1 "is the snapshot ${POM_VERSION}" "v${POM_VERSION%-SNAPSHOT}"
 else
