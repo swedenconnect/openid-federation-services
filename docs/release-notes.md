@@ -6,7 +6,7 @@
 
 ## Version 0.11.17
 
-**Date:** _not yet released_
+**Date:** 2026-09-30
 
 * Empty `crit`, `metadata_policy_crit` and `authority_hints` values are no longer written as empty arrays in issued statements, as required by OpenID Federation 1.0.
 * Entity configurations now include `crit` when it is set for the entity.

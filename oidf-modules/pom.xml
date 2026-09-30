@@ -22,7 +22,7 @@
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-parent</artifactId>
-        <version>0.11.17-SNAPSHOT</version>
+        <version>0.11.18-SNAPSHOT</version>
     </parent>
 
     <artifactId>oidf-modules</artifactId>
