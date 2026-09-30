@@ -97,7 +97,8 @@
 
     <!--
       A plain "mvn deploy" publishes to GitHub Packages, as it always has. Publishing to
-      Maven Central is a separate, manual step, see the "release" profile below.
+      Maven Central is done by the "release" profile below, which the Maven Central workflow
+      runs when a version tag is pushed.
     -->
     <distributionManagement>
         <repository>
@@ -503,7 +504,11 @@
 
               mvn -Prelease clean deploy
 
-          Run from the tagged commit. oidf-services is not published, it sets maven.deploy.skip.
+          This is what .github/workflows/maven-central-deploy.yml runs when a version tag is
+          pushed. It signs with the Bouncy Castle signer of the GPG plugin, selected with
+          -Dgpg.signer=bc, so the profile stays usable as it is from a developer machine.
+
+          oidf-services is not published, it sets maven.deploy.skip.
         -->
         <profile>
             <id>release</id>
