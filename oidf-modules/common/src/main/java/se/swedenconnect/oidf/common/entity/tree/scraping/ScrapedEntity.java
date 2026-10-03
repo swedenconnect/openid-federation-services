@@ -91,18 +91,23 @@ public class ScrapedEntity {
     final EntityStatementWrapper wrapper = new EntityStatementWrapper(this.entityStatement);
     final List<SignedJWT> trustMarks = wrapper.getTrustMarks();
     trustMarks.forEach(trustMark -> {
+      final String trustMarkType = EntityStatementClaims.getTrustMarkType(trustMark);
+      final String issuer;
       try {
-        final String trustMarkType = trustMark.getJWTClaimsSet().getStringClaim("trust_mark_type");
-        log.debug("Resolving trust mark status for {} of type {}", this.entityID, trustMarkType);
-        final TrustMarkStatusResponse trustMarkStatus = client.trustMarkStatus(
-            new FederationRequest<>(
-                new FederationTrustMarkStatusRequest(trustMark.serialize(), trustMark.getJWTClaimsSet().getIssuer())
-            )
-        );
-        this.trustMarkStatuses.put(trustMarkType, trustMarkStatus);
+        issuer = trustMark.getJWTClaimsSet().getIssuer();
       } catch (final ParseException e) {
-        throw new RuntimeException(e);
+        log.info("Ignoring trust mark of {} with invalid claims: {}", this.entityID, e.getMessage());
+        return;
       }
+      if (trustMarkType == null || issuer == null) {
+        log.info("Ignoring trust mark of {} without trust_mark_type or issuer", this.entityID);
+        return;
+      }
+      log.debug("Resolving trust mark status for {} of type {}", this.entityID, trustMarkType);
+      final TrustMarkStatusResponse trustMarkStatus = client.trustMarkStatus(
+          new FederationRequest<>(new FederationTrustMarkStatusRequest(trustMark.serialize(), issuer))
+      );
+      this.trustMarkStatuses.put(trustMarkType, trustMarkStatus);
     });
     wrapper.getFederationEntityMetadata()
         .ifPresent(metadata -> {

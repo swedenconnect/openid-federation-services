@@ -8,7 +8,7 @@
 
 **Date:** _not yet released_
 
-*
+* Trust mark entries using `trust_mark_type` (OpenID Federation 1.0) are now read by the resolver and in subordinate listings. Entity configurations now write `trust_mark_type` in addition to `id`. Trust marks using the draft `id` claim are still accepted. An invalid trust mark entry is skipped and logged instead of dropping all trust marks of the entity. ([#179](https://github.com/swedenconnect/openid-federation-services/issues/179))
 
 ## Version 0.11.17
 
