@@ -17,11 +17,11 @@
 package se.swedenconnect.oidf.common.entity.tree;
 
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.text.ParseException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,29 +38,16 @@ public class EntityStatementWrapper {
   private final SignedJWT entityStatement;
 
   /**
-   * Returns trust marks from the underlying entity statement.
+   * Returns trust marks from the underlying entity statement. Entries that cannot be parsed are logged and skipped.
    *
    * @return list of trust mark JWTs, empty if none present
    */
   public List<SignedJWT> getTrustMarks() {
-    try {
-      final List<Object> trustMarks = this.entityStatement.getJWTClaimsSet().getListClaim("trust_marks");
-      if (trustMarks == null) {
-        return Collections.emptyList();
-      }
-      return trustMarks.stream()
-          .map(e -> (Map<String, Object>) e)
-          .map(entry -> {
-            try {
-              return SignedJWT.parse((String) entry.get("trust_mark"));
-            } catch (final ParseException e) {
-              throw new IllegalArgumentException("Failed to parse trust mark JWT", e);
-            }
-          })
-          .toList();
-    } catch (final ParseException e) {
-      throw new IllegalStateException("Failed to parse entity statement claims", e);
-    }
+    return Optional.ofNullable(EntityStatementClaims.getTrustMarks(this.entityStatement))
+        .orElseGet(List::of)
+        .stream()
+        .map(TrustMarkEntry::getTrustMark)
+        .toList();
   }
 
   /**

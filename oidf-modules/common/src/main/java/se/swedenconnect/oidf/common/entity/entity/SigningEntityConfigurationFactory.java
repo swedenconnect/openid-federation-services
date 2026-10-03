@@ -94,7 +94,7 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
             })
             .filter(Objects::nonNull)
             .toList();
-        builder.claim("trust_marks", trustMarks.stream().map(TrustMarkEntry::toJSONObject).toList());
+        builder.claim("trust_marks", trustMarks.stream().map(EntityStatementClaims::toJSONObject).toList());
       }
       return EntityStatementClaims.sign(builder.build(), record.getJwks().getKeys().getFirst());
     } catch (final JOSEException e) {
