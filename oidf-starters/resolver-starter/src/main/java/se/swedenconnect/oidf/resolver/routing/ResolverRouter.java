@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Resolve
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
+import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 import se.swedenconnect.oidf.resolver.Resolver;
@@ -202,12 +203,13 @@ public class ResolverRouter implements Router, ModuleRouter {
         .lowCardinalityKeyValue("endpoint", normalizedEndpoint)
         .start();
     try {
-      final Optional<ResolverProperties> resolverProperties = this.source.getResolverProperties().stream()
+      final ResolverProperties resolverProperties = this.source.getResolverProperties().stream()
           .filter(property -> property.getEntityIdentifier().equalsIgnoreCase(entity.getEntityIdentifier().getValue()))
-          .findFirst();
-      final Resolver resolver = this.resolverFactory.create(resolverProperties.get());
+          .findFirst()
+          .orElseThrow(() -> missingConfiguration(entity, "resolver"));
+      final Resolver resolver = this.resolverFactory.create(resolverProperties);
       if (isResolve) {
-        final ResolveRequest resolveRequest = this.createResolveRequest(request, resolverProperties.get());
+        final ResolveRequest resolveRequest = this.createResolveRequest(request, resolverProperties);
         final String response = resolver.resolve(resolveRequest);
         return new CachedResponse(response, "application/resolve-response+jwt", 200);
       }
@@ -298,5 +300,18 @@ public class ResolverRouter implements Router, ModuleRouter {
         .filter(Objects::nonNull)
         .map(EntityID::getValue)
         .anyMatch(base -> requestUri.equals(base + "/discovery"));
+  }
+
+  /**
+   * Creates the error for an entity that advertises an endpoint of this module, but has no configuration for it.
+   *
+   * @param entity the entity
+   * @param module the name of the module
+   * @return the error to return
+   */
+  private static NotFoundException missingConfiguration(final EntityRecord entity, final String module) {
+    log.warn("Entity {} advertises {} endpoints but has no {} configuration",
+        entity.getEntityIdentifier().getValue(), module, module);
+    return new NotFoundException("No %s configured for %s".formatted(module, entity.getEntityIdentifier().getValue()));
   }
 }

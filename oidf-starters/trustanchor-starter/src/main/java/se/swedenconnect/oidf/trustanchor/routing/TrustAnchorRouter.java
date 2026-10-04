@@ -36,6 +36,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Subordi
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
+import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.routing.ModuleRouter;
@@ -116,7 +117,7 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
       final TrustAnchorProperties properties = this.source.getTrustAnchorProperties().stream()
           .filter(p -> p.getEntityIdentifier().getValue().equals(entity.getEntityIdentifier().getValue()))
           .findFirst()
-          .get();
+          .orElseThrow(() -> missingConfiguration(entity, "trust anchor"));
       final TrustAnchor trustAnchor = this.trustAnchorFactory.create(properties);
       if (this.isFetchEndpoint(request, entity)) {
         final MultiValueMap<String, String> params = RequireParameters.validate(request.params(), List.of("sub"));
@@ -255,5 +256,18 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
         .filter(prop -> this.routeFactory.createRoute(prop.getEntityIdentifier(), endpoint).test(request))
         .findFirst()
         .get();
+  }
+
+  /**
+   * Creates the error for an entity that advertises an endpoint of this module, but has no configuration for it.
+   *
+   * @param entity the entity
+   * @param module the name of the module
+   * @return the error to return
+   */
+  private static NotFoundException missingConfiguration(final EntityRecord entity, final String module) {
+    log.warn("Entity {} advertises {} endpoints but has no {} configuration",
+        entity.getEntityIdentifier().getValue(), module, module);
+    return new NotFoundException("No %s configured for %s".formatted(module, entity.getEntityIdentifier().getValue()));
   }
 }

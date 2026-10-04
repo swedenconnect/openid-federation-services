@@ -36,6 +36,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMa
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
+import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.routing.ModuleRouter;
 import se.swedenconnect.oidf.routing.RequireParameters;
@@ -132,7 +133,7 @@ public class TrustMarkIssuerRouter implements Router, ModuleRouter {
       final TrustMarkIssuerProperties properties = this.source.getTrustMarkIssuerProperties().stream()
           .filter(p -> p.entityIdentifier().getValue().equals(entity.getEntityIdentifier().getValue()))
           .findFirst()
-          .get();
+          .orElseThrow(() -> missingConfiguration(entity, "trust mark issuer"));
       final TrustMarkIssuer trustMarkIssuer = this.factory.create(properties);
       if (this.isTrustMarkEndpoint(request, entity)) {
         final MultiValueMap<String, String> params =
@@ -348,5 +349,18 @@ public class TrustMarkIssuerRouter implements Router, ModuleRouter {
         .filter(prop -> this.routeFactory.createRoute(prop.entityIdentifier(), endpoint).test(request))
         .findFirst()
         .get();
+  }
+
+  /**
+   * Creates the error for an entity that advertises an endpoint of this module, but has no configuration for it.
+   *
+   * @param entity the entity
+   * @param module the name of the module
+   * @return the error to return
+   */
+  private static NotFoundException missingConfiguration(final EntityRecord entity, final String module) {
+    log.warn("Entity {} advertises {} endpoints but has no {} configuration",
+        entity.getEntityIdentifier().getValue(), module, module);
+    return new NotFoundException("No %s configured for %s".formatted(module, entity.getEntityIdentifier().getValue()));
   }
 }
