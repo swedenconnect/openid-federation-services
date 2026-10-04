@@ -28,6 +28,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Resolve
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidTrustAnchorException;
+import se.swedenconnect.oidf.common.entity.exception.InvalidTrustChainException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
@@ -137,7 +138,13 @@ public class ValidatingResolver implements Resolver {
     }
 
     if (request.trustAnchor().equals(request.subject())) {
-      final ResolverTrustChain chain = this.tree.getTrustChain(request);
+      final ResolverTrustChain chain;
+      try {
+        chain = this.tree.getTrustChain(request);
+      }
+      catch (final RuntimeException e) {
+        return this.trustChainError(request, e, validationErrors);
+      }
       final List<SignedJWT> selfChain = chain.getTrustChain().stream().toList();
       if (selfChain.isEmpty()) {
         validationErrors.add(
@@ -162,8 +169,14 @@ public class ValidatingResolver implements Resolver {
     }
 
 
-    final ResolverTrustChain chain = this.tree.getTrustChainViaAuthorityHints(request)
-        .orElseGet(() -> this.tree.getTrustChain(request));
+    final ResolverTrustChain chain;
+    try {
+      chain = this.tree.getTrustChainViaAuthorityHints(request)
+          .orElseGet(() -> this.tree.getTrustChain(request));
+    }
+    catch (final RuntimeException e) {
+      return this.trustChainError(request, e, validationErrors);
+    }
     if (chain.getTrustChain().isEmpty()) {
       validationErrors.add(
           new NotFoundException("Resolver found no subject with requested EntityID:%s".formatted(request.subject()))
@@ -215,6 +228,25 @@ public class ValidatingResolver implements Resolver {
   }
 
   /**
+   * Builds the response for a trust chain that could not be built from the resolver tree.
+   *
+   * @param request the resolve request
+   * @param e the error from the tree
+   * @param validationErrors the validation errors of the request, the trust chain error is added to them
+   * @return response holding the validation errors
+   */
+  private ResolverResponse trustChainError(final ResolveRequest request, final RuntimeException e,
+      final List<Exception> validationErrors) {
+    log.info("Failed to build trust chain for '{}' to '{}': {}", request.subject(), request.trustAnchor(),
+        e.getMessage());
+    validationErrors.add(new InvalidTrustChainException(
+        "Failed to build trust chain for %s".formatted(request.subject()), e));
+    return ResolverResponse.builder()
+        .validationErrors(validationErrors)
+        .build();
+  }
+
+  /**
    * Keeps only the entity types requested with {@code entity_type} (OpenID Federation 1.0, Section 8.3.1). When the
    * subject has none of the requested types, a {@link NotFoundException} is added to the validation errors.
    *
@@ -246,9 +278,16 @@ public class ValidatingResolver implements Resolver {
    */
   private Optional<JWKSet> resolveTrustMarkIssuerKeys(final String issuer, final String trustAnchor) {
     final ResolveRequest request = new ResolveRequest(issuer, trustAnchor, null, false);
-    final List<SignedJWT> issuerChain = this.tree.getTrustChainViaAuthorityHints(request)
-        .orElseGet(() -> this.tree.getTrustChain(request))
-        .getTrustChain().stream().toList();
+    final List<SignedJWT> issuerChain;
+    try {
+      issuerChain = this.tree.getTrustChainViaAuthorityHints(request)
+          .orElseGet(() -> this.tree.getTrustChain(request))
+          .getTrustChain().stream().toList();
+    }
+    catch (final RuntimeException e) {
+      log.debug("Failed to build trust chain for trust mark issuer '{}': {}", issuer, e.getMessage());
+      return Optional.empty();
+    }
     if (issuerChain.isEmpty()) {
       log.debug("No trust chain found for trust mark issuer '{}'", issuer);
       return Optional.empty();
