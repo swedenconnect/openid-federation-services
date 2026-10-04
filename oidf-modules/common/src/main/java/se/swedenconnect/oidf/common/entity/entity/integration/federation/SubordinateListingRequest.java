@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -59,10 +60,23 @@ public record SubordinateListingRequest(List<String> entityType, Boolean trustMa
   }
 
   /**
-   * Converts the request into a {@link SignedJWT} predicate
+   * Converts the request into a {@link SignedJWT} predicate. The trust mark filters use every trust mark in the
+   * {@code trust_marks} claim, without validating them.
+   *
    * @return request as predicate
    */
   public Predicate<SignedJWT> toPredicate() {
+    return this.toPredicate(SubordinateListingRequest::trustMarksOf);
+  }
+
+  /**
+   * Converts the request into a {@link SignedJWT} predicate, where the trust mark filters only count the trust marks
+   * returned by {@code validTrustMarks}.
+   *
+   * @param validTrustMarks gives the valid trust marks of an Entity Configuration
+   * @return request as predicate
+   */
+  public Predicate<SignedJWT> toPredicate(final Function<SignedJWT, List<TrustMarkEntry>> validTrustMarks) {
     final List<Predicate<SignedJWT>> predicates = new ArrayList<>();
 
     if (Objects.nonNull(this.entityType) && !this.entityType.isEmpty()) {
@@ -72,16 +86,16 @@ public record SubordinateListingRequest(List<String> entityType, Boolean trustMa
 
     Optional.ofNullable(this.trustMarkType).ifPresent(tmid -> {
       final Predicate<SignedJWT> predicate =
-          es -> trustMarksOf(es).stream()
+          es -> validTrustMarks.apply(es).stream()
               .anyMatch(tme -> tme.getID().getValue().equals(tmid));
       predicates.add(predicate);
     });
 
     Optional.ofNullable(this.trustMarked).ifPresent(marked -> {
       if (marked) {
-        predicates.add(es -> !trustMarksOf(es).isEmpty());
+        predicates.add(es -> !validTrustMarks.apply(es).isEmpty());
       } else {
-        predicates.add(es -> trustMarksOf(es).isEmpty());
+        predicates.add(es -> validTrustMarks.apply(es).isEmpty());
       }
     });
 

@@ -16,11 +16,6 @@
  */
 package se.swedenconnect.oidf.resolver.trustmark;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKMatcher;
-import com.nimbusds.jose.jwk.JWKSelector;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -28,13 +23,11 @@ import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkDelegation;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkValidator;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 
-import java.security.Key;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,11 +45,8 @@ import java.util.function.Function;
 @Slf4j
 public class TrustMarkCollector {
 
-  private static final String TRUST_MARK_TYPE = "trust-mark+jwt";
-
   private static final String STATUS_RESPONSE_TYPE = "trust-mark-status-response+jwt";
 
-  private static final Duration CLOCK_SKEW = Duration.ofSeconds(15);
 
   /**
    * Constructor.
@@ -163,34 +153,15 @@ public class TrustMarkCollector {
   private static String validateTrustMark(final SignedJWT trustMark, final JWTClaimsSet claims,
       final String trustMarkType, final String subject, final Function<String, Optional<JWKSet>> issuerKeys,
       final Map<String, TrustMarkStatusResponse> statuses) throws java.text.ParseException {
-    if (trustMarkType == null) {
-      return "trust_mark_type is missing";
-    }
-    if (!subject.equals(claims.getSubject())) {
-      return "sub does not match the entity";
-    }
-    if (trustMark.getHeader().getType() == null
-        || !TRUST_MARK_TYPE.equals(trustMark.getHeader().getType().getType())) {
-      return "wrong typ";
-    }
-    if (claims.getIssuer() == null) {
-      return "iss is missing";
-    }
-    if (claims.getIssueTime() == null) {
-      return "iat is missing";
-    }
-    final Instant now = Instant.now();
-    if (claims.getIssueTime().toInstant().isAfter(now.plus(CLOCK_SKEW))) {
-      return "iat is in the future";
-    }
-    if (claims.getExpirationTime() != null && claims.getExpirationTime().toInstant().isBefore(now)) {
-      return "trust mark has expired";
+    final String claimsError = TrustMarkValidator.checkClaims(trustMark, subject, Instant.now());
+    if (claimsError != null) {
+      return claimsError;
     }
     final Optional<JWKSet> keys = issuerKeys.apply(claims.getIssuer());
     if (keys.isEmpty()) {
       return "issuer keys could not be resolved through a trust chain";
     }
-    if (!TrustMarkCollector.verify(trustMark, keys.get())) {
+    if (!TrustMarkValidator.verify(trustMark, keys.get())) {
       return "signature is not valid for the issuer keys";
     }
     final TrustMarkStatusResponse status = statuses.get(trustMark.serialize());
@@ -220,7 +191,7 @@ public class TrustMarkCollector {
         || !STATUS_RESPONSE_TYPE.equals(response.getHeader().getType().getType())) {
       return "status response has wrong typ";
     }
-    if (!TrustMarkCollector.verify(response, issuerKeys)) {
+    if (!TrustMarkValidator.verify(response, issuerKeys)) {
       return "status response signature is not valid for the issuer keys";
     }
     final JWTClaimsSet claims = response.getJWTClaimsSet();
@@ -309,81 +280,18 @@ public class TrustMarkCollector {
         log.info("Trust mark of type '{}' rejected: invalid trust_mark_owners entry in Trust Anchor", trustMarkType);
         return false;
       }
-      final JWTClaimsSet trustMarkClaims = trustMark.getJWTClaimsSet();
-      final String delegationJwt = trustMarkClaims.getStringClaim("delegation");
-      if (delegationJwt == null) {
-        log.info("Trust mark of type '{}' from '{}' rejected: delegation is missing",
-            trustMarkType, trustMarkClaims.getIssuer());
-        return false;
-      }
-      final SignedJWT delegation = SignedJWT.parse(delegationJwt);
-      final JWTClaimsSet delegationClaims = delegation.getJWTClaimsSet();
-      final String error;
-      if (delegation.getHeader().getType() == null
-          || !TrustMarkDelegation.DELEGATION_TYPE.equals(delegation.getHeader().getType().getType())) {
-        error = "wrong typ";
-      }
-      else if (!ownerId.equals(delegationClaims.getIssuer())) {
-        error = "iss is not the trust mark owner";
-      }
-      else if (!Objects.equals(trustMarkClaims.getIssuer(), delegationClaims.getSubject())) {
-        error = "sub is not the trust mark issuer";
-      }
-      else if (!trustMarkType.equals(delegationClaims.getStringClaim("trust_mark_type"))) {
-        error = "trust_mark_type does not match";
-      }
-      else if (delegationClaims.getIssueTime() == null) {
-        error = "iat is missing";
-      }
-      else if (delegationClaims.getExpirationTime() != null
-          && delegationClaims.getExpirationTime().toInstant().isBefore(Instant.now())) {
-        error = "delegation has expired";
-      }
-      else if (!TrustMarkCollector.verify(delegation, JWKSet.parse((Map<String, Object>) ownerJwks))) {
-        error = "signature is not valid for the owner keys";
-      }
-      else {
+      final String error = TrustMarkValidator.checkDelegation(trustMark, trustMarkType, ownerId,
+          JWKSet.parse((Map<String, Object>) ownerJwks), Instant.now());
+      if (error == null) {
         return true;
       }
-      log.info("Trust mark of type '{}' from '{}' rejected: {} in delegation",
-          trustMarkType, trustMarkClaims.getIssuer(), error);
+      log.info("Trust mark of type '{}' from '{}' rejected: {}",
+          trustMarkType, trustMark.getJWTClaimsSet().getIssuer(), error);
       return false;
     }
     catch (final java.text.ParseException e) {
       log.info("Trust mark of type '{}' rejected: failed to parse delegation: {}", trustMarkType, e.getMessage());
       return false;
     }
-  }
-
-  /**
-   * Verifies the signature of a JWT against the keys in a JWK set. When the JWT has a {@code kid}, only the key with
-   * that identifier is used.
-   *
-   * @param jwt the JWT to verify
-   * @param jwks the keys to verify against
-   * @return true if the signature is valid
-   */
-  private static boolean verify(final SignedJWT jwt, final JWKSet jwks) {
-    final String kid = jwt.getHeader().getKeyID();
-    final List<JWK> keys = kid == null
-        ? jwks.getKeys()
-        : new JWKSelector(new JWKMatcher.Builder().keyID(kid).build()).select(jwks);
-    for (final JWK jwk : keys) {
-      try {
-        final Key key = switch (jwk.getKeyType().getValue()) {
-          case "EC" -> jwk.toECKey().toPublicKey();
-          case "RSA" -> jwk.toRSAKey().toPublicKey();
-          case null, default -> null;
-        };
-        if (key != null
-            && jwt.verify(new DefaultJWSVerifierFactory().createJWSVerifier(jwt.getHeader(), key))) {
-          return true;
-        }
-      }
-      catch (final JOSEException e) {
-        log.debug("Failed to verify signature with key '{}': {}", jwk.getKeyID(), e.getMessage());
-      }
-    }
-    return false;
   }
 }
