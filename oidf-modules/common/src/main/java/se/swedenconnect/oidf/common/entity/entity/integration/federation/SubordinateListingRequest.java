@@ -29,7 +29,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * @param entityType
@@ -55,8 +54,10 @@ public record SubordinateListingRequest(List<String> entityType, Boolean trustMa
     if (Objects.nonNull(this.entityType) && !this.entityType.isEmpty()) {
       return true;
     }
-    return Stream.of(this.trustMarkType, this.trustMarked, this.intermediate)
-        .anyMatch(Objects::nonNull);
+    // trust_marked and intermediate only filter when true (Section 8.2.1)
+    return Objects.nonNull(this.trustMarkType)
+        || Boolean.TRUE.equals(this.trustMarked)
+        || Boolean.TRUE.equals(this.intermediate);
   }
 
   /**
@@ -91,33 +92,20 @@ public record SubordinateListingRequest(List<String> entityType, Boolean trustMa
       predicates.add(predicate);
     });
 
-    Optional.ofNullable(this.trustMarked).ifPresent(marked -> {
-      if (marked) {
-        predicates.add(es -> !validTrustMarks.apply(es).isEmpty());
-      } else {
-        predicates.add(es -> validTrustMarks.apply(es).isEmpty());
-      }
-    });
+    // trust_marked and intermediate only filter when true; false means no filtering (Section 8.2.1)
+    if (Boolean.TRUE.equals(this.trustMarked)) {
+      predicates.add(es -> !validTrustMarks.apply(es).isEmpty());
+    }
 
-    Optional.ofNullable(this.intermediate).ifPresent(intermediate -> {
-      if (intermediate) {
-        predicates.add(es -> {
-          final FederationEntityMetadata federationEntityMetadata =
-              EntityStatementClaims.getFederationEntityMetadata(es);
-          return Objects.nonNull(federationEntityMetadata)
-              && Objects.nonNull(federationEntityMetadata.getFederationFetchEndpointURI())
-              && Objects.nonNull(federationEntityMetadata.getFederationListEndpointURI());
-        });
-      } else {
-        predicates.add(es -> {
-          final FederationEntityMetadata federationEntityMetadata =
-              EntityStatementClaims.getFederationEntityMetadata(es);
-          return Objects.isNull(federationEntityMetadata)
-              || (Objects.isNull(federationEntityMetadata.getFederationFetchEndpointURI())
-              && Objects.isNull(federationEntityMetadata.getFederationListEndpointURI()));
-        });
-      }
-    });
+    if (Boolean.TRUE.equals(this.intermediate)) {
+      predicates.add(es -> {
+        final FederationEntityMetadata federationEntityMetadata =
+            EntityStatementClaims.getFederationEntityMetadata(es);
+        return Objects.nonNull(federationEntityMetadata)
+            && Objects.nonNull(federationEntityMetadata.getFederationFetchEndpointURI())
+            && Objects.nonNull(federationEntityMetadata.getFederationListEndpointURI());
+      });
+    }
 
     return predicates.stream().reduce((p) -> true, Predicate::and);
   }
