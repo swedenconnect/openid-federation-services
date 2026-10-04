@@ -251,6 +251,10 @@ Naming constraints use the domain name syntax of RFC 5280 and apply to the host 
 identifier. `.example.com` matches any host below `example.com` but not `example.com` itself, while
 `host.example.com` matches that host only.
 
+Entity types not listed in `allowed-entity-types` are removed from the metadata of entities below this
+subordinate when a trust chain is resolved. `federation_entity` is always kept, and an empty list allows only
+`federation_entity`.
+
 The demo does not set any constraints, so any entity type and any nesting depth is allowed under `/im`.
 
 ### `resolvers.json` — the resolver

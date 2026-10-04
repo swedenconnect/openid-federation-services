@@ -29,9 +29,12 @@ import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Combines metadata policy and calculates what the metadata value should be.
@@ -40,6 +43,8 @@ import java.util.Optional;
  */
 @Slf4j
 public class MetadataProcessor {
+
+  private static final String FEDERATION_ENTITY = "federation_entity";
 
   private final PolicyOperationFactory operationFactory;
   private final PolicyOperationCombinationValidator combinationValidator;
@@ -63,10 +68,13 @@ public class MetadataProcessor {
     try {
       final SignedJWT leafNode = chain.getFirst();
 
+      // Entity types not allowed by the allowed_entity_types constraints are removed (Section 6.2.3)
+      final Set<String> allowedTypes = allowedEntityTypes(chain);
       final List<String> metadataType = EntityStatementClaims.claims(leafNode)
           .getJSONObjectClaim("metadata")
           .keySet()
           .stream()
+          .filter(type -> allowedTypes == null || FEDERATION_ENTITY.equals(type) || allowedTypes.contains(type))
           .toList();
 
       // chain.get(1), if present, is the immediate superior's subordinate statement about the leaf -
@@ -95,6 +103,41 @@ public class MetadataProcessor {
     catch (final PolicyViolationException | com.nimbusds.oauth2.sdk.ParseException | java.text.ParseException e) {
       throw new IllegalArgumentException("Failed to validate/parse policy", e);
     }
+  }
+
+  /**
+   * Collects the {@code allowed_entity_types} constraints of the Subordinate Statements in the chain. When several
+   * statements set the constraint, only types allowed by all of them are allowed.
+   *
+   * @param chain the trust chain
+   * @return the allowed entity types, or null if no statement sets the constraint
+   * @throws PolicyViolationException if a constraint is not an array of strings
+   * @throws java.text.ParseException if the statement claims cannot be parsed
+   */
+  private static Set<String> allowedEntityTypes(final List<SignedJWT> chain)
+      throws PolicyViolationException, java.text.ParseException {
+    Set<String> allowed = null;
+    for (final SignedJWT statement : chain) {
+      if (EntityStatementClaims.isSelfStatement(statement)) {
+        continue;
+      }
+      final Map<String, Object> constraints = EntityStatementClaims.claims(statement).getJSONObjectClaim("constraints");
+      if (constraints == null || !constraints.containsKey("allowed_entity_types")) {
+        continue;
+      }
+      if (!(constraints.get("allowed_entity_types") instanceof final List<?> types)
+          || !types.stream().allMatch(String.class::isInstance)) {
+        throw new PolicyViolationException("allowed_entity_types is not an array of strings");
+      }
+      final Set<String> statementTypes = types.stream().map(String.class::cast).collect(Collectors.toSet());
+      if (allowed == null) {
+        allowed = new HashSet<>(statementTypes);
+      }
+      else {
+        allowed.retainAll(statementTypes);
+      }
+    }
+    return allowed;
   }
 
   /**

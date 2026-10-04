@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.service.resolver;
 
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -24,11 +25,12 @@ import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 
 import java.text.ParseException;
+import java.util.Map;
 
 @Slf4j
 public class ResolverConstraintTestCases {
   @Test
-  void testEntityTypesOnlyAllowRelyingParty() {
+  void testEntityTypesOnlyAllowRelyingParty() throws ParseException {
     final EntityID anarchyTrustAnchor = new EntityID("http://localhost:11111/anarchy/ta");
     final EntityID anarchyResolver = new EntityID("http://localhost:11111/anarchy/resolver");
     final EntityID resolver = new EntityID("http://localhost:11111/entity_type/resolver");
@@ -49,9 +51,16 @@ public class ResolverConstraintTestCases {
             false
         )
     );
+    // Entity types that are not allowed are removed from the metadata, the chain stays valid (Section 6.2.3)
     Assertions.assertNull(difference.getReference().getError());
-    Assertions.assertNotNull(difference.getResponse().getError());
-    Assertions.assertEquals(400, difference.getResponse().getError().getStatusCode());
+    Assertions.assertNull(difference.getResponse().getError());
+    final Map<String, Object> referenceMetadata = SignedJWT.parse(difference.getReference().getBody())
+        .getJWTClaimsSet().getJSONObjectClaim("metadata");
+    final Map<String, Object> metadata = SignedJWT.parse(difference.getResponse().getBody())
+        .getJWTClaimsSet().getJSONObjectClaim("metadata");
+    Assertions.assertTrue(referenceMetadata.containsKey("openid_provider"));
+    Assertions.assertFalse(metadata.containsKey("openid_provider"));
+    Assertions.assertTrue(metadata.containsKey("federation_entity"));
   }
 
   @Test

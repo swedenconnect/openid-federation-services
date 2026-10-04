@@ -200,6 +200,55 @@ class MetadataProcessorTest {
         ((JSONObject) result.get("federation_entity")).get("organization_name"));
   }
 
+  @Test
+  void typesNotAllowedAreRemoved() throws Exception {
+    final JSONObject result = this.processWithAllowedTypes(List.of(List.of("openid_provider")));
+    Assertions.assertEquals(java.util.Set.of("federation_entity"), result.keySet());
+  }
+
+  @Test
+  void emptyAllowedTypesKeepsOnlyFederationEntity() throws Exception {
+    final JSONObject result = this.processWithAllowedTypes(List.of(List.of()));
+    Assertions.assertEquals(java.util.Set.of("federation_entity"), result.keySet());
+  }
+
+  @Test
+  void allowedTypesAreKept() throws Exception {
+    final JSONObject result = this.processWithAllowedTypes(List.of(List.of("openid_relying_party")));
+    Assertions.assertEquals(java.util.Set.of("federation_entity", "openid_relying_party"), result.keySet());
+  }
+
+  @Test
+  void allowedTypesOfAllStatementsMustMatch() throws Exception {
+    final JSONObject result = this.processWithAllowedTypes(
+        List.of(List.of("openid_relying_party"), List.of("openid_provider")));
+    Assertions.assertEquals(java.util.Set.of("federation_entity"), result.keySet());
+  }
+
+  private JSONObject processWithAllowedTypes(final List<List<String>> allowedTypesPerStatement) throws Exception {
+    final JWK leafKey = generateKey();
+    final JSONObject metadata = metadata(java.util.Map.of("organization_name", "Leaf Org"));
+    metadata.put("federation_entity", new JSONObject(java.util.Map.of("organization_name", "Leaf Org")));
+    final List<SignedJWT> chain = new java.util.ArrayList<>();
+    chain.add(selfStatement(leafKey, LEAF_ID, metadata));
+    for (final List<String> allowedTypes : allowedTypesPerStatement) {
+      final JWK key = generateKey();
+      final JWTClaimsSet claims = new JWTClaimsSet.Builder()
+          .issuer(SUPERIOR_ID)
+          .subject(LEAF_ID)
+          .issueTime(Date.from(Instant.now()))
+          .expirationTime(Date.from(Instant.now().plus(Duration.ofDays(1))))
+          .claim("jwks", new JSONObject(new JWKSet(leafKey.toPublicJWK()).toJSONObject()))
+          .claim("constraints", new JSONObject(java.util.Map.of("allowed_entity_types", allowedTypes)))
+          .build();
+      final SignedJWT statement = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256)
+          .type(new JOSEObjectType("entity-statement+jwt")).keyID(key.getKeyID()).build(), claims);
+      statement.sign(new RSASSASigner(key.toRSAKey()));
+      chain.add(statement);
+    }
+    return this.processor.processMetadata(chain);
+  }
+
   private JSONObject processWithPolicy(final JSONObject metadataPolicy, final List<String> metadataPolicyCrit)
       throws Exception {
     final JWK leafKey = generateKey();
