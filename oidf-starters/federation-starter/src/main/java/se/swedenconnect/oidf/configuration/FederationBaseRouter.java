@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.configuration;
 
+import com.nimbusds.jose.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
@@ -88,7 +89,16 @@ public class FederationBaseRouter implements Router {
           .filter(router -> router.willHandleRequest(request, entity))
           .findFirst()
           .get();
-      final CachedResponse response = module.handleRequest(request, entity);
+      CachedResponse response;
+      try {
+        response = module.handleRequest(request, entity);
+      }
+      catch (final RuntimeException e) {
+        log.error("Failed to handle request {}", request.uri(), e);
+        // Section 8.9 error format, also for errors the module did not handle
+        response = new CachedResponse(JSONObjectUtils.toJSONString(Map.of("error", "server_error",
+            "error_description", "The request could not be handled")), "application/json", 500);
+      }
       if (response.statusCode() >= 200 && response.statusCode() < 300) {
         this.cache.put(snapshot, cacheKey, response);
       }
