@@ -20,6 +20,7 @@
 * The resolver now checks the status of each trust mark on its own, so two trust marks of the same type no longer share a status. Trust marks in Subordinate Statements are ignored. ([#191](https://github.com/swedenconnect/openid-federation-services/issues/191))
 * An empty issuer list for a trust mark type in `trust_mark_issuers` now means that any issuer is accepted, as required by OpenID Federation 1.0. ([#192](https://github.com/swedenconnect/openid-federation-services/issues/192))
 * The trust mark status endpoint now returns 404 for trust marks it does not know, and reports `expired` based on the expiry of the trust mark itself. ([#193](https://github.com/swedenconnect/openid-federation-services/issues/193))
+* The trust mark endpoint no longer issues trust marks to revoked, expired or not yet granted subjects, and returns 404 for them instead. ([#194](https://github.com/swedenconnect/openid-federation-services/issues/194))
 
 ## Version 0.11.17
 

@@ -189,6 +189,9 @@ public class TrustMarkIssuer {
    *
    * @param request TrustMarkId and Subject is mandatory
    * @return trust mark in a JWT
+   * @throws NotFoundException if the type or subject is unknown, or the subject is revoked, expired or not yet
+   *     granted
+   * @throws ServerErrorException if the trust mark could not be signed
    */
   public String trustMark(final TrustMarkRequest request) throws ServerErrorException, NotFoundException {
 
@@ -212,6 +215,16 @@ public class TrustMarkIssuer {
       throw new NotFoundException("Could not find subject");
     }
     final TrustMarkSubjectProperty trustMarkSubjectProperty = subject.get();
+    final Instant now = Instant.now(this.clock);
+    if (trustMarkSubjectProperty.revoked()) {
+      throw new NotFoundException("Trust mark for subject has been revoked");
+    }
+    if (trustMarkSubjectProperty.expires() != null && !now.isBefore(trustMarkSubjectProperty.expires())) {
+      throw new NotFoundException("Trust mark for subject has expired");
+    }
+    if (trustMarkSubjectProperty.granted() != null && now.isBefore(trustMarkSubjectProperty.granted())) {
+      throw new NotFoundException("Trust mark for subject is not yet granted");
+    }
     try {
       final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
       return this.signer.sign(this.source.getEntity(new NodeKey(entityIdentifier)).get(),
