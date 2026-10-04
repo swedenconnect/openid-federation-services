@@ -109,9 +109,11 @@ public class ResolverResponseFactory {
         .min(Comparator.naturalOrder())
         .orElse(configuredExpiry);
 
+    // Only the claims of a resolve response are included, not the claims of the subject (Section 8.3.2)
     final JWTClaimsSet claims =
-        new JWTClaimsSet.Builder(EntityStatementClaims.claims(resolverResponse.entityStatement()))
+        new JWTClaimsSet.Builder()
             .issuer(this.properties.getEntityIdentifier())
+            .subject(EntityStatementClaims.claims(resolverResponse.entityStatement()).getSubject())
             .issueTime(Date.from(now))
             .jwtID(new BigInteger(128, rng).toString(16))
             .expirationTime(Date.from(responseExpiry))
