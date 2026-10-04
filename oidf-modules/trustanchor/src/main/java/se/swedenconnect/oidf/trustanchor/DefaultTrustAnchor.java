@@ -44,6 +44,7 @@ import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -105,7 +106,7 @@ public class DefaultTrustAnchor implements TrustAnchor {
             )
         );
 
-    final Optional<TrustAnchorProperties.SubordinateListingProperty> first = this.properties.getSubordinates().stream()
+    final Optional<TrustAnchorProperties.SubordinateListingProperty> first = this.subordinates().stream()
         .filter(p -> request.subject().equals(p.getEntityIdentifier().getValue()))
         .findFirst();
 
@@ -125,9 +126,7 @@ public class DefaultTrustAnchor implements TrustAnchor {
   public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
     this.debugLogRequest(request);
 
-    final List<TrustAnchorProperties.SubordinateListingProperty> subordinates = this.source
-        .findSubordinates(this.properties.getEntityIdentifier().getValue()).stream()
-        .toList();
+    final List<TrustAnchorProperties.SubordinateListingProperty> subordinates = this.subordinates();
 
     if (!request.requiresFiltering()) {
       return subordinates.stream().map(e -> e.getEntityIdentifier().getValue()).toList();
@@ -149,6 +148,19 @@ public class DefaultTrustAnchor implements TrustAnchor {
       }
     }
     return result;
+  }
+
+  /**
+   * Gets the subordinates of this Trust Anchor. Fetch and listing use the same list, so that every listed subordinate
+   * can be fetched. An entity listed more than once is only included the first time.
+   *
+   * @return the subordinates
+   */
+  private List<TrustAnchorProperties.SubordinateListingProperty> subordinates() {
+    final Map<String, TrustAnchorProperties.SubordinateListingProperty> unique = new LinkedHashMap<>();
+    Optional.ofNullable(this.properties.getSubordinates()).orElseGet(List::of)
+        .forEach(subordinate -> unique.putIfAbsent(subordinate.getEntityIdentifier().getValue(), subordinate));
+    return List.copyOf(unique.values());
   }
 
   /**

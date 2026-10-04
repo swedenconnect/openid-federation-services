@@ -70,7 +70,6 @@ class DefaultTrustAnchorListingTest {
       this.keys.put(id, new ECKeyGenerator(Curve.P_256).keyID(id + "#key").generate());
     }
     this.source = Mockito.mock(CompositeRecordSource.class);
-    Mockito.when(this.source.findSubordinates(TA)).thenReturn(List.of(this.subordinate(ISSUER), this.subordinate(HOLDER)));
     Mockito.when(this.source.getEntity(Mockito.any())).thenReturn(Optional.empty());
     this.client = Mockito.mock(FederationClient.class);
     Mockito.when(this.client.entityConfiguration(Mockito.any())).thenAnswer(invocation -> {
@@ -135,6 +134,11 @@ class DefaultTrustAnchorListingTest {
   }
 
   @Test
+  void duplicateSubordinatesAreListedOnce() throws Exception {
+    Assertions.assertEquals(List.of(ISSUER, HOLDER), this.list(SubordinateListingRequest.requestAll(), null));
+  }
+
+  @Test
   void unavailableSubordinateIsLeftOutForTrustMarkFilter() throws Exception {
     Assertions.assertEquals(List.of(), this.listByType(null));
   }
@@ -146,6 +150,7 @@ class DefaultTrustAnchorListingTest {
   private List<String> list(final SubordinateListingRequest request,
       final Map<EntityID, List<EntityID>> trustMarkIssuers) throws Exception {
     final TrustAnchorProperties properties = new TrustAnchorProperties(new EntityID(TA), trustMarkIssuers, null);
+    properties.setSubordinates(List.of(this.subordinate(ISSUER), this.subordinate(HOLDER), this.subordinate(HOLDER)));
     final DefaultTrustAnchor trustAnchor = new DefaultTrustAnchor(this.source, properties,
         Mockito.mock(SubordinateStatementFactory.class), this.client);
     return trustAnchor.subordinateListing(request);
