@@ -208,6 +208,13 @@ class TrustMarkCollectorStatusTest {
   }
 
   @Test
+  void chainWithSingleStatementIsHandled() throws Exception {
+    final String trustMark = this.trustMark().build();
+    final List<SignedJWT> statements = List.of(this.leafStatement(trustMark, "trust_mark_type"));
+    Assertions.assertEquals(1, this.collect(statements, Map.of(trustMark, this.activeStatus(trustMark))).size());
+  }
+
+  @Test
   void trustMarksInSubordinateStatementAreIgnored() throws Exception {
     final String leafTrustMark = this.trustMark().build();
     final String superiorTrustMark = this.trustMark().build();
