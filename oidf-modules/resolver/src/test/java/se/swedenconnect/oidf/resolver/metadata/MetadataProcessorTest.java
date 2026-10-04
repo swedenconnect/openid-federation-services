@@ -26,6 +26,7 @@ import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.ValueOperation;
 import net.minidev.json.JSONObject;
@@ -126,6 +127,63 @@ class MetadataProcessorTest {
     Assertions.assertEquals("Leaf Org", rp.get("organization_name"));
   }
 
+  @Test
+  void regexpOperatorIsApplied() throws Exception {
+    final JSONObject policy = policy("organization_name", java.util.Map.of("regexp", List.of("^Policy.*")));
+    final RuntimeException e =
+        Assertions.assertThrows(RuntimeException.class, () -> this.processWithPolicy(policy, null));
+    Assertions.assertInstanceOf(PolicyViolationException.class, e.getCause());
+  }
+
+  @Test
+  void unknownOperatorIsIgnored() throws Exception {
+    final JSONObject policy = policy("organization_name",
+        java.util.Map.of("value", "Policy Org", "unknown_op", "anything"));
+    final JSONObject rp = (JSONObject) this.processWithPolicy(policy, null).get("openid_relying_party");
+    Assertions.assertEquals("Policy Org", rp.get("organization_name"));
+  }
+
+  @Test
+  void unknownCriticalOperatorFails() throws Exception {
+    final JSONObject policy = policy("organization_name",
+        java.util.Map.of("value", "Policy Org", "unknown_op", "anything"));
+    Assertions.assertThrows(IllegalArgumentException.class,
+        () -> this.processWithPolicy(policy, List.of("unknown_op")));
+  }
+
+  @Test
+  void invalidOperatorCombinationFails() throws Exception {
+    final JSONObject policy = policy("organization_name",
+        java.util.Map.of("value", "Policy Org", "default", "Default Org"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
+  }
+
+  @Test
+  void malformedPolicyFails() throws Exception {
+    final JSONObject policy = new JSONObject();
+    policy.put("openid_relying_party", new JSONObject(java.util.Map.of("organization_name", "not an object")));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
+  }
+
+  private JSONObject processWithPolicy(final JSONObject metadataPolicy, final List<String> metadataPolicyCrit)
+      throws Exception {
+    final JWK leafKey = generateKey();
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata(java.util.Map.of(
+        "organization_name", "Leaf Org"
+    )));
+    final SignedJWT superiorStatement =
+        subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, metadataPolicy, metadataPolicyCrit);
+    return this.processor.processMetadata(List.of(leafEc, superiorStatement));
+  }
+
+  private static JSONObject policy(final String parameter, final java.util.Map<String, Object> operators) {
+    final JSONObject typePolicy = new JSONObject();
+    typePolicy.put(parameter, new JSONObject(operators));
+    final JSONObject policy = new JSONObject();
+    policy.put("openid_relying_party", typePolicy);
+    return policy;
+  }
+
   private static JWK generateKey() throws Exception {
     return new RSAKeyGenerator(2048).keyID("key").generate();
   }
@@ -158,6 +216,13 @@ class MetadataProcessorTest {
   private static SignedJWT subordinateStatement(
       final JWK subjectKey, final String issuer, final String subject,
       final JSONObject metadata, final JSONObject metadataPolicy) throws Exception {
+    return subordinateStatement(subjectKey, issuer, subject, metadata, metadataPolicy, null);
+  }
+
+  private static SignedJWT subordinateStatement(
+      final JWK subjectKey, final String issuer, final String subject,
+      final JSONObject metadata, final JSONObject metadataPolicy, final List<String> metadataPolicyCrit)
+      throws Exception {
     final JWK signingKey = generateKey();
     final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
         .type(new JOSEObjectType("entity-statement+jwt"))
@@ -174,6 +239,9 @@ class MetadataProcessorTest {
     }
     if (metadataPolicy != null) {
       claims.claim("metadata_policy", metadataPolicy);
+    }
+    if (metadataPolicyCrit != null) {
+      claims.claim("metadata_policy_crit", metadataPolicyCrit);
     }
     final SignedJWT jwt = new SignedJWT(header, claims.build());
     jwt.sign(new RSASSASigner(signingKey.toRSAKey()));
