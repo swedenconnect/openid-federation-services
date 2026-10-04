@@ -167,6 +167,30 @@ class TrustMarkCollectorStatusTest {
   }
 
   @Test
+  void trustMarkFromUnlistedIssuerIsRejected() throws Exception {
+    final JSONArray issuers = new JSONArray();
+    issuers.add("https://example.com/other-issuer");
+    Assertions.assertTrue(this.collectWithIssuers(issuers).isEmpty());
+  }
+
+  @Test
+  void emptyIssuerListAllowsAnyIssuer() throws Exception {
+    Assertions.assertEquals(1, this.collectWithIssuers(new JSONArray()).size());
+  }
+
+  @Test
+  void invalidIssuerListRejectsTrustMark() throws Exception {
+    Assertions.assertTrue(this.collectWithIssuers("not-an-array").isEmpty());
+  }
+
+  private List<TrustMarkEntry> collectWithIssuers(final Object issuers) throws Exception {
+    final String trustMark = this.trustMark().build();
+    final List<SignedJWT> statements = List.of(
+        this.leafStatement(trustMark, "trust_mark_type"), this.otherStatement(), this.trustAnchor(null, issuers));
+    return this.collect(statements, Map.of(trustMark, this.activeStatus(trustMark)));
+  }
+
+  @Test
   void statusIsKeptPerTrustMark() throws Exception {
     final String active = this.trustMark().build();
     final String revoked = this.trustMark().build();
@@ -339,9 +363,13 @@ class TrustMarkCollectorStatusTest {
   }
 
   private SignedJWT trustAnchor(final JWK ownerKey) throws Exception {
-    final JWK taKey = new RSAKeyGenerator(2048).keyID("ta-key").generate();
     final JSONArray issuers = new JSONArray();
     issuers.add(ISSUER);
+    return this.trustAnchor(ownerKey, issuers);
+  }
+
+  private SignedJWT trustAnchor(final JWK ownerKey, final Object issuers) throws Exception {
+    final JWK taKey = new RSAKeyGenerator(2048).keyID("ta-key").generate();
     final JSONObject trustMarkIssuers = new JSONObject();
     trustMarkIssuers.put(TRUST_MARK_TYPE, issuers);
 

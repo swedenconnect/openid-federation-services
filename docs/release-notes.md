@@ -18,6 +18,7 @@
 * The resolver now rejects statements whose `crit` or `metadata_policy_crit` lists claims or operators it does not support, and accepts `metadata_policy_crit` listing only some of the supported operators. ([#189](https://github.com/swedenconnect/openid-federation-services/issues/189))
 * The resolver now reads the trust mark status endpoint from the issuer's metadata instead of guessing it. Trust marks from issuers without a status endpoint are validated locally. ([#190](https://github.com/swedenconnect/openid-federation-services/issues/190))
 * The resolver now checks the status of each trust mark on its own, so two trust marks of the same type no longer share a status. Trust marks in Subordinate Statements are ignored. ([#191](https://github.com/swedenconnect/openid-federation-services/issues/191))
+* An empty issuer list for a trust mark type in `trust_mark_issuers` now means that any issuer is accepted, as required by OpenID Federation 1.0. ([#192](https://github.com/swedenconnect/openid-federation-services/issues/192))
 
 ## Version 0.11.17
 

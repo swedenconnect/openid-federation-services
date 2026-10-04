@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Responsible for collecting trust marks from a trust chain.
@@ -237,36 +236,48 @@ public class TrustMarkCollector {
 
   /**
    * Parses the {@code trust_mark_issuers} claim, a JSON object mapping each trust mark type to an array of
-   * entity identifiers (OpenID Federation 1.0, Section 3.1.2). Values that are not arrays, and array elements that
-   * are not strings, are ignored.
+   * entity identifiers (OpenID Federation 1.0, Section 3.1.2). A type whose value is not an array of strings is
+   * mapped to null, so that no trust marks of that type are accepted.
    *
    * @param trustMarkIssuer the claim value
-   * @return map of trust mark type to allowed issuers
+   * @return map of trust mark type to allowed issuers, where an empty list means that anyone may issue
    */
   private static Map<Identifier, List<Issuer>> getTrustMarkToIssuersMap(final Map<String, Object> trustMarkIssuer) {
-    return trustMarkIssuer
-        .entrySet()
-        .stream()
-        .collect(Collectors.toMap(kv -> new Identifier(kv.getKey()),
-            kv -> kv.getValue() instanceof final List<?> values
-                ? values.stream()
-                    .filter(String.class::isInstance)
-                    .map(value -> new Issuer((String) value))
-                    .toList()
-                : List.of()));
+    final Map<Identifier, List<Issuer>> issuers = new HashMap<>();
+    trustMarkIssuer.forEach((type, value) -> {
+      if (value instanceof final List<?> values && values.stream().allMatch(String.class::isInstance)) {
+        issuers.put(new Identifier(type), values.stream().map(v -> new Issuer((String) v)).toList());
+      }
+      else {
+        log.info("Invalid trust_mark_issuers value for trust mark type '{}', no issuer is trusted", type);
+        issuers.put(new Identifier(type), null);
+      }
+    });
+    return issuers;
   }
 
+  /**
+   * Checks whether the Trust Anchor trusts the issuer of a trust mark.
+   *
+   * @param entry the trust mark entry
+   * @param trustMarkToIssuersMap the parsed {@code trust_mark_issuers} claim
+   * @return true if the trust mark type is listed and its issuer is trusted, or the type allows any issuer
+   */
   private static boolean isTrustMarkAllowed(final TrustMarkEntry entry,
                                             final Map<Identifier, List<Issuer>> trustMarkToIssuersMap) {
     final List<Issuer> issuers = trustMarkToIssuersMap.get(entry.getID());
-    if (Objects.isNull(issuers) || issuers.isEmpty()) {
+    if (Objects.isNull(issuers)) {
       return false;
+    }
+    if (issuers.isEmpty()) {
+      // An empty array means that anyone may issue trust marks of this type
+      return true;
     }
     final String issuer;
     try {
       issuer = entry.getTrustMark().getJWTClaimsSet().getIssuer();
     } catch (final java.text.ParseException e) {
-      log.warn("Failed to parse trust mark, skipping ...", e);
+      log.info("Trust mark of type '{}' rejected: failed to parse: {}", entry.getID(), e.getMessage());
       return false;
     }
     return issuers.contains(new Issuer(issuer));
