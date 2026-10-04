@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.trustmarkissuer;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
@@ -97,6 +98,13 @@ class TrustMarkIssuerStatusTest {
   }
 
   @Test
+  void wrongTypIsInvalid() throws Exception {
+    this.registerSubject(false);
+    Assertions.assertEquals("invalid",
+        this.status(this.trustMark(ISSUER, TYPE, Instant.now().plusSeconds(60), "jwt")));
+  }
+
+  @Test
   void unknownSubjectIsNotFound() throws Exception {
     Mockito.when(this.source.getTrustMarkSubject(Mockito.any(), Mockito.any(), Mockito.any()))
         .thenReturn(Optional.empty());
@@ -135,7 +143,12 @@ class TrustMarkIssuerStatusTest {
   }
 
   private String trustMark(final String iss, final String type, final Instant expiration) throws Exception {
-    return this.sign(new JWTClaimsSet.Builder()
+    return this.trustMark(iss, type, expiration, "trust-mark+jwt");
+  }
+
+  private String trustMark(final String iss, final String type, final Instant expiration, final String typ)
+      throws Exception {
+    return this.sign(typ, new JWTClaimsSet.Builder()
         .issuer(iss)
         .subject(SUBJECT)
         .claim("trust_mark_type", type)
@@ -145,7 +158,13 @@ class TrustMarkIssuerStatusTest {
   }
 
   private SignedJWT sign(final JWTClaimsSet claims) throws Exception {
-    final SignedJWT jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claims);
+    return this.sign(null, claims);
+  }
+
+  private SignedJWT sign(final String typ, final JWTClaimsSet claims) throws Exception {
+    final SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256)
+        .type(typ == null ? null : new JOSEObjectType(typ))
+        .build(), claims);
     jwt.sign(new RSASSASigner(this.key));
     return jwt;
   }

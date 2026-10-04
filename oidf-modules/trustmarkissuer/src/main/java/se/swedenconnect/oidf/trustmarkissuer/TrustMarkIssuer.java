@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.trustmarkissuer;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
@@ -29,6 +30,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMa
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkValidator;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
@@ -164,9 +166,14 @@ public class TrustMarkIssuer {
    * @param sub the subject of the trust mark
    * @return the status
    * @throws NotFoundException if the subject is not registered for the trust mark type
+   * @throws java.text.ParseException if the trust mark cannot be parsed
    */
   private String resolveStatus(final EntityRecord entity, final String trustMark, final JWTClaimsSet trustMarkClaims,
-      final String trustMarkType, final String sub) throws NotFoundException {
+      final String trustMarkType, final String sub) throws NotFoundException, java.text.ParseException {
+    final JOSEObjectType typ = SignedJWT.parse(trustMark).getHeader().getType();
+    if (typ == null || !TrustMarkValidator.TRUST_MARK_JWT_TYPE.equals(typ.getType())) {
+      return "invalid";
+    }
     if (!this.signer.verify(entity, trustMark)) {
       return "invalid";
     }
