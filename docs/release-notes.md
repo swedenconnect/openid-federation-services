@@ -47,6 +47,7 @@
 * The subordinate listing no longer contains duplicates or subordinates that the fetch endpoint does not know. ([#220](https://github.com/swedenconnect/openid-federation-services/issues/220))
 * Subordinate statements no longer contain naming constraint members set to `null`, or `federation_entity` in `allowed_entity_types`. ([#221](https://github.com/swedenconnect/openid-federation-services/issues/221))
 * An entity that advertises federation endpoints without the matching configuration now gets a JSON `not_found` error instead of an empty 404. ([#222](https://github.com/swedenconnect/openid-federation-services/issues/222))
+* Subordinate statements and other signed responses now use the algorithm declared by the signing key, for example PS256, instead of always RS256 for RSA keys. ([#223](https://github.com/swedenconnect/openid-federation-services/issues/223))
 
 ## Version 0.11.17
 
