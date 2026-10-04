@@ -53,12 +53,13 @@ public class NamingConstraints {
   }
 
   /**
-   * @return this object as json
+   * @return this object as json, holding only the members that are set
    */
   public Map<String, Object> toJson() {
     final HashMap<String, Object> json = new HashMap<>();
-    json.put("permitted", this.permitted);
-    json.put("excluded", this.excluded);
+    // Only set members are written, a member is an array of names (Section 6.2.2)
+    Optional.ofNullable(this.permitted).ifPresent(names -> json.put("permitted", names));
+    Optional.ofNullable(this.excluded).ifPresent(names -> json.put("excluded", names));
     return json;
   }
 }
