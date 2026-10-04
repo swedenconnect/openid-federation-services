@@ -15,6 +15,7 @@
 * Metadata policies that fail to parse are no longer silently ignored by the resolver. The `regexp` and `intersects` operators are now applied, unknown operators are ignored unless marked critical, and other policy errors make the resolve fail. ([#186](https://github.com/swedenconnect/openid-federation-services/issues/186))
 * Metadata policies are now applied per entity type. A policy for one entity type no longer affects the metadata of another type. ([#187](https://github.com/swedenconnect/openid-federation-services/issues/187))
 * Naming constraints now use the domain name syntax required by OpenID Federation 1.0 and are matched against the host of the entity identifier. Constraints written as URIs no longer match and must be changed. ([#188](https://github.com/swedenconnect/openid-federation-services/issues/188))
+* The resolver now rejects statements whose `crit` or `metadata_policy_crit` lists claims or operators it does not support, and accepts `metadata_policy_crit` listing only some of the supported operators. ([#189](https://github.com/swedenconnect/openid-federation-services/issues/189))
 
 ## Version 0.11.17
 

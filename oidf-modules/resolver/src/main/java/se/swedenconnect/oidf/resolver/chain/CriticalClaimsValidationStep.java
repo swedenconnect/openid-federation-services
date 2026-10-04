@@ -33,13 +33,15 @@ import java.util.Set;
 public class CriticalClaimsValidationStep implements ChainValidationStep {
 
   /**
-   * This implementation supports the ec_location claim.
+   * This implementation supports the ec_location claim. Claims defined by OpenID Federation 1.0 must not be listed
+   * in crit, so they are rejected as well.
    */
   public static final Set<String> SUPPORTED_CRITICAL_CLAIMS =
       Set.of("ec_location");
 
   /**
-   * This implementation supports the additional metadata operators regexp and instersects.
+   * This implementation supports the additional metadata operators regexp and intersects. Operators defined by
+   * OpenID Federation 1.0 must not be listed in metadata_policy_crit, so they are rejected as well.
    */
   public static final Set<String> SUPPORTED_METADATA_CLAIMS = Set.of(
       "regexp", "intersects"
@@ -51,11 +53,11 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
     chain
         .forEach(es -> {
           Optional.ofNullable(EntityStatementClaims.getCriticalExtensionClaims(es))
-              .filter(crit -> !crit.isEmpty())
+              .filter(crit -> !SUPPORTED_CRITICAL_CLAIMS.containsAll(crit))
               .ifPresent(crit -> {
-                if (!new HashSet<>(crit).containsAll(SUPPORTED_CRITICAL_CLAIMS)) {
-                  throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");
-                }
+                throw new IllegalArgumentException(
+                    "Unsupported claims in crit of Entity Statement: %s".formatted(unsupported(crit,
+                        SUPPORTED_CRITICAL_CLAIMS)));
               });
           final List<String> metadataPolicyCrit;
           try {
@@ -63,14 +65,22 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
           } catch (final java.text.ParseException e) {
             throw new IllegalStateException("Failed to parse metadata_policy_crit claim", e);
           }
+          if (metadataPolicyCrit != null && EntityStatementClaims.isSelfStatement(es)) {
+            throw new IllegalArgumentException("metadata_policy_crit is only allowed in Subordinate Statements");
+          }
           Optional.ofNullable(metadataPolicyCrit)
-              .filter(critMetadata -> !critMetadata.isEmpty())
+              .filter(critMetadata -> critMetadata.isEmpty() || !SUPPORTED_METADATA_CLAIMS.containsAll(critMetadata))
               .ifPresent(critMetadata -> {
-                if (!new HashSet<>(critMetadata).containsAll(SUPPORTED_METADATA_CLAIMS)) {
-                  throw new IllegalArgumentException("Unsupported critical claims declaration in Entity Statement");
-                }
+                throw new IllegalArgumentException(
+                    "Unsupported operators in metadata_policy_crit of Entity Statement: %s".formatted(
+                        critMetadata.isEmpty() ? "empty array" : unsupported(critMetadata,
+                            SUPPORTED_METADATA_CLAIMS)));
               });
         });
     return errors;
+  }
+
+  private static List<String> unsupported(final List<String> values, final Set<String> supported) {
+    return values.stream().filter(value -> !supported.contains(value)).toList();
   }
 }

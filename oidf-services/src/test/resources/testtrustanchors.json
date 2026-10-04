@@ -204,8 +204,7 @@
         "virtual-entity-id": "http://localhost:11111/im",
         "jwks": "federation:sign-key-1",
         "metadata-policy-crit": [
-          "regexp",
-          "intersects"
+          "regexp"
         ]
       }
     ]

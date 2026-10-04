@@ -654,8 +654,7 @@
             ]
           },
           "metadata-policy-crit": [
-            "regexp",
-            "intersects"
+            "regexp"
           ]
         }
       ]
