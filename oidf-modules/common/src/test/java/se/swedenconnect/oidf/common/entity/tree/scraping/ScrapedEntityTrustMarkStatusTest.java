@@ -56,6 +56,7 @@ class ScrapedEntityTrustMarkStatusTest {
 
   private ECKey key;
   private FederationClient client;
+  private SignedJWT trustMark;
 
   @BeforeEach
   void setUp() throws Exception {
@@ -77,7 +78,7 @@ class ScrapedEntityTrustMarkStatusTest {
     Mockito.verify(this.client).trustMarkStatus(captor.capture());
     Assertions.assertEquals(STATUS_ENDPOINT,
         captor.getValue().federationEntityMetadata().get("federation_trust_mark_status_endpoint"));
-    Assertions.assertSame(response, entity.getTrustMarkStatuses().get(TYPE));
+    Assertions.assertSame(response, entity.getTrustMarkStatuses().get(this.trustMark.serialize()));
   }
 
   @Test
@@ -87,7 +88,7 @@ class ScrapedEntityTrustMarkStatusTest {
     final ScrapedEntity entity = this.scrape();
 
     Mockito.verify(this.client, Mockito.never()).trustMarkStatus(Mockito.any());
-    Assertions.assertTrue(entity.getTrustMarkStatuses().get(TYPE).isNoStatusEndpoint());
+    Assertions.assertTrue(entity.getTrustMarkStatuses().get(this.trustMark.serialize()).isNoStatusEndpoint());
   }
 
   @Test
@@ -103,7 +104,7 @@ class ScrapedEntityTrustMarkStatusTest {
     final ScrapedEntity entity = this.scrape();
 
     Mockito.verify(this.client, Mockito.never()).trustMarkStatus(Mockito.any());
-    final TrustMarkStatusResponse status = entity.getTrustMarkStatuses().get(TYPE);
+    final TrustMarkStatusResponse status = entity.getTrustMarkStatuses().get(this.trustMark.serialize());
     Assertions.assertTrue(status.isError());
     Assertions.assertFalse(status.isNoStatusEndpoint());
   }
@@ -127,14 +128,14 @@ class ScrapedEntityTrustMarkStatusTest {
   }
 
   private SignedJWT leafConfiguration() throws Exception {
-    final SignedJWT trustMark = this.sign("trust-mark+jwt", new JWTClaimsSet.Builder()
+    this.trustMark = this.sign("trust-mark+jwt", new JWTClaimsSet.Builder()
         .issuer(ISSUER)
         .subject(SUBJECT)
         .claim("trust_mark_type", TYPE)
         .build());
     final JSONObject entry = new JSONObject();
     entry.put("trust_mark_type", TYPE);
-    entry.put("trust_mark", trustMark.serialize());
+    entry.put("trust_mark", this.trustMark.serialize());
     return this.configuration(SUBJECT, Map.of("organization_name", "Leaf"), List.of(entry));
   }
 

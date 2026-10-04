@@ -86,19 +86,10 @@ public class TrustMarkCollector {
     if (EntityStatementClaims.getTrustMarks(leafStatement) == null) {
       return List.of();
     }
-    final SignedJWT superiorStatement = trustChain.get(2);
     final String subject = EntityStatementClaims.claims(leafStatement).getSubject();
 
+    // Trust marks are only allowed in Entity Configurations (Section 3.2, step 20)
     final List<TrustMarkEntry> trustMarks = TrustMarkCollector.parseTrustMark(leafStatement);
-    if (EntityStatementClaims.claims(superiorStatement).getSubject().equals(subject)) {
-      // If the superior statement is issued for the subject,
-      // then collect any trust marks not present in the leaf statement
-      final List<TrustMarkEntry> superiorStatementTrustMarks = TrustMarkCollector.parseTrustMark(superiorStatement);
-      superiorStatementTrustMarks.stream()
-          .filter(supTrustMark -> trustMarks.stream()
-              .noneMatch(subjTrustMark -> supTrustMark.getID().equals(subjTrustMark.getID())))
-          .forEach(trustMarks::add);
-    }
 
     final Map<String, Object> trustMarkOwners =
         Optional.ofNullable(EntityStatementClaims.claims(trustAnchor).getJSONObjectClaim("trust_mark_owners"))
@@ -133,7 +124,7 @@ public class TrustMarkCollector {
    * @param entry the trust mark entry
    * @param subject the entity the trust mark is presented for
    * @param issuerKeys resolves the federation entity keys of the issuer
-   * @param statuses status responses from the issuers, keyed by trust mark type
+   * @param statuses status responses from the issuers, keyed by the serialized trust mark JWT
    * @return true if the trust mark is valid and active
    */
   private static boolean isTrustMarkValid(final TrustMarkEntry entry, final String subject,
@@ -166,7 +157,7 @@ public class TrustMarkCollector {
    * @param trustMarkType the trust mark type
    * @param subject the entity the trust mark is presented for
    * @param issuerKeys resolves the federation entity keys of the issuer
-   * @param statuses status responses from the issuers, keyed by trust mark type
+   * @param statuses status responses from the issuers, keyed by the serialized trust mark JWT
    * @return a description of the first failed check, or null if the trust mark is valid
    * @throws java.text.ParseException if the status response cannot be parsed
    */
@@ -203,7 +194,7 @@ public class TrustMarkCollector {
     if (!TrustMarkCollector.verify(trustMark, keys.get())) {
       return "signature is not valid for the issuer keys";
     }
-    final TrustMarkStatusResponse status = statuses.get(trustMarkType);
+    final TrustMarkStatusResponse status = statuses.get(trustMark.serialize());
     if (status != null && status.isNoStatusEndpoint()) {
       // The issuer publishes no status endpoint, the local checks above are all that can be done (Section 7.3)
       return null;

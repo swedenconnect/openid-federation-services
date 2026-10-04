@@ -63,6 +63,7 @@ public class ScrapedEntity {
 
   // Base info
   private SignedJWT entityStatement;
+  /** Trust mark status responses, keyed by the serialized trust mark JWT. */
   @Builder.Default
   private Map<String, TrustMarkStatusResponse> trustMarkStatuses = new HashMap<>();
   //Roles
@@ -122,7 +123,7 @@ public class ScrapedEntity {
         trustMarkStatus = client.trustMarkStatus(new FederationRequest<>(
             new FederationTrustMarkStatusRequest(trustMark.serialize(), issuer), issuerMetadata.get()));
       }
-      this.trustMarkStatuses.put(trustMarkType, trustMarkStatus);
+      this.trustMarkStatuses.put(trustMark.serialize(), trustMarkStatus);
     });
     wrapper.getFederationEntityMetadata()
         .ifPresent(metadata -> {

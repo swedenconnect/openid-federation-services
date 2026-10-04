@@ -167,15 +167,37 @@ class TrustMarkCollectorStatusTest {
   }
 
   @Test
-  void superiorStatementWithoutTrustMarksIsHandled() throws Exception {
-    final String trustMark = this.trustMark().build();
+  void statusIsKeptPerTrustMark() throws Exception {
+    final String active = this.trustMark().build();
+    final String revoked = this.trustMark().build();
+    final SignedJWT revokedStatus = this.status(this.issuerKey, STATUS_TYPE, ISSUER, revoked, "revoked");
     final List<SignedJWT> statements = List.of(
-        this.leafStatement(trustMark, "trust_mark_type"),
-        this.otherStatement(),
-        // Position 2 in the chain is read as the statement issued for the subject
-        this.subordinateStatementForSubject(),
+        this.leafStatement(List.of(active, revoked), "trust_mark_type"), this.otherStatement(),
         this.trustAnchor(null));
-    Assertions.assertEquals(1, this.collect(statements, this.activeStatus(trustMark)).size());
+
+    final List<TrustMarkEntry> result = this.collect(statements, Map.of(
+        active, this.activeStatus(active),
+        revoked, new TrustMarkStatusResponse(revokedStatus, false)));
+
+    Assertions.assertEquals(1, result.size());
+    Assertions.assertEquals(active, result.getFirst().getTrustMark().serialize());
+  }
+
+  @Test
+  void trustMarksInSubordinateStatementAreIgnored() throws Exception {
+    final String leafTrustMark = this.trustMark().build();
+    final String superiorTrustMark = this.trustMark().build();
+    final List<SignedJWT> statements = List.of(
+        this.leafStatement(leafTrustMark, "trust_mark_type"),
+        this.subordinateStatementForSubject(superiorTrustMark),
+        this.trustAnchor(null));
+
+    final List<TrustMarkEntry> result = this.collect(statements, Map.of(
+        leafTrustMark, this.activeStatus(leafTrustMark),
+        superiorTrustMark, this.activeStatus(superiorTrustMark)));
+
+    Assertions.assertEquals(1, result.size());
+    Assertions.assertEquals(leafTrustMark, result.getFirst().getTrustMark().serialize());
   }
 
   @Test
@@ -183,7 +205,7 @@ class TrustMarkCollectorStatusTest {
     final String trustMark = this.trustMark().typeClaim("id").build();
     final List<SignedJWT> statements = List.of(
         this.leafStatement(trustMark, "id"), this.otherStatement(), this.trustAnchor(null));
-    Assertions.assertEquals(1, this.collect(statements, this.activeStatus(trustMark)).size());
+    Assertions.assertEquals(1, this.collect(statements, Map.of(trustMark, this.activeStatus(trustMark))).size());
   }
 
   @Test
@@ -226,15 +248,15 @@ class TrustMarkCollectorStatusTest {
       throws Exception {
     final List<SignedJWT> statements = List.of(
         this.leafStatement(trustMark, "trust_mark_type"), this.otherStatement(), this.trustAnchor(null));
-    return this.collect(statements, status);
-  }
-
-  private List<TrustMarkEntry> collect(final List<SignedJWT> statements, final TrustMarkStatusResponse status)
-      throws Exception {
     final Map<String, TrustMarkStatusResponse> statuses = new HashMap<>();
     if (status != null) {
-      statuses.put(TRUST_MARK_TYPE, status);
+      statuses.put(trustMark, status);
     }
+    return this.collect(statements, statuses);
+  }
+
+  private List<TrustMarkEntry> collect(final List<SignedJWT> statements,
+      final Map<String, TrustMarkStatusResponse> statuses) throws Exception {
     final ScrapedEntity leafEntity = ScrapedEntity.builder()
         .entityID(new EntityID(SUBJECT))
         .trustMarkStatuses(statuses)
@@ -247,7 +269,7 @@ class TrustMarkCollectorStatusTest {
     final String trustMark = this.trustMark().delegation(delegation).build();
     final List<SignedJWT> statements = List.of(
         this.leafStatement(trustMark, "trust_mark_type"), this.otherStatement(), this.trustAnchor(ownerKey));
-    return this.collect(statements, this.activeStatus(trustMark));
+    return this.collect(statements, Map.of(trustMark, this.activeStatus(trustMark)));
   }
 
   private TrustMarkBuilder trustMark() {
@@ -281,16 +303,25 @@ class TrustMarkCollectorStatusTest {
   }
 
   private SignedJWT leafStatement(final String trustMark, final String typeMember) throws Exception {
-    final JSONObject trustMarkEntry = new JSONObject();
-    trustMarkEntry.put(typeMember, TRUST_MARK_TYPE);
-    trustMarkEntry.put("trust_mark", trustMark);
-    final JSONArray trustMarks = new JSONArray();
-    trustMarks.add(trustMarkEntry);
+    return this.leafStatement(List.of(trustMark), typeMember);
+  }
 
+  private SignedJWT leafStatement(final List<String> trustMarks, final String typeMember) throws Exception {
     final JWTClaimsSet claims = this.statementClaims(SUBJECT, SUBJECT, this.leafKey)
-        .claim("trust_marks", trustMarks)
+        .claim("trust_marks", trustMarksClaim(trustMarks, typeMember))
         .build();
     return sign(this.leafKey, "entity-statement+jwt", claims);
+  }
+
+  private static JSONArray trustMarksClaim(final List<String> trustMarks, final String typeMember) {
+    final JSONArray claim = new JSONArray();
+    for (final String trustMark : trustMarks) {
+      final JSONObject trustMarkEntry = new JSONObject();
+      trustMarkEntry.put(typeMember, TRUST_MARK_TYPE);
+      trustMarkEntry.put("trust_mark", trustMark);
+      claim.add(trustMarkEntry);
+    }
+    return claim;
   }
 
   private SignedJWT otherStatement() throws Exception {
@@ -299,10 +330,12 @@ class TrustMarkCollectorStatusTest {
         this.statementClaims("https://example.com/intermediate", "https://example.com/other-entity", key).build());
   }
 
-  private SignedJWT subordinateStatementForSubject() throws Exception {
+  private SignedJWT subordinateStatementForSubject(final String trustMark) throws Exception {
     final JWK key = new RSAKeyGenerator(2048).keyID("superior-key").generate();
     return sign(key, "entity-statement+jwt",
-        this.statementClaims("https://example.com/intermediate", SUBJECT, key).build());
+        this.statementClaims("https://example.com/intermediate", SUBJECT, key)
+            .claim("trust_marks", trustMarksClaim(List.of(trustMark), "trust_mark_type"))
+            .build());
   }
 
   private SignedJWT trustAnchor(final JWK ownerKey) throws Exception {
