@@ -57,6 +57,9 @@ import java.util.Optional;
  */
 public class TrustMarkIssuerRouter implements Router, ModuleRouter {
 
+  /** The required parameters of a trust mark request (Section 8.6.1). */
+  private static final List<String> TRUST_MARK_PARAMETERS = List.of("trust_mark_type", "sub");
+
   private static final Logger log = LoggerFactory.getLogger(TrustMarkIssuerRouter.class);
   public static final Gson GSON = new Gson();
   private final RouteFactory routeFactory;
@@ -132,7 +135,8 @@ public class TrustMarkIssuerRouter implements Router, ModuleRouter {
           .get();
       final TrustMarkIssuer trustMarkIssuer = this.factory.create(properties);
       if (this.isTrustMarkEndpoint(request, entity)) {
-        final MultiValueMap<String, String> params = request.params();
+        final MultiValueMap<String, String> params =
+            RequireParameters.validate(request.params(), TRUST_MARK_PARAMETERS);
         final String response = trustMarkIssuer.trustMark(
             new TrustMarkRequest(params.getFirst("trust_mark_type"), params.getFirst("sub")));
         return new CachedResponse(response, "application/trust-mark+jwt", 200);
@@ -194,7 +198,7 @@ public class TrustMarkIssuerRouter implements Router, ModuleRouter {
 
   private ServerResponse handleTrustMark(final ServerRequest request, final TrustMarkIssuer trustMarkIssuer)
       throws FederationException {
-    final MultiValueMap<String, String> params = request.params();
+    final MultiValueMap<String, String> params = RequireParameters.validate(request.params(), TRUST_MARK_PARAMETERS);
     final String trustMarkType = params.getFirst("trust_mark_type");
     final String sub = params.getFirst("sub");
     final Long snapshot = this.lookup.getLatestSnapshotVersion();
@@ -285,14 +289,14 @@ public class TrustMarkIssuerRouter implements Router, ModuleRouter {
   }
 
   private ServerResponse handleTrustMarkRequest(final CompositeRecordSource source, final ServerRequest request) {
-    final MultiValueMap<String, String> params = request.params();
-    final String trustMarkType = params.getFirst("trust_mark_type");
-    log.debug("Handling trust mark request {}", params);
-    final String sub = params.getFirst("sub");
-
     final TrustMarkIssuerProperties property = this.getPropertyByRequest(source, request, "/trust_mark");
     final TrustMarkIssuer trustMarkIssuer = this.factory.create(property);
     try {
+      final MultiValueMap<String, String> params =
+          RequireParameters.validate(request.params(), TRUST_MARK_PARAMETERS);
+      final String trustMarkType = params.getFirst("trust_mark_type");
+      log.debug("Handling trust mark request {}", params);
+      final String sub = params.getFirst("sub");
       log.debug("Using fresh trust mark for {} {} {}", params, property, request.headers());
       final String response = trustMarkIssuer.trustMark(new TrustMarkRequest(trustMarkType, sub));
       this.tagObservation("/trust_mark", false);

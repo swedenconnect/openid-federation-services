@@ -37,6 +37,7 @@
 * The resolver now rejects trust chains with statements that place claims in the wrong kind of statement or have malformed claim values, as described in Section 3.2 of OpenID Federation 1.0. ([#208](https://github.com/swedenconnect/openid-federation-services/issues/208))
 * Resolve responses no longer copy claims such as `jwks`, `authority_hints` and `crit` from the subject's Entity Configuration. ([#209](https://github.com/swedenconnect/openid-federation-services/issues/209))
 * Metadata policies are only taken from Subordinate Statements, never from Entity Configurations. ([#210](https://github.com/swedenconnect/openid-federation-services/issues/210))
+* The trust mark endpoint now returns 400 `invalid_request` when `trust_mark_type` or `sub` is missing. ([#212](https://github.com/swedenconnect/openid-federation-services/issues/212))
 
 ## Version 0.11.17
 

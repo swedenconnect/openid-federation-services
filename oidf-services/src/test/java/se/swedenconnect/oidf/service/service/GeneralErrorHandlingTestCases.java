@@ -28,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.service.suites.Context;
+import java.util.List;
 
 @ActiveProfiles({"integration-test"})
 public class GeneralErrorHandlingTestCases {
@@ -98,6 +99,23 @@ public class GeneralErrorHandlingTestCases {
     Assertions.assertEquals("Required request parameter [trust_mark_type] was missing.",
         body.get("error_description").asText());
     Assertions.assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
+  }
+
+  @Test
+  public void testTrustMarkRequestWithoutRequiredParameterExpect400() throws Exception {
+    for (final String uri : List.of(
+        "/im/tmi/trust_mark?sub=http://localhost:11111/im/op",
+        "/im/tmi/trust_mark?trust_mark_type=http://localhost:11111/im/tmi/certified")) {
+      final ResponseEntity<String> response = this.restClient.get()
+          .uri(uri)
+          .retrieve()
+          .onStatus(HttpStatusCode::isError, (req, res) -> {})
+          .toEntity(String.class);
+
+      Assertions.assertEquals(400, response.getStatusCode().value(), uri);
+      final JsonNode body = this.objectMapper.readTree(response.getBody());
+      Assertions.assertEquals("invalid_request", body.get("error").asText(), uri);
+    }
   }
 
 }
