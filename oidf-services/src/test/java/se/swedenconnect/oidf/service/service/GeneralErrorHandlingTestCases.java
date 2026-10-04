@@ -118,4 +118,20 @@ public class GeneralErrorHandlingTestCases {
     }
   }
 
+  @Test
+  public void testInvalidBooleanParameterExpect400() throws Exception {
+    for (final String uri : List.of("/im/subordinate_listing?trust_marked=yes",
+        "/im/subordinate_listing?intermediate=1")) {
+      final ResponseEntity<String> response = this.restClient.get()
+          .uri(uri)
+          .retrieve()
+          .onStatus(HttpStatusCode::isError, (req, res) -> {})
+          .toEntity(String.class);
+
+      Assertions.assertEquals(400, response.getStatusCode().value(), uri);
+      final JsonNode body = this.objectMapper.readTree(response.getBody());
+      Assertions.assertEquals("invalid_request", body.get("error").asText(), uri);
+    }
+  }
+
 }
