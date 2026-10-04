@@ -196,21 +196,21 @@ A subordinate entry supports:
 
 | Operator      | Effect                                                              |
 |---------------|----------------------------------------------------------------------|
-| `value`       | Force the claim to exactly this value                               |
+| `value`       | Force the claim to exactly this value, `null` removes the claim     |
 | `add`         | Add value(s) to a list-valued claim                                 |
 | `default`     | Value to use if the claim is not already present                    |
 | `essential`   | `true`/`false` — whether the claim must be present after merging    |
 | `one_of`      | The claim's value must be one of the listed values                  |
-| `subset_of`   | The claim's (list) value must be a subset of the listed values      |
+| `subset_of`   | Reduce the claim's (list) value to the values that are listed       |
 | `superset_of` | The claim's (list) value must be a superset of the listed values    |
 
 This service also registers two operators from the [Swedish OIDC Federation
-profile](https://github.com/oidc-sweden/specifications/blob/main/swedish-oidc-fed-profile.md) that are
+profile](https://github.com/oidc-sweden/specifications/blob/main/attic/swedish-oidc-fed-profile.md) that are
 **not** part of the base specification:
 
 | Operator     | Effect                                                                                          |
 |--------------|--------------------------------------------------------------------------------------------------|
-| `regexp`     | The claim's string value must match every listed regular expression                              |
+| `regexp`     | The claim's value, or every value in a list, must match every listed regular expression          |
 | `intersects` | The claim's (list) value must share at least one element with the listed values                  |
 
 In the example above, the policy forces `/op`'s `oauth_client.organization_identifier` and

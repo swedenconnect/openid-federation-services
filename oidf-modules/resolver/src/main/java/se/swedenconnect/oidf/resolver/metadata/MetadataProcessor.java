@@ -19,17 +19,13 @@ package se.swedenconnect.oidf.resolver.metadata;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
-import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
-import com.nimbusds.openid.connect.sdk.federation.policy.language.OperationName;
-import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.PolicyOperationCombinationValidator;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.PolicyOperationFactory;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,18 +42,10 @@ public class MetadataProcessor {
 
   private static final String FEDERATION_ENTITY = "federation_entity";
 
-  private final PolicyOperationFactory operationFactory;
-  private final PolicyOperationCombinationValidator combinationValidator;
-
   /**
-   * Constructor
-   * @param operationFactory for creating operations
-   * @param combinationValidator for validating operation combinations
+   * Constructor.
    */
-  public MetadataProcessor(final PolicyOperationFactory operationFactory,
-      final PolicyOperationCombinationValidator combinationValidator) {
-    this.operationFactory = operationFactory;
-    this.combinationValidator = combinationValidator;
+  public MetadataProcessor() {
   }
 
   /**
@@ -81,28 +69,73 @@ public class MetadataProcessor {
       // the only statement whose "metadata" claim is in scope for the leaf, per spec ("Immediate Subordinate").
       final SignedJWT immediateSuperiorStatement = chain.size() > 1 ? chain.get(1) : null;
 
-      // Policies are bound to an entity type and are combined and applied per type (Sections 6.1.1 and 6.1.4.1)
+      // Policies are bound to an entity type and are merged and applied per type (Sections 6.1.1 and 6.1.4)
       final JSONObject result = new JSONObject();
       for (final String type : metadataType) {
-        final List<MetadataPolicy> typePolicies = new ArrayList<>();
-        for (final SignedJWT statement : chain) {
-          Optional.ofNullable(this.parsePolicy(statement, type)).ifPresent(typePolicies::add);
-        }
-        final MetadataPolicy combined = MetadataPolicy.combine(typePolicies, this.combinationValidator);
-        final MetadataPolicy typePolicy =
-            MetadataPolicy.parse(combined.toJSONObject(), this.operationFactory, this.combinationValidator);
-
+        final Map<String, ParameterPolicy> typePolicy = this.resolvePolicy(chain, type);
         final JSONObject baseMetadata = mergeSubordinateMetadata(
             EntityStatementClaims.getMetadata(leafNode, new EntityType(type)),
             immediateSuperiorStatement,
             type);
-        result.put(type, typePolicy.apply(baseMetadata));
+        result.put(type, applyPolicy(baseMetadata, typePolicy));
       }
       return result;
     }
-    catch (final PolicyViolationException | com.nimbusds.oauth2.sdk.ParseException | java.text.ParseException e) {
+    catch (final MetadataPolicyException | java.text.ParseException e) {
       throw new IllegalArgumentException("Failed to validate/parse policy", e);
     }
+  }
+
+  /**
+   * Resolves the metadata policy for one entity type by merging the policies of the statements in the chain, starting
+   * with the statement issued by the most superior entity (Section 6.1.4.1).
+   *
+   * @param chain the trust chain, leaf first
+   * @param type the entity type
+   * @return the resolved policy, keyed by metadata parameter
+   * @throws MetadataPolicyException on a policy error
+   * @throws java.text.ParseException if the statement claims cannot be parsed
+   */
+  private Map<String, ParameterPolicy> resolvePolicy(final List<SignedJWT> chain, final String type)
+      throws MetadataPolicyException, java.text.ParseException {
+    final Map<String, ParameterPolicy> resolved = new LinkedHashMap<>();
+    for (final SignedJWT statement : chain.reversed()) {
+      final Map<String, ParameterPolicy> statementPolicy = this.parsePolicy(statement, type);
+      if (statementPolicy == null) {
+        continue;
+      }
+      for (final Map.Entry<String, ParameterPolicy> parameter : statementPolicy.entrySet()) {
+        final ParameterPolicy current = resolved.get(parameter.getKey());
+        resolved.put(parameter.getKey(), current == null ? parameter.getValue() : current.merge(parameter.getValue()));
+      }
+    }
+    return resolved;
+  }
+
+  /**
+   * Applies a resolved metadata policy to the metadata of one entity type (Section 6.1.4.2).
+   *
+   * @param metadata the metadata, may be null
+   * @param policy the resolved policy
+   * @return the resulting metadata, or null if the metadata is null and there is no policy
+   * @throws MetadataPolicyException if the metadata does not comply with the policy
+   */
+  private static JSONObject applyPolicy(final JSONObject metadata, final Map<String, ParameterPolicy> policy)
+      throws MetadataPolicyException {
+    if (metadata == null && policy.isEmpty()) {
+      return null;
+    }
+    final JSONObject result = metadata == null ? new JSONObject() : new JSONObject(metadata);
+    for (final Map.Entry<String, ParameterPolicy> parameter : policy.entrySet()) {
+      final Object value = parameter.getValue().apply(result.get(parameter.getKey()));
+      if (value == null) {
+        result.remove(parameter.getKey());
+      }
+      else {
+        result.put(parameter.getKey(), value);
+      }
+    }
+    return result;
   }
 
   /**
@@ -111,11 +144,11 @@ public class MetadataProcessor {
    *
    * @param chain the trust chain
    * @return the allowed entity types, or null if no statement sets the constraint
-   * @throws PolicyViolationException if a constraint is not an array of strings
+   * @throws MetadataPolicyException if a constraint is not an array of strings
    * @throws java.text.ParseException if the statement claims cannot be parsed
    */
   private static Set<String> allowedEntityTypes(final List<SignedJWT> chain)
-      throws PolicyViolationException, java.text.ParseException {
+      throws MetadataPolicyException, java.text.ParseException {
     Set<String> allowed = null;
     for (final SignedJWT statement : chain) {
       if (EntityStatementClaims.isSelfStatement(statement)) {
@@ -127,7 +160,7 @@ public class MetadataProcessor {
       }
       if (!(constraints.get("allowed_entity_types") instanceof final List<?> types)
           || !types.stream().allMatch(String.class::isInstance)) {
-        throw new PolicyViolationException("allowed_entity_types is not an array of strings");
+        throw new MetadataPolicyException("allowed_entity_types is not an array of strings");
       }
       final Set<String> statementTypes = types.stream().map(String.class::cast).collect(Collectors.toSet());
       if (allowed == null) {
@@ -146,50 +179,50 @@ public class MetadataProcessor {
    *
    * @param statement the statement holding the policy
    * @param type the entity type
-   * @return the policy, or null if the statement has no policy for the type
-   * @throws PolicyViolationException if the policy is malformed, has an invalid combination of operators, or uses an
+   * @return the policy keyed by metadata parameter, or null if the statement has no policy for the type
+   * @throws MetadataPolicyException if the policy is malformed, has an invalid combination of operators, or uses an
    *     unsupported critical operator
-   * @throws com.nimbusds.oauth2.sdk.ParseException if an operator value cannot be parsed
    * @throws java.text.ParseException if the statement claims cannot be parsed
    */
-  private MetadataPolicy parsePolicy(final SignedJWT statement, final String type)
-      throws PolicyViolationException, com.nimbusds.oauth2.sdk.ParseException, java.text.ParseException {
+  private Map<String, ParameterPolicy> parsePolicy(final SignedJWT statement, final String type)
+      throws MetadataPolicyException, java.text.ParseException {
     final JWTClaimsSet claims = EntityStatementClaims.claims(statement);
     final Map<String, Object> policy = claims.getJSONObjectClaim("metadata_policy");
     if (policy == null || !policy.containsKey(type)) {
       return null;
     }
     if (!(policy.get(type) instanceof final Map<?, ?> typePolicy)) {
-      throw new PolicyViolationException("metadata_policy for '%s' is not a JSON object".formatted(type));
+      throw new MetadataPolicyException("metadata_policy for '%s' is not a JSON object".formatted(type));
     }
     final List<String> critical =
         Optional.ofNullable(claims.getStringListClaim("metadata_policy_crit")).orElseGet(List::of);
 
-    final JSONObject supported = new JSONObject();
+    final Map<String, ParameterPolicy> parsed = new LinkedHashMap<>();
     for (final Map.Entry<?, ?> parameter : typePolicy.entrySet()) {
+      final String parameterName = String.valueOf(parameter.getKey());
       if (!(parameter.getValue() instanceof final Map<?, ?> operators)) {
-        throw new PolicyViolationException("metadata_policy for '%s.%s' is not a JSON object"
-            .formatted(type, parameter.getKey()));
+        throw new MetadataPolicyException("metadata_policy for '%s.%s' is not a JSON object"
+            .formatted(type, parameterName));
       }
-      final JSONObject supportedOperators = new JSONObject();
+      final Map<String, Object> supportedOperators = new LinkedHashMap<>();
       for (final Map.Entry<?, ?> operator : operators.entrySet()) {
         final String name = String.valueOf(operator.getKey());
-        if (this.operationFactory.createForName(new OperationName(name)) != null) {
+        if (ParameterPolicy.isSupported(name)) {
           supportedOperators.put(name, operator.getValue());
         }
         else if (critical.contains(name)) {
-          throw new PolicyViolationException("Critical policy operator '%s' is not supported".formatted(name));
+          throw new MetadataPolicyException("Critical policy operator '%s' is not supported".formatted(name));
         }
         else {
           log.debug("Ignoring unsupported policy operator '{}' for '{}.{}' in statement from '{}'",
-              name, type, parameter.getKey(), claims.getIssuer());
+              name, type, parameterName, claims.getIssuer());
         }
       }
       if (!supportedOperators.isEmpty()) {
-        supported.put(String.valueOf(parameter.getKey()), supportedOperators);
+        parsed.put(parameterName, ParameterPolicy.parse(parameterName, supportedOperators));
       }
     }
-    return MetadataPolicy.parse(supported, this.operationFactory, this.combinationValidator);
+    return parsed;
   }
 
   private static JSONObject mergeSubordinateMetadata(

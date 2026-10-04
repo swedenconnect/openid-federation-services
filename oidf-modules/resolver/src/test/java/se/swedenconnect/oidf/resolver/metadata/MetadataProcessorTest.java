@@ -26,8 +26,6 @@ import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
-import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.ValueOperation;
 import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
@@ -44,7 +42,7 @@ class MetadataProcessorTest {
   private static final String SUPERIOR_ID = "https://superior.example.com";
 
   private final MetadataProcessor processor =
-      new MetadataProcessor(new OIDFPolicyOperationFactory(), new DefaultPolicyOperationCombinationValidator());
+      new MetadataProcessor();
 
   @Test
   void superiorMetadataAddsKeyLeafDidNotSet() throws Exception {
@@ -132,7 +130,7 @@ class MetadataProcessorTest {
     final JSONObject policy = policy("organization_name", java.util.Map.of("regexp", List.of("^Policy.*")));
     final IllegalArgumentException e =
         Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
-    Assertions.assertInstanceOf(PolicyViolationException.class, e.getCause());
+    Assertions.assertInstanceOf(MetadataPolicyException.class, e.getCause());
   }
 
   @Test
@@ -154,7 +152,7 @@ class MetadataProcessorTest {
   @Test
   void invalidOperatorCombinationFails() throws Exception {
     final JSONObject policy = policy("organization_name",
-        java.util.Map.of("value", "Policy Org", "default", "Default Org"));
+        java.util.Map.of("value", "Policy Org", "one_of", List.of("Other Org")));
     Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
   }
 
@@ -223,6 +221,56 @@ class MetadataProcessorTest {
     final JSONObject result = this.processWithAllowedTypes(
         List.of(List.of("openid_relying_party"), List.of("openid_provider")));
     Assertions.assertEquals(java.util.Set.of("federation_entity"), result.keySet());
+  }
+
+  @Test
+  void specExampleIsResolvedAsInSection615() throws Exception {
+    final JSONObject taPolicy = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"openid_relying_party": {
+          "grant_types": {"default": ["authorization_code"],
+                          "subset_of": ["authorization_code", "refresh_token"],
+                          "superset_of": ["authorization_code"]},
+          "token_endpoint_auth_method": {"one_of": ["private_key_jwt", "self_signed_tls_client_auth"],
+                                         "essential": true},
+          "token_endpoint_auth_signing_alg": {"one_of": ["PS256", "ES256"]},
+          "subject_type": {"value": "pairwise"},
+          "contacts": {"add": ["helpdesk@federation.example.org"]}}}
+        """);
+    final JSONObject intermediatePolicy = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"openid_relying_party": {
+          "grant_types": {"subset_of": ["authorization_code"]},
+          "token_endpoint_auth_method": {"one_of": ["self_signed_tls_client_auth"]},
+          "contacts": {"add": ["helpdesk@org.example.org"]}}}
+        """);
+    final JSONObject intermediateMetadata = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"openid_relying_party": {"sector_identifier_uri": "https://org.example.org/sector-ids.json",
+                                  "policy_uri": "https://org.example.org/policy.html"}}
+        """);
+    final JSONObject leafMetadata = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"openid_relying_party": {"redirect_uris": ["https://rp.example.org/callback"],
+                                  "response_types": ["code"],
+                                  "token_endpoint_auth_method": "self_signed_tls_client_auth",
+                                  "contacts": ["rp_admins@rp.example.org"]}}
+        """);
+    final JWK leafKey = generateKey();
+    final List<SignedJWT> chain = List.of(
+        selfStatement(leafKey, LEAF_ID, leafMetadata),
+        subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, intermediateMetadata, intermediatePolicy),
+        subordinateStatement(generateKey(), "https://ta.example.com", SUPERIOR_ID, null, taPolicy));
+
+    final JSONObject rp = (JSONObject) this.processor.processMetadata(chain).get("openid_relying_party");
+
+    final JSONObject expected = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"redirect_uris": ["https://rp.example.org/callback"],
+         "grant_types": ["authorization_code"],
+         "response_types": ["code"],
+         "token_endpoint_auth_method": "self_signed_tls_client_auth",
+         "subject_type": "pairwise",
+         "sector_identifier_uri": "https://org.example.org/sector-ids.json",
+         "policy_uri": "https://org.example.org/policy.html",
+         "contacts": ["rp_admins@rp.example.org", "helpdesk@federation.example.org", "helpdesk@org.example.org"]}
+        """);
+    Assertions.assertEquals(expected, rp);
   }
 
   private JSONObject processWithAllowedTypes(final List<List<String>> allowedTypesPerStatement) throws Exception {

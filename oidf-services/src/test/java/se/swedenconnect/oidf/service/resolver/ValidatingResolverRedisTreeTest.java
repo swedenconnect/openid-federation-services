@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.service.resolver;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import com.redis.testcontainers.RedisContainer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,7 +45,6 @@ import se.swedenconnect.oidf.resolver.ValidatingResolver;
 import se.swedenconnect.oidf.resolver.chain.ChainValidator;
 import se.swedenconnect.oidf.resolver.chain.SignatureValidationStep;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
-import se.swedenconnect.oidf.resolver.metadata.OIDFPolicyOperationFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTreeLoader;
 import se.swedenconnect.oidf.resolver.tree.resolution.DFSExecution;
@@ -154,8 +152,7 @@ class ValidatingResolverRedisTreeTest {
     final ChainValidator validator = new ChainValidator(
         List.of(new SignatureValidationStep(new JWKSet(entities.taKey.toPublicJWK()))));
 
-    final MetadataProcessor processor = new MetadataProcessor(
-        new OIDFPolicyOperationFactory(), new DefaultPolicyOperationCombinationValidator());
+    final MetadataProcessor processor = new MetadataProcessor();
 
     resolver = new ValidatingResolver(props, validator, entityStatementTree, processor, factory);
   }

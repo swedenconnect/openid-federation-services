@@ -24,6 +24,7 @@
 * The trust marked entities listing no longer includes revoked or not yet granted subjects, and returns an empty array instead of 404 when no subject is valid. ([#195](https://github.com/swedenconnect/openid-federation-services/issues/195))
 * The trust mark status endpoint now returns 400 `invalid_request` instead of 500 for a trust mark that cannot be parsed. ([#196](https://github.com/swedenconnect/openid-federation-services/issues/196))
 * The `allowed_entity_types` constraint now removes disallowed entity types from the resolved metadata instead of rejecting the trust chain, and an empty list allows only `federation_entity`. ([#197](https://github.com/swedenconnect/openid-federation-services/issues/197))
+* Metadata policy operators now follow OpenID Federation 1.0, including allowed operator combinations, `value` set to `null`, `subset_of` giving an empty array, merging of `one_of`, and `scope` handled as a list of values. ([#198](https://github.com/swedenconnect/openid-federation-services/issues/198))
 
 ## Version 0.11.17
 
