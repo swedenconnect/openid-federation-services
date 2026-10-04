@@ -69,35 +69,27 @@ public class MetadataProcessor {
           .stream()
           .toList();
 
-      final List<MetadataPolicy> metadataPolicies = new ArrayList<>();
-      for (final SignedJWT statement : chain) {
-        for (final String type : metadataType) {
-          Optional.ofNullable(this.parsePolicy(statement, type)).ifPresent(metadataPolicies::add);
-        }
-      }
-
-      final MetadataPolicy combinedMetadataPolicy = MetadataPolicy.combine(metadataPolicies, this.combinationValidator);
-
-      final MetadataPolicy metadataPolicy =
-          MetadataPolicy.parse(combinedMetadataPolicy.toJSONObject(), this.operationFactory, this.combinationValidator);
-
       // chain.get(1), if present, is the immediate superior's subordinate statement about the leaf -
       // the only statement whose "metadata" claim is in scope for the leaf, per spec ("Immediate Subordinate").
       final SignedJWT immediateSuperiorStatement = chain.size() > 1 ? chain.get(1) : null;
 
+      // Policies are bound to an entity type and are combined and applied per type (Sections 6.1.1 and 6.1.4.1)
       final JSONObject result = new JSONObject();
-      metadataType.forEach(type -> {
-        try {
-          final JSONObject baseMetadata = mergeSubordinateMetadata(
-              EntityStatementClaims.getMetadata(leafNode, new EntityType(type)),
-              immediateSuperiorStatement,
-              type);
-          result.put(type, metadataPolicy.apply(baseMetadata));
+      for (final String type : metadataType) {
+        final List<MetadataPolicy> typePolicies = new ArrayList<>();
+        for (final SignedJWT statement : chain) {
+          Optional.ofNullable(this.parsePolicy(statement, type)).ifPresent(typePolicies::add);
         }
-        catch (final PolicyViolationException e) {
-          throw new RuntimeException(e);
-        }
-      });
+        final MetadataPolicy combined = MetadataPolicy.combine(typePolicies, this.combinationValidator);
+        final MetadataPolicy typePolicy =
+            MetadataPolicy.parse(combined.toJSONObject(), this.operationFactory, this.combinationValidator);
+
+        final JSONObject baseMetadata = mergeSubordinateMetadata(
+            EntityStatementClaims.getMetadata(leafNode, new EntityType(type)),
+            immediateSuperiorStatement,
+            type);
+        result.put(type, typePolicy.apply(baseMetadata));
+      }
       return result;
     }
     catch (final PolicyViolationException | com.nimbusds.oauth2.sdk.ParseException | java.text.ParseException e) {

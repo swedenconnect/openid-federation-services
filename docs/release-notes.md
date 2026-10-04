@@ -13,6 +13,7 @@
 * Trust marks of types listed in `trust_mark_owners` now require a valid delegation from the owner. A trust mark that fails the check is dropped instead of failing the resolve. ([#184](https://github.com/swedenconnect/openid-federation-services/issues/184))
 * The resolver now fully validates trust marks and their status responses. The trust mark issuer must be reachable through a valid trust chain to the Trust Anchor, and a trust mark whose status cannot be confirmed is no longer included. ([#185](https://github.com/swedenconnect/openid-federation-services/issues/185))
 * Metadata policies that fail to parse are no longer silently ignored by the resolver. The `regexp` and `intersects` operators are now applied, unknown operators are ignored unless marked critical, and other policy errors make the resolve fail. ([#186](https://github.com/swedenconnect/openid-federation-services/issues/186))
+* Metadata policies are now applied per entity type. A policy for one entity type no longer affects the metadata of another type. ([#187](https://github.com/swedenconnect/openid-federation-services/issues/187))
 
 ## Version 0.11.17
 

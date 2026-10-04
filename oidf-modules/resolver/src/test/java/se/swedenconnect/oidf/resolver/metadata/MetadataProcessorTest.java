@@ -130,8 +130,8 @@ class MetadataProcessorTest {
   @Test
   void regexpOperatorIsApplied() throws Exception {
     final JSONObject policy = policy("organization_name", java.util.Map.of("regexp", List.of("^Policy.*")));
-    final RuntimeException e =
-        Assertions.assertThrows(RuntimeException.class, () -> this.processWithPolicy(policy, null));
+    final IllegalArgumentException e =
+        Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
     Assertions.assertInstanceOf(PolicyViolationException.class, e.getCause());
   }
 
@@ -163,6 +163,41 @@ class MetadataProcessorTest {
     final JSONObject policy = new JSONObject();
     policy.put("openid_relying_party", new JSONObject(java.util.Map.of("organization_name", "not an object")));
     Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
+  }
+
+  @Test
+  void policiesAreAppliedPerEntityType() throws Exception {
+    final JWK leafKey = generateKey();
+    final JSONObject metadata = metadata(java.util.Map.of("organization_name", "Leaf Org"));
+    metadata.put("federation_entity", new JSONObject(java.util.Map.of("organization_name", "Leaf Org")));
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata);
+
+    final JSONObject policy = policy("organization_name", java.util.Map.of("value", "RP Org"));
+    policy.put("federation_entity",
+        new JSONObject(java.util.Map.of("organization_name", new JSONObject(java.util.Map.of("value", "Fed Org")))));
+    final SignedJWT superiorStatement = subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, policy);
+
+    final JSONObject result = this.processor.processMetadata(List.of(leafEc, superiorStatement));
+
+    Assertions.assertEquals("RP Org", ((JSONObject) result.get("openid_relying_party")).get("organization_name"));
+    Assertions.assertEquals("Fed Org", ((JSONObject) result.get("federation_entity")).get("organization_name"));
+  }
+
+  @Test
+  void policyForOneTypeIsNotAppliedToAnother() throws Exception {
+    final JWK leafKey = generateKey();
+    final JSONObject metadata = metadata(java.util.Map.of("organization_name", "Leaf Org"));
+    metadata.put("federation_entity", new JSONObject(java.util.Map.of("organization_name", "Fed Leaf Org")));
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata);
+
+    final JSONObject policy = policy("organization_name", java.util.Map.of("value", "RP Org"));
+    final SignedJWT superiorStatement = subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, policy);
+
+    final JSONObject result = this.processor.processMetadata(List.of(leafEc, superiorStatement));
+
+    Assertions.assertEquals("RP Org", ((JSONObject) result.get("openid_relying_party")).get("organization_name"));
+    Assertions.assertEquals("Fed Leaf Org",
+        ((JSONObject) result.get("federation_entity")).get("organization_name"));
   }
 
   private JSONObject processWithPolicy(final JSONObject metadataPolicy, final List<String> metadataPolicyCrit)
