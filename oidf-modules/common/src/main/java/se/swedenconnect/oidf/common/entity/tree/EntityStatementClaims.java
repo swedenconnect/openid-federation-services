@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Typed claims accessors for entity statement {@link SignedJWT}s.
@@ -292,6 +293,40 @@ public final class EntityStatementClaims {
     } catch (final java.text.ParseException e) {
       return null;
     }
+  }
+
+  /**
+   * Claim names defined for entity statements by OpenID Federation 1.0, which must not be listed in {@code crit}.
+   */
+  public static final Set<String> SPECIFIED_CLAIMS = Set.of(
+      "iss", "sub", "iat", "exp", "jwks", "aud", "authority_hints", "trust_anchor_hints", "metadata",
+      "metadata_policy", "constraints", "crit", "metadata_policy_crit", "trust_marks", "trust_mark_issuers",
+      "trust_mark_owners", "source_endpoint", "trust_anchor");
+
+  /**
+   * Adds the {@code crit} claim to a claims set that is about to be signed. Only names that are not defined by the
+   * specification, not repeated and present as claims are kept (OpenID Federation 1.0, Section 13.4). The claim is
+   * left out when no name is kept.
+   *
+   * @param builder the claims, with every claim except {@code crit} already set
+   * @param configured the configured critical claim names, may be null
+   * @return the claims with {@code crit} set when there is a name to list
+   */
+  public static JWTClaimsSet.Builder withCriticalClaims(final JWTClaimsSet.Builder builder,
+      final List<String> configured) {
+    if (configured == null || configured.isEmpty()) {
+      return builder;
+    }
+    final Set<String> present = builder.build().getClaims().keySet();
+    final List<String> crit = configured.stream()
+        .distinct()
+        .filter(name -> !SPECIFIED_CLAIMS.contains(name) && present.contains(name))
+        .toList();
+    if (crit.size() != configured.size()) {
+      log.warn("Configured crit {} reduced to {}, names defined by the specification, repeated or not present"
+          + " as claims are left out", configured, crit);
+    }
+    return crit.isEmpty() ? builder : builder.claim("crit", crit);
   }
 
   /**

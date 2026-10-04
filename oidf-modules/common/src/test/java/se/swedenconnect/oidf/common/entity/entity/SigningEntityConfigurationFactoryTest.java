@@ -83,10 +83,13 @@ class SigningEntityConfigurationFactoryTest {
 
   @Test
   void includesCritWhenNotEmpty() throws Exception {
-    final List<String> crit = List.of("ext_a", "ext_b");
-    final JWTClaimsSet claims = this.create(this.recordBuilder().crit(crit).build());
+    final EntityConfigurationClaimCustomizer extension = (record, builder) -> builder.claim("ext_a", "value");
+    this.factory = new SigningEntityConfigurationFactory(Mockito.mock(FederationClient.class), List.of(extension));
+    final JWTClaimsSet claims =
+        this.create(this.recordBuilder().crit(List.of("ext_a", "ext_b", "authority_hints")).build());
 
-    Assertions.assertEquals(crit, claims.getStringListClaim("crit"));
+    // ext_b is not present and authority_hints is defined by the specification
+    Assertions.assertEquals(List.of("ext_a"), claims.getStringListClaim("crit"));
   }
 
   @Test

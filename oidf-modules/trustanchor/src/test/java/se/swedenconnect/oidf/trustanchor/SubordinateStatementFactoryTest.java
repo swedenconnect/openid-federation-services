@@ -109,9 +109,29 @@ class SubordinateStatementFactoryTest {
 
   @Test
   void includesCritWhenNotEmpty() throws Exception {
-    final JWTClaimsSet claims = this.sign(this.subordinateBuilder().crit(List.of("ext_a", "ext_b")).build());
+    final JWTClaimsSet claims = this.sign(this.subordinateBuilder()
+        .ecLocation("https://example.com/im/ec")
+        .crit(List.of("ec_location"))
+        .build());
 
-    Assertions.assertEquals(List.of("ext_a", "ext_b"), claims.getStringListClaim("crit"));
+    Assertions.assertEquals(List.of("ec_location"), claims.getStringListClaim("crit"));
+  }
+
+  @Test
+  void critOnlyListsPresentExtensionClaimsOnce() throws Exception {
+    final JWTClaimsSet claims = this.sign(this.subordinateBuilder()
+        .ecLocation("https://example.com/im/ec")
+        .crit(List.of("ec_location", "ec_location", "jwks", "not_present"))
+        .build());
+
+    Assertions.assertEquals(List.of("ec_location"), claims.getStringListClaim("crit"));
+  }
+
+  @Test
+  void critIsLeftOutWhenNoNameIsPresent() throws Exception {
+    final JWTClaimsSet claims = this.sign(this.subordinateBuilder().crit(List.of("ext_a", "metadata")).build());
+
+    Assertions.assertFalse(claims.getClaims().containsKey("crit"));
   }
 
   @Test
