@@ -307,16 +307,24 @@ public final class EntityStatementClaims {
   }
 
   /**
-   * Verifies the signature of the given entity statement against the given jwk set.
+   * Verifies the signature of the given entity statement against the given jwk set. The statement must have a
+   * {@code kid} header that identifies a key in the jwk set (OpenID Federation 1.0, Section 3.2, steps 11 and 12).
    *
    * @param jwt    to verify
    * @param jwkSet to verify against
    * @return thumbprint of the jwk used to verify the signature
-   * @throws BadJOSEException if the jwt is invalid
+   * @throws BadJOSEException if the jwt is invalid, has no {@code kid}, or its {@code kid} is not in the jwk set
    * @throws JOSEException    if the signature verification failed
    */
   public static Base64URL verifySignature(final SignedJWT jwt, final JWKSet jwkSet)
       throws BadJOSEException, JOSEException {
+    final String kid = jwt.getHeader().getKeyID();
+    if (kid == null || kid.isBlank()) {
+      throw new BadJOSEException("Entity statement has no kid header");
+    }
+    if (jwkSet == null || jwkSet.getKeyByKeyId(kid) == null) {
+      throw new BadJOSEException("Entity statement kid '%s' does not match any key in the jwks".formatted(kid));
+    }
     return JWTUtils.verifySignature(jwt, ENTITY_STATEMENT_TYPE, new EntityStatementClaimsVerifier(null), jwkSet);
   }
 
