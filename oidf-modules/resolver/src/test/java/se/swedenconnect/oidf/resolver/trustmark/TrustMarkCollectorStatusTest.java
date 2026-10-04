@@ -47,6 +47,7 @@ class TrustMarkCollectorStatusTest {
   private static final String TRUST_MARK_TYPE = "https://example.com/trustmark/type1";
   private static final String SUBJECT = "https://example.com/subject";
   private static final String ISSUER = "https://example.com/issuer";
+  private static final String OWNER = "https://example.com/owner";
 
   @Test
   void statusStoreFiltersInactiveTrustMarks() throws Exception {
@@ -205,11 +206,66 @@ class TrustMarkCollectorStatusTest {
         "Trust mark JWT using the draft id claim should be collected");
   }
 
+  @Test
+  void delegatedTrustMarkSignedByIssuerKeyIsCollected() throws Exception {
+    final JWK issuerKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final String delegation = buildDelegationJwt(ownerKey, ISSUER, Instant.now().plusSeconds(3600));
+
+    Assertions.assertEquals(1, collectWithOwner(issuerKey, ownerKey, delegation).size(),
+        "Trust mark with a valid delegation from the owner should be collected");
+  }
+
+  @Test
+  void ownedTrustMarkWithoutDelegationIsRejected() throws Exception {
+    final JWK issuerKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+
+    Assertions.assertTrue(collectWithOwner(issuerKey, ownerKey, null).isEmpty(),
+        "Trust mark of an owned type without delegation should be rejected");
+  }
+
+  @Test
+  void delegationNotSignedByOwnerIsRejected() throws Exception {
+    final JWK issuerKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final JWK otherKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final String delegation = buildDelegationJwt(otherKey, ISSUER, Instant.now().plusSeconds(3600));
+
+    Assertions.assertTrue(collectWithOwner(issuerKey, ownerKey, delegation).isEmpty(),
+        "Delegation not signed by the owner should be rejected");
+  }
+
+  @Test
+  void delegationForOtherIssuerIsRejected() throws Exception {
+    final JWK issuerKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final String delegation =
+        buildDelegationJwt(ownerKey, "https://example.com/other-issuer", Instant.now().plusSeconds(3600));
+
+    Assertions.assertTrue(collectWithOwner(issuerKey, ownerKey, delegation).isEmpty(),
+        "Delegation whose sub is not the trust mark issuer should be rejected");
+  }
+
+  @Test
+  void expiredDelegationIsRejected() throws Exception {
+    final JWK issuerKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final String delegation = buildDelegationJwt(ownerKey, ISSUER, Instant.now().minusSeconds(60));
+
+    Assertions.assertTrue(collectWithOwner(issuerKey, ownerKey, delegation).isEmpty(),
+        "Expired delegation should be rejected");
+  }
+
   private String buildTrustMarkJwt(final JWK key) throws Exception {
     return buildTrustMarkJwt(key, "trust_mark_type");
   }
 
   private String buildTrustMarkJwt(final JWK key, final String typeClaim) throws Exception {
+    return buildTrustMarkJwt(key, typeClaim, buildDelegationJwt(key, ISSUER, Instant.now().plusSeconds(3600)));
+  }
+
+  private String buildTrustMarkJwt(final JWK key, final String typeClaim, final String delegation) throws Exception {
     final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
         .type(new JOSEObjectType("trust-mark+jwt"))
         .keyID(key.getKeyID())
@@ -218,11 +274,45 @@ class TrustMarkCollectorStatusTest {
         .issuer(ISSUER)
         .subject(SUBJECT)
         .claim(typeClaim, TRUST_MARK_TYPE)
+        .claim("delegation", delegation)
         .issueTime(Date.from(Instant.now()))
         .build();
     final SignedJWT jwt = new SignedJWT(header, claims);
     jwt.sign(new RSASSASigner(key.toRSAKey()));
     return jwt.serialize();
+  }
+
+  private String buildDelegationJwt(final JWK ownerKey, final String subject, final Instant expiration)
+      throws Exception {
+    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
+        .type(new JOSEObjectType("trust-mark-delegation+jwt"))
+        .keyID(ownerKey.getKeyID())
+        .build();
+    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
+        .issuer(OWNER)
+        .subject(subject)
+        .claim("trust_mark_type", TRUST_MARK_TYPE)
+        .issueTime(Date.from(Instant.now().minusSeconds(7200)))
+        .expirationTime(Date.from(expiration))
+        .build();
+    final SignedJWT jwt = new SignedJWT(header, claims);
+    jwt.sign(new RSASSASigner(ownerKey.toRSAKey()));
+    return jwt.serialize();
+  }
+
+  private List<TrustMarkEntry> collectWithOwner(final JWK issuerKey, final JWK ownerKey, final String delegation)
+      throws Exception {
+    final String trustMarkJwt = buildTrustMarkJwt(issuerKey, "trust_mark_type", delegation);
+    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(issuerKey, trustMarkJwt);
+    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
+    final SignedJWT trustAnchor = buildTrustAnchorStatement(ownerKey);
+
+    final ScrapedEntity leafEntity = ScrapedEntity.builder()
+        .entityID(new EntityID(SUBJECT))
+        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
+        .build();
+    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    return TrustMarkCollector.collectSubjectTrustMarks(new ResolverTrustChain(statements, leafEntity));
   }
 
   private SignedJWT buildSignedJWTWithTrustMark(final JWK key, final String trustMarkJwt)
@@ -360,6 +450,7 @@ class TrustMarkCollectorStatusTest {
 
     final JSONObject jwksObj = new JSONObject(new JWKSet(ownerKey.toPublicJWK()).toJSONObject());
     final JSONObject ownerEntry = new JSONObject();
+    ownerEntry.put("sub", OWNER);
     ownerEntry.put("jwks", jwksObj);
 
     final JSONObject trustMarkOwners = new JSONObject();
