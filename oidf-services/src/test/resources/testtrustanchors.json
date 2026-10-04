@@ -9,10 +9,10 @@
         "constraints": {
           "naming": {
             "permitted": [
-              "http://localhost:11111/im/im"
+              "localhost"
             ],
             "excluded": [
-              "http://localhost:11111/im/im/rp"
+              ".localhost"
             ]
           }
         }

@@ -236,8 +236,8 @@ instead of inlined, which is convenient for sharing one policy across several su
   "max-path-length": 1,
   "allowed-entity-types": ["openid_provider", "openid_relying_party"],
   "naming": {
-    "permitted": ["https://example.com/"],
-    "excluded": ["https://example.com/blocked/"]
+    "permitted": [".example.com"],
+    "excluded": ["blocked.example.com"]
   }
 }
 ```
@@ -246,8 +246,12 @@ instead of inlined, which is convenient for sharing one policy across several su
 |-------------------------|-------------------------------------------------------------------------------|----------------|
 | `max-path-length`       | Maximum number of intermediates allowed below this entity                    | Long           |
 | `allowed-entity-types`  | Entity types (`openid_provider`, `openid_relying_party`, …) permitted below  | List\<String\> |
-| `naming.permitted`      | URI prefixes subordinate identifiers must start with                        | List\<String\> |
-| `naming.excluded`       | URI prefixes subordinate identifiers must not start with                    | List\<String\> |
+| `naming.permitted`      | Hosts (`host.example.com`) or domains (`.example.com`) subordinate identifiers must be under | List\<String\> |
+| `naming.excluded`       | Hosts or domains subordinate identifiers must not be under, takes precedence over `permitted` | List\<String\> |
+
+Naming constraints use the domain name syntax of RFC 5280 and apply to the host part of the entity
+identifier. `.example.com` matches any host below `example.com` but not `example.com` itself, while
+`host.example.com` matches that host only.
 
 The demo does not set any constraints, so any entity type and any nesting depth is allowed under `/im`.
 

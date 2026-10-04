@@ -114,8 +114,10 @@ public class ResolverConstraintTestCases {
             null,false
         )
     );
+    // All test entities share the host localhost, which the naming constraints permit. Exclusion is covered by
+    // EntityNameValidatorTest, since host based constraints cannot single out one entity here.
     Assertions.assertNull(difference2.getReference().getError());
-    Assertions.assertNotNull(difference2.getResponse().getError());
-    Assertions.assertEquals(400, difference2.getResponse().getError().getStatusCode());
+    Assertions.assertNull(difference2.getResponse().getError());
+    Assertions.assertEquals(0, difference2.getJsonDifference().size());
   }
 }
