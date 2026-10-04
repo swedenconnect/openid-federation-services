@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.resolver;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -105,7 +106,7 @@ class ValidatingResolverInMemoryTreeTest {
   void resolveLeafReturnsSignedResponse() throws Exception {
     when(factory.sign(any())).thenReturn("mock-signed-resolve-response");
 
-    final ResolveRequest request = new ResolveRequest(LEAF_ID, TA_ID, "openid_relying_party", false);
+    final ResolveRequest request = new ResolveRequest(LEAF_ID, TA_ID, List.of("openid_relying_party"), false);
     final String result = resolver.resolve(request);
 
     assertNotNull(result);
@@ -122,13 +123,13 @@ class ValidatingResolverInMemoryTreeTest {
 
   @Test
   void wrongTrustAnchorThrowsFederationException() {
-    final ResolveRequest request = new ResolveRequest(LEAF_ID, "https://other-ta.example.com", "openid_relying_party", false);
+    final ResolveRequest request = new ResolveRequest(LEAF_ID, "https://other-ta.example.com", List.of("openid_relying_party"), false);
     assertThrows(Exception.class, () -> resolver.resolve(request));
   }
 
   @Test
   void missingSubjectThrowsFederationException() {
-    final ResolveRequest request = new ResolveRequest("https://unknown.example.com", TA_ID, "openid_relying_party", false);
+    final ResolveRequest request = new ResolveRequest("https://unknown.example.com", TA_ID, List.of("openid_relying_party"), false);
     assertThrows(Exception.class, () -> resolver.resolve(request));
   }
 
@@ -136,10 +137,42 @@ class ValidatingResolverInMemoryTreeTest {
   void resolveSamlSpReturnsSignedResponse() throws Exception {
     when(factory.sign(any())).thenReturn("mock-signed-resolve-response");
 
-    final ResolveRequest request = new ResolveRequest(SAML_SP_ID, TA_ID, "saml_service_provider", false);
+    final ResolveRequest request = new ResolveRequest(SAML_SP_ID, TA_ID, List.of("saml_service_provider"), false);
     final String result = resolver.resolve(request);
 
     assertNotNull(result);
+  }
+
+  @Test
+  void metadataIsFilteredOnRequestedTypes() throws Exception {
+    Assertions.assertEquals(java.util.Set.of("saml_service_provider"),
+        this.resolvedTypes(List.of("saml_service_provider")));
+  }
+
+  @Test
+  void severalRequestedTypesAreReturned() throws Exception {
+    Assertions.assertEquals(java.util.Set.of("saml_service_provider", "federation_entity"),
+        this.resolvedTypes(List.of("saml_service_provider", "federation_entity", "openid_provider")));
+  }
+
+  @Test
+  void allTypesAreReturnedWhenNoneAreRequested() throws Exception {
+    Assertions.assertEquals(java.util.Set.of("saml_service_provider", "federation_entity"),
+        this.resolvedTypes(null));
+  }
+
+  @Test
+  void subjectWithoutRequestedTypeIsNotFound() {
+    final ResolveRequest request = new ResolveRequest(LEAF_ID, TA_ID, List.of("openid_provider"), false);
+    assertThrows(NotFoundException.class, () -> resolver.resolve(request));
+  }
+
+  private java.util.Set<String> resolvedTypes(final List<String> types) throws Exception {
+    when(factory.sign(any())).thenReturn("mock-signed-resolve-response");
+    resolver.resolve(new ResolveRequest(SAML_SP_ID, TA_ID, types, false));
+    final ArgumentCaptor<ResolverResponse> captor = ArgumentCaptor.forClass(ResolverResponse.class);
+    verify(factory).sign(captor.capture());
+    return captor.getValue().metadata().keySet();
   }
 
   @Test
@@ -164,7 +197,7 @@ class ValidatingResolverInMemoryTreeTest {
 
   @Test
   void resolveTrustAnchorAsSubjectWithUnmatchedTypeIsReportedAsError() {
-    final ResolveRequest request = new ResolveRequest(TA_ID, TA_ID, "openid_relying_party", false);
+    final ResolveRequest request = new ResolveRequest(TA_ID, TA_ID, List.of("openid_relying_party"), false);
 
     assertThrows(NotFoundException.class, () -> resolver.resolve(request));
   }

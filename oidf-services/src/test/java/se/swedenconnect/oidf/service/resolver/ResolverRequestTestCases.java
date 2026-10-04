@@ -22,6 +22,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.client.RestClient;
 
 import java.text.ParseException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for the parameters of the resolve request.
@@ -51,12 +54,33 @@ public class ResolverRequestTestCases {
     Assertions.assertTrue(response.getError().getMessage().contains("invalid_trust_anchor"));
   }
 
+  @Test
+  void metadataIsFilteredOnEntityTypes() throws ParseException {
+    final ResolverDifferentiator.Response all = resolve(List.of(), TRUST_ANCHOR);
+    final ResolverDifferentiator.Response filtered =
+        resolve(List.of("openid_provider", "unknown_type"), TRUST_ANCHOR);
+
+    Assertions.assertTrue(metadata(all).keySet().size() > 1);
+    Assertions.assertEquals(Set.of("openid_provider"), metadata(filtered).keySet());
+  }
+
+  private static Map<String, Object> metadata(final ResolverDifferentiator.Response response) throws ParseException {
+    Assertions.assertNull(response.getError());
+    return SignedJWT.parse(response.getBody()).getJWTClaimsSet().getJSONObjectClaim("metadata");
+  }
+
   private static ResolverDifferentiator.Response resolve(final String... trustAnchors) {
+    return resolve(List.of(), trustAnchors);
+  }
+
+  private static ResolverDifferentiator.Response resolve(final List<String> entityTypes,
+      final String... trustAnchors) {
     return RestClient.builder().baseUrl(RESOLVER).build()
         .get()
         .uri(uri -> uri.path("/resolve")
             .queryParam("sub", SUBJECT)
             .queryParam("trust_anchor", (Object[]) trustAnchors)
+            .queryParam("entity_type", entityTypes.toArray())
             .build())
         .exchange((req, res) -> {
           final String body = new String(res.getBody().readAllBytes());

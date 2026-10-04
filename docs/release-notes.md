@@ -27,6 +27,7 @@
 * Metadata policy operators now follow OpenID Federation 1.0, including allowed operator combinations, `value` set to `null`, `subset_of` giving an empty array, merging of `one_of`, and `scope` handled as a list of values. ([#198](https://github.com/swedenconnect/openid-federation-services/issues/198))
 * Metadata policy errors in the resolver now give `invalid_metadata` with HTTP 400 instead of 500, and entities without metadata no longer cause an error. ([#199](https://github.com/swedenconnect/openid-federation-services/issues/199))
 * Resolve requests with several `trust_anchor` parameters now use the first Trust Anchor the resolver is configured for. ([#200](https://github.com/swedenconnect/openid-federation-services/issues/200))
+* Resolve responses now contain only the entity types requested with `entity_type`, and the parameter may be given more than once. ([#201](https://github.com/swedenconnect/openid-federation-services/issues/201))
 
 ## Version 0.11.17
 

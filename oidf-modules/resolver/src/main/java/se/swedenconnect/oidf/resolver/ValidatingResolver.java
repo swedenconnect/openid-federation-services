@@ -149,7 +149,7 @@ public class ValidatingResolver implements Resolver {
       }
       JSONObject selfMetadata = null;
       try {
-        selfMetadata = this.processor.processMetadata(selfChain);
+        selfMetadata = filterTypes(this.processor.processMetadata(selfChain), request, validationErrors);
       } catch (final Exception e) {
         log.debug("Could not process metadata for self resolved entity:{}", request.subject(), e);
       }
@@ -181,7 +181,7 @@ public class ValidatingResolver implements Resolver {
 
     JSONObject processedMetadata = null;
     try {
-      processedMetadata = this.processor.processMetadata(trustChainList);
+      processedMetadata = filterTypes(this.processor.processMetadata(trustChainList), request, validationErrors);
     } catch (final Exception e) {
       validationErrors.add(e);
     }
@@ -212,6 +212,29 @@ public class ValidatingResolver implements Resolver {
         .validationErrors(validationErrors)
         .typedValidationErrors(chainValidationResult.typedErrors())
         .build();
+  }
+
+  /**
+   * Keeps only the entity types requested with {@code entity_type} (OpenID Federation 1.0, Section 8.3.1). When the
+   * subject has none of the requested types, a {@link NotFoundException} is added to the validation errors.
+   *
+   * @param metadata the resolved metadata
+   * @param request the resolve request
+   * @param validationErrors the validation errors of the request
+   * @return the metadata of the requested types, or all metadata if no types were requested
+   */
+  private static JSONObject filterTypes(final JSONObject metadata, final ResolveRequest request,
+      final List<Exception> validationErrors) {
+    if (metadata == null || request.types() == null || request.types().isEmpty()) {
+      return metadata;
+    }
+    final JSONObject filtered = new JSONObject();
+    request.types().stream().filter(metadata::containsKey).forEach(type -> filtered.put(type, metadata.get(type)));
+    if (filtered.isEmpty()) {
+      validationErrors.add(new NotFoundException("Subject %s has none of the requested entity types %s"
+          .formatted(request.subject(), request.types())));
+    }
+    return filtered;
   }
 
   /**

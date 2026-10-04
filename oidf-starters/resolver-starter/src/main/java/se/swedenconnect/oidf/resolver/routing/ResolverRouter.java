@@ -121,14 +121,14 @@ public class ResolverRouter implements Router, ModuleRouter {
                   .explain(new ResolveRequest(
                   params.getFirst("sub"),
                   trustAnchor,
-                  params.getFirst("entity_type"),
+                  entityTypes(params),
                   true
               )));
             }
             final ResolveRequest resolveRequest = new ResolveRequest(
                 params.getFirst("sub"),
                 trustAnchor,
-                params.getFirst("entity_type"),
+                entityTypes(params),
                 false
             );
             final Long snapshot = this.lookup.getLatestSnapshotVersion();
@@ -231,7 +231,7 @@ public class ResolverRouter implements Router, ModuleRouter {
     return new ResolveRequest(
         params.getFirst("sub"),
         selectTrustAnchor(params, properties),
-        params.getFirst("entity_type"),
+        entityTypes(params),
         explain
     );
   }
@@ -251,6 +251,20 @@ public class ResolverRouter implements Router, ModuleRouter {
         .filter(trustAnchor -> trustAnchor.equalsIgnoreCase(properties.getTrustAnchor()))
         .findFirst()
         .orElse(trustAnchors.getFirst());
+  }
+
+  /**
+   * Gets the requested entity types. The {@code entity_type} parameter may occur more than once
+   * (OpenID Federation 1.0, Section 8.3.1). Blank values are ignored.
+   *
+   * @param params the request parameters
+   * @return the requested entity types, or null if none were requested
+   */
+  private static List<String> entityTypes(final MultiValueMap<String, String> params) {
+    final List<String> types = Optional.ofNullable(params.get("entity_type")).orElseGet(List::of).stream()
+        .filter(type -> type != null && !type.isBlank())
+        .toList();
+    return types.isEmpty() ? null : types;
   }
 
   private DiscoveryRequest createDiscoveryRequest(final ServerRequest request) throws FederationException {
