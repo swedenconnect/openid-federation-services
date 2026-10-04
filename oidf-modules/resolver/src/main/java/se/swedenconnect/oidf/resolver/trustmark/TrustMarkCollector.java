@@ -24,17 +24,16 @@ import com.nimbusds.jose.jwk.JWKSelector;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 
 import java.security.Key;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -123,26 +122,24 @@ public class TrustMarkCollector {
     }
 
     return filtered.stream().filter(jwt -> {
-      try {
-        final JWTClaimsSet claims = jwt.getTrustMark().getJWTClaimsSet();
-        final String trustMarkType = claims.getClaimAsString("trust_mark_type");
-        final Optional<TrustMarkStatusResponse> trustMarkStatus =
-            Optional.ofNullable(chain.getLeafEntity().getTrustMarkStatuses().get(trustMarkType));
-        return trustMarkStatus.map(tms -> {
-              if (tms.isError()) {
-                return true;
-              }
-              try {
-                final Map<String, Object> tmsClaims = tms.getSignedJWT().getJWTClaimsSet().getClaims();
-                return tmsClaims.containsKey("status") && "active".equals(tmsClaims.get("status"));
-              } catch (final java.text.ParseException e) {
-                return false;
-              }
-            })
-            .orElse(false);
-      } catch (final java.text.ParseException e) {
-        throw new RuntimeException(e);
+      final String trustMarkType = EntityStatementClaims.getTrustMarkType(jwt.getTrustMark());
+      if (trustMarkType == null) {
+        return false;
       }
+      final Optional<TrustMarkStatusResponse> trustMarkStatus =
+          Optional.ofNullable(chain.getLeafEntity().getTrustMarkStatuses().get(trustMarkType));
+      return trustMarkStatus.map(tms -> {
+            if (tms.isError()) {
+              return true;
+            }
+            try {
+              final Map<String, Object> tmsClaims = tms.getSignedJWT().getJWTClaimsSet().getClaims();
+              return tmsClaims.containsKey("status") && "active".equals(tmsClaims.get("status"));
+            } catch (final java.text.ParseException e) {
+              return false;
+            }
+          })
+          .orElse(false);
     }).toList();
   }
 
@@ -175,19 +172,8 @@ public class TrustMarkCollector {
     return issuers.contains(new Issuer(issuer));
   }
 
-  @SuppressWarnings("unchecked")
-  private static List<TrustMarkEntry> parseTrustMark(final SignedJWT entity) throws java.text.ParseException {
-    final List<Object> trustMarks =
-        Optional.ofNullable(EntityStatementClaims.claims(entity).getListClaim("trust_marks")).orElseGet(List::of);
-    return trustMarks.stream()
-        .map(o -> new JSONObject((Map<String, Object>) o))
-        .map(json -> {
-          try {
-            return TrustMarkEntry.parse(json);
-          } catch (final ParseException e) {
-            throw new IllegalArgumentException("Failed to parse TrustMarkEntry", e);
-          }
-        }).toList();
+  private static List<TrustMarkEntry> parseTrustMark(final SignedJWT entity) {
+    return new ArrayList<>(Optional.ofNullable(EntityStatementClaims.getTrustMarks(entity)).orElseGet(List::of));
   }
 
   protected static Key selectKey(final SignedJWT jwt, final JWKSet jwks) throws JOSEException {

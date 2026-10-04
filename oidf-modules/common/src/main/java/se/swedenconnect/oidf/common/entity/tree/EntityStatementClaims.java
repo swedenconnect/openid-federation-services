@@ -25,6 +25,7 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsVerifier;
@@ -34,8 +35,10 @@ import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import com.nimbusds.openid.connect.sdk.federation.utils.JWTUtils;
+import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +53,7 @@ import java.util.Map;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public final class EntityStatementClaims {
 
   /**
@@ -183,24 +187,99 @@ public final class EntityStatementClaims {
   }
 
   /**
+   * Gets the trust mark entries of the {@code trust_marks} claim. Entries that cannot be parsed are logged and
+   * skipped.
+   *
    * @param jwt to get trust marks from
    * @return trust mark entries from the {@code trust_marks} claim, or null if not present or invalid
    */
-  @SuppressWarnings("unchecked")
   public static List<TrustMarkEntry> getTrustMarks(final SignedJWT jwt) {
+    final List<Object> array;
     try {
-      final List<Object> array = claims(jwt).getListClaim("trust_marks");
-      if (array == null) {
-        return null;
-      }
-      final List<TrustMarkEntry> marks = new LinkedList<>();
-      for (final Object o : array) {
-        marks.add(TrustMarkEntry.parse(new JSONObject((Map<String, Object>) o)));
-      }
-      return marks;
-    } catch (final java.text.ParseException | ParseException e) {
+      array = claims(jwt).getListClaim("trust_marks");
+    } catch (final java.text.ParseException e) {
+      log.info("Invalid trust_marks claim in entity statement for '{}': {}", claims(jwt).getSubject(),
+          e.getMessage());
       return null;
     }
+    if (array == null) {
+      return null;
+    }
+    final List<TrustMarkEntry> marks = new ArrayList<>();
+    for (final Object o : array) {
+      try {
+        marks.add(parseTrustMarkEntry(o));
+      } catch (final ParseException e) {
+        log.info("Ignoring invalid trust_marks entry in entity statement for '{}': {}", claims(jwt).getSubject(),
+            e.getMessage());
+      }
+    }
+    return marks;
+  }
+
+  /**
+   * Parses a {@code trust_marks} entry. The trust mark type is read from {@code trust_mark_type}, with the
+   * {@code id} member of earlier OpenID Federation drafts as a fallback.
+   *
+   * @param entry the entry to parse
+   * @return the trust mark entry
+   * @throws ParseException if the entry is not a valid trust mark entry
+   */
+  @SuppressWarnings("unchecked")
+  public static TrustMarkEntry parseTrustMarkEntry(final Object entry) throws ParseException {
+    if (!(entry instanceof final Map<?, ?> map)) {
+      throw new ParseException("Trust mark entry is not a JSON object");
+    }
+    final JSONObject json = new JSONObject((Map<String, Object>) map);
+    String type = JSONObjectUtils.getString(json, "trust_mark_type", null);
+    if (type == null || type.isBlank()) {
+      type = JSONObjectUtils.getString(json, "id", null);
+    }
+    if (type == null || type.isBlank()) {
+      throw new ParseException("Trust mark entry is missing trust_mark_type");
+    }
+    final String trustMark = JSONObjectUtils.getNonBlankString(json, "trust_mark");
+    try {
+      return new TrustMarkEntry(new Identifier(type), SignedJWT.parse(trustMark));
+    } catch (final java.text.ParseException e) {
+      throw new ParseException("Invalid trust mark JWT: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Gets the type of a trust mark JWT. The type is read from the {@code trust_mark_type} claim, with the {@code id}
+   * claim of earlier OpenID Federation drafts as a fallback.
+   *
+   * @param trustMark the trust mark JWT
+   * @return the trust mark type, or null if not present or the claims cannot be parsed
+   */
+  public static String getTrustMarkType(final SignedJWT trustMark) {
+    try {
+      final JWTClaimsSet trustMarkClaims = trustMark.getJWTClaimsSet();
+      final String type = trustMarkClaims.getStringClaim("trust_mark_type");
+      if (type != null && !type.isBlank()) {
+        return type;
+      }
+      final String id = trustMarkClaims.getStringClaim("id");
+      return id != null && !id.isBlank() ? id : null;
+    } catch (final java.text.ParseException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Serializes a trust mark entry for the {@code trust_marks} claim. The draft {@code id} member is written next to
+   * {@code trust_mark_type} for peers that still read the draft form.
+   *
+   * @param entry the trust mark entry
+   * @return JSON object with the members {@code trust_mark_type}, {@code id} and {@code trust_mark}
+   */
+  public static JSONObject toJSONObject(final TrustMarkEntry entry) {
+    final JSONObject json = new JSONObject();
+    json.put("trust_mark_type", entry.getID().getValue());
+    json.put("id", entry.getID().getValue());
+    json.put("trust_mark", entry.getTrustMark().serialize());
+    return json;
   }
 
   /**

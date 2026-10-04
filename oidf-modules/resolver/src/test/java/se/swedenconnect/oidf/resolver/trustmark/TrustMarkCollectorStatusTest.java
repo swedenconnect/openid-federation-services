@@ -162,7 +162,54 @@ class TrustMarkCollectorStatusTest {
         "Superior statement for the subject without trust_marks should not prevent collection");
   }
 
+  @Test
+  void entryWithTrustMarkTypeIsCollected() throws Exception {
+    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
+    final String trustMarkJwt = buildTrustMarkJwt(key);
+
+    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt, "trust_mark_type");
+    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
+    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
+
+    final ScrapedEntity leafEntity = ScrapedEntity.builder()
+        .entityID(new EntityID(SUBJECT))
+        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
+        .build();
+    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
+    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
+
+    Assertions.assertEquals(1, result.size(),
+        "Trust mark entry using trust_mark_type should be collected");
+    Assertions.assertEquals(TRUST_MARK_TYPE, result.getFirst().getID().getValue());
+  }
+
+  @Test
+  void draftTrustMarkJwtWithIdIsCollected() throws Exception {
+    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
+    final String trustMarkJwt = buildTrustMarkJwt(key, "id");
+
+    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt, "id");
+    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
+    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
+
+    final ScrapedEntity leafEntity = ScrapedEntity.builder()
+        .entityID(new EntityID(SUBJECT))
+        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
+        .build();
+    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
+    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
+    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
+
+    Assertions.assertEquals(1, result.size(),
+        "Trust mark JWT using the draft id claim should be collected");
+  }
+
   private String buildTrustMarkJwt(final JWK key) throws Exception {
+    return buildTrustMarkJwt(key, "trust_mark_type");
+  }
+
+  private String buildTrustMarkJwt(final JWK key, final String typeClaim) throws Exception {
     final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
         .type(new JOSEObjectType("trust-mark+jwt"))
         .keyID(key.getKeyID())
@@ -170,7 +217,7 @@ class TrustMarkCollectorStatusTest {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
         .issuer(ISSUER)
         .subject(SUBJECT)
-        .claim("trust_mark_type", TRUST_MARK_TYPE)
+        .claim(typeClaim, TRUST_MARK_TYPE)
         .issueTime(Date.from(Instant.now()))
         .build();
     final SignedJWT jwt = new SignedJWT(header, claims);
@@ -180,8 +227,13 @@ class TrustMarkCollectorStatusTest {
 
   private SignedJWT buildSignedJWTWithTrustMark(final JWK key, final String trustMarkJwt)
       throws Exception {
+    return buildSignedJWTWithTrustMark(key, trustMarkJwt, "id");
+  }
+
+  private SignedJWT buildSignedJWTWithTrustMark(final JWK key, final String trustMarkJwt, final String typeMember)
+      throws Exception {
     final JSONObject trustMarkEntry = new JSONObject();
-    trustMarkEntry.put("id", TRUST_MARK_TYPE);
+    trustMarkEntry.put(typeMember, TRUST_MARK_TYPE);
     trustMarkEntry.put("trust_mark", trustMarkJwt);
 
     final JSONArray trustMarks = new JSONArray();
