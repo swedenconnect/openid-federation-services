@@ -125,6 +125,14 @@ public class TrustAnchorTestCases {
   }
 
   @Test
+  @DisplayName("Fetch with the issuer itself as subject : 400")
+  void fetchFailsWhenSubjectIsIssuer(final FederationClients clients) {
+    final TrustAnchorClient client = clients.intermediate();
+    Assertions.assertThrows(HttpClientErrorException.BadRequest.class,
+        () -> client.fetch(TestFederationEntities.IM.INTERMEDIATE));
+  }
+
+  @Test
   @DisplayName("Fetch non-existing subject : 404")
   void fetchFailsWhenInvalidEntityId(final FederationClients clients) {
     final TrustAnchorClient client = clients.anarchy().trustAnchor();

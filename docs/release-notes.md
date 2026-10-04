@@ -39,6 +39,7 @@
 * Metadata policies are only taken from Subordinate Statements, never from Entity Configurations. ([#210](https://github.com/swedenconnect/openid-federation-services/issues/210))
 * The trust mark endpoint now returns 400 `invalid_request` when `trust_mark_type` or `sub` is missing. ([#212](https://github.com/swedenconnect/openid-federation-services/issues/212))
 * The trust mark status endpoint now reports `invalid` for trust marks without the `typ` header `trust-mark+jwt`. ([#214](https://github.com/swedenconnect/openid-federation-services/issues/214))
+* Fetch requests with the issuer itself as `sub` now give 400 `invalid_request`. ([#215](https://github.com/swedenconnect/openid-federation-services/issues/215))
 
 ## Version 0.11.17
 

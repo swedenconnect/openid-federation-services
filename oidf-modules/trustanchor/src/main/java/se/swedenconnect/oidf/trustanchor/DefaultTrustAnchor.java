@@ -36,6 +36,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkValidator;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
+import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
@@ -87,8 +88,12 @@ public class DefaultTrustAnchor implements TrustAnchor {
 
   @Override
   public String fetchEntityStatement(final FetchRequest request)
-      throws InvalidIssuerException, NotFoundException {
+      throws InvalidIssuerException, NotFoundException, InvalidRequestException {
     this.debugLogRequest(request);
+    if (this.properties.getEntityIdentifier().getValue().equals(request.subject())) {
+      // A statement about the issuer itself is never issued (Section 8.1.2)
+      throw new InvalidRequestException("sub must not be the issuer itself");
+    }
     final EntityRecord issuer = this.source.getEntity(
             new NodeKey(this.properties.getEntityIdentifier().getValue())
         )
