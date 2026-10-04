@@ -42,11 +42,13 @@ import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Default implementation of trust anchor.
@@ -133,13 +135,29 @@ public class DefaultTrustAnchor implements TrustAnchor {
 
     final Instant now = Instant.now();
     final Map<String, JWKSet> issuerKeys = this.trustMarkIssuerKeys(subordinates);
-    return subordinates.stream()
-        .map(subordinate -> this.entityConfigurationOrNull(subordinate, now))
-        .filter(Objects::nonNull)
-        .filter(request.toPredicate(ec -> this.validTrustMarks(ec, issuerKeys, now)))
-        .map(EntityStatementClaims::getEntityID)
-        .map(EntityID::getValue)
-        .toList();
+    final Predicate<SignedJWT> filter = request.toPredicate(ec -> this.validTrustMarks(ec, issuerKeys, now));
+    // The entity_type and intermediate filters only apply when the type of a subordinate is known (Section 8.2.1).
+    // A subordinate whose Entity Configuration cannot be fetched has unknown types, so it is kept, unless a trust
+    // mark filter asks for evidence that it cannot give.
+    final boolean keepUnavailable = request.trustMarkType() == null && !Boolean.TRUE.equals(request.trustMarked());
+    final List<String> result = new ArrayList<>();
+    for (final TrustAnchorProperties.SubordinateListingProperty subordinate : subordinates) {
+      final FetchedConfiguration fetched = this.fetchEntityConfiguration(subordinate, now);
+      if (fetched.configuration() != null ? filter.test(fetched.configuration())
+          : !fetched.available() && keepUnavailable) {
+        result.add(subordinate.getEntityIdentifier().getValue());
+      }
+    }
+    return result;
+  }
+
+  /**
+   * The outcome of fetching the Entity Configuration of a subordinate.
+   *
+   * @param configuration the valid Entity Configuration, or null if none was obtained
+   * @param available false if the Entity Configuration could not be fetched
+   */
+  private record FetchedConfiguration(SignedJWT configuration, boolean available) {
   }
 
   /**
@@ -148,9 +166,9 @@ public class DefaultTrustAnchor implements TrustAnchor {
    *
    * @param entity the subordinate
    * @param now the current time
-   * @return the Entity Configuration, or null if it cannot be fetched or is not valid
+   * @return the outcome, holding the Entity Configuration if it was fetched and is valid
    */
-  private SignedJWT entityConfigurationOrNull(final TrustAnchorProperties.SubordinateListingProperty entity,
+  private FetchedConfiguration fetchEntityConfiguration(final TrustAnchorProperties.SubordinateListingProperty entity,
       final Instant now) {
     final EntityID entityID = entity.getEntityIdentifier();
     final SignedJWT entityConfiguration;
@@ -159,9 +177,13 @@ public class DefaultTrustAnchor implements TrustAnchor {
           new EntityConfigurationRequest(entityID, entity.getEcLocation()),
           Map.of()));
     } catch (final Exception e) {
-      log.warn("Skipping subordinate {} in filtered listing, entity configuration unavailable",
-          entityID.getValue(), e);
-      return null;
+      log.info("Entity configuration of subordinate {} unavailable for filtered listing: {}",
+          entityID.getValue(), e.getMessage());
+      return new FetchedConfiguration(null, false);
+    }
+    if (entityConfiguration == null) {
+      log.info("Entity configuration of subordinate {} unavailable for filtered listing", entityID.getValue());
+      return new FetchedConfiguration(null, false);
     }
     try {
       final JWTClaimsSet claims = entityConfiguration.getJWTClaimsSet();
@@ -181,7 +203,7 @@ public class DefaultTrustAnchor implements TrustAnchor {
       }
       else {
         EntityStatementClaims.verifySignature(entityConfiguration, entity.getJwks());
-        return entityConfiguration;
+        return new FetchedConfiguration(entityConfiguration, true);
       }
       log.info("Skipping subordinate {} in filtered listing, invalid entity configuration: {}",
           entityID.getValue(), error);
@@ -190,7 +212,7 @@ public class DefaultTrustAnchor implements TrustAnchor {
       log.info("Skipping subordinate {} in filtered listing, invalid entity configuration: {}",
           entityID.getValue(), e.getMessage());
     }
-    return null;
+    return new FetchedConfiguration(null, true);
   }
 
   /**

@@ -43,6 +43,7 @@
 * `trust_marked=false` and `intermediate=false` no longer filter the subordinate listing. ([#216](https://github.com/swedenconnect/openid-federation-services/issues/216))
 * Subordinate listing requests with a `trust_marked` or `intermediate` value other than `true` or `false` now give 400 `invalid_request`. ([#217](https://github.com/swedenconnect/openid-federation-services/issues/217))
 * The `intermediate` filter of the subordinate listing now counts every subordinate with a fetch endpoint as an intermediate, also when it has no list endpoint. ([#218](https://github.com/swedenconnect/openid-federation-services/issues/218))
+* Subordinates whose Entity Configuration cannot be fetched are now kept in listings filtered by `entity_type` or `intermediate`, since their types are unknown. ([#219](https://github.com/swedenconnect/openid-federation-services/issues/219))
 
 ## Version 0.11.17
 

@@ -75,7 +75,11 @@ class DefaultTrustAnchorListingTest {
     this.client = Mockito.mock(FederationClient.class);
     Mockito.when(this.client.entityConfiguration(Mockito.any())).thenAnswer(invocation -> {
       final FederationRequest<EntityConfigurationRequest> request = invocation.getArgument(0);
-      return this.configurations.get(request.parameters().entityID().getValue());
+      final SignedJWT configuration = this.configurations.get(request.parameters().entityID().getValue());
+      if (configuration == null) {
+        throw new IllegalStateException("connection refused");
+      }
+      return configuration;
     });
     this.configurations.put(ISSUER, this.configuration(ISSUER, ISSUER, List.of()));
   }
@@ -123,11 +127,28 @@ class DefaultTrustAnchorListingTest {
     Assertions.assertEquals(List.of(), this.listByType(null));
   }
 
+  @Test
+  void unavailableSubordinateIsKeptForEntityTypeFilter() throws Exception {
+    // No Entity Configuration is registered for the holder, so fetching it fails
+    Assertions.assertEquals(List.of(HOLDER),
+        this.list(new SubordinateListingRequest(List.of("openid_provider"), null, null, null), null));
+  }
+
+  @Test
+  void unavailableSubordinateIsLeftOutForTrustMarkFilter() throws Exception {
+    Assertions.assertEquals(List.of(), this.listByType(null));
+  }
+
   private List<String> listByType(final Map<EntityID, List<EntityID>> trustMarkIssuers) throws Exception {
+    return this.list(new SubordinateListingRequest(null, null, TYPE, null), trustMarkIssuers);
+  }
+
+  private List<String> list(final SubordinateListingRequest request,
+      final Map<EntityID, List<EntityID>> trustMarkIssuers) throws Exception {
     final TrustAnchorProperties properties = new TrustAnchorProperties(new EntityID(TA), trustMarkIssuers, null);
     final DefaultTrustAnchor trustAnchor = new DefaultTrustAnchor(this.source, properties,
         Mockito.mock(SubordinateStatementFactory.class), this.client);
-    return trustAnchor.subordinateListing(new SubordinateListingRequest(null, null, TYPE, null));
+    return trustAnchor.subordinateListing(request);
   }
 
   private TrustAnchorProperties.SubordinateListingProperty subordinate(final String id) {
