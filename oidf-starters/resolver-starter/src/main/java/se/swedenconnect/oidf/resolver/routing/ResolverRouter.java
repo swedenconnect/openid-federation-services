@@ -109,24 +109,25 @@ public class ResolverRouter implements Router, ModuleRouter {
                 request.params(),
                 List.of("sub", "trust_anchor")
             );
+            final ResolverProperties resolverProperties = source.getResolverProperties().stream()
+                .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.getEntityIdentifier()), "/resolve")
+                    .test(request))
+                .findFirst()
+                .get();
+            final String trustAnchor = selectTrustAnchor(params, resolverProperties);
 
             if (params.containsKey("explain") && Boolean.parseBoolean(params.getFirst("explain"))) {
-              final ResolverProperties resolverProperties = source.getResolverProperties().stream()
-                  .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.getEntityIdentifier()), "/resolve")
-                      .test(request))
-                  .findFirst()
-                  .get();
               return ServerResponse.ok().body(this.resolverFactory.create(resolverProperties)
                   .explain(new ResolveRequest(
                   params.getFirst("sub"),
-                  params.getFirst("trust_anchor"),
+                  trustAnchor,
                   params.getFirst("entity_type"),
                   true
               )));
             }
             final ResolveRequest resolveRequest = new ResolveRequest(
                 params.getFirst("sub"),
-                params.getFirst("trust_anchor"),
+                trustAnchor,
                 params.getFirst("entity_type"),
                 false
             );
@@ -137,11 +138,6 @@ public class ResolverRouter implements Router, ModuleRouter {
               this.tagObservation("/resolve", true);
               return serverResponse.get();
             }
-            final ResolverProperties resolverProperties = source.getResolverProperties().stream()
-                .filter(prop -> this.routeFactory.createRoute(new EntityID(prop.getEntityIdentifier()), "/resolve")
-                    .test(request))
-                .findFirst()
-                .get();
             final String resolveResponse = this.resolverFactory.create(resolverProperties).resolve(resolveRequest);
             this.resolverResponseCache.put(snapshot, resolveRequest, resolveResponse);
             this.tagObservation("/resolve", false);
@@ -211,7 +207,7 @@ public class ResolverRouter implements Router, ModuleRouter {
           .findFirst();
       final Resolver resolver = this.resolverFactory.create(resolverProperties.get());
       if (isResolve) {
-        final ResolveRequest resolveRequest = this.createResolveRequest(request);
+        final ResolveRequest resolveRequest = this.createResolveRequest(request, resolverProperties.get());
         final String response = resolver.resolve(resolveRequest);
         return new CachedResponse(response, "application/resolve-response+jwt", 200);
       }
@@ -227,16 +223,34 @@ public class ResolverRouter implements Router, ModuleRouter {
     }
   }
 
-  private ResolveRequest createResolveRequest(final ServerRequest request) throws FederationException {
+  private ResolveRequest createResolveRequest(final ServerRequest request, final ResolverProperties properties)
+      throws FederationException {
     final MultiValueMap<String, String> params = RequireParameters.validate(
         request.params(), List.of("sub", "trust_anchor"));
     final boolean explain = Boolean.parseBoolean(params.getFirst("explain"));
     return new ResolveRequest(
         params.getFirst("sub"),
-        params.getFirst("trust_anchor"),
+        selectTrustAnchor(params, properties),
         params.getFirst("entity_type"),
         explain
     );
+  }
+
+  /**
+   * Selects the trust anchor to resolve with. The {@code trust_anchor} parameter may occur more than once
+   * (OpenID Federation 1.0, Section 8.3.1), and the first value that this resolver is configured for is used.
+   *
+   * @param params the request parameters, containing at least one {@code trust_anchor}
+   * @param properties the resolver configuration
+   * @return the first configured trust anchor in the request, or the first value if none is configured
+   */
+  private static String selectTrustAnchor(final MultiValueMap<String, String> params,
+      final ResolverProperties properties) {
+    final List<String> trustAnchors = params.get("trust_anchor");
+    return trustAnchors.stream()
+        .filter(trustAnchor -> trustAnchor.equalsIgnoreCase(properties.getTrustAnchor()))
+        .findFirst()
+        .orElse(trustAnchors.getFirst());
   }
 
   private DiscoveryRequest createDiscoveryRequest(final ServerRequest request) throws FederationException {

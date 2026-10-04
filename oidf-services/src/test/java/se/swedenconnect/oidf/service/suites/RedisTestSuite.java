@@ -36,6 +36,7 @@ import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
 import se.swedenconnect.oidf.service.entity.RegistryMock;
 import se.swedenconnect.oidf.service.resolver.ResolverConstraintTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverCritTestCases;
+import se.swedenconnect.oidf.service.resolver.ResolverRequestTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverDiscoveryTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverPolicyTestCases;
 import se.swedenconnect.oidf.service.resolver.ResolverSamlSpTestCases;
@@ -52,6 +53,7 @@ import java.util.Random;
 @SuiteDisplayName("Redis Test Suite")
 @SelectClasses(value = {
     ResolverConstraintTestCases.class,
+    ResolverRequestTestCases.class,
     ResolverTrustMarkTestCases.class,
     ResolverDiscoveryTestCases.class,
     GeneralErrorHandlingTestCases.class,
