@@ -52,4 +52,16 @@ class SubordinateListingRequestTest {
     Assertions.assertFalse(trustMarked.test(LEAF));
     Assertions.assertFalse(intermediate.test(LEAF));
   }
+
+  @Test
+  void entityWithOnlyFetchEndpointIsIntermediate() {
+    final SignedJWT intermediate = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), new JWTClaimsSet.Builder()
+        .issuer("https://im.example.com")
+        .subject("https://im.example.com")
+        .claim("metadata", java.util.Map.of("federation_entity",
+            java.util.Map.of("federation_fetch_endpoint", "https://im.example.com/fetch")))
+        .build());
+    Assertions.assertTrue(new SubordinateListingRequest(null, null, null, true)
+        .toPredicate(es -> List.of()).test(intermediate));
+  }
 }

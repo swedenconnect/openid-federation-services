@@ -98,12 +98,12 @@ public record SubordinateListingRequest(List<String> entityType, Boolean trustMa
     }
 
     if (Boolean.TRUE.equals(this.intermediate)) {
+      // An entity with subordinates must have a fetch endpoint, a list endpoint is optional (Section 8.1)
       predicates.add(es -> {
         final FederationEntityMetadata federationEntityMetadata =
             EntityStatementClaims.getFederationEntityMetadata(es);
         return Objects.nonNull(federationEntityMetadata)
-            && Objects.nonNull(federationEntityMetadata.getFederationFetchEndpointURI())
-            && Objects.nonNull(federationEntityMetadata.getFederationListEndpointURI());
+            && Objects.nonNull(federationEntityMetadata.getFederationFetchEndpointURI());
       });
     }
 
