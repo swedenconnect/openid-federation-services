@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.T
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.time.Clock;
@@ -112,10 +113,12 @@ public class TrustMarkIssuer {
   }
 
   /**
-   * Validate the trust mark status.
+   * Gets the status of a trust mark issued by this trust mark issuer (OpenID Federation 1.0, Section 8.4).
    *
    * @param request For a TrustMark status check
-   * @return True if trust mark is active
+   * @return signed status response with the status {@code active}, {@code invalid}, {@code revoked} or
+   *     {@code expired}
+   * @throws NotFoundException if the trust mark was not issued by this issuer, or its type or subject is unknown
    */
   public String trustMarkStatus(final TrustMarkStatusRequest request)
       throws NotFoundException, InvalidRequestException {
@@ -124,48 +127,61 @@ public class TrustMarkIssuer {
       final SignedJWT parse = SignedJWT.parse(request.trustMark());
 
       final JWTClaimsSet trustMarkClaims = parse.getJWTClaimsSet();
-      final String trustMarkType = trustMarkClaims.getStringClaim("trust_mark_type");
-      final String sub = trustMarkClaims.getStringClaim("sub");
+      final String trustMarkType = EntityStatementClaims.getTrustMarkType(parse);
+      final String sub = trustMarkClaims.getSubject();
+      final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
 
-      final boolean exists = this.trustMarkIssuerProperties.trustMarks()
+      if (!entityIdentifier.equals(trustMarkClaims.getIssuer())) {
+        throw new NotFoundException("Trust mark was not issued by %s".formatted(entityIdentifier));
+      }
+      final boolean exists = trustMarkType != null && this.trustMarkIssuerProperties.trustMarks()
           .stream()
           .anyMatch(tmi -> tmi.getTrustMarkType().getTrustMarkType().equals(trustMarkType));
-
       if (!exists) {
         throw new NotFoundException("Could not find any trust mark with type %s".formatted(trustMarkType));
       }
 
-      String status = "active";
-      final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
-      final Optional<EntityRecord> entity = this.source.getEntity(new NodeKey(entityIdentifier));
-      if (!this.signer.verify(entity.get(), request.trustMark())) {
-        status = "invalid";
-      }
+      final EntityRecord entity = this.source.getEntity(new NodeKey(entityIdentifier))
+          .orElseThrow(() -> new NotFoundException("Trust mark issuer %s not found".formatted(entityIdentifier)));
+      final String status = this.resolveStatus(entity, request.trustMark(), trustMarkClaims, trustMarkType, sub);
 
-      final Optional<TrustMarkSubjectProperty> subject =
-          this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.entityIdentifier(),
-              new TrustMarkType(trustMarkType),
-              new EntityID(sub));
-
-      if (subject.isPresent()) {
-        if (subject.get().revoked()) {
-          status = "revoked";
-        }
-        final Optional<Date> expirationTime = Optional.ofNullable(trustMarkClaims.getExpirationTime());
-        if (expirationTime.isPresent()) {
-          if (Instant.now().isAfter(expirationTime.get().toInstant())) {
-            status = "expired";
-          }
-        }
-      }
-
-      return this.signer.signStatus(
-          entity.get(),
-          request.trustMark(),
-          status).serialize();
+      return this.signer.signStatus(entity, request.trustMark(), status).serialize();
     } catch (final java.text.ParseException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Resolves the status of a trust mark whose issuer and type are known to be this issuer's.
+   *
+   * @param entity the trust mark issuer entity
+   * @param trustMark the serialized trust mark
+   * @param trustMarkClaims the claims of the trust mark
+   * @param trustMarkType the trust mark type
+   * @param sub the subject of the trust mark
+   * @return the status
+   * @throws NotFoundException if the subject is not registered for the trust mark type
+   */
+  private String resolveStatus(final EntityRecord entity, final String trustMark, final JWTClaimsSet trustMarkClaims,
+      final String trustMarkType, final String sub) throws NotFoundException {
+    if (!this.signer.verify(entity, trustMark)) {
+      return "invalid";
+    }
+    if (sub == null) {
+      throw new NotFoundException("Trust mark has no subject");
+    }
+    final TrustMarkSubjectProperty subject = this.source.getTrustMarkSubject(
+            this.trustMarkIssuerProperties.entityIdentifier(), new TrustMarkType(trustMarkType), new EntityID(sub))
+        .orElseThrow(() -> new NotFoundException("Subject %s has no trust mark of type %s"
+            .formatted(sub, trustMarkType)));
+    if (subject.revoked()) {
+      return "revoked";
+    }
+    final Date expirationTime = trustMarkClaims.getExpirationTime();
+    if (expirationTime != null && Instant.now(this.clock).isAfter(expirationTime.toInstant())) {
+      return "expired";
+    }
+    return "active";
   }
 
   /**

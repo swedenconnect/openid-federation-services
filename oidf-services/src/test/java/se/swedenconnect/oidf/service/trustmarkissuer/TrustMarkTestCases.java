@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.ApplicationContext;
+import org.springframework.web.client.HttpClientErrorException;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
 import se.swedenconnect.oidf.service.service.testclient.FederationClients;
 import se.swedenconnect.oidf.service.service.testclient.TestFederationClientParameterResolver;
@@ -126,7 +127,7 @@ public class TrustMarkTestCases {
     final Base64URL header = parse.getHeader().toBase64URL();
     final Base64URL signature = parse.getSignature();
     final Base64URL payload = new JWTClaimsSet.Builder(parse.getJWTClaimsSet())
-        .claim("iss", "https://me.test")
+        .claim("ref", "https://me.test")
         .build().toPayload()
         .toBase64URL();
     final SignedJWT modifiedJwt = new SignedJWT(header, payload, signature);
@@ -136,6 +137,28 @@ public class TrustMarkTestCases {
             modifiedJwt.serialize()
         );
     Assertions.assertEquals("invalid", SignedJWT.parse(statusJwt).getJWTClaimsSet().getStringClaim("status"));
+  }
+
+  @Test
+  public void testTrustMarkStatusFromOtherIssuerIsNotFound(final FederationClients clients) throws ParseException {
+
+    final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(
+        TestFederationEntities.IM.TRUST_MARK_ISSUER,
+        TRUST_MARK_ID,
+        TestFederationEntities.IM.OP
+    );
+
+    final SignedJWT parse = SignedJWT.parse(trustMark.serialize());
+    final Base64URL payload = new JWTClaimsSet.Builder(parse.getJWTClaimsSet())
+        .claim("iss", "https://me.test")
+        .build().toPayload()
+        .toBase64URL();
+    final SignedJWT modifiedJwt = new SignedJWT(parse.getHeader().toBase64URL(), payload, parse.getSignature());
+    final RuntimeException e = Assertions.assertThrows(RuntimeException.class,
+        () -> clients.anarchy().trustMark().trustMarkStatus(
+            TestFederationEntities.IM.TRUST_MARK_ISSUER,
+            modifiedJwt.serialize()));
+    Assertions.assertInstanceOf(HttpClientErrorException.NotFound.class, e.getCause());
   }
 
   @Test
