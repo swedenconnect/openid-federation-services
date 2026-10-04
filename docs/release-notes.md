@@ -16,6 +16,7 @@
 * Metadata policies are now applied per entity type. A policy for one entity type no longer affects the metadata of another type. ([#187](https://github.com/swedenconnect/openid-federation-services/issues/187))
 * Naming constraints now use the domain name syntax required by OpenID Federation 1.0 and are matched against the host of the entity identifier. Constraints written as URIs no longer match and must be changed. ([#188](https://github.com/swedenconnect/openid-federation-services/issues/188))
 * The resolver now rejects statements whose `crit` or `metadata_policy_crit` lists claims or operators it does not support, and accepts `metadata_policy_crit` listing only some of the supported operators. ([#189](https://github.com/swedenconnect/openid-federation-services/issues/189))
+* The resolver now reads the trust mark status endpoint from the issuer's metadata instead of guessing it. Trust marks from issuers without a status endpoint are validated locally. ([#190](https://github.com/swedenconnect/openid-federation-services/issues/190))
 
 ## Version 0.11.17
 

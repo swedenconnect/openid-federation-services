@@ -94,6 +94,18 @@ class TrustMarkCollectorStatusTest {
   }
 
   @Test
+  void issuerWithoutStatusEndpointIsAccepted() throws Exception {
+    final String trustMark = this.trustMark().build();
+    Assertions.assertEquals(1, this.collect(trustMark, TrustMarkStatusResponse.noStatusEndpoint()).size());
+  }
+
+  @Test
+  void issuerWithoutStatusEndpointStillNeedsValidSignature() throws Exception {
+    final String trustMark = this.trustMark().signingKey(this.leafKey).build();
+    Assertions.assertTrue(this.collect(trustMark, TrustMarkStatusResponse.noStatusEndpoint()).isEmpty());
+  }
+
+  @Test
   void statusNotSignedByIssuerIsRejected() throws Exception {
     final String trustMark = this.trustMark().build();
     final JWK otherKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();

@@ -70,7 +70,7 @@ public class TrustMarkCollector {
 
   /**
    * Collects and filters trust marks from the given trust chain. A trust mark is kept only if it passes the checks
-   * in OpenID Federation 1.0, Section 7.3, and its issuer reports it as active.
+   * in OpenID Federation 1.0, Section 7.3, and its issuer reports it as active, or publishes no status endpoint.
    *
    * @param chain the resolved trust chain including the leaf entity
    * @param issuerKeyResolver resolves the federation entity keys of a trust mark issuer, empty if the issuer cannot
@@ -127,7 +127,8 @@ public class TrustMarkCollector {
   }
 
   /**
-   * Validates a trust mark according to OpenID Federation 1.0, Section 7.3, and checks its status with the issuer.
+   * Validates a trust mark according to OpenID Federation 1.0, Section 7.3, and checks its status with the issuer
+   * when the issuer publishes a status endpoint.
    *
    * @param entry the trust mark entry
    * @param subject the entity the trust mark is presented for
@@ -203,6 +204,10 @@ public class TrustMarkCollector {
       return "signature is not valid for the issuer keys";
     }
     final TrustMarkStatusResponse status = statuses.get(trustMarkType);
+    if (status != null && status.isNoStatusEndpoint()) {
+      // The issuer publishes no status endpoint, the local checks above are all that can be done (Section 7.3)
+      return null;
+    }
     if (status == null || status.isError() || status.getSignedJWT() == null) {
       return "status could not be obtained from the issuer";
     }
