@@ -143,17 +143,25 @@ public class TrustMarkCollector {
     }).toList();
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * Parses the {@code trust_mark_issuers} claim, a JSON object mapping each trust mark type to an array of
+   * entity identifiers (OpenID Federation 1.0, Section 3.1.2). Values that are not arrays, and array elements that
+   * are not strings, are ignored.
+   *
+   * @param trustMarkIssuer the claim value
+   * @return map of trust mark type to allowed issuers
+   */
   private static Map<Identifier, List<Issuer>> getTrustMarkToIssuersMap(final Map<String, Object> trustMarkIssuer) {
     return trustMarkIssuer
         .entrySet()
         .stream()
         .collect(Collectors.toMap(kv -> new Identifier(kv.getKey()),
-            kv -> ((List<Object>) kv.getValue())
-                .stream()
-                .map(value -> (Map<String, Object>) value)
-                .map(value -> new Issuer((String) value.get("value")))
-                .toList()));
+            kv -> kv.getValue() instanceof final List<?> values
+                ? values.stream()
+                    .filter(String.class::isInstance)
+                    .map(value -> new Issuer((String) value))
+                    .toList()
+                : List.of()));
   }
 
   private static boolean isTrustMarkAllowed(final TrustMarkEntry entry,

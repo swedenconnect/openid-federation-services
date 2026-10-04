@@ -17,11 +17,13 @@
 package se.swedenconnect.oidf.service.entity;
 
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationClaimCustomizer;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -50,7 +52,10 @@ public class TrustAnchorEntityCustomizer implements EntityConfigurationClaimCust
         .findFirst()
         .ifPresent(ta -> {
           Optional.ofNullable(ta.getTrustMarkIssuers()).ifPresent(issuers -> {
-            builder.claim("trust_mark_issuers", ta.getTrustMarkIssuers());
+            final Map<String, Object> claim = new HashMap<>();
+            issuers.forEach((type, entityIds) -> claim.put(type.getValue(),
+                entityIds.stream().map(EntityID::getValue).toList()));
+            builder.claim("trust_mark_issuers", claim);
           });
 
           builder.claim("trust_mark_owners", new HashMap<>(ta.trustMarkOwnersJson()));

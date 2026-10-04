@@ -327,9 +327,7 @@ class TrustMarkCollectorStatusTest {
         .build();
 
     final JSONArray issuerArray = new JSONArray();
-    final JSONObject issuerEntry = new JSONObject();
-    issuerEntry.put("value", ISSUER);
-    issuerArray.add(issuerEntry);
+    issuerArray.add(ISSUER);
 
     final JSONObject trustMarkIssuers = new JSONObject();
     trustMarkIssuers.put(TRUST_MARK_TYPE, issuerArray);
@@ -368,9 +366,7 @@ class TrustMarkCollectorStatusTest {
     trustMarkOwners.put(TRUST_MARK_TYPE, ownerEntry);
 
     final JSONArray issuerArray = new JSONArray();
-    final JSONObject issuerEntry = new JSONObject();
-    issuerEntry.put("value", ISSUER);
-    issuerArray.add(issuerEntry);
+    issuerArray.add(ISSUER);
 
     final JSONObject trustMarkIssuers = new JSONObject();
     trustMarkIssuers.put(TRUST_MARK_TYPE, issuerArray);
