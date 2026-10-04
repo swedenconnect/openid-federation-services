@@ -21,6 +21,7 @@
 * An empty issuer list for a trust mark type in `trust_mark_issuers` now means that any issuer is accepted, as required by OpenID Federation 1.0. ([#192](https://github.com/swedenconnect/openid-federation-services/issues/192))
 * The trust mark status endpoint now returns 404 for trust marks it does not know, and reports `expired` based on the expiry of the trust mark itself. ([#193](https://github.com/swedenconnect/openid-federation-services/issues/193))
 * The trust mark endpoint no longer issues trust marks to revoked, expired or not yet granted subjects, and returns 404 for them instead. ([#194](https://github.com/swedenconnect/openid-federation-services/issues/194))
+* The trust marked entities listing no longer includes revoked or not yet granted subjects, and returns an empty array instead of 404 when no subject is valid. ([#195](https://github.com/swedenconnect/openid-federation-services/issues/195))
 
 ## Version 0.11.17
 

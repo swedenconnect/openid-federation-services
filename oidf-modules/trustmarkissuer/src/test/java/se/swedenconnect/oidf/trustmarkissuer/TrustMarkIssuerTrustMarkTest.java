@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
@@ -45,7 +46,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Tests for {@link TrustMarkIssuer#trustMark(TrustMarkRequest)}.
+ * Tests for {@link TrustMarkIssuer#trustMark(TrustMarkRequest)} and
+ * {@link TrustMarkIssuer#trustMarkListing(TrustMarkListingRequest)}.
  *
  * @author Martin Lindström
  */
@@ -93,6 +95,36 @@ class TrustMarkIssuerTrustMarkTest {
         new TrustMarkSubjectProperty(SUBJECT, Instant.now().minusSeconds(60), Instant.now().plusSeconds(60), false));
 
     Assertions.assertEquals(trustMark.serialize(), issuer.trustMark(new TrustMarkRequest(TYPE, SUBJECT)));
+  }
+
+  @Test
+  void listingOnlyContainsValidSubjects() throws Exception {
+    final Instant now = Instant.now();
+    Mockito.when(this.source.getTrustMarkSubjects(Mockito.any(), Mockito.any())).thenReturn(List.of(
+        new TrustMarkSubjectProperty("https://valid.example.com", now.minusSeconds(60), now.plusSeconds(60), false),
+        new TrustMarkSubjectProperty("https://revoked.example.com", null, null, true),
+        new TrustMarkSubjectProperty("https://expired.example.com", null, now.minusSeconds(60), false),
+        new TrustMarkSubjectProperty("https://future.example.com", now.plusSeconds(60), null, false)));
+    final TrustMarkIssuer issuer = this.issuer(new TrustMarkSubjectProperty(SUBJECT, null, null, false));
+
+    Assertions.assertEquals(List.of("https://valid.example.com"),
+        issuer.trustMarkListing(new TrustMarkListingRequest(TYPE, null)));
+  }
+
+  @Test
+  void listingWithoutValidSubjectsIsEmpty() throws Exception {
+    Mockito.when(this.source.getTrustMarkSubjects(Mockito.any(), Mockito.any())).thenReturn(List.of(
+        new TrustMarkSubjectProperty("https://revoked.example.com", null, null, true)));
+    final TrustMarkIssuer issuer = this.issuer(new TrustMarkSubjectProperty(SUBJECT, null, null, false));
+
+    Assertions.assertEquals(List.of(), issuer.trustMarkListing(new TrustMarkListingRequest(TYPE, null)));
+  }
+
+  @Test
+  void listingForUnknownTypeIsNotFound() {
+    final TrustMarkIssuer issuer = this.issuer(new TrustMarkSubjectProperty(SUBJECT, null, null, false));
+    Assertions.assertThrows(NotFoundException.class,
+        () -> issuer.trustMarkListing(new TrustMarkListingRequest("http://tm.digg.se/other", null)));
   }
 
   @Test

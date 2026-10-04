@@ -78,10 +78,13 @@ public class TrustMarkIssuer {
   }
 
   /**
-   * Listing all trustmarks that are valid for this trustmarkid filtered by subject if supplied
+   * Lists the subjects that currently hold a trust mark of the given type, that is, subjects that are not revoked,
+   * are granted and have not expired. The result is filtered by subject if supplied.
    *
    * @param request Request containing trustmarkid and subject
-   * @return listing of trust mark subjects that are valid. If there is no subject found a empty list is returned.
+   * @return listing of trust mark subjects that are valid, an empty list if there are none
+   * @throws InvalidRequestException if the trust mark type is missing or invalid
+   * @throws NotFoundException if the trust mark type is not issued by this trust mark issuer
    */
   public List<String> trustMarkListing(final TrustMarkListingRequest request)
       throws InvalidRequestException, NotFoundException {
@@ -92,19 +95,18 @@ public class TrustMarkIssuer {
       throw new InvalidRequestException("Trust mark id can not be null");
     }
     final TrustMarkType id = TrustMarkType.validate(request.trustMarkType(), InvalidRequestException::new);
+    final boolean typeExists = this.trustMarkIssuerProperties.trustMarks().stream()
+        .anyMatch(tm -> tm.getTrustMarkType().getTrustMarkType().equals(id.getTrustMarkType()));
+    if (!typeExists) {
+      throw new NotFoundException("Trust mark type %s was not found for the trust mark issuer."
+          .formatted(request.trustMarkType()));
+    }
+    final Instant now = Instant.now(this.clock);
     final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.entityIdentifier(), id)
         .stream()
-        .filter(tms -> {
-          if (Objects.nonNull(tms.expires())) {
-            return tms.expires().isAfter(Instant.now(this.clock));
-          }
-          return true;
-        })
+        .filter(tms -> isValid(tms, now))
         .map(TrustMarkSubjectProperty::sub)
         .toList();
-    if (result.isEmpty()) {
-      throw new NotFoundException("Could not find any subjects.");
-    }
     if (Objects.nonNull(request.subject())) {
       return result.stream().filter(sub -> sub.equals(request.subject())).map(List::of).findFirst()
           .orElseGet(List::of);
@@ -215,15 +217,8 @@ public class TrustMarkIssuer {
       throw new NotFoundException("Could not find subject");
     }
     final TrustMarkSubjectProperty trustMarkSubjectProperty = subject.get();
-    final Instant now = Instant.now(this.clock);
-    if (trustMarkSubjectProperty.revoked()) {
-      throw new NotFoundException("Trust mark for subject has been revoked");
-    }
-    if (trustMarkSubjectProperty.expires() != null && !now.isBefore(trustMarkSubjectProperty.expires())) {
-      throw new NotFoundException("Trust mark for subject has expired");
-    }
-    if (trustMarkSubjectProperty.granted() != null && now.isBefore(trustMarkSubjectProperty.granted())) {
-      throw new NotFoundException("Trust mark for subject is not yet granted");
+    if (!isValid(trustMarkSubjectProperty, Instant.now(this.clock))) {
+      throw new NotFoundException("Trust mark for subject is revoked, expired or not yet granted");
     }
     try {
       final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
@@ -235,6 +230,19 @@ public class TrustMarkIssuer {
     }
   }
 
+
+  /**
+   * Checks whether a subject currently holds its trust mark.
+   *
+   * @param subject the trust mark subject
+   * @param now the current time
+   * @return true if the subject is not revoked, is granted and has not expired
+   */
+  private static boolean isValid(final TrustMarkSubjectProperty subject, final Instant now) {
+    return !subject.revoked()
+        && (subject.granted() == null || !now.isBefore(subject.granted()))
+        && (subject.expires() == null || now.isBefore(subject.expires()));
+  }
 
   /**
    * @return entity id of this trust mark issuer.
