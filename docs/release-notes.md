@@ -36,6 +36,7 @@
 * Fetch responses from the legacy fetch route now have the content type `application/entity-statement+jwt`. ([#207](https://github.com/swedenconnect/openid-federation-services/issues/207))
 * The resolver now rejects trust chains with statements that place claims in the wrong kind of statement or have malformed claim values, as described in Section 3.2 of OpenID Federation 1.0. ([#208](https://github.com/swedenconnect/openid-federation-services/issues/208))
 * Resolve responses no longer copy claims such as `jwks`, `authority_hints` and `crit` from the subject's Entity Configuration. ([#209](https://github.com/swedenconnect/openid-federation-services/issues/209))
+* Metadata policies are only taken from Subordinate Statements, never from Entity Configurations. ([#210](https://github.com/swedenconnect/openid-federation-services/issues/210))
 
 ## Version 0.11.17
 

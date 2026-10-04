@@ -242,6 +242,21 @@ class MetadataProcessorTest {
   }
 
   @Test
+  void policyInEntityConfigurationIsIgnored() throws Exception {
+    final JWK leafKey = generateKey();
+    final JWTClaimsSet claims = new JWTClaimsSet.Builder(selfStatement(leafKey, LEAF_ID,
+        metadata(java.util.Map.of("organization_name", "Leaf Org"))).getJWTClaimsSet())
+        .claim("metadata_policy", policy("organization_name", java.util.Map.of("value", "Policy Org")))
+        .build();
+    final SignedJWT leafEc = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claims);
+    final SignedJWT superiorStatement = subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, null);
+
+    final JSONObject rp = (JSONObject) this.processor.processMetadata(List.of(leafEc, superiorStatement))
+        .get("openid_relying_party");
+    Assertions.assertEquals("Leaf Org", rp.get("organization_name"));
+  }
+
+  @Test
   void specExampleIsResolvedAsInSection615() throws Exception {
     final JSONObject taPolicy = (JSONObject) net.minidev.json.JSONValue.parse("""
         {"openid_relying_party": {

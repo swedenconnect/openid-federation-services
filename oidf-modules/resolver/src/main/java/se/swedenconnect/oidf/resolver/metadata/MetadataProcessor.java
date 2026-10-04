@@ -93,8 +93,8 @@ public class MetadataProcessor {
   }
 
   /**
-   * Resolves the metadata policy for one entity type by merging the policies of the statements in the chain, starting
-   * with the statement issued by the most superior entity (Section 6.1.4.1).
+   * Resolves the metadata policy for one entity type by merging the policies of the Subordinate Statements in the
+   * chain, starting with the statement issued by the most superior entity (Section 6.1.4.1).
    *
    * @param chain the trust chain, leaf first
    * @param type the entity type
@@ -106,6 +106,10 @@ public class MetadataProcessor {
       throws MetadataPolicyException, java.text.ParseException {
     final Map<String, ParameterPolicy> resolved = new LinkedHashMap<>();
     for (final SignedJWT statement : chain.reversed()) {
+      if (EntityStatementClaims.isSelfStatement(statement)) {
+        // metadata_policy is only used from Subordinate Statements (Sections 3.2 and 6.1.4.1)
+        continue;
+      }
       final Map<String, ParameterPolicy> statementPolicy = this.parsePolicy(statement, type);
       if (statementPolicy == null) {
         continue;
