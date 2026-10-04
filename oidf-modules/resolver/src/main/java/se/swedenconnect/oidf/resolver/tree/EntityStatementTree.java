@@ -72,21 +72,30 @@ public class EntityStatementTree {
     // Find the entity that matches our subject, include parents
     final SearchRequest<ScrapedEntity> request =
         new SearchRequest<>(resolveRequest.asPredicate(), true, snapshot, true);
+    final SequencedSet<ScrapedEntity> reversed;
     try {
-      final SequencedSet<ScrapedEntity> reversed = this.tree.search(request).stream()
+      reversed = this.tree.search(request).stream()
           //Sort by level in tree
           .sorted(Comparator.comparingInt(a -> a.context().level()))
           .map(Tree.SearchResult::getData)
           .collect(Collectors.toCollection(LinkedHashSet::new))
           //Reverse order to be leaf --> n --> root
           .reversed();
-      return this.resolverTrustChain(reversed);
     } catch (final IllegalStateException e) {
       log.error("Failed to load from cache due to internal error for request {}", resolveRequest);
       throw e;
     }
+    return this.resolverTrustChain(reversed);
   }
 
+  /**
+   * Builds the trust chain for a path of entities.
+   *
+   * @param entities the path, leaf first
+   * @return the trust chain
+   * @throws IllegalStateException if a superior is not among the authority hints of its subordinate, or holds no
+   *     subordinate statement about it
+   */
   private ResolverTrustChain resolverTrustChain(final SequencedSet<ScrapedEntity> entities) {
     //1. Use request to find path to the entity
     //2. Initial chain structure should be
@@ -107,6 +116,14 @@ public class EntityStatementTree {
     for (int i = 0; i < entityList.size() - 1; i++) {
       final ScrapedEntity child = entityList.get(i);
       final ScrapedEntity parent = entityList.get(i + 1);
+
+      // The superior must be among the authority hints of the entity (Section 3.2, step 6)
+      final String parentId = EntityStatementClaims.getEntityID(parent.getEntityStatement()).getValue();
+      final List<EntityID> hints = EntityStatementClaims.getAuthorityHints(child.getEntityStatement());
+      if (hints == null || hints.stream().noneMatch(hint -> hint.getValue().equals(parentId))) {
+        throw new IllegalStateException("Entity %s does not list %s in its authority_hints"
+            .formatted(child.getEntityID().getValue(), parentId));
+      }
 
       final ScrapedIntermediate parentIntermediate = parent.getIntermediate();
       if (parentIntermediate == null) {

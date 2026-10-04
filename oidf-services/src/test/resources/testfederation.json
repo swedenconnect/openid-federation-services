@@ -98,6 +98,17 @@
   {
     "entity-identifier": "http://localhost:11111/im",
     "virtual-entity-id": "http://localhost:11111/im/banan",
+    "authority-hints": [
+      "http://localhost:11111/naming/ta",
+      "http://localhost:11111/trust_mark_issuer/ta",
+      "http://localhost:11111/anarchy/ta",
+      "http://localhost:11111/path/ta",
+      "http://localhost:11111/entity_type/ta",
+      "http://localhost:11111/policy/ta",
+      "http://localhost:11111/crit/ta",
+      "http://localhost:11111/metadata_policy_crit/ta",
+      "http://localhost:11111/trust_mark_owner/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -110,6 +121,9 @@
   {
     "entity-identifier": "http://localhost:11111/im/im",
     "virtual-entity-id": "http://localhost:11111/im/im",
+    "authority-hints": [
+      "http://localhost:11111/im"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -134,6 +148,9 @@
   {
     "entity-identifier": "http://localhost:11111/im/op",
     "virtual-entity-id": "http://localhost:11111/im/op",
+    "authority-hints": [
+      "http://localhost:11111/im"
+    ],
     "jwks": "hosted:sign-key-2",
     "trust-mark-source": [
       {
@@ -158,6 +175,9 @@
   {
     "entity-identifier": "http://localhost:11111/im/saml-sp",
     "virtual-entity-id": "http://localhost:11111/im/sp",
+    "authority-hints": [
+      "http://localhost:11111/im"
+    ],
     "jwks": "federation:359433581122628090150675142465804663870388233428",
     "trust-mark-source": [
       {
@@ -195,6 +215,9 @@
   {
     "entity-identifier": "http://localhost:11111/im/im/op",
     "virtual-entity-id": "http://localhost:11111/im/im/op",
+    "authority-hints": [
+      "http://localhost:11111/im/im"
+    ],
     "jwks": "hosted:sign-key-2",
     "metadata": {
       "federation_entity": {
@@ -208,6 +231,9 @@
   {
     "entity-identifier": "http://localhost:11111/im/im/rp",
     "virtual-entity-id": "http://localhost:11111/im/im/rp",
+    "authority-hints": [
+      "http://localhost:11111/im/im"
+    ],
     "jwks": "hosted:sign-key-2",
     "metadata": {
       "federation_entity": {
@@ -221,6 +247,9 @@
   {
     "entity-identifier": "http://localhost:11111/policy/resolver",
     "virtual-entity-id": "http://localhost:11111/policy/resolver",
+    "authority-hints": [
+      "http://localhost:11111/policy/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -232,6 +261,9 @@
   {
     "entity-identifier": "http://localhost:11111/entity_type/resolver",
     "virtual-entity-id": "http://localhost:11111/entity_type/resolver",
+    "authority-hints": [
+      "http://localhost:11111/entity_type/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -243,6 +275,9 @@
   {
     "entity-identifier": "http://localhost:11111/path/resolver",
     "virtual-entity-id": "http://localhost:11111/path/resolver",
+    "authority-hints": [
+      "http://localhost:11111/path/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -254,6 +289,9 @@
   {
     "entity-identifier": "http://localhost:11111/trust_mark_owner/resolver",
     "virtual-entity-id": "http://localhost:11111/trust_mark_owner/resolver",
+    "authority-hints": [
+      "http://localhost:11111/trust_mark_owner/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -265,6 +303,9 @@
   {
     "entity-identifier": "http://localhost:11111/crit/resolver",
     "virtual-entity-id": "http://localhost:11111/crit/resolver",
+    "authority-hints": [
+      "http://localhost:11111/crit/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -276,6 +317,9 @@
   {
     "entity-identifier": "http://localhost:11111/metadata_policy_crit/resolver",
     "virtual-entity-id": "http://localhost:11111/metadata_policy_crit/resolver",
+    "authority-hints": [
+      "http://localhost:11111/metadata_policy_crit/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -287,6 +331,9 @@
   {
     "entity-identifier": "http://localhost:11111/trust_mark_issuer/resolver",
     "virtual-entity-id": "http://localhost:11111/trust_mark_issuer/resolver",
+    "authority-hints": [
+      "http://localhost:11111/trust_mark_issuer/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -298,6 +345,9 @@
   {
     "entity-identifier": "http://localhost:11111/anarchy/resolver",
     "virtual-entity-id": "http://localhost:11111/anarchy/resolver",
+    "authority-hints": [
+      "http://localhost:11111/anarchy/ta"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {
@@ -331,6 +381,9 @@
   {
     "entity-identifier": "http://localhost:11111/im/tmi",
     "virtual-entity-id": "http://localhost:11111/im/tmi",
+    "authority-hints": [
+      "http://localhost:11111/im"
+    ],
     "jwks": "federation:sign-key-1",
     "metadata": {
       "federation_entity": {

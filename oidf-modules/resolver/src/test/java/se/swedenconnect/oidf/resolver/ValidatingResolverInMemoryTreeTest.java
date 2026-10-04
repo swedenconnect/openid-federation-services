@@ -69,8 +69,13 @@ class ValidatingResolverInMemoryTreeTest {
   @BeforeEach
   void setUp() throws Exception {
     final TestEntitiesFactory entities = new TestEntitiesFactory();
-    final FederationClient client = FederationClientMockFactory.create(entities);
+    resolver = this.createResolver(entities, new JWKSet(entities.taKey.toPublicJWK()));
+    resolverWithOtherTrustedKeys = this.createResolver(entities,
+        new JWKSet(new RSAKeyGenerator(2048).keyID("other").generate().toPublicJWK()));
+  }
 
+  private ValidatingResolver createResolver(final TestEntitiesFactory entities, final JWKSet trustedKeys) {
+    final FederationClient client = FederationClientMockFactory.create(entities);
     final VersionedInMemoryCache cache = new VersionedInMemoryCache();
     final Tree<ScrapedEntity> inMemoryTree = new Tree<>(cache);
 
@@ -97,18 +102,23 @@ class ValidatingResolverInMemoryTreeTest {
         "https://resolver.example.com"
     );
 
-    final ChainValidator validator = new ChainValidator(
-        List.of(new SignatureValidationStep(new JWKSet(entities.taKey.toPublicJWK())))
-    );
+    final ChainValidator validator = new ChainValidator(List.of(new SignatureValidationStep(trustedKeys)));
 
     final MetadataProcessor processor = new MetadataProcessor();
 
-    resolver = new ValidatingResolver(props, validator, entityStatementTree, processor, factory);
+    return new ValidatingResolver(props, validator, entityStatementTree, processor, factory);
+  }
 
-    final ChainValidator otherKeysValidator = new ChainValidator(List.of(new SignatureValidationStep(
-        new JWKSet(new RSAKeyGenerator(2048).keyID("other").generate().toPublicJWK()))));
-    resolverWithOtherTrustedKeys =
-        new ValidatingResolver(props, otherKeysValidator, entityStatementTree, processor, factory);
+  @Test
+  void superiorNotInAuthorityHintsIsRejected() throws Exception {
+    // The SAML SP names the Trust Anchor as its superior, but its subordinate statement is issued by the intermediate
+    final TestEntitiesFactory entities = new TestEntitiesFactory(List.of(TA_ID));
+    final ValidatingResolver wrongHints =
+        this.createResolver(entities, new JWKSet(entities.taKey.toPublicJWK()));
+    final ResolveRequest request = new ResolveRequest(SAML_SP_ID, TA_ID, null, false);
+    final InvalidTrustChainException e =
+        assertThrows(InvalidTrustChainException.class, () -> wrongHints.resolve(request));
+    Assertions.assertTrue(e.getCause().getMessage().contains("authority_hints"), e.getCause().getMessage());
   }
 
   @Test
