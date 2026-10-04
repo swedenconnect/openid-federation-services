@@ -30,6 +30,7 @@ import com.nimbusds.openid.connect.sdk.federation.policy.operations.ValueOperati
 import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import se.swedenconnect.oidf.common.entity.exception.InvalidMetadataException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -128,8 +129,8 @@ class MetadataProcessorTest {
   @Test
   void regexpOperatorIsApplied() throws Exception {
     final JSONObject policy = policy("organization_name", java.util.Map.of("regexp", List.of("^Policy.*")));
-    final IllegalArgumentException e =
-        Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
+    final InvalidMetadataException e =
+        Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
     Assertions.assertInstanceOf(MetadataPolicyException.class, e.getCause());
   }
 
@@ -145,7 +146,7 @@ class MetadataProcessorTest {
   void unknownCriticalOperatorFails() throws Exception {
     final JSONObject policy = policy("organization_name",
         java.util.Map.of("value", "Policy Org", "unknown_op", "anything"));
-    Assertions.assertThrows(IllegalArgumentException.class,
+    Assertions.assertThrows(InvalidMetadataException.class,
         () -> this.processWithPolicy(policy, List.of("unknown_op")));
   }
 
@@ -153,14 +154,14 @@ class MetadataProcessorTest {
   void invalidOperatorCombinationFails() throws Exception {
     final JSONObject policy = policy("organization_name",
         java.util.Map.of("value", "Policy Org", "one_of", List.of("Other Org")));
-    Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
+    Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
   }
 
   @Test
   void malformedPolicyFails() throws Exception {
     final JSONObject policy = new JSONObject();
     policy.put("openid_relying_party", new JSONObject(java.util.Map.of("organization_name", "not an object")));
-    Assertions.assertThrows(IllegalArgumentException.class, () -> this.processWithPolicy(policy, null));
+    Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
   }
 
   @Test
@@ -221,6 +222,23 @@ class MetadataProcessorTest {
     final JSONObject result = this.processWithAllowedTypes(
         List.of(List.of("openid_relying_party"), List.of("openid_provider")));
     Assertions.assertEquals(java.util.Set.of("federation_entity"), result.keySet());
+  }
+
+  @Test
+  void policyErrorGivesInvalidMetadata() throws Exception {
+    final JSONObject policy = policy("contacts", java.util.Map.of("subset_of", "not-an-array"));
+    final InvalidMetadataException e =
+        Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
+    Assertions.assertEquals("invalid_metadata", e.toJSONObject().get("error"));
+    Assertions.assertEquals(400, e.httpStatusCode());
+  }
+
+  @Test
+  void leafWithoutMetadataGivesEmptyMetadata() throws Exception {
+    final JWK leafKey = generateKey();
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, null);
+    final SignedJWT superiorStatement = subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, null);
+    Assertions.assertEquals(new JSONObject(), this.processor.processMetadata(List.of(leafEc, superiorStatement)));
   }
 
   @Test

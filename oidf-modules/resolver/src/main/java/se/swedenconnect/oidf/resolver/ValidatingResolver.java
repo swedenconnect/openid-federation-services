@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidTrustAnchorException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
+import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationError;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationResult;
@@ -117,9 +118,8 @@ public class ValidatingResolver implements Resolver {
       if (exception instanceof FederationException federationException) {
         throw federationException;
       }
-      throw new FederationException("Validation failed with %d errors".formatted(response.validationErrors().size()),
-          exception.getMessage(),
-          exception);
+      throw new ServerErrorException("Validation failed with %d errors: %s"
+          .formatted(response.validationErrors().size(), exception.getMessage()), exception);
     }
 
     try {

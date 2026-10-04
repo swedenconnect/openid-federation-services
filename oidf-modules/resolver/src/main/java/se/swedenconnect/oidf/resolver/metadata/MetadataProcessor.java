@@ -21,6 +21,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
+import se.swedenconnect.oidf.common.entity.exception.InvalidMetadataException;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.ArrayList;
@@ -49,17 +50,22 @@ public class MetadataProcessor {
   }
 
   /**
-   * @param chain to process
+   * Resolves the metadata of the trust chain subject (OpenID Federation 1.0, Section 6.1.4).
+   *
+   * @param chain to process, leaf first
    * @return final metadata object
+   * @throws InvalidMetadataException on a metadata policy error
    */
-  public JSONObject processMetadata(final List<SignedJWT> chain) {
+  public JSONObject processMetadata(final List<SignedJWT> chain) throws InvalidMetadataException {
     try {
       final SignedJWT leafNode = chain.getFirst();
 
       // Entity types not allowed by the allowed_entity_types constraints are removed (Section 6.2.3)
       final Set<String> allowedTypes = allowedEntityTypes(chain);
-      final List<String> metadataType = EntityStatementClaims.claims(leafNode)
-          .getJSONObjectClaim("metadata")
+      // metadata is OPTIONAL in an Entity Configuration
+      final Map<String, Object> leafMetadata = Optional.ofNullable(
+          EntityStatementClaims.claims(leafNode).getJSONObjectClaim("metadata")).orElseGet(Map::of);
+      final List<String> metadataType = leafMetadata
           .keySet()
           .stream()
           .filter(type -> allowedTypes == null || FEDERATION_ENTITY.equals(type) || allowedTypes.contains(type))
@@ -82,7 +88,7 @@ public class MetadataProcessor {
       return result;
     }
     catch (final MetadataPolicyException | java.text.ParseException e) {
-      throw new IllegalArgumentException("Failed to validate/parse policy", e);
+      throw new InvalidMetadataException("Failed to resolve metadata: " + e.getMessage(), e);
     }
   }
 
