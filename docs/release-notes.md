@@ -22,6 +22,7 @@
 * The trust mark status endpoint now returns 404 for trust marks it does not know, and reports `expired` based on the expiry of the trust mark itself. ([#193](https://github.com/swedenconnect/openid-federation-services/issues/193))
 * The trust mark endpoint no longer issues trust marks to revoked, expired or not yet granted subjects, and returns 404 for them instead. ([#194](https://github.com/swedenconnect/openid-federation-services/issues/194))
 * The trust marked entities listing no longer includes revoked or not yet granted subjects, and returns an empty array instead of 404 when no subject is valid. ([#195](https://github.com/swedenconnect/openid-federation-services/issues/195))
+* The trust mark status endpoint now returns 400 `invalid_request` instead of 500 for a trust mark that cannot be parsed. ([#196](https://github.com/swedenconnect/openid-federation-services/issues/196))
 
 ## Version 0.11.17
 

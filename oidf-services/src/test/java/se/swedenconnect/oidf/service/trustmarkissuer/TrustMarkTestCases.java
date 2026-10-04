@@ -140,6 +140,17 @@ public class TrustMarkTestCases {
   }
 
   @Test
+  public void testTrustMarkStatusMalformedIsBadRequest(final FederationClients clients) {
+    final RuntimeException e = Assertions.assertThrows(RuntimeException.class,
+        () -> clients.anarchy().trustMark().trustMarkStatus(
+            TestFederationEntities.IM.TRUST_MARK_ISSUER,
+            "not-a-jwt"));
+    Assertions.assertInstanceOf(HttpClientErrorException.BadRequest.class, e.getCause());
+    Assertions.assertTrue(((HttpClientErrorException) e.getCause()).getResponseBodyAsString()
+        .contains("invalid_request"));
+  }
+
+  @Test
   public void testTrustMarkStatusFromOtherIssuerIsNotFound(final FederationClients clients) throws ParseException {
 
     final SignedJWT trustMark = clients.anarchy().trustMark().trustMark(

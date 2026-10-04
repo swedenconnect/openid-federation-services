@@ -31,6 +31,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSou
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
+import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 
 import java.time.Clock;
@@ -115,6 +116,12 @@ class TrustMarkIssuerStatusTest {
     this.registerSubject(false);
     final String trustMark = this.trustMark(ISSUER, "http://tm.digg.se/other", Instant.now().plusSeconds(60));
     Assertions.assertThrows(NotFoundException.class, () -> this.status(trustMark));
+  }
+
+  @Test
+  void malformedTrustMarkIsInvalidRequest() {
+    Assertions.assertThrows(InvalidRequestException.class,
+        () -> this.issuer.trustMarkStatus(new TrustMarkStatusRequest("not-a-jwt")));
   }
 
   private void registerSubject(final boolean revoked) {

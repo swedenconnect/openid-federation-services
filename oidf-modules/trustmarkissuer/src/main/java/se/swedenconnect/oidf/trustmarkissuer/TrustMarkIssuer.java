@@ -121,6 +121,7 @@ public class TrustMarkIssuer {
    * @return signed status response with the status {@code active}, {@code invalid}, {@code revoked} or
    *     {@code expired}
    * @throws NotFoundException if the trust mark was not issued by this issuer, or its type or subject is unknown
+   * @throws InvalidRequestException if the trust mark cannot be parsed
    */
   public String trustMarkStatus(final TrustMarkStatusRequest request)
       throws NotFoundException, InvalidRequestException {
@@ -149,7 +150,7 @@ public class TrustMarkIssuer {
 
       return this.signer.signStatus(entity, request.trustMark(), status).serialize();
     } catch (final java.text.ParseException e) {
-      throw new RuntimeException(e);
+      throw new InvalidRequestException("Trust mark could not be parsed as a signed JWT", e);
     }
   }
 
