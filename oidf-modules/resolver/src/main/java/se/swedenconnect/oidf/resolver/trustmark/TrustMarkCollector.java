@@ -34,12 +34,15 @@ import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 
 import java.security.Key;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +52,12 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class TrustMarkCollector {
+
+  private static final String TRUST_MARK_TYPE = "trust-mark+jwt";
+
+  private static final String STATUS_RESPONSE_TYPE = "trust-mark-status-response+jwt";
+
+  private static final Duration CLOCK_SKEW = Duration.ofSeconds(15);
 
   /**
    * Constructor.
@@ -60,12 +69,16 @@ public class TrustMarkCollector {
 
 
   /**
-   * Collects and filters trust marks from the given trust chain.
+   * Collects and filters trust marks from the given trust chain. A trust mark is kept only if it passes the checks
+   * in OpenID Federation 1.0, Section 7.3, and its issuer reports it as active.
    *
    * @param chain the resolved trust chain including the leaf entity
+   * @param issuerKeyResolver resolves the federation entity keys of a trust mark issuer, empty if the issuer cannot
+   *     be trusted
    * @return list of valid trust mark entries
    */
-  public static List<TrustMarkEntry> collectSubjectTrustMarks(final ResolverTrustChain chain)
+  public static List<TrustMarkEntry> collectSubjectTrustMarks(final ResolverTrustChain chain,
+      final Function<String, Optional<JWKSet>> issuerKeyResolver)
       throws java.text.ParseException {
     final List<SignedJWT> trustChain = chain.getTrustChain().stream().toList();
     final SignedJWT leafStatement = trustChain.getFirst();
@@ -105,26 +118,125 @@ public class TrustMarkCollector {
       }
     }
 
-    return filtered.stream().filter(jwt -> {
-      final String trustMarkType = EntityStatementClaims.getTrustMarkType(jwt.getTrustMark());
-      if (trustMarkType == null) {
-        return false;
+    final Map<String, Optional<JWKSet>> issuerKeys = new HashMap<>();
+    final Map<String, TrustMarkStatusResponse> statuses = chain.getLeafEntity().getTrustMarkStatuses();
+    return filtered.stream()
+        .filter(tm -> TrustMarkCollector.isTrustMarkValid(tm, subject,
+            issuer -> issuerKeys.computeIfAbsent(issuer, issuerKeyResolver), statuses))
+        .toList();
+  }
+
+  /**
+   * Validates a trust mark according to OpenID Federation 1.0, Section 7.3, and checks its status with the issuer.
+   *
+   * @param entry the trust mark entry
+   * @param subject the entity the trust mark is presented for
+   * @param issuerKeys resolves the federation entity keys of the issuer
+   * @param statuses status responses from the issuers, keyed by trust mark type
+   * @return true if the trust mark is valid and active
+   */
+  private static boolean isTrustMarkValid(final TrustMarkEntry entry, final String subject,
+      final Function<String, Optional<JWKSet>> issuerKeys, final Map<String, TrustMarkStatusResponse> statuses) {
+    final SignedJWT trustMark = entry.getTrustMark();
+    final String trustMarkType = EntityStatementClaims.getTrustMarkType(trustMark);
+    try {
+      final JWTClaimsSet claims = trustMark.getJWTClaimsSet();
+      final String error = TrustMarkCollector.validateTrustMark(trustMark, claims, trustMarkType, subject,
+          issuerKeys, statuses);
+      if (error == null) {
+        return true;
       }
-      final Optional<TrustMarkStatusResponse> trustMarkStatus =
-          Optional.ofNullable(chain.getLeafEntity().getTrustMarkStatuses().get(trustMarkType));
-      return trustMarkStatus.map(tms -> {
-            if (tms.isError()) {
-              return true;
-            }
-            try {
-              final Map<String, Object> tmsClaims = tms.getSignedJWT().getJWTClaimsSet().getClaims();
-              return tmsClaims.containsKey("status") && "active".equals(tmsClaims.get("status"));
-            } catch (final java.text.ParseException e) {
-              return false;
-            }
-          })
-          .orElse(false);
-    }).toList();
+      log.info("Trust mark of type '{}' from '{}' for '{}' rejected: {}",
+          trustMarkType, claims.getIssuer(), subject, error);
+      return false;
+    }
+    catch (final java.text.ParseException e) {
+      log.info("Trust mark of type '{}' for '{}' rejected: failed to parse: {}", trustMarkType, subject,
+          e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * Performs the trust mark checks.
+   *
+   * @param trustMark the trust mark JWT
+   * @param claims the trust mark claims
+   * @param trustMarkType the trust mark type
+   * @param subject the entity the trust mark is presented for
+   * @param issuerKeys resolves the federation entity keys of the issuer
+   * @param statuses status responses from the issuers, keyed by trust mark type
+   * @return a description of the first failed check, or null if the trust mark is valid
+   * @throws java.text.ParseException if the status response cannot be parsed
+   */
+  private static String validateTrustMark(final SignedJWT trustMark, final JWTClaimsSet claims,
+      final String trustMarkType, final String subject, final Function<String, Optional<JWKSet>> issuerKeys,
+      final Map<String, TrustMarkStatusResponse> statuses) throws java.text.ParseException {
+    if (trustMarkType == null) {
+      return "trust_mark_type is missing";
+    }
+    if (!subject.equals(claims.getSubject())) {
+      return "sub does not match the entity";
+    }
+    if (trustMark.getHeader().getType() == null
+        || !TRUST_MARK_TYPE.equals(trustMark.getHeader().getType().getType())) {
+      return "wrong typ";
+    }
+    if (claims.getIssuer() == null) {
+      return "iss is missing";
+    }
+    if (claims.getIssueTime() == null) {
+      return "iat is missing";
+    }
+    final Instant now = Instant.now();
+    if (claims.getIssueTime().toInstant().isAfter(now.plus(CLOCK_SKEW))) {
+      return "iat is in the future";
+    }
+    if (claims.getExpirationTime() != null && claims.getExpirationTime().toInstant().isBefore(now)) {
+      return "trust mark has expired";
+    }
+    final Optional<JWKSet> keys = issuerKeys.apply(claims.getIssuer());
+    if (keys.isEmpty()) {
+      return "issuer keys could not be resolved through a trust chain";
+    }
+    if (!TrustMarkCollector.verify(trustMark, keys.get())) {
+      return "signature is not valid for the issuer keys";
+    }
+    final TrustMarkStatusResponse status = statuses.get(trustMarkType);
+    if (status == null || status.isError() || status.getSignedJWT() == null) {
+      return "status could not be obtained from the issuer";
+    }
+    return TrustMarkCollector.validateStatus(status.getSignedJWT(), trustMark, claims.getIssuer(), keys.get());
+  }
+
+  /**
+   * Validates a trust mark status response according to OpenID Federation 1.0, Section 8.4.2.
+   *
+   * @param response the status response
+   * @param trustMark the trust mark the status was requested for
+   * @param issuer the trust mark issuer
+   * @param issuerKeys the federation entity keys of the issuer
+   * @return a description of the first failed check, or null if the response says the trust mark is active
+   * @throws java.text.ParseException if the response cannot be parsed
+   */
+  private static String validateStatus(final SignedJWT response, final SignedJWT trustMark, final String issuer,
+      final JWKSet issuerKeys) throws java.text.ParseException {
+    if (response.getHeader().getType() == null
+        || !STATUS_RESPONSE_TYPE.equals(response.getHeader().getType().getType())) {
+      return "status response has wrong typ";
+    }
+    if (!TrustMarkCollector.verify(response, issuerKeys)) {
+      return "status response signature is not valid for the issuer keys";
+    }
+    final JWTClaimsSet claims = response.getJWTClaimsSet();
+    if (!issuer.equals(claims.getIssuer())) {
+      return "status response iss is not the trust mark issuer";
+    }
+    if (!trustMark.serialize().equals(claims.getStringClaim("trust_mark"))) {
+      return "status response is for another trust mark";
+    }
+    final String status = claims.getStringClaim("status");
+    return "active".equals(status) ? null : "status is '%s'".formatted(status);
   }
 
   /**

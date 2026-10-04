@@ -220,7 +220,8 @@ public class RestClientFederationClient implements FederationClient {
           .body(String.class);
       return new TrustMarkStatusResponse(SignedJWT.parse(body), false);
     } catch (final Exception e) {
-      log.error("Failed to get Trust Mark Status for Trust Mark Request {}", request, e);
+      log.warn("Failed to get trust mark status from '{}': {}", path, e.getMessage());
+      log.debug("Trust mark status request {} failed", request, e);
       return new TrustMarkStatusResponse(null, true);
     }
   }

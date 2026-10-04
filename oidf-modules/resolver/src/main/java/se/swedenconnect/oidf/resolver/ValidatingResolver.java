@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.resolver;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
@@ -28,6 +29,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.Resolve
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidTrustAnchorException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationError;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationResult;
 import se.swedenconnect.oidf.resolver.chain.ChainValidator;
@@ -185,7 +187,8 @@ public class ValidatingResolver implements Resolver {
     }
     List<TrustMarkEntry> trustMarkEntries = null;
     try {
-      trustMarkEntries = TrustMarkCollector.collectSubjectTrustMarks(chain);
+      trustMarkEntries = TrustMarkCollector.collectSubjectTrustMarks(chain,
+          issuer -> this.resolveTrustMarkIssuerKeys(issuer, request.trustAnchor()));
     } catch (final Exception e) {
       validationErrors.add(e);
     }
@@ -209,6 +212,38 @@ public class ValidatingResolver implements Resolver {
         .validationErrors(validationErrors)
         .typedValidationErrors(chainValidationResult.typedErrors())
         .build();
+  }
+
+  /**
+   * Resolves the federation entity keys of a trust mark issuer through a valid trust chain to the trust anchor.
+   *
+   * @param issuer the trust mark issuer
+   * @param trustAnchor the trust anchor of the resolve request
+   * @return the keys of the issuer, or empty if no valid trust chain was found
+   */
+  private Optional<JWKSet> resolveTrustMarkIssuerKeys(final String issuer, final String trustAnchor) {
+    final ResolveRequest request = new ResolveRequest(issuer, trustAnchor, null, false);
+    final List<SignedJWT> issuerChain = this.tree.getTrustChainViaAuthorityHints(request)
+        .orElseGet(() -> this.tree.getTrustChain(request))
+        .getTrustChain().stream().toList();
+    if (issuerChain.isEmpty()) {
+      log.debug("No trust chain found for trust mark issuer '{}'", issuer);
+      return Optional.empty();
+    }
+    if (issuerChain.size() > 1) {
+      try {
+        final ChainValidationResult result = this.validator.validate(issuerChain);
+        if (!result.errors().isEmpty()) {
+          log.debug("Trust chain for trust mark issuer '{}' is not valid: {}", issuer, result.errors());
+          return Optional.empty();
+        }
+      }
+      catch (final Exception e) {
+        log.debug("Trust chain for trust mark issuer '{}' is not valid: {}", issuer, e.getMessage());
+        return Optional.empty();
+      }
+    }
+    return Optional.ofNullable(EntityStatementClaims.getJWKSet(issuerChain.getFirst()));
   }
 
   @Override

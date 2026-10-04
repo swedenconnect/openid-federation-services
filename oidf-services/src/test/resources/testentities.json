@@ -371,7 +371,7 @@
   {
     "entity-identifier": "http://localhost:11111/im/tmi",
     "virtual-entity-id": "http://localhost:11111/im/tmi",
-    "jwks": "federation:invalidkid",
+    "jwks": "federation:359433581122628090150675142465804663870388233428",
     "authority-hints": ["http://localhost:11111/im"],
     "metadata": {
       "federation_entity": {
