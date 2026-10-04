@@ -33,6 +33,7 @@
 * The resolver now rejects trust chains where a superior is not listed in the `authority_hints` of the entity it issues a statement about. ([#204](https://github.com/swedenconnect/openid-federation-services/issues/204))
 * Entity statements without a `kid` header, or with a `kid` that does not match the verifying keys, are now rejected. ([#205](https://github.com/swedenconnect/openid-federation-services/issues/205))
 * Filtered subordinate listings now only count trust marks that are valid and issued by the Trust Anchor or one of its direct subordinates, and skip subordinates whose Entity Configuration is not valid. ([#206](https://github.com/swedenconnect/openid-federation-services/issues/206))
+* Fetch responses from the legacy fetch route now have the content type `application/entity-statement+jwt`. ([#207](https://github.com/swedenconnect/openid-federation-services/issues/207))
 
 ## Version 0.11.17
 

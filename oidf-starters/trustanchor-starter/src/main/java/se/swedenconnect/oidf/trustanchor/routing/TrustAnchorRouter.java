@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.nimbusds.jose.shaded.gson.Gson;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -57,6 +58,9 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
   private static final Logger log = LoggerFactory.getLogger(TrustAnchorRouter.class);
   public static final Gson GSON = new Gson();
   private final TrustAnchorFactory trustAnchorFactory;
+  private static final MediaType ENTITY_STATEMENT_TYPE =
+      MediaType.parseMediaType("application/entity-statement+jwt");
+
   private final RouteFactory routeFactory;
   private final ServerResponseErrorHandler errorHandler;
   private final CacheSnapshotVersionLookup lookup;
@@ -170,7 +174,7 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
       final String response = trustAnchor.fetchEntityStatement(fetchRequest);
       this.fetchCache.put(snapshot, fetchRequest, response);
       this.tagObservation("/fetch", false);
-      return ServerResponse.ok().body(response);
+      return ServerResponse.ok().contentType(ENTITY_STATEMENT_TYPE).body(response);
     } catch (final FederationException e) {
       return this.errorHandler.handle(e);
     }
@@ -182,7 +186,7 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
     log.debug("Cache header was {} for trust anchor", cacheControl);
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
       return this.fetchCache.get(snapshot, fetchRequest)
-          .map(response -> ServerResponse.ok().body(response));
+          .map(response -> ServerResponse.ok().contentType(ENTITY_STATEMENT_TYPE).body(response));
     }
     return Optional.empty();
   }

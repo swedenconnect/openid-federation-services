@@ -29,7 +29,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.FederationProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.service.entity.TestFederationEntities;
@@ -107,6 +110,18 @@ public class TrustAnchorTestCases {
 
     Assertions.assertTrue(union.contains(TestFederationEntities.IM.NestedIM.OP.getValue()));
     Assertions.assertTrue(union.contains(TestFederationEntities.IM.NestedIM.RP.getValue()));
+  }
+
+  @Test
+  @DisplayName("Fetch response has content type application/entity-statement+jwt, also when cached : 200")
+  void testFetchContentType() {
+    final String uri = TestFederationEntities.IM.INTERMEDIATE.getValue() + "/fetch?sub="
+        + TestFederationEntities.IM.OP.getValue();
+    for (int i = 0; i < 2; i++) {
+      final ResponseEntity<String> response = RestClient.create().get().uri(uri).retrieve().toEntity(String.class);
+      Assertions.assertEquals(MediaType.parseMediaType("application/entity-statement+jwt"),
+          response.getHeaders().getContentType());
+    }
   }
 
   @Test
