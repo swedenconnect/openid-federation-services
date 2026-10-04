@@ -152,11 +152,17 @@ public class FederationBaseRouter implements Router {
       virtualEntityId = requestUri.substring(0, requestUri.lastIndexOf('/'));
     }
     log.debug("FederationBaseRouter lookup requestUri={} virtualEntityId={}", requestUri, virtualEntityId);
-    final Optional<EntityRecord> entity = source.getEntityByVirtualEntityId(new EntityID(virtualEntityId))
-        .or(() -> source.getEntity(new NodeKey(virtualEntityId)))
+    // An entity identifier may be configured with a trailing /, which is not part of the request path (Section 9)
+    final Optional<EntityRecord> entity = findByBaseUrl(source, virtualEntityId)
+        .or(() -> findByBaseUrl(source, virtualEntityId + "/"))
         .or(() -> this.findEntityByEcLocation(source, requestUri));
     log.debug("FederationBaseRouter entity found={}", entity.isPresent());
     return entity;
+  }
+
+  private static Optional<EntityRecord> findByBaseUrl(final CompositeRecordSource source, final String baseUrl) {
+    return source.getEntityByVirtualEntityId(new EntityID(baseUrl))
+        .or(() -> source.getEntity(new NodeKey(baseUrl)));
   }
 
   private Optional<EntityRecord> findEntityByEcLocation(final CompositeRecordSource source, final String requestUri) {

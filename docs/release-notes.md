@@ -49,6 +49,7 @@
 * An entity that advertises federation endpoints without the matching configuration now gets a JSON `not_found` error instead of an empty 404. ([#222](https://github.com/swedenconnect/openid-federation-services/issues/222))
 * Subordinate statements and other signed responses now use the algorithm declared by the signing key, for example PS256, instead of always RS256 for RSA keys. ([#223](https://github.com/swedenconnect/openid-federation-services/issues/223))
 * All error responses now use the error codes and JSON format of OpenID Federation 1.0, Section 8.9. ([#224](https://github.com/swedenconnect/openid-federation-services/issues/224))
+* Entities whose identifier ends with `/` are now served at the well-known path and their endpoints without a double slash. ([#225](https://github.com/swedenconnect/openid-federation-services/issues/225))
 
 ## Version 0.11.17
 
