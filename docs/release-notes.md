@@ -29,6 +29,7 @@
 * Resolve requests with several `trust_anchor` parameters now use the first Trust Anchor the resolver is configured for. ([#200](https://github.com/swedenconnect/openid-federation-services/issues/200))
 * Resolve responses now contain only the entity types requested with `entity_type`, and the parameter may be given more than once. ([#201](https://github.com/swedenconnect/openid-federation-services/issues/201))
 * The resolver no longer fails with 500 or loops forever on `authority_hints` that point back to each other or to a superior without a subordinate statement for the entity. ([#202](https://github.com/swedenconnect/openid-federation-services/issues/202))
+* Resolving the Trust Anchor itself now validates its Entity Configuration against the configured trusted keys and its validity time, and reports metadata errors. ([#203](https://github.com/swedenconnect/openid-federation-services/issues/203))
 
 ## Version 0.11.17
 

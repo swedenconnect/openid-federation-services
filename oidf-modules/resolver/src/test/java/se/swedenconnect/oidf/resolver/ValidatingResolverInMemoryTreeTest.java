@@ -19,6 +19,8 @@ package se.swedenconnect.oidf.resolver;
 import com.nimbusds.jose.jwk.JWKSet;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import se.swedenconnect.oidf.common.entity.exception.InvalidTrustChainException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -62,6 +64,8 @@ class ValidatingResolverInMemoryTreeTest {
 
   ValidatingResolver resolver;
 
+  ValidatingResolver resolverWithOtherTrustedKeys;
+
   @BeforeEach
   void setUp() throws Exception {
     final TestEntitiesFactory entities = new TestEntitiesFactory();
@@ -100,6 +104,17 @@ class ValidatingResolverInMemoryTreeTest {
     final MetadataProcessor processor = new MetadataProcessor();
 
     resolver = new ValidatingResolver(props, validator, entityStatementTree, processor, factory);
+
+    final ChainValidator otherKeysValidator = new ChainValidator(List.of(new SignatureValidationStep(
+        new JWKSet(new RSAKeyGenerator(2048).keyID("other").generate().toPublicJWK()))));
+    resolverWithOtherTrustedKeys =
+        new ValidatingResolver(props, otherKeysValidator, entityStatementTree, processor, factory);
+  }
+
+  @Test
+  void resolveTrustAnchorAsSubjectChecksTrustedKeys() {
+    final ResolveRequest request = new ResolveRequest(TA_ID, TA_ID, null, false);
+    assertThrows(InvalidTrustChainException.class, () -> resolverWithOtherTrustedKeys.resolve(request));
   }
 
   @Test

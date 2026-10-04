@@ -154,17 +154,21 @@ public class ValidatingResolver implements Resolver {
             .validationErrors(validationErrors)
             .build();
       }
+      // The Trust Anchor Entity Configuration is validated like any other trust chain (Sections 8.3 and 10.2)
+      final ChainValidationResult selfValidation = this.validator.validateTrustAnchor(selfChain.getFirst());
+      validationErrors.addAll(selfValidation.errors());
       JSONObject selfMetadata = null;
       try {
         selfMetadata = filterTypes(this.processor.processMetadata(selfChain), request, validationErrors);
       } catch (final Exception e) {
-        log.debug("Could not process metadata for self resolved entity:{}", request.subject(), e);
+        validationErrors.add(e);
       }
       return ResolverResponse.builder()
           .entityStatement(selfChain.getFirst())
           .metadata(selfMetadata)
           .trustChain(selfChain)
           .validationErrors(validationErrors)
+          .typedValidationErrors(selfValidation.typedErrors())
           .build();
     }
 
