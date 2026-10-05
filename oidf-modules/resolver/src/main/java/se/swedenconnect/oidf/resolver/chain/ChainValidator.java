@@ -54,6 +54,22 @@ public class ChainValidator {
     if (chain.size() < 3) {
       errors.add(new InvalidTrustChainException("Chain does not include at least three statements"));
     }
+    return this.runSteps(chain, errors);
+  }
+
+  /**
+   * Validates the Entity Configuration of the Trust Anchor on its own, used when the Trust Anchor itself is resolved.
+   * The same validation steps as for a trust chain are run, so the signature is checked against the configured
+   * trusted keys, together with {@code iat}, {@code exp} and {@code crit}.
+   *
+   * @param entityConfiguration the Entity Configuration of the Trust Anchor
+   * @return the validation result
+   */
+  public ChainValidationResult validateTrustAnchor(final SignedJWT entityConfiguration) {
+    return this.runSteps(List.of(entityConfiguration), new ArrayList<>());
+  }
+
+  private ChainValidationResult runSteps(final List<SignedJWT> chain, final List<Exception> errors) {
 
     final List<ChainValidationStepResult> failedValidationSteps =
         this.chainValidationSteps

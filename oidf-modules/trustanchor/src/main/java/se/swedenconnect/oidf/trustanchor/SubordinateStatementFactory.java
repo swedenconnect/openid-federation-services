@@ -19,9 +19,11 @@ package se.swedenconnect.oidf.trustanchor;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -67,22 +69,12 @@ public class SubordinateStatementFactory {
             builder.claim("constraints", constraint.toJson());
           });
 
-      Optional.ofNullable(subordinate.getCrit()).ifPresent(
-          crit -> builder.claim("crit", crit)
-      );
+      Optional.ofNullable(subordinate.getMetadataPolicyCrit())
+          .filter(metadataPolicyCrit -> !metadataPolicyCrit.isEmpty())
+          .ifPresent(metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit));
 
-      Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(
-          metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
-      );
-
-      final String resolvedEcLocation = resolveEcLocation(subordinate);
-      if (resolvedEcLocation != null) {
-        builder.claim("ec_location", resolvedEcLocation);
-      }
-
-      Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(
-          metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit)
-      );
+      Optional.ofNullable(subordinate.resolveEcLocation())
+          .ifPresent(ecLocation -> builder.claim(EcLocationValidator.CLAIM_NAME, ecLocation));
 
       Optional.ofNullable(subordinate.getPolicy())
           .flatMap(policy -> Optional.ofNullable(policy.getPolicy()))
@@ -93,13 +85,14 @@ public class SubordinateStatementFactory {
 
       builder.claim("jwks", subordinate.getJwks().toJSONObject(true));
 
-      final JWTClaimsSet jwtClaimsSet = builder
+      builder
           .issueTime(Date.from(Instant.now()))
           .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
           .jwtID(new BigInteger(128, RNG).toString(16))
           .issuer(issuer.getEntityIdentifier().getValue())
-          .subject(subordinate.getEntityIdentifier().getValue())
-          .build();
+          .subject(subordinate.getEntityIdentifier().getValue());
+      final JWTClaimsSet jwtClaimsSet =
+          EntityStatementClaims.withCriticalClaims(builder, subordinate.getCrit()).build();
 
       return this.signerFactory
           .createSigner(issuer)
@@ -107,34 +100,5 @@ public class SubordinateStatementFactory {
     } catch (final Exception e) {
       throw new EntityStatementSignException("Failed to sign entity statement", e);
     }
-  }
-
-  private static String resolveEcLocation(final TrustAnchorProperties.SubordinateListingProperty subordinate) {
-    final String entityId = subordinate.getEntityIdentifier().getValue();
-    final String virtualEntityId = subordinate.getVirtualEntityId() != null
-        ? subordinate.getVirtualEntityId().getValue()
-        : null;
-
-    final String ecLocation = subordinate.getEcLocation();
-
-    if (ecLocation != null) {
-      if (ecLocation.startsWith("http://") || ecLocation.startsWith("https://")) {
-        return ecLocation;
-      }
-      if (ecLocation.startsWith("/") && virtualEntityId != null) {
-        return virtualEntityId + ecLocation;
-      }
-      if (ecLocation.startsWith("/")) {
-        return entityId + ecLocation;
-      }
-    }
-
-    // No ec_location set — if virtual entity ID differs from entity ID the subordinate
-    // is hosted under a different domain, so we must tell others where to find it.
-    if (virtualEntityId != null && !virtualEntityId.equals(entityId)) {
-      return virtualEntityId + "/.well-known/openid-federation";
-    }
-
-    return null;
   }
 }

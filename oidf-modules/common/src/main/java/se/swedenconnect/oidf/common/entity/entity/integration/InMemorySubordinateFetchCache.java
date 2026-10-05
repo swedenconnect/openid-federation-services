@@ -39,6 +39,6 @@ public class InMemorySubordinateFetchCache implements SubordinateFetchCache {
 
   @Override
   public void put(final long snapshot, final FetchRequest request, final String response) {
-    this.cache.computeIfAbsent(snapshot, _ -> new ConcurrentHashMap<>()).put(request.subject(), response);
+    this.cache.computeIfAbsent(snapshot, key -> new ConcurrentHashMap<>()).put(request.subject(), response);
   }
 }

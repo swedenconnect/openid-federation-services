@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
@@ -49,52 +50,57 @@ public class RestClientFederationClient implements FederationClient {
   private final RestClient client;
   private final MeterRegistry registry;
   private final UptimeRegistry uptimeRegistry;
+  private final EcLocationValidator ecLocationValidator;
 
   /**
    * @param client to use for requests
    * @param registry for metrics
    * @param uptimeRegistry for per-cycle uptime tracking
+   * @param ecLocationValidator for checking ec_location values before they are used
    */
   public RestClientFederationClient(
       final RestClient client,
       final MeterRegistry registry,
-      final UptimeRegistry uptimeRegistry
+      final UptimeRegistry uptimeRegistry,
+      final EcLocationValidator ecLocationValidator
   ) {
     this.client = client;
     this.registry = registry;
     this.uptimeRegistry = uptimeRegistry;
+    this.ecLocationValidator = ecLocationValidator;
   }
 
   @Override
   public SignedJWT entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
     final String entityId = request.parameters().entityID().getValue();
     final long startNanos = System.nanoTime();
-    final String jwt = Optional.ofNullable(request.parameters().ecLocation())
-        .map(location -> {
-          if (location.startsWith("data:application/entity-statement+jwt,")) {
-            return location.split(",")[1];
-          }
-          return this.client.mutate()
-              .baseUrl(location)
-              .build()
-              .get()
-              .retrieve()
-              .body(String.class);
-        })
-        .orElseGet(
-            () -> this.client.mutate()
-                .baseUrl(request.parameters().entityID().getValue())
+    try {
+      final String jwt = Optional.ofNullable(request.parameters().ecLocation())
+          .map(location -> {
+            this.ecLocationValidator.validate(location);
+            if (EcLocationValidator.isDataUrl(location)) {
+              return EcLocationValidator.getDataUrlContent(location);
+            }
+            return this.client.mutate()
+                .baseUrl(location)
                 .build()
                 .get()
-                .uri(builder -> builder.path("/.well-known/openid-federation").build()).retrieve()
-                .body(String.class)
-        );
-    try {
+                .retrieve()
+                .body(String.class);
+          })
+          .orElseGet(
+              () -> this.client.mutate()
+                  .baseUrl(request.parameters().entityID().getValue())
+                  .build()
+                  .get()
+                  .uri(builder -> builder.path("/.well-known/openid-federation").build()).retrieve()
+                  .body(String.class)
+          );
+      final SignedJWT result = SignedJWT.parse(jwt);
       this.registry.counter("GET_entity_configuration", List.of(
           Tag.of("entityId", entityId),
           Tag.of("outcome", "success")
       )).increment();
-      final SignedJWT result = SignedJWT.parse(jwt);
       final long responseTimeMs = (System.nanoTime() - startNanos) / 1_000_000;
       this.uptimeRegistry.record(entityId, true);
       this.uptimeRegistry.recordSuccess(entityId, responseTimeMs);
@@ -207,7 +213,12 @@ public class RestClientFederationClient implements FederationClient {
             request.federationEntityMetadata().get("federation_trust_mark_status_endpoint"))
         .filter(p -> p instanceof String)
         .map(String.class::cast)
-        .orElseGet(() -> request.parameters().trustMarkIssuer() + "/trust_mark_status");
+        .orElse(null);
+    if (path == null) {
+      log.info("Trust mark issuer {} has no valid federation_trust_mark_status_endpoint",
+          request.parameters().trustMarkIssuer());
+      return new TrustMarkStatusResponse(null, true);
+    }
     try {
       final MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
       form.add("trust_mark", request.parameters().trustMarkJwt());
@@ -220,7 +231,8 @@ public class RestClientFederationClient implements FederationClient {
           .body(String.class);
       return new TrustMarkStatusResponse(SignedJWT.parse(body), false);
     } catch (final Exception e) {
-      log.error("Failed to get Trust Mark Status for Trust Mark Request {}", request, e);
+      log.warn("Failed to get trust mark status from '{}': {}", path, e.getMessage());
+      log.debug("Trust mark status request {} failed", request, e);
       return new TrustMarkStatusResponse(null, true);
     }
   }

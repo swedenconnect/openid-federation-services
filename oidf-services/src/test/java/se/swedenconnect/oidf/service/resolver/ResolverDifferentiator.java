@@ -63,7 +63,7 @@ public class ResolverDifferentiator {
     final ResolveRequest referenceRequest = new ResolveRequest(
         resolveRequest.subject(),
         this.anarchyTrustAnchor.getValue(),
-        resolveRequest.type(),
+        resolveRequest.types(),
         false
     );
 
@@ -81,7 +81,7 @@ public class ResolverDifferentiator {
         .uri(uri -> uri.path("/resolve")
             .queryParam("sub", resolveRequest.subject())
             .queryParam("trust_anchor", resolveRequest.trustAnchor())
-            .queryParamIfPresent("entity_type", Optional.ofNullable(resolveRequest.type()))
+            .queryParam("entity_type", Optional.ofNullable(resolveRequest.types()).orElseGet(List::of).toArray())
             .build())
         .exchange((req, res) -> {
           final String body = new String(res.getBody().readAllBytes());

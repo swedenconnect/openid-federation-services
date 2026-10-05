@@ -91,8 +91,13 @@ public class TrustMarkSigner {
         .subject(trustMarkSubjectProperty.sub());
 
 
-    claimsSetBuilder.expirationTime(
-        this.calculateExp(trustMarkIssuerProperties.trustMarkValidityDuration(), trustMarkSubjectProperty.expires()));
+    final Date expirationTime =
+        this.calculateExp(trustMarkIssuerProperties.trustMarkValidityDuration(), trustMarkSubjectProperty.expires());
+    if (!expirationTime.toInstant().isAfter(Instant.now(this.clock))) {
+      throw new ServerErrorException("Refusing to issue trust mark for %s with exp in the past"
+          .formatted(trustMarkSubjectProperty.sub()));
+    }
+    claimsSetBuilder.expirationTime(expirationTime);
 
     final Optional<EntityID> issuerEntityId = Optional.ofNullable(trustMarkIssuerProperties.entityIdentifier());
 

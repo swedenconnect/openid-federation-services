@@ -75,15 +75,30 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   @Override
   protected ResponseEntity<Object> createResponseEntity(final @Nullable Object body, final HttpHeaders headers,
                                                         final HttpStatusCode statusCode, final WebRequest request) {
-    String error = HttpStatus.valueOf(statusCode.value()).getReasonPhrase();
-    String errorDescription = "Unknown server error";
-    if (body instanceof ProblemDetail) {
-      error = Optional.ofNullable(((ProblemDetail) body).getTitle())
-          .orElse("server_error").toLowerCase().replace(' ', '_');
-      errorDescription = ((ProblemDetail) body).getDetail();
-    }
+    final String errorDescription = Optional.ofNullable(body)
+        .filter(ProblemDetail.class::isInstance)
+        .map(ProblemDetail.class::cast)
+        .map(ProblemDetail::getDetail)
+        .orElseGet(() -> Optional.ofNullable(HttpStatus.resolve(statusCode.value()))
+            .map(HttpStatus::getReasonPhrase)
+            .orElse("Error"));
     return new ResponseEntity<>(
-        Map.of("error", error, "error_description", errorDescription), headers, statusCode);
+        Map.of("error", errorCode(statusCode), "error_description", errorDescription), headers, statusCode);
+  }
+
+  /**
+   * Maps an HTTP status to an error code of OpenID Federation 1.0, Section 8.9.
+   *
+   * @param statusCode the HTTP status
+   * @return the error code
+   */
+  static String errorCode(final HttpStatusCode statusCode) {
+    return switch (statusCode.value()) {
+      case 401 -> "invalid_client";
+      case 404 -> "not_found";
+      case 503 -> "temporarily_unavailable";
+      default -> statusCode.is5xxServerError() ? "server_error" : "invalid_request";
+    };
   }
 
 }

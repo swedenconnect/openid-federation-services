@@ -16,19 +16,16 @@
  */
 package se.swedenconnect.oidf.resolver;
 
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.PolicyOperationCombinationValidator;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.PolicyOperationFactory;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
-import se.swedenconnect.oidf.resolver.metadata.OIDFPolicyOperationFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.DFSExecution;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 
@@ -79,22 +76,8 @@ public class FederationResolverConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  MetadataProcessor metadataProcessor(final PolicyOperationFactory policyOperationFactory,
-                                      final PolicyOperationCombinationValidator policyOperationCombinationValidator
-  ) {
-    return new MetadataProcessor(policyOperationFactory, policyOperationCombinationValidator);
-  }
-
-  @Bean
-  @ConditionalOnMissingBean
-  PolicyOperationFactory policyOperationFactory() {
-    return new OIDFPolicyOperationFactory();
-  }
-
-  @Bean
-  @ConditionalOnMissingBean
-  PolicyOperationCombinationValidator policyOperationCombinationValidator() {
-    return new DefaultPolicyOperationCombinationValidator();
+  MetadataProcessor metadataProcessor() {
+    return new MetadataProcessor();
   }
 
   @Bean
@@ -102,8 +85,10 @@ public class FederationResolverConfiguration {
   EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory(
       final FederationClient client,
       final ErrorContextFactory errorContextFactory,
-      final ApplicationEventPublisher publisher) {
-    return new EntityStatementTreeLoaderFactory(client, new DFSExecution(), errorContextFactory, publisher);
+      final ApplicationEventPublisher publisher,
+      final EcLocationValidator ecLocationValidator) {
+    return new EntityStatementTreeLoaderFactory(
+        client, new DFSExecution(), errorContextFactory, publisher, ecLocationValidator);
   }
 
   @Bean

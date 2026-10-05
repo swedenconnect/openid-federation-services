@@ -25,6 +25,7 @@ import com.nimbusds.jose.util.Base64URL;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.id.Identifier;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsVerifier;
@@ -34,11 +35,14 @@ import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import com.nimbusds.openid.connect.sdk.federation.utils.JWTUtils;
+import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Typed claims accessors for entity statement {@link SignedJWT}s.
@@ -50,6 +54,7 @@ import java.util.Map;
  *
  * @author Felix Hellman
  */
+@Slf4j
 public final class EntityStatementClaims {
 
   /**
@@ -183,24 +188,99 @@ public final class EntityStatementClaims {
   }
 
   /**
+   * Gets the trust mark entries of the {@code trust_marks} claim. Entries that cannot be parsed are logged and
+   * skipped.
+   *
    * @param jwt to get trust marks from
    * @return trust mark entries from the {@code trust_marks} claim, or null if not present or invalid
    */
-  @SuppressWarnings("unchecked")
   public static List<TrustMarkEntry> getTrustMarks(final SignedJWT jwt) {
+    final List<Object> array;
     try {
-      final List<Object> array = claims(jwt).getListClaim("trust_marks");
-      if (array == null) {
-        return null;
-      }
-      final List<TrustMarkEntry> marks = new LinkedList<>();
-      for (final Object o : array) {
-        marks.add(TrustMarkEntry.parse(new JSONObject((Map<String, Object>) o)));
-      }
-      return marks;
-    } catch (final java.text.ParseException | ParseException e) {
+      array = claims(jwt).getListClaim("trust_marks");
+    } catch (final java.text.ParseException e) {
+      log.info("Invalid trust_marks claim in entity statement for '{}': {}", claims(jwt).getSubject(),
+          e.getMessage());
       return null;
     }
+    if (array == null) {
+      return null;
+    }
+    final List<TrustMarkEntry> marks = new ArrayList<>();
+    for (final Object o : array) {
+      try {
+        marks.add(parseTrustMarkEntry(o));
+      } catch (final ParseException e) {
+        log.info("Ignoring invalid trust_marks entry in entity statement for '{}': {}", claims(jwt).getSubject(),
+            e.getMessage());
+      }
+    }
+    return marks;
+  }
+
+  /**
+   * Parses a {@code trust_marks} entry. The trust mark type is read from {@code trust_mark_type}, with the
+   * {@code id} member of earlier OpenID Federation drafts as a fallback.
+   *
+   * @param entry the entry to parse
+   * @return the trust mark entry
+   * @throws ParseException if the entry is not a valid trust mark entry
+   */
+  @SuppressWarnings("unchecked")
+  public static TrustMarkEntry parseTrustMarkEntry(final Object entry) throws ParseException {
+    if (!(entry instanceof final Map<?, ?> map)) {
+      throw new ParseException("Trust mark entry is not a JSON object");
+    }
+    final JSONObject json = new JSONObject((Map<String, Object>) map);
+    String type = JSONObjectUtils.getString(json, "trust_mark_type", null);
+    if (type == null || type.isBlank()) {
+      type = JSONObjectUtils.getString(json, "id", null);
+    }
+    if (type == null || type.isBlank()) {
+      throw new ParseException("Trust mark entry is missing trust_mark_type");
+    }
+    final String trustMark = JSONObjectUtils.getNonBlankString(json, "trust_mark");
+    try {
+      return new TrustMarkEntry(new Identifier(type), SignedJWT.parse(trustMark));
+    } catch (final java.text.ParseException e) {
+      throw new ParseException("Invalid trust mark JWT: " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Gets the type of a trust mark JWT. The type is read from the {@code trust_mark_type} claim, with the {@code id}
+   * claim of earlier OpenID Federation drafts as a fallback.
+   *
+   * @param trustMark the trust mark JWT
+   * @return the trust mark type, or null if not present or the claims cannot be parsed
+   */
+  public static String getTrustMarkType(final SignedJWT trustMark) {
+    try {
+      final JWTClaimsSet trustMarkClaims = trustMark.getJWTClaimsSet();
+      final String type = trustMarkClaims.getStringClaim("trust_mark_type");
+      if (type != null && !type.isBlank()) {
+        return type;
+      }
+      final String id = trustMarkClaims.getStringClaim("id");
+      return id != null && !id.isBlank() ? id : null;
+    } catch (final java.text.ParseException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Serializes a trust mark entry for the {@code trust_marks} claim. The draft {@code id} member is written next to
+   * {@code trust_mark_type} for peers that still read the draft form.
+   *
+   * @param entry the trust mark entry
+   * @return JSON object with the members {@code trust_mark_type}, {@code id} and {@code trust_mark}
+   */
+  public static JSONObject toJSONObject(final TrustMarkEntry entry) {
+    final JSONObject json = new JSONObject();
+    json.put("trust_mark_type", entry.getID().getValue());
+    json.put("id", entry.getID().getValue());
+    json.put("trust_mark", entry.getTrustMark().serialize());
+    return json;
   }
 
   /**
@@ -216,6 +296,40 @@ public final class EntityStatementClaims {
   }
 
   /**
+   * Claim names defined for entity statements by OpenID Federation 1.0, which must not be listed in {@code crit}.
+   */
+  public static final Set<String> SPECIFIED_CLAIMS = Set.of(
+      "iss", "sub", "iat", "exp", "jwks", "aud", "authority_hints", "trust_anchor_hints", "metadata",
+      "metadata_policy", "constraints", "crit", "metadata_policy_crit", "trust_marks", "trust_mark_issuers",
+      "trust_mark_owners", "source_endpoint", "trust_anchor");
+
+  /**
+   * Adds the {@code crit} claim to a claims set that is about to be signed. Only names that are not defined by the
+   * specification, not repeated and present as claims are kept (OpenID Federation 1.0, Section 13.4). The claim is
+   * left out when no name is kept.
+   *
+   * @param builder the claims, with every claim except {@code crit} already set
+   * @param configured the configured critical claim names, may be null
+   * @return the claims with {@code crit} set when there is a name to list
+   */
+  public static JWTClaimsSet.Builder withCriticalClaims(final JWTClaimsSet.Builder builder,
+      final List<String> configured) {
+    if (configured == null || configured.isEmpty()) {
+      return builder;
+    }
+    final Set<String> present = builder.build().getClaims().keySet();
+    final List<String> crit = configured.stream()
+        .distinct()
+        .filter(name -> !SPECIFIED_CLAIMS.contains(name) && present.contains(name))
+        .toList();
+    if (crit.size() != configured.size()) {
+      log.warn("Configured crit {} reduced to {}, names defined by the specification, repeated or not present"
+          + " as claims are left out", configured, crit);
+    }
+    return crit.isEmpty() ? builder : builder.claim("crit", crit);
+  }
+
+  /**
    * Signs the given claims set as an entity statement.
    *
    * @param claimsSet  to sign
@@ -228,16 +342,24 @@ public final class EntityStatementClaims {
   }
 
   /**
-   * Verifies the signature of the given entity statement against the given jwk set.
+   * Verifies the signature of the given entity statement against the given jwk set. The statement must have a
+   * {@code kid} header that identifies a key in the jwk set (OpenID Federation 1.0, Section 3.2, steps 11 and 12).
    *
    * @param jwt    to verify
    * @param jwkSet to verify against
    * @return thumbprint of the jwk used to verify the signature
-   * @throws BadJOSEException if the jwt is invalid
+   * @throws BadJOSEException if the jwt is invalid, has no {@code kid}, or its {@code kid} is not in the jwk set
    * @throws JOSEException    if the signature verification failed
    */
   public static Base64URL verifySignature(final SignedJWT jwt, final JWKSet jwkSet)
       throws BadJOSEException, JOSEException {
+    final String kid = jwt.getHeader().getKeyID();
+    if (kid == null || kid.isBlank()) {
+      throw new BadJOSEException("Entity statement has no kid header");
+    }
+    if (jwkSet == null || jwkSet.getKeyByKeyId(kid) == null) {
+      throw new BadJOSEException("Entity statement kid '%s' does not match any key in the jwks".formatted(kid));
+    }
     return JWTUtils.verifySignature(jwt, ENTITY_STATEMENT_TYPE, new EntityStatementClaimsVerifier(null), jwkSet);
   }
 

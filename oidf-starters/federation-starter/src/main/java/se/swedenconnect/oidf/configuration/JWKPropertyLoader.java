@@ -40,7 +40,8 @@ public class JWKPropertyLoader implements Converter<String, JWK> {
         || source.startsWith("hosted:")
         || source.startsWith("public")) {
       return this.registry.getObject().getKey(source)
-          .orElseThrow();
+          .orElseThrow(() -> new IllegalArgumentException(
+              "Key reference '%s' could not be found".formatted(source)));
     }
     throw new IllegalArgumentException("Could not convert string:%s to jwk".formatted(source));
   }

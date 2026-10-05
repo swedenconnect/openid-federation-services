@@ -70,7 +70,9 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
       builder.issueTime(Date.from(Instant.now()));
       builder.expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)));
       builder.claim("metadata", record.getMetadata());
-      builder.claim("authority_hints", record.getAuthorityHints());
+      if (Objects.nonNull(record.getAuthorityHints()) && !record.getAuthorityHints().isEmpty()) {
+        builder.claim("authority_hints", record.getAuthorityHints());
+      }
       builder.claim("jwks", record.getJwks().toPublicJWKSet().toJSONObject());
       final List<TrustMarkSourceProperty> trustMarkSourceProperties = record.getTrustMarkSource();
       if (Objects.nonNull(trustMarkSourceProperties)) {
@@ -89,9 +91,10 @@ public class SigningEntityConfigurationFactory implements EntityConfigurationFac
             })
             .filter(Objects::nonNull)
             .toList();
-        builder.claim("trust_marks", trustMarks.stream().map(TrustMarkEntry::toJSONObject).toList());
+        builder.claim("trust_marks", trustMarks.stream().map(EntityStatementClaims::toJSONObject).toList());
       }
-      return EntityStatementClaims.sign(builder.build(), record.getJwks().getKeys().getFirst());
+      return EntityStatementClaims.sign(EntityStatementClaims.withCriticalClaims(builder, record.getCrit()).build(),
+          record.getJwks().getKeys().getFirst());
     } catch (final JOSEException e) {
       throw new IllegalArgumentException("Failed to sign entity configuration", e);
     }

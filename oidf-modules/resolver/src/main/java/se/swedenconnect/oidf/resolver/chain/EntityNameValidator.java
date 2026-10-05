@@ -20,58 +20,59 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Validation class for checking allowed/excluded entity name patterns.
+ * Matches entity identifiers against naming constraints. Constraints use the domain name syntax of RFC 5280,
+ * Section 4.2.1.10, and apply to the host part of the entity identifier (OpenID Federation 1.0, Section 6.2.2).
  *
  * @author Felix Hellman
  */
 @Slf4j
 public class EntityNameValidator {
+
   /**
-   * @param entityId to check
-   * @param rule rule to check towards
-   * @return true if allowed, false if not allowed
+   * Checks an entity identifier against one naming constraint. A constraint starting with a period, such as
+   * {@code .example.com}, matches any host below that domain but not the domain itself. A constraint without a
+   * leading period, such as {@code host.example.com}, matches that host only.
+   *
+   * @param entityId the entity identifier to check
+   * @param rule the naming constraint
+   * @return true if the host of the entity identifier matches the constraint
    */
   public static boolean validate(final String entityId, final String rule) {
-    final URI permittedUri = URI.create(rule);
-    final URI entityUri = URI.create(entityId);
-    try {
-      Optional.ofNullable(permittedUri.getAuthority()).ifPresent(authority -> {
-        if (!entityUri.getAuthority().endsWith(authority)) {
-          throw new IllegalArgumentException("Failed to validate Entity Name, illegal authority");
-        }
-      });
-      Optional.ofNullable(permittedUri.getScheme()).ifPresent(scheme -> {
-        if (!entityUri.getScheme().contains(scheme)) {
-          throw new IllegalArgumentException("Failed to validate Entity Name, illegal scheme");
-        }
-      });
-      Optional.ofNullable(permittedUri.getPath()).ifPresent(path -> {
-        if (!entityUri.getPath().contains(path)) {
-          throw new IllegalArgumentException("Failed to validate Entity Name, illegal path");
-        }
-      });
-      //Everything matches
-      return true;
-    } catch (final IllegalArgumentException e) {
-      log.warn("Entity name did not match constraint", e);
+    if (rule == null || rule.isBlank()) {
       return false;
     }
+    final String host = hostOf(entityId);
+    if (host == null) {
+      log.debug("Entity identifier '{}' has no host, it matches no naming constraint", entityId);
+      return false;
+    }
+    final String constraint = rule.toLowerCase(Locale.ROOT);
+    return constraint.startsWith(".") ? host.endsWith(constraint) : host.equals(constraint);
   }
 
   /**
-   * Checks entityId towards a list of rules
-   * @param entityId to check
-   * @param rules to check
-   * @return true if
+   * Checks an entity identifier against a list of naming constraints.
+   *
+   * @param entityId the entity identifier to check
+   * @param rules the naming constraints
+   * @return true if any of the constraints matches
    */
   public static boolean anyMatch(final String entityId, final List<String> rules) {
-    final long failedRules = rules.stream().map(rule -> validate(entityId, rule))
-        .filter(v -> !v)
-        .count();
+    return rules.stream().anyMatch(rule -> validate(entityId, rule));
+  }
 
-    return failedRules != rules.size();
+  private static String hostOf(final String entityId) {
+    try {
+      return Optional.ofNullable(URI.create(entityId).getHost())
+          .map(host -> host.toLowerCase(Locale.ROOT))
+          .orElse(null);
+    }
+    catch (final IllegalArgumentException e) {
+      return null;
+    }
   }
 }

@@ -26,6 +26,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.routing.RouterProperties;
 
 import java.util.List;
@@ -68,12 +69,20 @@ public class FederationProperties {
   @NestedConfigurationProperty
   private RouterProperties routing;
 
+  /**
+   * Whether {@code ec_location} values may use the {@code http} scheme. OpenID Federation Entity Configuration
+   * Hosting 1.0 only allows {@code https} and data URLs, so this is only meant for local test and demo setups.
+   * Defaults to {@code false}.
+   */
+  private boolean allowHttpEcLocation;
+
   @PostConstruct
   void validate() {
     Assert.notNull(this.resolver, "%s.%s can not be empty".formatted(PROPERTY_KEY, "resolver"));
     this.resolver.validate("%s.%s".formatted(PROPERTY_KEY, "resolver"));
     if (Objects.nonNull(this.localRegistry)) {
-      this.localRegistry.validate("%s.%s".formatted(PROPERTY_KEY, "local-registry"));
+      this.localRegistry.validate("%s.%s".formatted(PROPERTY_KEY, "local-registry"),
+          new EcLocationValidator(this.allowHttpEcLocation));
     } else {
       this.localRegistry = new PropertyRegistry(
           List.of(),

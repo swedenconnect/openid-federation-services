@@ -37,6 +37,6 @@ public class InMemoryEntityConfigurationCache implements EntityConfigurationCach
 
   @Override
   public void put(final long snapshot, final String entityId, final String response) {
-    this.cache.computeIfAbsent(snapshot, _ -> new ConcurrentHashMap<>()).put(entityId, response);
+    this.cache.computeIfAbsent(snapshot, key -> new ConcurrentHashMap<>()).put(entityId, response);
   }
 }

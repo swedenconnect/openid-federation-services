@@ -31,6 +31,7 @@ import com.nimbusds.jose.jwk.KeyType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.utils.JWTUtils;
 import lombok.Getter;
 
 /**
@@ -51,7 +52,8 @@ public class JWKFederationSigner implements FederationSigner {
   }
 
   /**
-   * Signs claims
+   * Signs claims with the signing key. The algorithm is the {@code alg} of the key when set, otherwise the default
+   * algorithm for the key type.
    *
    * @param type   for this jwt
    * @param claims fot this jwt
@@ -61,7 +63,8 @@ public class JWKFederationSigner implements FederationSigner {
    */
   public SignedJWT sign(final JOSEObjectType type, final JWTClaimsSet claims) throws JOSEException, ParseException {
     final JWSSigner signer = this.getSigner(this.signKey);
-    final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().get();
+    // The alg of the key is used when set, the same way as for Entity Configurations
+    final JWSAlgorithm alg = JWTUtils.resolveSigningAlgorithm(this.signKey);
     final JWSHeader header = new JWSHeader.Builder(alg)
         .type(type)
         .keyID(this.signKey.getKeyID())

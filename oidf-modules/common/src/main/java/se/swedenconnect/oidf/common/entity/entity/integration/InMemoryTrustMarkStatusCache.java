@@ -36,6 +36,6 @@ public class InMemoryTrustMarkStatusCache implements TrustMarkStatusCache {
 
   @Override
   public void put(final long snapshot, final String trustMarkJwt, final String response) {
-    this.trustMarkStatusCache.computeIfAbsent(snapshot, _ -> new ConcurrentHashMap<>()).put(trustMarkJwt, response);
+    this.trustMarkStatusCache.computeIfAbsent(snapshot, key -> new ConcurrentHashMap<>()).put(trustMarkJwt, response);
   }
 }

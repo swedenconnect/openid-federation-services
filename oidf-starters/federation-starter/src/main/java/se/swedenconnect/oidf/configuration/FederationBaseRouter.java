@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.configuration;
 
+import com.nimbusds.jose.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
@@ -88,7 +89,16 @@ public class FederationBaseRouter implements Router {
           .filter(router -> router.willHandleRequest(request, entity))
           .findFirst()
           .get();
-      final CachedResponse response = module.handleRequest(request, entity);
+      CachedResponse response;
+      try {
+        response = module.handleRequest(request, entity);
+      }
+      catch (final RuntimeException e) {
+        log.error("Failed to handle request {}", request.uri(), e);
+        // Section 8.9 error format, also for errors the module did not handle
+        response = new CachedResponse(JSONObjectUtils.toJSONString(Map.of("error", "server_error",
+            "error_description", "The request could not be handled")), "application/json", 500);
+      }
       if (response.statusCode() >= 200 && response.statusCode() < 300) {
         this.cache.put(snapshot, cacheKey, response);
       }
@@ -142,11 +152,17 @@ public class FederationBaseRouter implements Router {
       virtualEntityId = requestUri.substring(0, requestUri.lastIndexOf('/'));
     }
     log.debug("FederationBaseRouter lookup requestUri={} virtualEntityId={}", requestUri, virtualEntityId);
-    final Optional<EntityRecord> entity = source.getEntityByVirtualEntityId(new EntityID(virtualEntityId))
-        .or(() -> source.getEntity(new NodeKey(virtualEntityId)))
+    // An entity identifier may be configured with a trailing /, which is not part of the request path (Section 9)
+    final Optional<EntityRecord> entity = findByBaseUrl(source, virtualEntityId)
+        .or(() -> findByBaseUrl(source, virtualEntityId + "/"))
         .or(() -> this.findEntityByEcLocation(source, requestUri));
     log.debug("FederationBaseRouter entity found={}", entity.isPresent());
     return entity;
+  }
+
+  private static Optional<EntityRecord> findByBaseUrl(final CompositeRecordSource source, final String baseUrl) {
+    return source.getEntityByVirtualEntityId(new EntityID(baseUrl))
+        .or(() -> source.getEntity(new NodeKey(baseUrl)));
   }
 
   private Optional<EntityRecord> findEntityByEcLocation(final CompositeRecordSource source, final String requestUri) {

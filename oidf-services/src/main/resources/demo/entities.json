@@ -15,6 +15,7 @@
     "entity-identifier": "http://localhost:8080/im",
     "virtual-entity-id": "http://localhost:8080/im",
     "jwks": "federation:demo-federation-key",
+    "authority-hints": ["http://localhost:8080/ta"],
     "metadata": {
       "federation_entity": {
         "organization_name": "Demo Intermediate",
@@ -27,6 +28,7 @@
     "entity-identifier": "http://localhost:8080/op",
     "virtual-entity-id": "http://localhost:8080/op",
     "jwks": "hosted:demo-hosted-key",
+    "authority-hints": ["http://localhost:8080/im"],
     "metadata": {
       "federation_entity": {
         "organization_name": "Demo OpenID Provider"
@@ -40,8 +42,9 @@
     "entity-identifier": "http://localhost:8080/rp",
     "virtual-entity-id": "http://localhost:8080/rp",
     "jwks": "hosted:demo-hosted-key",
+    "authority-hints": ["http://localhost:8080/im"],
     "metadata": {
-      "relying_party": {
+      "openid_relying_party": {
         "organization_name": "DIGG Myndigheten för digital förvaltning",
         "description": "This is a RP that tests the metadata_policy"
       }

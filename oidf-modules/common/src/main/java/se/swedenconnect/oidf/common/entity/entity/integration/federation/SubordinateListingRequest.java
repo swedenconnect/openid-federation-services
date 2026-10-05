@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * @param entityType
@@ -54,15 +54,30 @@ public record SubordinateListingRequest(List<String> entityType, Boolean trustMa
     if (Objects.nonNull(this.entityType) && !this.entityType.isEmpty()) {
       return true;
     }
-    return Stream.of(this.trustMarkType, this.trustMarked, this.intermediate)
-        .anyMatch(Objects::nonNull);
+    // trust_marked and intermediate only filter when true (Section 8.2.1)
+    return Objects.nonNull(this.trustMarkType)
+        || Boolean.TRUE.equals(this.trustMarked)
+        || Boolean.TRUE.equals(this.intermediate);
   }
 
   /**
-   * Converts the request into a {@link SignedJWT} predicate
+   * Converts the request into a {@link SignedJWT} predicate. The trust mark filters use every trust mark in the
+   * {@code trust_marks} claim, without validating them.
+   *
    * @return request as predicate
    */
   public Predicate<SignedJWT> toPredicate() {
+    return this.toPredicate(SubordinateListingRequest::trustMarksOf);
+  }
+
+  /**
+   * Converts the request into a {@link SignedJWT} predicate, where the trust mark filters only count the trust marks
+   * returned by {@code validTrustMarks}.
+   *
+   * @param validTrustMarks gives the valid trust marks of an Entity Configuration
+   * @return request as predicate
+   */
+  public Predicate<SignedJWT> toPredicate(final Function<SignedJWT, List<TrustMarkEntry>> validTrustMarks) {
     final List<Predicate<SignedJWT>> predicates = new ArrayList<>();
 
     if (Objects.nonNull(this.entityType) && !this.entityType.isEmpty()) {
@@ -72,38 +87,25 @@ public record SubordinateListingRequest(List<String> entityType, Boolean trustMa
 
     Optional.ofNullable(this.trustMarkType).ifPresent(tmid -> {
       final Predicate<SignedJWT> predicate =
-          es -> trustMarksOf(es).stream()
+          es -> validTrustMarks.apply(es).stream()
               .anyMatch(tme -> tme.getID().getValue().equals(tmid));
       predicates.add(predicate);
     });
 
-    Optional.ofNullable(this.trustMarked).ifPresent(marked -> {
-      if (marked) {
-        predicates.add(es -> !trustMarksOf(es).isEmpty());
-      } else {
-        predicates.add(es -> trustMarksOf(es).isEmpty());
-      }
-    });
+    // trust_marked and intermediate only filter when true; false means no filtering (Section 8.2.1)
+    if (Boolean.TRUE.equals(this.trustMarked)) {
+      predicates.add(es -> !validTrustMarks.apply(es).isEmpty());
+    }
 
-    Optional.ofNullable(this.intermediate).ifPresent(intermediate -> {
-      if (intermediate) {
-        predicates.add(es -> {
-          final FederationEntityMetadata federationEntityMetadata =
-              EntityStatementClaims.getFederationEntityMetadata(es);
-          return Objects.nonNull(federationEntityMetadata)
-              && Objects.nonNull(federationEntityMetadata.getFederationFetchEndpointURI())
-              && Objects.nonNull(federationEntityMetadata.getFederationListEndpointURI());
-        });
-      } else {
-        predicates.add(es -> {
-          final FederationEntityMetadata federationEntityMetadata =
-              EntityStatementClaims.getFederationEntityMetadata(es);
-          return Objects.isNull(federationEntityMetadata)
-              || (Objects.isNull(federationEntityMetadata.getFederationFetchEndpointURI())
-              && Objects.isNull(federationEntityMetadata.getFederationListEndpointURI()));
-        });
-      }
-    });
+    if (Boolean.TRUE.equals(this.intermediate)) {
+      // An entity with subordinates must have a fetch endpoint, a list endpoint is optional (Section 8.1)
+      predicates.add(es -> {
+        final FederationEntityMetadata federationEntityMetadata =
+            EntityStatementClaims.getFederationEntityMetadata(es);
+        return Objects.nonNull(federationEntityMetadata)
+            && Objects.nonNull(federationEntityMetadata.getFederationFetchEndpointURI());
+      });
+    }
 
     return predicates.stream().reduce((p) -> true, Predicate::and);
   }

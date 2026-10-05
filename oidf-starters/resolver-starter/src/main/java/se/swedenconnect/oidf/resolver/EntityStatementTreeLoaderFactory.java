@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.resolver;
 
 import org.springframework.context.ApplicationEventPublisher;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTreeLoader;
@@ -33,21 +34,25 @@ public class EntityStatementTreeLoaderFactory {
   private final ExecutionStrategy executionStrategy;
   private final ErrorContextFactory errorContextFactory;
   private final ApplicationEventPublisher publisher;
+  private final EcLocationValidator ecLocationValidator;
 
   /**
    * @param client              for fetching entities
    * @param executionStrategy   for executing iterations
    * @param errorContextFactory for creating error context
    * @param publisher           publisher of events.
+   * @param ecLocationValidator for checking ec_location values of Subordinate Statements
    */
   public EntityStatementTreeLoaderFactory(final FederationClient client,
                                           final ExecutionStrategy executionStrategy,
                                           final ErrorContextFactory errorContextFactory,
-                                          final ApplicationEventPublisher publisher) {
+                                          final ApplicationEventPublisher publisher,
+                                          final EcLocationValidator ecLocationValidator) {
     this.client = client;
     this.executionStrategy = executionStrategy;
     this.errorContextFactory = errorContextFactory;
     this.publisher = publisher;
+    this.ecLocationValidator = ecLocationValidator;
   }
 
   /**
@@ -57,7 +62,8 @@ public class EntityStatementTreeLoaderFactory {
    * @return new instance of a tree loader
    */
   public EntityStatementTreeLoader create(final ResolverProperties properties) {
-    return new EntityStatementTreeLoader(this.client, this.executionStrategy, this.errorContextFactory)
+    return new EntityStatementTreeLoader(
+        this.client, this.executionStrategy, this.errorContextFactory, this.ecLocationValidator)
         .withAdditionalPostHook(() -> this.publisher.publishEvent(
             new TreeUpdatedEvent(properties.getEntityIdentifier())
         ));

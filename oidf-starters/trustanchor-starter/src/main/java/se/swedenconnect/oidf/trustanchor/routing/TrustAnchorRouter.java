@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.nimbusds.jose.shaded.gson.Gson;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.servlet.function.RequestPredicate;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -35,6 +36,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Subordi
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
+import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
+import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.tree.scraping.CacheSnapshotVersionLookup;
 import se.swedenconnect.oidf.routing.ModuleRouter;
 import se.swedenconnect.oidf.routing.RequireParameters;
@@ -57,6 +60,9 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
   private static final Logger log = LoggerFactory.getLogger(TrustAnchorRouter.class);
   public static final Gson GSON = new Gson();
   private final TrustAnchorFactory trustAnchorFactory;
+  private static final MediaType ENTITY_STATEMENT_TYPE =
+      MediaType.parseMediaType("application/entity-statement+jwt");
+
   private final RouteFactory routeFactory;
   private final ServerResponseErrorHandler errorHandler;
   private final CacheSnapshotVersionLookup lookup;
@@ -111,7 +117,7 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
       final TrustAnchorProperties properties = this.source.getTrustAnchorProperties().stream()
           .filter(p -> p.getEntityIdentifier().getValue().equals(entity.getEntityIdentifier().getValue()))
           .findFirst()
-          .get();
+          .orElseThrow(() -> missingConfiguration(entity, "trust anchor"));
       final TrustAnchor trustAnchor = this.trustAnchorFactory.create(properties);
       if (this.isFetchEndpoint(request, entity)) {
         final MultiValueMap<String, String> params = RequireParameters.validate(request.params(), List.of("sub"));
@@ -121,9 +127,9 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
       final MultiValueMap<String, String> params = request.params();
       final java.util.List<String> listing = trustAnchor.subordinateListing(new SubordinateListingRequest(
           params.get("entity_type"),
-          Optional.ofNullable(params.getFirst("trust_marked")).map(Boolean::parseBoolean).orElse(null),
+          booleanParameter(params, "trust_marked"),
           params.getFirst("trust_mark_type"),
-          Optional.ofNullable(params.getFirst("intermediate")).map(Boolean::parseBoolean).orElse(null)
+          booleanParameter(params, "intermediate")
       ));
       return new CachedResponse(GSON.toJson(listing), "application/json", 200);
     } catch (final FederationException e) {
@@ -170,7 +176,7 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
       final String response = trustAnchor.fetchEntityStatement(fetchRequest);
       this.fetchCache.put(snapshot, fetchRequest, response);
       this.tagObservation("/fetch", false);
-      return ServerResponse.ok().body(response);
+      return ServerResponse.ok().contentType(ENTITY_STATEMENT_TYPE).body(response);
     } catch (final FederationException e) {
       return this.errorHandler.handle(e);
     }
@@ -182,7 +188,7 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
     log.debug("Cache header was {} for trust anchor", cacheControl);
     if (cacheControl.isEmpty() || !"no-cache".equals(cacheControl.getFirst())) {
       return this.fetchCache.get(snapshot, fetchRequest)
-          .map(response -> ServerResponse.ok().body(response));
+          .map(response -> ServerResponse.ok().contentType(ENTITY_STATEMENT_TYPE).body(response));
     }
     return Optional.empty();
   }
@@ -203,20 +209,37 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
       this.tagObservation("/subordinate_listing", false);
       return ServerResponse.ok().body(trustAnchor.subordinateListing(new SubordinateListingRequest(
           params.get("entity_type"),
-          Optional.ofNullable(params.getFirst("trust_marked"))
-              .map(Boolean::parseBoolean)
-              .orElse(null),
+          booleanParameter(params, "trust_marked"),
           params.getFirst("trust_mark_type"),
-          Optional.ofNullable(params.getFirst("intermediate"))
-              .map(Boolean::parseBoolean)
-              .orElse(null)
+          booleanParameter(params, "intermediate")
       )));
     } catch (final FederationException e) {
       return this.errorHandler.handle(e);
     }
   }
 
-  private RequestPredicate getRequestPredicate(final CompositeRecordSource source, final String endpoint) {
+  /**
+   * Reads a boolean request parameter. Only {@code true} and {@code false} are accepted.
+   *
+   * @param params the request parameters
+   * @param name the parameter name
+   * @return the value, or null if the parameter is absent
+   * @throws InvalidRequestException if the value is not {@code true} or {@code false}
+   */
+  private static Boolean booleanParameter(final MultiValueMap<String, String> params, final String name)
+      throws InvalidRequestException {
+    final String value = params.getFirst(name);
+    if (value == null) {
+      return null;
+    }
+    return switch (value) {
+      case "true" -> true;
+      case "false" -> false;
+      default -> throw new InvalidRequestException("%s must be true or false".formatted(name));
+    };
+  }
+
+    private RequestPredicate getRequestPredicate(final CompositeRecordSource source, final String endpoint) {
     return request -> {
       return source.getTrustAnchorProperties().stream()
           .map(prop -> this.routeFactory.createRoute(prop.getEntityIdentifier(), endpoint))
@@ -233,5 +256,18 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
         .filter(prop -> this.routeFactory.createRoute(prop.getEntityIdentifier(), endpoint).test(request))
         .findFirst()
         .get();
+  }
+
+  /**
+   * Creates the error for an entity that advertises an endpoint of this module, but has no configuration for it.
+   *
+   * @param entity the entity
+   * @param module the name of the module
+   * @return the error to return
+   */
+  private static NotFoundException missingConfiguration(final EntityRecord entity, final String module) {
+    log.warn("Entity {} advertises {} endpoints but has no {} configuration",
+        entity.getEntityIdentifier().getValue(), module, module);
+    return new NotFoundException("No %s configured for %s".formatted(module, entity.getEntityIdentifier().getValue()));
   }
 }

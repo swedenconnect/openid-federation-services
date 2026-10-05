@@ -82,7 +82,9 @@ public class EntityRecordDeserializer implements JsonDeserializer<EntityRecord> 
     if (jwksElement != null && !jwksElement.isJsonNull()) {
       record.setJwks(this.kidReferenceLoader.deserialize(jwksElement, JWKSet.class, ctx));
     } else {
-      record.setJwks(new JWKSet(this.registry.getDefaultKey().get()));
+      // An entity without jwks is signed with the default key, which is the first hosted key
+      record.setJwks(new JWKSet(this.registry.getDefaultKey()
+          .orElseThrow(() -> new JsonParseException("No jwks given and no default (hosted) key is configured"))));
     }
 
     return record;

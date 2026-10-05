@@ -22,6 +22,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -32,6 +33,7 @@ import se.swedenconnect.oidf.UptimeRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.LocalRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.RecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.JWKSetSignerFactory;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
@@ -71,11 +73,17 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
+  EcLocationValidator ecLocationValidator(final FederationProperties properties) {
+    return new EcLocationValidator(properties.isAllowHttpEcLocation());
+  }
+
+  @Bean
   FederationClient federationClient(
       @Qualifier("federationRestClient") final RestClient restClient,
       final MeterRegistry registry,
-      final UptimeRegistry uptimeRegistry) {
-    return new RestClientFederationClient(restClient, registry, uptimeRegistry);
+      final UptimeRegistry uptimeRegistry,
+      final EcLocationValidator ecLocationValidator) {
+    return new RestClientFederationClient(restClient, registry, uptimeRegistry, ecLocationValidator);
   }
 
   @Bean
@@ -95,8 +103,14 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
-  ServerResponseErrorHandler serverResponseErrorHandler() {
-    return new ServerResponseErrorHandler(new ErrorHandler());
+  @ConditionalOnMissingBean
+  ErrorHandler errorHandler() {
+    return new ErrorHandler();
+  }
+
+  @Bean
+  ServerResponseErrorHandler serverResponseErrorHandler(final ErrorHandler errorHandler) {
+    return new ServerResponseErrorHandler(errorHandler);
   }
 
   @Bean

@@ -38,7 +38,7 @@ public class InMemoryResolverResponseCache implements ResolverResponseCache {
 
   @Override
   public void put(final long snapshot, final ResolveRequest request, final String response) {
-    this.resolverResponseCache.computeIfAbsent(snapshot, _ -> new ConcurrentHashMap<>())
+    this.resolverResponseCache.computeIfAbsent(snapshot, key -> new ConcurrentHashMap<>())
         .put(request.toKey(new EntityID(request.subject())), response);
   }
 }

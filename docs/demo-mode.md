@@ -106,6 +106,7 @@ One entry per entity hosted by this service instance. This is where an entity's 
   "entity-identifier": "http://localhost:8080/op",
   "virtual-entity-id": "http://localhost:8080/op",
   "jwks": "hosted:demo-hosted-key",
+  "authority-hints": ["http://localhost:8080/im"],
   "metadata": {
     "federation_entity": {
       "organization_name": "Demo OpenID Provider"
@@ -123,6 +124,9 @@ One entry per entity hosted by this service instance. This is where an entity's 
   configured above. Entities that participate in the trust chain protocol as intermediaries (trust
   anchor, resolver) typically use a `federation:`-mapped key; leaf entities (OP, RP) typically use a
   `hosted:`-mapped key, since that key also signs their protocol-specific (OIDC) metadata.
+* `authority-hints` — the superiors of the entity, published as `authority_hints`. The resolver only
+  builds a trust chain through a superior that the entity lists here, so every entity except the Trust
+  Anchor needs it.
 * `metadata` — an object keyed by federation entity type (`federation_entity`, `openid_provider`,
   `openid_relying_party`, `oauth_client`, `oauth_authorization_server`, `oauth_resource`,
   `trust_mark_issuer`, …) whose values are published verbatim as that type's metadata in the entity's
@@ -148,14 +152,12 @@ One entry per trust anchor **or intermediate**, listing its immediate subordinat
       "policy": {
         "id": "MyMetadataProfile",
         "policy": {
-          "metadata-policy": {
-            "oauth_client": {
-              "organization_identifier": {
-                "value": "urn:glue:iso6523:0007:2021006552"
-              },
-              "organization_name": {
-                "value": "Myndigheten för OIDF"
-              }
+          "oauth_client": {
+            "organization_identifier": {
+              "value": "urn:glue:iso6523:0007:2021006552"
+            },
+            "organization_name": {
+              "value": "Myndigheten för OIDF"
             }
           }
         }
@@ -171,7 +173,7 @@ One entry per trust anchor **or intermediate**, listing its immediate subordinat
 
 This says: the Intermediate (`/im`) is itself a subordinate of the Trust Anchor (`/ta`, see the first
 entry in the file) and has two subordinates of its own, `/op` and `/rp`. The `/op` subordinate statement
-additionally carries a `metadata-policy` that the *Resolver* applies when resolving `/op`'s effective
+additionally carries a `metadata_policy` that the *Resolver* applies when resolving `/op`'s effective
 metadata — see [Policy](#policy) below.
 
 A subordinate entry supports:
@@ -185,33 +187,24 @@ A subordinate entry supports:
 | `policy`                | [Metadata policy](#policy) applied to this subordinate's metadata on resolve     | Object/reference  |
 | `constraints`           | [Trust chain constraints](#constraints) enforced below this subordinate          | Object            |
 | `crit`                  | Critical claims the subordinate statement must assert support for               | List\<String\>    |
-| `metadata-policy-crit`  | Critical policy operators used in `policy` (per §5.1.2 of the specification)     | List\<String\>    |
-| `ec-location`           | Overrides where this subordinate's own entity configuration is fetched from      | String            |
+| `metadata-policy-crit`  | Critical policy operators used in `policy`, see Section 6.1.3 of the specification | List\<String\>    |
+| `ec-location`           | Where this subordinate's Entity Configuration is found, issued as `ec_location`. See [`ec-location` values](service-configuration.md#ec-location-values) | String            |
 
 #### Policy
 
-`policy.policy.metadata-policy` follows [§4.1.2 of OpenID Federation
-1.0](https://openid.net/specs/openid-federation-1_0.html#section-4.1.2): a map of
-`entity-type -> claim-name -> { operator: value }`. The standard operators are:
+`policy.policy` is issued as the `metadata_policy` claim of the Subordinate Statement, and follows
+[Section 6.1.2 of OpenID Federation 1.0](https://openid.net/specs/openid-federation-1_0.html#section-6.1.2): a
+map of `entity-type -> claim-name -> { operator: value }`. The standard operators are:
 
 | Operator      | Effect                                                              |
 |---------------|----------------------------------------------------------------------|
-| `value`       | Force the claim to exactly this value                               |
+| `value`       | Force the claim to exactly this value, `null` removes the claim     |
 | `add`         | Add value(s) to a list-valued claim                                 |
 | `default`     | Value to use if the claim is not already present                    |
 | `essential`   | `true`/`false` — whether the claim must be present after merging    |
 | `one_of`      | The claim's value must be one of the listed values                  |
-| `subset_of`   | The claim's (list) value must be a subset of the listed values      |
+| `subset_of`   | Reduce the claim's (list) value to the values that are listed       |
 | `superset_of` | The claim's (list) value must be a superset of the listed values    |
-
-This service also registers two operators from the [Swedish OIDC Federation
-profile](https://github.com/oidc-sweden/specifications/blob/main/swedish-oidc-fed-profile.md) that are
-**not** part of the base specification:
-
-| Operator     | Effect                                                                                          |
-|--------------|--------------------------------------------------------------------------------------------------|
-| `regexp`     | The claim's string value must match every listed regular expression                              |
-| `intersects` | The claim's (list) value must share at least one element with the listed values                  |
 
 In the example above, the policy forces `/op`'s `oauth_client.organization_identifier` and
 `oauth_client.organization_name` metadata to fixed values regardless of what `/op` itself publishes —
@@ -234,8 +227,8 @@ instead of inlined, which is convenient for sharing one policy across several su
   "max-path-length": 1,
   "allowed-entity-types": ["openid_provider", "openid_relying_party"],
   "naming": {
-    "permitted": ["https://example.com/"],
-    "excluded": ["https://example.com/blocked/"]
+    "permitted": [".example.com"],
+    "excluded": ["blocked.example.com"]
   }
 }
 ```
@@ -244,8 +237,16 @@ instead of inlined, which is convenient for sharing one policy across several su
 |-------------------------|-------------------------------------------------------------------------------|----------------|
 | `max-path-length`       | Maximum number of intermediates allowed below this entity                    | Long           |
 | `allowed-entity-types`  | Entity types (`openid_provider`, `openid_relying_party`, …) permitted below  | List\<String\> |
-| `naming.permitted`      | URI prefixes subordinate identifiers must start with                        | List\<String\> |
-| `naming.excluded`       | URI prefixes subordinate identifiers must not start with                    | List\<String\> |
+| `naming.permitted`      | Hosts (`host.example.com`) or domains (`.example.com`) subordinate identifiers must be under | List\<String\> |
+| `naming.excluded`       | Hosts or domains subordinate identifiers must not be under, takes precedence over `permitted` | List\<String\> |
+
+Naming constraints use the domain name syntax of RFC 5280 and apply to the host part of the entity
+identifier. `.example.com` matches any host below `example.com` but not `example.com` itself, while
+`host.example.com` matches that host only.
+
+Entity types not listed in `allowed-entity-types` are removed from the metadata of entities below this
+subordinate when a trust chain is resolved. `federation_entity` is always kept, and an empty list allows only
+`federation_entity`.
 
 The demo does not set any constraints, so any entity type and any nesting depth is allowed under `/im`.
 
@@ -256,15 +257,15 @@ The demo does not set any constraints, so any entity type and any nesting depth 
   "entity-identifier": "http://localhost:8080/resolver",
   "trust-anchor": "http://localhost:8080/ta",
   "trusted-keys": "federation:demo-federation-key",
-  "resolve-response-duration": "1H"
+  "resolve-response-duration": "PT1H"
 }
 ```
 
 Each entry configures one Resolver entity: which Trust Anchor it resolves chains under
 (`trust-anchor`), which key(s) it trusts to validate fetched statements with (`trusted-keys`, a
 [key reference](service-configuration.md#reference-keys)), and how long a `/resolve` response's `exp`
-claim should be set to relative to now (`resolve-response-duration`, an ISO‑8601 duration — `"1H"` is
-shorthand accepted for `PT1H`). A resolver entry's own `entity-identifier` must also exist in
+claim should be set to relative to now (`resolve-response-duration`, an ISO-8601 duration such as `PT1H`,
+default 7 days). A resolver entry's own `entity-identifier` must also exist in
 `entities.json`, since that is where its own signing key and published metadata
 (`federation_resolve_endpoint`, etc.) come from.
 

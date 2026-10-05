@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.trustmarkissuer;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.ParseException;
@@ -29,9 +30,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMa
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkValidator;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.time.Clock;
@@ -77,10 +80,13 @@ public class TrustMarkIssuer {
   }
 
   /**
-   * Listing all trustmarks that are valid for this trustmarkid filtered by subject if supplied
+   * Lists the subjects that currently hold a trust mark of the given type, that is, subjects that are not revoked,
+   * are granted and have not expired. The result is filtered by subject if supplied.
    *
    * @param request Request containing trustmarkid and subject
-   * @return listing of trust mark subjects that are valid. If there is no subject found a empty list is returned.
+   * @return listing of trust mark subjects that are valid, an empty list if there are none
+   * @throws InvalidRequestException if the trust mark type is missing or invalid
+   * @throws NotFoundException if the trust mark type is not issued by this trust mark issuer
    */
   public List<String> trustMarkListing(final TrustMarkListingRequest request)
       throws InvalidRequestException, NotFoundException {
@@ -91,19 +97,18 @@ public class TrustMarkIssuer {
       throw new InvalidRequestException("Trust mark id can not be null");
     }
     final TrustMarkType id = TrustMarkType.validate(request.trustMarkType(), InvalidRequestException::new);
+    final boolean typeExists = this.trustMarkIssuerProperties.trustMarks().stream()
+        .anyMatch(tm -> tm.getTrustMarkType().getTrustMarkType().equals(id.getTrustMarkType()));
+    if (!typeExists) {
+      throw new NotFoundException("Trust mark type %s was not found for the trust mark issuer."
+          .formatted(request.trustMarkType()));
+    }
+    final Instant now = Instant.now(this.clock);
     final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.entityIdentifier(), id)
         .stream()
-        .filter(tms -> {
-          if (Objects.nonNull(tms.expires())) {
-            return tms.expires().isAfter(Instant.now(this.clock));
-          }
-          return true;
-        })
+        .filter(tms -> isValid(tms, now))
         .map(TrustMarkSubjectProperty::sub)
         .toList();
-    if (result.isEmpty()) {
-      throw new NotFoundException("Could not find any subjects.");
-    }
     if (Objects.nonNull(request.subject())) {
       return result.stream().filter(sub -> sub.equals(request.subject())).map(List::of).findFirst()
           .orElseGet(List::of);
@@ -112,10 +117,13 @@ public class TrustMarkIssuer {
   }
 
   /**
-   * Validate the trust mark status.
+   * Gets the status of a trust mark issued by this trust mark issuer (OpenID Federation 1.0, Section 8.4).
    *
    * @param request For a TrustMark status check
-   * @return True if trust mark is active
+   * @return signed status response with the status {@code active}, {@code invalid}, {@code revoked} or
+   *     {@code expired}
+   * @throws NotFoundException if the trust mark was not issued by this issuer, or its type or subject is unknown
+   * @throws InvalidRequestException if the trust mark cannot be parsed
    */
   public String trustMarkStatus(final TrustMarkStatusRequest request)
       throws NotFoundException, InvalidRequestException {
@@ -124,48 +132,66 @@ public class TrustMarkIssuer {
       final SignedJWT parse = SignedJWT.parse(request.trustMark());
 
       final JWTClaimsSet trustMarkClaims = parse.getJWTClaimsSet();
-      final String trustMarkType = trustMarkClaims.getStringClaim("trust_mark_type");
-      final String sub = trustMarkClaims.getStringClaim("sub");
+      final String trustMarkType = EntityStatementClaims.getTrustMarkType(parse);
+      final String sub = trustMarkClaims.getSubject();
+      final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
 
-      final boolean exists = this.trustMarkIssuerProperties.trustMarks()
+      if (!entityIdentifier.equals(trustMarkClaims.getIssuer())) {
+        throw new NotFoundException("Trust mark was not issued by %s".formatted(entityIdentifier));
+      }
+      final boolean exists = trustMarkType != null && this.trustMarkIssuerProperties.trustMarks()
           .stream()
           .anyMatch(tmi -> tmi.getTrustMarkType().getTrustMarkType().equals(trustMarkType));
-
       if (!exists) {
         throw new NotFoundException("Could not find any trust mark with type %s".formatted(trustMarkType));
       }
 
-      String status = "active";
-      final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
-      final Optional<EntityRecord> entity = this.source.getEntity(new NodeKey(entityIdentifier));
-      if (!this.signer.verify(entity.get(), request.trustMark())) {
-        status = "invalid";
-      }
+      final EntityRecord entity = this.source.getEntity(new NodeKey(entityIdentifier))
+          .orElseThrow(() -> new NotFoundException("Trust mark issuer %s not found".formatted(entityIdentifier)));
+      final String status = this.resolveStatus(entity, request.trustMark(), trustMarkClaims, trustMarkType, sub);
 
-      final Optional<TrustMarkSubjectProperty> subject =
-          this.source.getTrustMarkSubject(this.trustMarkIssuerProperties.entityIdentifier(),
-              new TrustMarkType(trustMarkType),
-              new EntityID(sub));
-
-      if (subject.isPresent()) {
-        if (subject.get().revoked()) {
-          status = "revoked";
-        }
-        final Optional<Date> expirationTime = Optional.ofNullable(trustMarkClaims.getExpirationTime());
-        if (expirationTime.isPresent()) {
-          if (Instant.now().isAfter(expirationTime.get().toInstant())) {
-            status = "expired";
-          }
-        }
-      }
-
-      return this.signer.signStatus(
-          entity.get(),
-          request.trustMark(),
-          status).serialize();
+      return this.signer.signStatus(entity, request.trustMark(), status).serialize();
     } catch (final java.text.ParseException e) {
-      throw new RuntimeException(e);
+      throw new InvalidRequestException("Trust mark could not be parsed as a signed JWT", e);
     }
+  }
+
+  /**
+   * Resolves the status of a trust mark whose issuer and type are known to be this issuer's.
+   *
+   * @param entity the trust mark issuer entity
+   * @param trustMark the serialized trust mark
+   * @param trustMarkClaims the claims of the trust mark
+   * @param trustMarkType the trust mark type
+   * @param sub the subject of the trust mark
+   * @return the status
+   * @throws NotFoundException if the subject is not registered for the trust mark type
+   * @throws java.text.ParseException if the trust mark cannot be parsed
+   */
+  private String resolveStatus(final EntityRecord entity, final String trustMark, final JWTClaimsSet trustMarkClaims,
+      final String trustMarkType, final String sub) throws NotFoundException, java.text.ParseException {
+    final JOSEObjectType typ = SignedJWT.parse(trustMark).getHeader().getType();
+    if (typ == null || !TrustMarkValidator.TRUST_MARK_JWT_TYPE.equals(typ.getType())) {
+      return "invalid";
+    }
+    if (!this.signer.verify(entity, trustMark)) {
+      return "invalid";
+    }
+    if (sub == null) {
+      throw new NotFoundException("Trust mark has no subject");
+    }
+    final TrustMarkSubjectProperty subject = this.source.getTrustMarkSubject(
+            this.trustMarkIssuerProperties.entityIdentifier(), new TrustMarkType(trustMarkType), new EntityID(sub))
+        .orElseThrow(() -> new NotFoundException("Subject %s has no trust mark of type %s"
+            .formatted(sub, trustMarkType)));
+    if (subject.revoked()) {
+      return "revoked";
+    }
+    final Date expirationTime = trustMarkClaims.getExpirationTime();
+    if (expirationTime != null && Instant.now(this.clock).isAfter(expirationTime.toInstant())) {
+      return "expired";
+    }
+    return "active";
   }
 
   /**
@@ -173,6 +199,9 @@ public class TrustMarkIssuer {
    *
    * @param request TrustMarkId and Subject is mandatory
    * @return trust mark in a JWT
+   * @throws NotFoundException if the type or subject is unknown, or the subject is revoked, expired or not yet
+   *     granted
+   * @throws ServerErrorException if the trust mark could not be signed
    */
   public String trustMark(final TrustMarkRequest request) throws ServerErrorException, NotFoundException {
 
@@ -196,6 +225,9 @@ public class TrustMarkIssuer {
       throw new NotFoundException("Could not find subject");
     }
     final TrustMarkSubjectProperty trustMarkSubjectProperty = subject.get();
+    if (!isValid(trustMarkSubjectProperty, Instant.now(this.clock))) {
+      throw new NotFoundException("Trust mark for subject is revoked, expired or not yet granted");
+    }
     try {
       final String entityIdentifier = this.trustMarkIssuerProperties.entityIdentifier().getValue();
       return this.signer.sign(this.source.getEntity(new NodeKey(entityIdentifier)).get(),
@@ -206,6 +238,19 @@ public class TrustMarkIssuer {
     }
   }
 
+
+  /**
+   * Checks whether a subject currently holds its trust mark.
+   *
+   * @param subject the trust mark subject
+   * @param now the current time
+   * @return true if the subject is not revoked, is granted and has not expired
+   */
+  private static boolean isValid(final TrustMarkSubjectProperty subject, final Instant now) {
+    return !subject.revoked()
+        && (subject.granted() == null || !now.isBefore(subject.granted()))
+        && (subject.expires() == null || now.isBefore(subject.expires()));
+  }
 
   /**
    * @return entity id of this trust mark issuer.

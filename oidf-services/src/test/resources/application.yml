@@ -58,6 +58,8 @@ logging:
     se.swedenconnect: INFO
 
 federation:
+  # The test entities use http, which ec_location does not allow by default
+  allow-http-ec-location: true
   keys:
     kid-algorithm: serial
     additional-keys:

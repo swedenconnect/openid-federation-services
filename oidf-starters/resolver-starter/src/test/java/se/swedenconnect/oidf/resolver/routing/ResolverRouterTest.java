@@ -22,9 +22,16 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.function.ServerRequest;
+import org.springframework.web.servlet.function.ServerResponse;
+import se.swedenconnect.oidf.common.entity.entity.integration.CachedResponse;
+import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
+import se.swedenconnect.oidf.common.entity.exception.FederationException;
+import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
+import io.micrometer.observation.ObservationRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 class ResolverRouterTest {
@@ -67,6 +74,25 @@ class ResolverRouterTest {
     Assertions.assertFalse(this.router.willHandleRequest(
         request(ENTITY_ID + "/.well-known/openid-federation"),
         record(null)));
+  }
+
+  @Test
+  void missingResolverConfigurationGivesJsonNotFound() {
+    final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
+    Mockito.when(source.getResolverProperties()).thenReturn(List.of());
+    final ServerResponseErrorHandler errorHandler = Mockito.mock(ServerResponseErrorHandler.class);
+    Mockito.when(errorHandler.handle(Mockito.any()))
+        .thenAnswer(invocation -> ServerResponse.status(invocation.getArgument(0, FederationException.class)
+            .httpStatusCode()).build());
+    final ResolverRouter withSource =
+        new ResolverRouter(null, null, errorHandler, null, null, ObservationRegistry.NOOP, source);
+
+    final CachedResponse response = withSource.handleRequest(
+        request(ENTITY_ID + "/resolve?sub=https://myentity.com/rp&trust_anchor=https://myentity.com/ta"),
+        record(null));
+
+    Assertions.assertEquals(404, response.statusCode());
+    Assertions.assertTrue(response.body().contains("not_found"), response.body());
   }
 
   private static ServerRequest request(final String uri) {

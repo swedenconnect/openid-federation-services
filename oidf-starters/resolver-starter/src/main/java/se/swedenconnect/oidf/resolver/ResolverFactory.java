@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.resolver.chain.ChainValidator;
 import se.swedenconnect.oidf.resolver.chain.ConstraintsValidationStep;
 import se.swedenconnect.oidf.resolver.chain.CriticalClaimsValidationStep;
 import se.swedenconnect.oidf.resolver.chain.SignatureValidationStep;
+import se.swedenconnect.oidf.resolver.chain.StatementSyntaxValidationStep;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 
@@ -124,7 +125,8 @@ public class ResolverFactory {
     return new ChainValidator(List.of(
         new SignatureValidationStep(properties.getTrustedKeys()),
         new ConstraintsValidationStep(),
-        new CriticalClaimsValidationStep()
+        new CriticalClaimsValidationStep(),
+        new StatementSyntaxValidationStep()
     ));
   }
 

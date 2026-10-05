@@ -54,6 +54,10 @@ public class TestEntitiesFactory {
   public final SignedJWT imSamlSpSub;
 
   public TestEntitiesFactory() throws Exception {
+    this(List.of(IM_ID));
+  }
+
+  public TestEntitiesFactory(final List<String> samlSpAuthorityHints) throws Exception {
     taKey = new RSAKeyGenerator(2048).keyID("ta-key").generate();
     imKey = new RSAKeyGenerator(2048).keyID("im-key").generate();
     leafKey = new RSAKeyGenerator(2048).keyID("leaf-key").generate();
@@ -62,7 +66,7 @@ public class TestEntitiesFactory {
     taEC = buildSelfStatement(taKey, TA_ID, taMetadata(), null);
     imEC = buildSelfStatement(imKey, IM_ID, imMetadata(), List.of(TA_ID));
     leafEC = buildSelfStatement(leafKey, LEAF_ID, leafMetadata(), List.of(IM_ID));
-    samlSpEC = buildSelfStatement(samlSpKey, SAML_SP_ID, samlSpMetadata(), List.of(IM_ID));
+    samlSpEC = buildSelfStatement(samlSpKey, SAML_SP_ID, samlSpMetadata(), samlSpAuthorityHints);
 
     taImSub = buildSubordinateStatement(taKey, TA_ID, IM_ID, imKey.toPublicJWK());
     imLeafSub = buildSubordinateStatement(imKey, IM_ID, LEAF_ID, leafKey.toPublicJWK());

@@ -37,6 +37,7 @@ public class InMemoryTrustMarkCache implements TrustMarkCache {
 
   @Override
   public void put(final long snapshot, final String trustMarkType, final String subject, final String response) {
-    this.cache.computeIfAbsent(snapshot, _ -> new ConcurrentHashMap<>()).put(trustMarkType + ":" + subject, response);
+    this.cache.computeIfAbsent(snapshot, key -> new ConcurrentHashMap<>())
+        .put(trustMarkType + ":" + subject, response);
   }
 }

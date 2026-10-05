@@ -14,19 +14,22 @@
  * limitations under the License.
  *
  */
-
 package se.swedenconnect.oidf.resolver.metadata;
 
-import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicyEntry;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.SubsetOfOperation;
+/**
+ * Policy error raised while parsing, merging or applying a metadata policy (OpenID Federation 1.0, Section 6.1).
+ * A policy error makes the trust chain invalid.
+ *
+ * @author Martin Lindström
+ */
+public class MetadataPolicyException extends Exception {
 
-import java.util.List;
-
-public class MetadataPolicyFactory {
-
-  public static MetadataPolicyEntry subset(final String grantTypes, final List<String> values) {
-    final SubsetOfOperation subsetOfOperation = new SubsetOfOperation();
-    subsetOfOperation.configure(values);
-    return new MetadataPolicyEntry(grantTypes, List.of(subsetOfOperation));
+  /**
+   * Constructor.
+   *
+   * @param message description of the error
+   */
+  public MetadataPolicyException(final String message) {
+    super(message);
   }
 }

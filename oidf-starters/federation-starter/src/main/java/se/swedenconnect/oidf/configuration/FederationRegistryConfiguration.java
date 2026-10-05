@@ -46,6 +46,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.JWKSKidReferenceLo
 import se.swedenconnect.oidf.common.entity.entity.integration.JWKSSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.EntityRecordDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
@@ -144,9 +145,11 @@ public class FederationRegistryConfiguration {
   CacheRecordPopulator cacheRecordPopulator(
       final CachedRecordSource source,
       final RecordRegistryIntegration integration,
-      final FederationProperties properties
+      final FederationProperties properties,
+      final EcLocationValidator ecLocationValidator
   ) {
-    return new CacheRecordPopulator(source, integration, properties.getRegistry().getIntegration().getInstanceId());
+    return new CacheRecordPopulator(source, integration, properties.getRegistry().getIntegration().getInstanceId(),
+        ecLocationValidator);
   }
 
   @Bean

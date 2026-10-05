@@ -17,6 +17,9 @@
 package se.swedenconnect.oidf.common.entity.entity.integration;
 
 import com.nimbusds.jose.shaded.gson.Gson;
+import com.nimbusds.jose.shaded.gson.JsonElement;
+import com.nimbusds.jose.shaded.gson.JsonObject;
+import com.nimbusds.jose.shaded.gson.JsonParser;
 import com.nimbusds.jose.shaded.gson.TypeAdapter;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,27 +49,44 @@ public class JsonRegistryLoader {
   }
 
   /**
-   * Parse EntityRecords from json
-   * @param json
+   * Parses entity records from json. An entity that cannot be loaded, for example because a key reference names a
+   * key that does not exist, is left out and logged.
+   *
+   * @param json the entity records
    * @return list of entities
    */
   public List<EntityRecord> parseEntityRecord(final String json) {
-    try {
-      final TypeAdapter<List<EntityRecord>> adapter = this.gson.getAdapter(new TypeToken<>() {
-      });
-      return adapter.fromJson(json).stream()
-          .filter(er -> {
-            final boolean jwkIsMissingFromEntity = Objects.isNull(er.getJwks());
-            if (jwkIsMissingFromEntity) {
-              log.error("Failed to load entity {} due to no JWK available, is default key missing?",
-                  er.getEntityIdentifier().getValue());
-            }
-            return !jwkIsMissingFromEntity;
-          })
-          .toList();
-    } catch (final IOException e) {
-      throw new RuntimeException(e);
+    final List<EntityRecord> entities = new ArrayList<>();
+    for (final JsonElement element : JsonParser.parseString(json).getAsJsonArray()) {
+      try {
+        final EntityRecord entity = this.gson.fromJson(element, EntityRecord.class);
+        if (Objects.isNull(entity.getJwks())) {
+          log.error("Ignoring entity {} from registry: no keys available", entityId(element));
+          continue;
+        }
+        entities.add(entity);
+      }
+      catch (final RuntimeException e) {
+        log.error("Ignoring entity {} from registry: {}", entityId(element), e.getMessage());
+      }
     }
+    return entities;
+  }
+
+  /**
+   * Gets the entity identifier of an entity record, for logging.
+   *
+   * @param element the entity record
+   * @return the entity identifier, or "unknown" if there is none
+   */
+  private static String entityId(final JsonElement element) {
+    if (element.isJsonObject()) {
+      final JsonElement id = ((JsonObject) element).get("entity-identifier");
+      if (id != null && id.isJsonPrimitive()) {
+        return id.getAsString();
+      }
+    }
+    return "unknown";
   }
 
   /**

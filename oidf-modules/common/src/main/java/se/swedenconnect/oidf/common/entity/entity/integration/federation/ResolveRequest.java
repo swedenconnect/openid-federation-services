@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.common.entity.entity.integration.federation;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
@@ -29,14 +28,21 @@ import java.util.Objects;
 import java.util.function.BiPredicate;
 
 /**
- * @param subject
- * @param trustAnchor
- * @param type
- * @param explain
+ * A resolve request (OpenID Federation 1.0, Section 8.3.1).
+ *
+ * @param subject the entity to resolve
+ * @param trustAnchor the trust anchor to resolve with
+ * @param types the requested entity types, null or empty for all types
+ * @param explain true if an explanation of validation errors is requested
  * @author Felix Hellman
  */
-public record ResolveRequest(String subject, String trustAnchor, String type, Boolean explain) implements Serializable {
+public record ResolveRequest(String subject, String trustAnchor, List<String> types, Boolean explain)
+    implements Serializable {
+
   /**
+   * Gets the search predicate that finds the subject of this request. Entity types are not part of the search; the
+   * resolved metadata is filtered on the requested types instead.
+   *
    * @return this request as a search predicate
    */
   public BiPredicate<ScrapedEntity, Node.NodeSearchContext<ScrapedEntity>> asPredicate() {
@@ -51,10 +57,6 @@ public record ResolveRequest(String subject, String trustAnchor, String type, Bo
       predicates.add((a, s) -> EntityStatementClaims.claims(a.getEntityStatement()).getSubject()
           .equalsIgnoreCase(this.subject));
     }
-    if (Objects.nonNull(this.type)) {
-      predicates.add((a, s) -> Objects.nonNull(
-          EntityStatementClaims.getMetadata(a.getEntityStatement(), new EntityType(this.type))));
-    }
 
     return predicates.stream().reduce((a,b) -> true, BiPredicate::and);
   }
@@ -68,7 +70,7 @@ public record ResolveRequest(String subject, String trustAnchor, String type, Bo
         resolverEntity.getValue(),
         this.subject,
         this.trustAnchor,
-        this.type
+        this.types == null ? "" : String.join(",", this.types.stream().sorted().toList())
     );
   }
 
@@ -77,13 +79,13 @@ public record ResolveRequest(String subject, String trustAnchor, String type, Bo
    * @return key as request
    */
   public static ResolveRequest fromKey(final String key) {
-    final String[] split = key.split("\\|");
+    final String[] split = key.split("\\|", -1);
+    final String types = split.length > 3 ? split[3] : "";
     return new ResolveRequest(
         split[1],
         split[2],
-        split[3],
+        types.isEmpty() || "null".equals(types) ? null : List.of(types.split(",")),
         false
     );
   }
 }
-

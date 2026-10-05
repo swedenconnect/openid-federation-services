@@ -34,6 +34,10 @@ federation.*
 
 Each configured federation component must be referenced an **entitiy** to function correctly.
 
+| Property                 | Description                                                                                                                                                             | Type    | Default |
+|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|---------|
+| `allow-http-ec-location` | Accept `ec-location` values with the `http` scheme. OpenID Federation Entity Configuration Hosting 1.0 only allows `https` and data URLs, so only use this for local tests. | Boolean | false   |
+
 ---
 
 ## 2.1 Federation Keys
@@ -42,9 +46,13 @@ Each configured federation component must be referenced an **entitiy** to functi
 
 | Property          | Description                                                            | Type   | Default    |
 |-------------------|------------------------------------------------------------------------|--------|------------|
-| `kid-algorithm`   | Key ID algorithm (`thumbprint` or `serial`)                            | String | thumbprint |
+| `kid-algorithm`   | Key ID algorithm (`default` or `serial`), see below                    | String | default    |
 | `additional-keys` | List of additional public keys that can be referenced                  | Object | –          |
 | `mapping`         | Mapping of private keys to determine their usecase (federation/hosted) | Object | -          |
+
+With `default`, a key gets the key ID given in its credential configuration, or else its JWK thumbprint
+(RFC 7638). With `serial`, a key that has a certificate gets the certificate's serial number, in decimal, as key
+ID, and other keys get the `default` key ID.
 
 `federation.keys.additional-keys[*]`
 
@@ -129,6 +137,12 @@ Routing dispatches an incoming request path to the correct virtual entity — se
 | `trust-store-bundle-name` | Trust store bundle used for TLS | String |
 | `name`                    | Logical name of the client      | String |
 
+Every key named by a key reference from the registry, such as `hosted:sign-key`, must exist on this instance. An
+entity with a reference to a missing key is left out and logged as an error. A reference to a missing key in the
+module records (Trust Anchors, resolvers and Trust Mark Issuers) makes the whole module load fail, and the previously
+loaded modules stay in use. An entity without `jwks`, or with an empty key reference, is signed with the default
+key, which is the first hosted key.
+
 ---
 
 ## 2.5 Local Registry (Federation components)
@@ -146,7 +160,7 @@ federation.local-registry.*
 | `entity-identifier`         | Entity ID of the resolver                | String   |
 | `trusted-keys`              | Keys used to validate fetched statements | List     |
 | `trust-anchor`              | Trust anchor entity ID                   | String   |
-| `resolve-response-duration` | Cache duration for resolve responses     | Duration |
+| `resolve-response-duration` | Validity of issued resolve responses, default 7 days. In JSON files and registry records the value is an ISO-8601 duration, for example `PT1H` | Duration |
 
 ---
 
@@ -164,6 +178,13 @@ federation.local-registry.*
 See [Demo Mode Configuration → `trust-anchors.json`](service-configuration-demo.md#trust-anchorsjson--the-trust-hierarchy)
 for the full list of properties a subordinate entry supports, including worked examples of `policy` and
 `constraints`.
+
+A subordinate gets an `ec_location` claim in its Subordinate Statement when `ec-location` is set, or when its
+`virtual-entity-id` differs from its `entity-identifier` (the well-known location under the virtual entity ID is
+then used). See [`ec-location` values](#ec-location-values) for the accepted values. A warning is logged at
+startup when `ec_location` is issued for an Intermediate Entity, since OpenID Federation Entity Configuration
+Hosting 1.0 recommends it for Leaf Entities only, and when `ec_location` is listed in `crit`, since entities
+without support for the claim will then reject the statement.
 
 ---
 
@@ -211,6 +232,22 @@ for the full list of properties a subordinate entry supports, including worked e
 | `ec-location`       | Overrides entity configuration location | String              |
 
 Entities define federation metadata, trust mark sources, and may represent trust anchors, resolvers, OPs, RPs, or trust mark issuers.
+
+#### `ec-location` values
+
+The same rules apply to `ec-location` of entities and of Trust Anchor subordinates, whether they come from local
+configuration or from the registry:
+
+- An `https` URL, for example `https://hosting.example.com/leaf/ec`.
+- A data URL holding the Entity Configuration, `data:application/entity-statement+jwt,<jwt>`. The `;base64` form
+  is not accepted.
+- A path starting with `/`, which is resolved against the virtual entity ID, or the entity identifier if there is
+  none. The resolved URL must follow the rules above.
+- An `http` URL, only if `federation.allow-http-ec-location` is `true`.
+
+Other values make startup fail for local configuration. Entities and subordinates from the registry with other
+values are left out and logged as errors. The resolver also leaves out subordinates whose Subordinate Statement has
+an `ec_location` that does not follow these rules.
 
 ---
 

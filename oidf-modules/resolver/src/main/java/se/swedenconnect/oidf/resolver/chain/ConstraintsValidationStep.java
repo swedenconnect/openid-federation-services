@@ -23,13 +23,9 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.C
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Validates constraints of the chain.
@@ -37,8 +33,9 @@ import java.util.Set;
  * <ul>
  * <li>max_path_length</li>
  * <li>naming_constraints</li>
- * <li>allowed_entity_types</li>
  * </ul>
+ * The allowed_entity_types constraint does not invalidate the chain. Entity types that are not allowed are removed
+ * from the metadata by {@link se.swedenconnect.oidf.resolver.metadata.MetadataProcessor}.
  *
  * @author Felix Hellman
  */
@@ -73,29 +70,6 @@ public class ConstraintsValidationStep implements ChainValidationStep {
     }
 
     final SignedJWT leafStatement = subordinateStatements.getFirst();
-
-    //If allowedLeafEntityTypes is empty we implicitly allow all types
-    final Set<String> allowedLeafEntityTypes = Optional.ofNullable(constraints.getAllowedEntityTypes())
-        .map(HashSet::new)
-        .orElse(new HashSet<>());
-    if (!allowedLeafEntityTypes.isEmpty()) {
-      final Map<String, Object> metadataClaim =
-          EntityStatementClaims.claims(leafStatement).getJSONObjectClaim("metadata");
-      if (Objects.nonNull(metadataClaim)) {
-        final HashMap<String, Object> tmpMetadata = new HashMap<>(metadataClaim);
-        //This implementation allows federation_entity implicitly
-        tmpMetadata.remove("federation_entity");
-        final Set<String> keys = tmpMetadata.keySet();
-        //Remove all permitted entity_types
-        keys.removeAll(allowedLeafEntityTypes);
-        //If keys is not empty by now, it contains one or more illegal entity types.
-        if (!keys.isEmpty()) {
-          throw new IllegalArgumentException(
-              "Leaf entity entity_type constraints violation illegal-types:%s".formatted(keys)
-          );
-        }
-      }
-    }
 
     // Check max path length = the number of allowed intermediates
     int intermediateCount = subordinateStatements.size();
