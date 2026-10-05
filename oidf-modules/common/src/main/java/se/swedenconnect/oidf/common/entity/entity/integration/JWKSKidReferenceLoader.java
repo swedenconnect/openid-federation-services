@@ -36,7 +36,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * JWK kid reference loader.
+ * JWK kid reference loader. A reference is a comma separated list of key references, such as
+ * {@code hosted:sign-key}, and every key it names must exist in the {@link KeyRegistry}. An empty reference gives
+ * the default key.
  *
  * @author Felix Hellman
  */
@@ -52,18 +54,23 @@ public class JWKSKidReferenceLoader implements JsonSerializer<JWKSet>, JsonDeser
       final Type type,
       final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
     final String jwksReference = jsonElement.getAsJsonPrimitive().getAsString();
-    final List<String> references = Arrays.stream(jwksReference.split(",")).toList();
-    final JWKSet byReferences = this.registry.getByReferences(references);
-    if (byReferences.isEmpty()) {
-      log.warn("Reference %s contained no valid keys, loading default ...".formatted(jwksReference));
+    final List<String> references = Arrays.stream(jwksReference.split(","))
+        .map(String::trim)
+        .filter(reference -> !reference.isEmpty())
+        .toList();
+    if (references.isEmpty()) {
+      // An empty reference is treated as no reference, which gives the default key (the first hosted key)
       return this.registry.getDefaultKey()
           .map(JWKSet::new)
-          .orElseGet(() -> {
-            log.error("Failed to load default key since no default key was configured ...");
-            return null;
-          });
+          .orElseThrow(() -> new JsonParseException("Empty key reference and no default (hosted) key is configured"));
     }
-    return byReferences;
+    final List<String> missing = references.stream()
+        .filter(reference -> this.registry.getKey(reference).isEmpty())
+        .toList();
+    if (!missing.isEmpty()) {
+      throw new JsonParseException("Key reference '%s' could not be found".formatted(String.join(",", missing)));
+    }
+    return this.registry.getByReferences(references);
   }
 
   @Override
