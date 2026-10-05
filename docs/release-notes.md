@@ -55,6 +55,8 @@
 * The resolver no longer drops an entity whose Entity Configuration cannot be fetched during a reload. The data from the previous load is kept until it expires, and the entity is listed by the `dead-nodes` actuator endpoint meanwhile. ([#227](https://github.com/swedenconnect/openid-federation-services/issues/227))
 * A key reference in the local registry that names a missing key now stops startup with a message naming the file, the entry and the key reference, instead of "No value present". ([#228](https://github.com/swedenconnect/openid-federation-services/issues/228))
 * A key reference from the registry that names a missing key no longer falls back to the default key. The entity is left out, or the module load fails, and the missing key reference is logged.
+* Corrected the service configuration documentation for `kid-algorithm`, metadata policies and the resolver response duration. JSON resolver configuration now reads `resolve-response-duration`, as documented, and still accepts `resolver-response-duration`. ([#229](https://github.com/swedenconnect/openid-federation-services/issues/229))
+* The demo now resolves its OpenID Provider and Relying Party, and its metadata policy is applied. The demo entities lacked `authority_hints` and used the entity type `relying_party` instead of `openid_relying_party`.
 
 ## Version 0.11.17
 

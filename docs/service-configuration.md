@@ -46,9 +46,13 @@ Each configured federation component must be referenced an **entitiy** to functi
 
 | Property          | Description                                                            | Type   | Default    |
 |-------------------|------------------------------------------------------------------------|--------|------------|
-| `kid-algorithm`   | Key ID algorithm (`thumbprint` or `serial`)                            | String | thumbprint |
+| `kid-algorithm`   | Key ID algorithm (`default` or `serial`), see below                    | String | default    |
 | `additional-keys` | List of additional public keys that can be referenced                  | Object | –          |
 | `mapping`         | Mapping of private keys to determine their usecase (federation/hosted) | Object | -          |
+
+With `default`, a key gets the key ID given in its credential configuration, or else its JWK thumbprint
+(RFC 7638). With `serial`, a key that has a certificate gets the certificate's serial number, in decimal, as key
+ID, and other keys get the `default` key ID.
 
 `federation.keys.additional-keys[*]`
 
@@ -156,7 +160,7 @@ federation.local-registry.*
 | `entity-identifier`         | Entity ID of the resolver                | String   |
 | `trusted-keys`              | Keys used to validate fetched statements | List     |
 | `trust-anchor`              | Trust anchor entity ID                   | String   |
-| `resolve-response-duration` | Cache duration for resolve responses     | Duration |
+| `resolve-response-duration` | Validity of issued resolve responses, default 7 days. In JSON files and registry records the value is an ISO-8601 duration, for example `PT1H` | Duration |
 
 ---
 

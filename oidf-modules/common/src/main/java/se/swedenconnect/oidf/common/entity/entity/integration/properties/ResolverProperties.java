@@ -39,7 +39,8 @@ import java.time.Duration;
 public final class ResolverProperties {
   @SerializedName("trust-anchor")
   private String trustAnchor;
-  @SerializedName("resolver-response-duration")
+  /** The validity of issued resolve responses. The alternate name is kept for registries that still use it. */
+  @SerializedName(value = "resolve-response-duration", alternate = {"resolver-response-duration"})
   private Duration resolveResponseDuration;
   @SerializedName("trusted-keys")
   private JWKSet trustedKeys;
