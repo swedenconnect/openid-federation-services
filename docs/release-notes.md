@@ -4,6 +4,12 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+## Version 1.0.1
+
+**Date:** _not yet released_
+
+*
+
 ## Version 1.0.0
 
 **Date:** 2026-10-05
