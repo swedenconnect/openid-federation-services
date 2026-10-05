@@ -34,7 +34,8 @@ import java.util.Objects;
 /**
  * Actuator endpoint that lists dead nodes in the federation tree.
  * A dead node is a subordinate that has been listed by an intermediate but whose
- * entity configuration could not be fetched (e.g. the host is unreachable).
+ * entity configuration could not be fetched (e.g. the host is unreachable). This includes
+ * nodes that are still served using data from an earlier load of the tree.
  *
  * @author Felix Hellman
  */
@@ -64,7 +65,7 @@ public class DeadNodesEndpoint {
     final EntityStatementTree tree = this.registry.getRegistration(properties.getEntityIdentifier()).get().tree();
     return tree.getAll()
         .stream()
-        .filter(result -> Objects.isNull(result.getData()))
+        .filter(result -> Objects.isNull(result.getData()) || Objects.nonNull(result.getData().getScrapeFailedAt()))
         .map(result -> result.node().getKey().entityId())
         .toList();
   }

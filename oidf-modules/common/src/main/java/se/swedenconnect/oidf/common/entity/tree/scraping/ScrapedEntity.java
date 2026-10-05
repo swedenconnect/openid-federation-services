@@ -68,6 +68,28 @@ public class ScrapedEntity {
   private Map<String, TrustMarkStatusResponse> trustMarkStatuses = new HashMap<>();
   //Roles
   private ScrapedIntermediate intermediate;
+  /**
+   * Time when scraping of the entity started to fail, or {@code null} if the data comes from the latest scrape.
+   */
+  private Instant scrapeFailedAt;
+
+  /**
+   * Creates a copy of this entity for use when a new scrape of the entity has failed. The copy keeps the data of
+   * this entity and is marked with the time when scraping started to fail.
+   *
+   * @param failedAt the time when scraping of the entity started to fail
+   * @return a copy of this entity
+   */
+  public ScrapedEntity copyForFailedScrape(final Instant failedAt) {
+    return ScrapedEntity.builder()
+        .entityID(this.entityID)
+        .ecLocation(this.ecLocation)
+        .entityStatement(this.entityStatement)
+        .trustMarkStatuses(this.trustMarkStatuses)
+        .intermediate(this.intermediate)
+        .scrapeFailedAt(failedAt)
+        .build();
+  }
 
   /**
    * Resolves the entity statement using the provided federation client.
