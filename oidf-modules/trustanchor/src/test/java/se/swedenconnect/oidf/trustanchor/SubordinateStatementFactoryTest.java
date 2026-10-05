@@ -150,9 +150,9 @@ class SubordinateStatementFactoryTest {
 
   @Test
   void includesMetadataPolicyCritWhenNotEmpty() throws Exception {
-    final JWTClaimsSet claims = this.sign(this.subordinateBuilder().metadataPolicyCrit(List.of("regexp")).build());
+    final JWTClaimsSet claims = this.sign(this.subordinateBuilder().metadataPolicyCrit(List.of("custom_op")).build());
 
-    Assertions.assertEquals(List.of("regexp"), claims.getStringListClaim("metadata_policy_crit"));
+    Assertions.assertEquals(List.of("custom_op"), claims.getStringListClaim("metadata_policy_crit"));
   }
 
   @Test

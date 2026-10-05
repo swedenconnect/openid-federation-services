@@ -206,15 +206,6 @@ A subordinate entry supports:
 | `subset_of`   | Reduce the claim's (list) value to the values that are listed       |
 | `superset_of` | The claim's (list) value must be a superset of the listed values    |
 
-This service also registers two operators from the [Swedish OIDC Federation
-profile](https://github.com/oidc-sweden/specifications/blob/main/attic/swedish-oidc-fed-profile.md) that are
-**not** part of the base specification:
-
-| Operator     | Effect                                                                                          |
-|--------------|--------------------------------------------------------------------------------------------------|
-| `regexp`     | The claim's value, or every value in a list, must match every listed regular expression          |
-| `intersects` | The claim's (list) value must share at least one element with the listed values                  |
-
 In the example above, the policy forces `/op`'s `oauth_client.organization_identifier` and
 `oauth_client.organization_name` metadata to fixed values regardless of what `/op` itself publishes —
 typical for a Trust Anchor/Intermediate that wants to assert authoritative organization identity on

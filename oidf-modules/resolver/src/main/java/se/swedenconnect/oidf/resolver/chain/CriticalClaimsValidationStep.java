@@ -40,12 +40,10 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
       Set.of("ec_location");
 
   /**
-   * This implementation supports the additional metadata operators regexp and intersects. Operators defined by
-   * OpenID Federation 1.0 must not be listed in metadata_policy_crit, so they are rejected as well.
+   * This implementation supports no additional metadata operators. Operators defined by OpenID Federation 1.0 must
+   * not be listed in metadata_policy_crit, so they are rejected as well.
    */
-  public static final Set<String> SUPPORTED_METADATA_CLAIMS = Set.of(
-      "regexp", "intersects"
-  );
+  public static final Set<String> SUPPORTED_METADATA_CLAIMS = Set.of();
 
   @Override
   public List<ChainValidationError> validate(final List<SignedJWT> chain) {

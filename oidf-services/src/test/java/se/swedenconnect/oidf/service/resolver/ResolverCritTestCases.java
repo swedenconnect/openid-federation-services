@@ -53,23 +53,4 @@ public class ResolverCritTestCases {
     Assertions.assertEquals(List.of("ec_location"), trustChainEntryDifference.get(
         "crit").leftValue());
   }
-
-  @Test
-  void testResolverMetadataCrit(final FederationClients clients) throws ParseException {
-    final ResolverDifferentiator.ResponseDifference difference = clients.metadataCrit().getResponseDifference(new ResolveRequest(
-        TestFederationEntities.IM.OP.getValue(),
-        TestFederationEntities.MetadataPolicyCrit.TRUST_ANCHOR.getValue(),
-        null,false
-    ));
-
-    Assertions.assertEquals(1, difference.getJsonDifference().size());
-    Assertions.assertEquals("trust_marks", difference.getJsonDifference().keySet().stream().findFirst().get());
-
-    final Map<String, MapDifference.ValueDifference<Object>> trustChainEntryDifference =
-        difference.getTrustChainEntryDifference(2);
-
-    final List<String> metadataPolicyCrit =
-        (List<String>) trustChainEntryDifference.get("metadata_policy_crit").leftValue();
-    Assertions.assertEquals(List.of("regexp"), metadataPolicyCrit);
-  }
 }
