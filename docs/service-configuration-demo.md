@@ -188,7 +188,7 @@ A subordinate entry supports:
 | `constraints`           | [Trust chain constraints](#constraints) enforced below this subordinate          | Object            |
 | `crit`                  | Critical claims the subordinate statement must assert support for               | List\<String\>    |
 | `metadata-policy-crit`  | Critical policy operators used in `policy` (per §5.1.2 of the specification)     | List\<String\>    |
-| `ec-location`           | Overrides where this subordinate's own entity configuration is fetched from      | String            |
+| `ec-location`           | Where this subordinate's Entity Configuration is found, issued as `ec_location`. See [`ec-location` values](service-configuration.md#ec-location-values) | String            |
 
 #### Policy
 

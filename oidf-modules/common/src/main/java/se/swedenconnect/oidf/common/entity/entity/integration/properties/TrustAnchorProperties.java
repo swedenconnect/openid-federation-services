@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ConstraintRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 
@@ -121,6 +122,26 @@ public class TrustAnchorProperties {
     private ConstraintRecord constraints;
     @SerializedName("metadata")
     private Map<String, Object> metadata;
+
+    /**
+     * Gets the {@code ec_location} to issue for this subordinate. A configured value starting with {@code /} is
+     * resolved against the virtual entity ID, or the entity identifier if there is none. If no value is configured
+     * and the virtual entity ID differs from the entity identifier, the well-known location under the virtual entity
+     * ID is used, since the Entity Configuration is not found under the entity identifier.
+     *
+     * @return the {@code ec_location}, or {@code null} if none is issued
+     */
+    public String resolveEcLocation() {
+      final String entityId = this.entityIdentifier.getValue();
+      final String base = this.virtualEntityId != null ? this.virtualEntityId.getValue() : entityId;
+      if (this.ecLocation != null) {
+        return EcLocationValidator.resolve(this.ecLocation, base);
+      }
+      if (!base.equals(entityId)) {
+        return EcLocationValidator.resolve("/.well-known/openid-federation", base);
+      }
+      return null;
+    }
 
     /**
      * Create SubordinateListingProperty from entityId

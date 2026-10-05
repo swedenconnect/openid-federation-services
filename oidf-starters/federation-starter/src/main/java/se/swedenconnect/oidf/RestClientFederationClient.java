@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
@@ -49,20 +50,24 @@ public class RestClientFederationClient implements FederationClient {
   private final RestClient client;
   private final MeterRegistry registry;
   private final UptimeRegistry uptimeRegistry;
+  private final EcLocationValidator ecLocationValidator;
 
   /**
    * @param client to use for requests
    * @param registry for metrics
    * @param uptimeRegistry for per-cycle uptime tracking
+   * @param ecLocationValidator for checking ec_location values before they are used
    */
   public RestClientFederationClient(
       final RestClient client,
       final MeterRegistry registry,
-      final UptimeRegistry uptimeRegistry
+      final UptimeRegistry uptimeRegistry,
+      final EcLocationValidator ecLocationValidator
   ) {
     this.client = client;
     this.registry = registry;
     this.uptimeRegistry = uptimeRegistry;
+    this.ecLocationValidator = ecLocationValidator;
   }
 
   @Override
@@ -71,8 +76,9 @@ public class RestClientFederationClient implements FederationClient {
     final long startNanos = System.nanoTime();
     final String jwt = Optional.ofNullable(request.parameters().ecLocation())
         .map(location -> {
-          if (location.startsWith("data:application/entity-statement+jwt,")) {
-            return location.split(",")[1];
+          this.ecLocationValidator.validate(location);
+          if (EcLocationValidator.isDataUrl(location)) {
+            return EcLocationValidator.getDataUrlContent(location);
           }
           return this.client.mutate()
               .baseUrl(location)

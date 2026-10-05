@@ -26,6 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
@@ -87,7 +88,8 @@ class ValidatingResolverInMemoryTreeTest {
     final EntityStatementTreeLoader loader = new EntityStatementTreeLoader(
         client,
         new DFSExecution(),
-        errorContextFactory
+        errorContextFactory,
+        new EcLocationValidator(false)
     );
 
     loader.resolveTree(TA_ID, inMemoryTree, 1L);

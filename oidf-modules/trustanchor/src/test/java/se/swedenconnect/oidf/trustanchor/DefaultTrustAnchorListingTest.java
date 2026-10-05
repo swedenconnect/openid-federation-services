@@ -143,14 +143,34 @@ class DefaultTrustAnchorListingTest {
     Assertions.assertEquals(List.of(), this.listByType(null));
   }
 
+  @Test
+  void relativeEcLocationIsResolvedForFilteredListing() throws Exception {
+    final SignedJWT holderConfiguration = this.configuration(HOLDER, HOLDER,
+        List.of(this.trustMark(ISSUER, HOLDER, Instant.now().plusSeconds(600))));
+    Mockito.doReturn(holderConfiguration).when(this.client).entityConfiguration(Mockito.argThat(request ->
+        request != null && (HOLDER + "/hosted/ec").equals(request.parameters().ecLocation())));
+    final TrustAnchorProperties.SubordinateListingProperty holder = this.subordinate(HOLDER);
+    holder.setEcLocation("/hosted/ec");
+
+    Assertions.assertEquals(List.of(HOLDER), this.list(new SubordinateListingRequest(null, null, TYPE, null), null,
+        List.of(this.subordinate(ISSUER), holder)));
+  }
+
   private List<String> listByType(final Map<EntityID, List<EntityID>> trustMarkIssuers) throws Exception {
     return this.list(new SubordinateListingRequest(null, null, TYPE, null), trustMarkIssuers);
   }
 
   private List<String> list(final SubordinateListingRequest request,
       final Map<EntityID, List<EntityID>> trustMarkIssuers) throws Exception {
+    return this.list(request, trustMarkIssuers,
+        List.of(this.subordinate(ISSUER), this.subordinate(HOLDER), this.subordinate(HOLDER)));
+  }
+
+  private List<String> list(final SubordinateListingRequest request,
+      final Map<EntityID, List<EntityID>> trustMarkIssuers,
+      final List<TrustAnchorProperties.SubordinateListingProperty> subordinates) throws Exception {
     final TrustAnchorProperties properties = new TrustAnchorProperties(new EntityID(TA), trustMarkIssuers, null);
-    properties.setSubordinates(List.of(this.subordinate(ISSUER), this.subordinate(HOLDER), this.subordinate(HOLDER)));
+    properties.setSubordinates(subordinates);
     final DefaultTrustAnchor trustAnchor = new DefaultTrustAnchor(this.source, properties,
         Mockito.mock(SubordinateStatementFactory.class), this.client);
     return trustAnchor.subordinateListing(request);

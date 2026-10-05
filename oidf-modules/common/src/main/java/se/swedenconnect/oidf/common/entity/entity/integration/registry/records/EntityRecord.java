@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 
 import java.io.Serializable;
 import java.security.KeyStore;
@@ -147,18 +148,16 @@ public class EntityRecord implements Serializable {
   }
 
   /**
+   * Gets the locations where this service serves the Entity Configuration of this entity. The {@code ec-location} is
+   * only included if it is a URL, since a data URL is not served. The value has been validated when loaded.
+   *
    * @return list of entity configuration endpoints for this entity
    */
   public List<String> getEntityConfigurationEndpoints() {
     final EntityID entityID = this.virtualEntityId != null ? this.virtualEntityId : this.entityIdentifier;
     final List<String> endpoints = new ArrayList<>();
-    if (this.ecLocation != null) {
-      if (this.ecLocation.startsWith("http:") || this.ecLocation.startsWith("https://")) {
-        endpoints.add(this.ecLocation);
-      }
-      if (this.ecLocation.startsWith("/")) {
-        endpoints.add(withoutTrailingSlash(entityID.getValue()) + this.ecLocation);
-      }
+    if (this.ecLocation != null && !EcLocationValidator.isDataUrl(this.ecLocation)) {
+      endpoints.add(EcLocationValidator.resolve(this.ecLocation, entityID.getValue()));
     }
     // A trailing / of the entity identifier is removed before the well-known path is added (Section 9)
     endpoints.add(withoutTrailingSlash(entityID.getValue()) + "/.well-known/openid-federation");

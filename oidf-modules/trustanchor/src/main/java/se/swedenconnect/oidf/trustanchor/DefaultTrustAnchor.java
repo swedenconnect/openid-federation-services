@@ -186,7 +186,7 @@ public class DefaultTrustAnchor implements TrustAnchor {
     final SignedJWT entityConfiguration;
     try {
       entityConfiguration = this.federationClient.entityConfiguration(new FederationRequest<>(
-          new EntityConfigurationRequest(entityID, entity.getEcLocation()),
+          new EntityConfigurationRequest(entityID, entity.resolveEcLocation()),
           Map.of()));
     } catch (final Exception e) {
       log.info("Entity configuration of subordinate {} unavailable for filtered listing: {}",
