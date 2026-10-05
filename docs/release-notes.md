@@ -4,9 +4,15 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Version 1.0.0
+## Version 1.0.1
 
 **Date:** _not yet released_
+
+*
+
+## Version 1.0.0
+
+**Date:** 2026-10-05
 
 * The `trust_mark_type` filter of the discovery endpoint now only counts valid trust marks, checked as in resolve. Before, any `trust_marks` entry of the requested type in the entity's own Entity Configuration was enough. Resolve no longer accepts a trust mark whose type differs from the type of its `trust_marks` entry. ([#166](https://github.com/swedenconnect/openid-federation-services/issues/166))
 * Trust mark entries using `trust_mark_type` (OpenID Federation 1.0) are now read by the resolver and in subordinate listings. Entity configurations now write `trust_mark_type` in addition to `id`. Trust marks using the draft `id` claim are still accepted. An invalid trust mark entry is skipped and logged instead of dropping all trust marks of the entity. ([#179](https://github.com/swedenconnect/openid-federation-services/issues/179))
