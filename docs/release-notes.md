@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Version 0.11.18
+## Version 1.0.0
 
 **Date:** _not yet released_
 
