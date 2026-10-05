@@ -159,6 +159,31 @@ class ResolverResponseFactoryTtlTest {
         "TTL should use default 7 days when chain exp is longer, but was: " + actualDuration.toDays() + " days");
   }
 
+  @Test
+  void responseHoldsOnlyResolveResponseClaims() throws Exception {
+    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
+    final SignedJWT leaf = buildSignedJwt(key, "https://example.com/leaf", "https://example.com/leaf",
+        now.plus(Duration.ofDays(1)));
+
+    final ArgumentCaptor<JWTClaimsSet> claimsCaptor = ArgumentCaptor.forClass(JWTClaimsSet.class);
+    when(signer.sign(any(), claimsCaptor.capture())).thenReturn(leaf);
+
+    new ResolverResponseFactory(fixedClock, properties, signerFactory, compositeRecordSource)
+        .sign(ResolverResponse.builder()
+            .entityStatement(leaf)
+            .metadata(new net.minidev.json.JSONObject())
+            .trustMarkEntries(List.of())
+            .trustChain(List.of(leaf))
+            .validationErrors(List.of())
+            .build());
+
+    final JWTClaimsSet claims = claimsCaptor.getValue();
+    Assertions.assertEquals(java.util.Set.of("iss", "sub", "iat", "exp", "jti", "metadata", "trust_marks",
+        "trust_chain"), claims.getClaims().keySet());
+    Assertions.assertEquals(ENTITY_ID, claims.getIssuer());
+    Assertions.assertEquals("https://example.com/leaf", claims.getSubject());
+  }
+
   private SignedJWT buildEntityStatement(final JWK key, final String issuer, final String subject,
                                          final Instant expiry) throws Exception {
     return buildSignedJwt(key, issuer, subject, expiry);

@@ -157,11 +157,12 @@ public class EntityRecord implements Serializable {
         endpoints.add(this.ecLocation);
       }
       if (this.ecLocation.startsWith("/")) {
-        endpoints.add(entityID.getValue() + this.ecLocation);
+        endpoints.add(withoutTrailingSlash(entityID.getValue()) + this.ecLocation);
       }
     }
-    endpoints.add(entityID.getValue() + "/.well-known/openid-federation");
-    endpoints.add(this.entityIdentifier.getValue() + "/.well-known/openid-federation");
+    // A trailing / of the entity identifier is removed before the well-known path is added (Section 9)
+    endpoints.add(withoutTrailingSlash(entityID.getValue()) + "/.well-known/openid-federation");
+    endpoints.add(withoutTrailingSlash(this.entityIdentifier.getValue()) + "/.well-known/openid-federation");
     return endpoints;
   }
 
@@ -173,8 +174,18 @@ public class EntityRecord implements Serializable {
             return value;
           }
           final EntityID base = this.virtualEntityId != null ? this.virtualEntityId : this.entityIdentifier;
-          return base.getValue() + value;
+          return withoutTrailingSlash(base.getValue()) + value;
         });
+  }
+
+  /**
+   * Removes a trailing {@code /} from an entity identifier, so that paths can be appended to it.
+   *
+   * @param entityId the entity identifier
+   * @return the entity identifier without a trailing {@code /}
+   */
+  private static String withoutTrailingSlash(final String entityId) {
+    return entityId.endsWith("/") ? entityId.substring(0, entityId.length() - 1) : entityId;
   }
 
   /**

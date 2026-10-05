@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -54,12 +55,15 @@ import java.util.stream.Collectors;
 @Builder
 @AllArgsConstructor
 public class ScrapedEntity {
+  private static final String STATUS_ENDPOINT = "federation_trust_mark_status_endpoint";
+
   private final EntityID entityID;
   private final Instant scrapedAt = Instant.now();
   private String ecLocation;
 
   // Base info
   private SignedJWT entityStatement;
+  /** Trust mark status responses, keyed by the serialized trust mark JWT. */
   @Builder.Default
   private Map<String, TrustMarkStatusResponse> trustMarkStatuses = new HashMap<>();
   //Roles
@@ -90,6 +94,7 @@ public class ScrapedEntity {
     }
     final EntityStatementWrapper wrapper = new EntityStatementWrapper(this.entityStatement);
     final List<SignedJWT> trustMarks = wrapper.getTrustMarks();
+    final Map<String, Optional<Map<String, Object>>> issuerMetadataCache = new HashMap<>();
     trustMarks.forEach(trustMark -> {
       final String trustMarkType = EntityStatementClaims.getTrustMarkType(trustMark);
       final String issuer;
@@ -104,10 +109,21 @@ public class ScrapedEntity {
         return;
       }
       log.debug("Resolving trust mark status for {} of type {}", this.entityID, trustMarkType);
-      final TrustMarkStatusResponse trustMarkStatus = client.trustMarkStatus(
-          new FederationRequest<>(new FederationTrustMarkStatusRequest(trustMark.serialize(), issuer))
-      );
-      this.trustMarkStatuses.put(trustMarkType, trustMarkStatus);
+      final Optional<Map<String, Object>> issuerMetadata =
+          issuerMetadataCache.computeIfAbsent(issuer, i -> issuerMetadata(client, i));
+      final TrustMarkStatusResponse trustMarkStatus;
+      if (issuerMetadata.isEmpty()) {
+        trustMarkStatus = new TrustMarkStatusResponse(null, true);
+      }
+      else if (!issuerMetadata.get().containsKey(STATUS_ENDPOINT)) {
+        log.debug("Trust mark issuer {} has no {}", issuer, STATUS_ENDPOINT);
+        trustMarkStatus = TrustMarkStatusResponse.noStatusEndpoint();
+      }
+      else {
+        trustMarkStatus = client.trustMarkStatus(new FederationRequest<>(
+            new FederationTrustMarkStatusRequest(trustMark.serialize(), issuer), issuerMetadata.get()));
+      }
+      this.trustMarkStatuses.put(trustMark.serialize(), trustMarkStatus);
     });
     wrapper.getFederationEntityMetadata()
         .ifPresent(metadata -> {
@@ -117,5 +133,26 @@ public class ScrapedEntity {
             this.intermediate.scrape(client, metadata);
           }
         });
+  }
+
+  /**
+   * Fetches the {@code federation_entity} metadata of a trust mark issuer from its Entity Configuration.
+   *
+   * @param client the federation client
+   * @param issuer the trust mark issuer
+   * @return the metadata, an empty map if the issuer has none, or empty if the Entity Configuration could not be
+   *     fetched
+   */
+  private static Optional<Map<String, Object>> issuerMetadata(final FederationClient client, final String issuer) {
+    try {
+      final SignedJWT issuerConfiguration = client.entityConfiguration(
+          new FederationRequest<>(new EntityConfigurationRequest(new EntityID(issuer), null)));
+      return Optional.of(new EntityStatementWrapper(issuerConfiguration).getFederationEntityMetadata()
+          .orElseGet(Map::of));
+    }
+    catch (final Exception e) {
+      log.info("Failed to fetch Entity Configuration of trust mark issuer {}: {}", issuer, e.getMessage());
+      return Optional.empty();
+    }
   }
 }

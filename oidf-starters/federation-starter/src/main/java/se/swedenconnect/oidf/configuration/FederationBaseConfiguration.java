@@ -22,6 +22,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -95,8 +96,14 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
-  ServerResponseErrorHandler serverResponseErrorHandler() {
-    return new ServerResponseErrorHandler(new ErrorHandler());
+  @ConditionalOnMissingBean
+  ErrorHandler errorHandler() {
+    return new ErrorHandler();
+  }
+
+  @Bean
+  ServerResponseErrorHandler serverResponseErrorHandler(final ErrorHandler errorHandler) {
+    return new ServerResponseErrorHandler(errorHandler);
   }
 
   @Bean

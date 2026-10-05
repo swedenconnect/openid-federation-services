@@ -30,6 +30,7 @@ import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
@@ -37,361 +38,444 @@ import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
 
 class TrustMarkCollectorStatusTest {
 
   private static final String TRUST_MARK_TYPE = "https://example.com/trustmark/type1";
   private static final String SUBJECT = "https://example.com/subject";
   private static final String ISSUER = "https://example.com/issuer";
+  private static final String OWNER = "https://example.com/owner";
+  private static final String TRUST_MARK_JWT_TYPE = "trust-mark+jwt";
+  private static final String STATUS_TYPE = "trust-mark-status-response+jwt";
 
-  @Test
-  void statusStoreFiltersInactiveTrustMarks() throws Exception {
-    final TrustMarkCollector collector = new TrustMarkCollector();
+  private JWK leafKey;
+  private JWK issuerKey;
+  private Function<String, Optional<JWKSet>> issuerKeys;
 
-    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
-    final String trustMarkJwt = buildTrustMarkJwt(key);
-
-    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt);
-    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
-    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
-
-    final ScrapedEntity leafEntity = ScrapedEntity.builder()
-        .entityID(new EntityID(SUBJECT))
-        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("inactive"), false)))
-        .build();
-    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
-    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
-    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
-
-    Assertions.assertTrue(result.isEmpty(),
-        "Trust mark with inactive status should be filtered out");
+  @BeforeEach
+  void setUp() throws Exception {
+    this.leafKey = new RSAKeyGenerator(2048).keyID("leaf-key").generate();
+    this.issuerKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();
+    this.issuerKeys = issuer -> ISSUER.equals(issuer)
+        ? Optional.of(new JWKSet(this.issuerKey.toPublicJWK()))
+        : Optional.empty();
   }
 
   @Test
-  void statusStoreAllowsActiveTrustMarks() throws Exception {
-    final TrustMarkCollector collector = new TrustMarkCollector();
-
-    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
-    final String trustMarkJwt = buildTrustMarkJwt(key);
-
-    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt);
-    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
-    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
-
-    final ScrapedEntity leafEntity = ScrapedEntity.builder()
-        .entityID(new EntityID(SUBJECT))
-        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
-        .build();
-    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
-    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
-    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
-
-    Assertions.assertEquals(1, result.size(),
-        "Trust mark with active status should be included");
+  void activeTrustMarkIsCollected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    Assertions.assertEquals(1, this.collect(trustMark, this.activeStatus(trustMark)).size());
   }
 
   @Test
-  void missingStatusInStoreMeansInclude() throws Exception {
-    final TrustMarkCollector collector = new TrustMarkCollector();
-
-    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
-    final String trustMarkJwt = buildTrustMarkJwt(key);
-
-    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt);
-    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
-    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
-
-    final ScrapedEntity leafEntity = ScrapedEntity.builder()
-        .entityID(new EntityID(SUBJECT))
-        .trustMarkStatuses(Map.of())
-        .build();
-    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
-    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
-    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
-
-    Assertions.assertEquals(0, result.size(),
-        "Trust mark with no recorded status should be excluded (orElse(false))");
+  void inactiveTrustMarkIsRejected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    final SignedJWT status = this.status(this.issuerKey, STATUS_TYPE, ISSUER, trustMark, "revoked");
+    Assertions.assertTrue(this.collect(trustMark, new TrustMarkStatusResponse(status, false)).isEmpty());
   }
 
   @Test
-  void trustAnchorWithoutTrustMarkOwnersIsHandled() throws Exception {
-    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
-    final String trustMarkJwt = buildTrustMarkJwt(key);
-
-    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt);
-    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
-    final SignedJWT trustAnchor = buildTrustAnchorStatementWithoutTrustMarkOwners();
-
-    final ScrapedEntity leafEntity = ScrapedEntity.builder()
-        .entityID(new EntityID(SUBJECT))
-        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
-        .build();
-    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
-    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
-    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
-
-    Assertions.assertEquals(1, result.size(),
-        "Trust anchor without trust_mark_owners should not prevent collection");
+  void missingStatusIsRejected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    Assertions.assertTrue(this.collect(trustMark, null).isEmpty());
   }
 
   @Test
-  void superiorStatementWithoutTrustMarksIsHandled() throws Exception {
-    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
-    final String trustMarkJwt = buildTrustMarkJwt(key);
-
-    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt);
-    final SignedJWT intermediateStatement = buildSignedJWTWithoutTrustMarks();
-    // Position 2 in the chain is read as the statement issued for the subject
-    final SignedJWT subjectStatement = buildSubordinateStatementWithoutTrustMarks();
-    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
-
-    final ScrapedEntity leafEntity = ScrapedEntity.builder()
-        .entityID(new EntityID(SUBJECT))
-        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
-        .build();
-    final Set<SignedJWT> statements = new LinkedHashSet<>(
-        List.of(leafStatement, intermediateStatement, subjectStatement, trustAnchor));
-    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
-    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
-
-    Assertions.assertEquals(1, result.size(),
-        "Superior statement for the subject without trust_marks should not prevent collection");
+  void failedStatusCallIsRejected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    Assertions.assertTrue(this.collect(trustMark, new TrustMarkStatusResponse(null, true)).isEmpty());
   }
 
   @Test
-  void entryWithTrustMarkTypeIsCollected() throws Exception {
-    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
-    final String trustMarkJwt = buildTrustMarkJwt(key);
-
-    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt, "trust_mark_type");
-    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
-    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
-
-    final ScrapedEntity leafEntity = ScrapedEntity.builder()
-        .entityID(new EntityID(SUBJECT))
-        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
-        .build();
-    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
-    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
-    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
-
-    Assertions.assertEquals(1, result.size(),
-        "Trust mark entry using trust_mark_type should be collected");
-    Assertions.assertEquals(TRUST_MARK_TYPE, result.getFirst().getID().getValue());
+  void issuerWithoutStatusEndpointIsAccepted() throws Exception {
+    final String trustMark = this.trustMark().build();
+    Assertions.assertEquals(1, this.collect(trustMark, TrustMarkStatusResponse.noStatusEndpoint()).size());
   }
 
   @Test
-  void draftTrustMarkJwtWithIdIsCollected() throws Exception {
-    final JWK key = new RSAKeyGenerator(2048).keyID("test-key").generate();
-    final String trustMarkJwt = buildTrustMarkJwt(key, "id");
-
-    final SignedJWT leafStatement = buildSignedJWTWithTrustMark(key, trustMarkJwt, "id");
-    final SignedJWT superiorStatement = buildSignedJWTWithoutTrustMarks();
-    final SignedJWT trustAnchor = buildTrustAnchorStatement(key);
-
-    final ScrapedEntity leafEntity = ScrapedEntity.builder()
-        .entityID(new EntityID(SUBJECT))
-        .trustMarkStatuses(Map.of(TRUST_MARK_TYPE, new TrustMarkStatusResponse(buildStatusJwt("active"), false)))
-        .build();
-    final Set<SignedJWT> statements = new LinkedHashSet<>(List.of(leafStatement, superiorStatement, trustAnchor));
-    final ResolverTrustChain chain = new ResolverTrustChain(statements, leafEntity);
-    final List<TrustMarkEntry> result = TrustMarkCollector.collectSubjectTrustMarks(chain);
-
-    Assertions.assertEquals(1, result.size(),
-        "Trust mark JWT using the draft id claim should be collected");
+  void issuerWithoutStatusEndpointStillNeedsValidSignature() throws Exception {
+    final String trustMark = this.trustMark().signingKey(this.leafKey).build();
+    Assertions.assertTrue(this.collect(trustMark, TrustMarkStatusResponse.noStatusEndpoint()).isEmpty());
   }
 
-  private String buildTrustMarkJwt(final JWK key) throws Exception {
-    return buildTrustMarkJwt(key, "trust_mark_type");
+  @Test
+  void statusNotSignedByIssuerIsRejected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    final JWK otherKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();
+    final SignedJWT status = this.status(otherKey, STATUS_TYPE, ISSUER, trustMark, "active");
+    Assertions.assertTrue(this.collect(trustMark, new TrustMarkStatusResponse(status, false)).isEmpty());
   }
 
-  private String buildTrustMarkJwt(final JWK key, final String typeClaim) throws Exception {
-    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-        .type(new JOSEObjectType("trust-mark+jwt"))
-        .keyID(key.getKeyID())
-        .build();
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer(ISSUER)
-        .subject(SUBJECT)
-        .claim(typeClaim, TRUST_MARK_TYPE)
-        .issueTime(Date.from(Instant.now()))
-        .build();
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(new RSASSASigner(key.toRSAKey()));
-    return jwt.serialize();
+  @Test
+  void statusWithWrongTypIsRejected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    final SignedJWT status = this.status(this.issuerKey, "jwt", ISSUER, trustMark, "active");
+    Assertions.assertTrue(this.collect(trustMark, new TrustMarkStatusResponse(status, false)).isEmpty());
   }
 
-  private SignedJWT buildSignedJWTWithTrustMark(final JWK key, final String trustMarkJwt)
+  @Test
+  void statusFromOtherIssuerIsRejected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    final SignedJWT status =
+        this.status(this.issuerKey, STATUS_TYPE, "https://example.com/other", trustMark, "active");
+    Assertions.assertTrue(this.collect(trustMark, new TrustMarkStatusResponse(status, false)).isEmpty());
+  }
+
+  @Test
+  void statusForOtherTrustMarkIsRejected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    final String otherTrustMark = this.trustMark().build();
+    Assertions.assertTrue(this.collect(trustMark, this.activeStatus(otherTrustMark)).isEmpty());
+  }
+
+  @Test
+  void trustMarkForOtherSubjectIsRejected() throws Exception {
+    final String trustMark = this.trustMark().subject("https://example.com/other").build();
+    Assertions.assertTrue(this.collect(trustMark, this.activeStatus(trustMark)).isEmpty());
+  }
+
+  @Test
+  void trustMarkWithWrongTypIsRejected() throws Exception {
+    final String trustMark = this.trustMark().typ("jwt").build();
+    Assertions.assertTrue(this.collect(trustMark, this.activeStatus(trustMark)).isEmpty());
+  }
+
+  @Test
+  void expiredTrustMarkIsRejected() throws Exception {
+    final String trustMark = this.trustMark().expiration(Instant.now().minusSeconds(60)).build();
+    Assertions.assertTrue(this.collect(trustMark, this.activeStatus(trustMark)).isEmpty());
+  }
+
+  @Test
+  void trustMarkNotSignedByIssuerIsRejected() throws Exception {
+    final String trustMark = this.trustMark().signingKey(this.leafKey).build();
+    Assertions.assertTrue(this.collect(trustMark, this.activeStatus(trustMark)).isEmpty());
+  }
+
+  @Test
+  void trustMarkFromUnresolvableIssuerIsRejected() throws Exception {
+    final String trustMark = this.trustMark().build();
+    this.issuerKeys = issuer -> Optional.empty();
+    Assertions.assertTrue(this.collect(trustMark, this.activeStatus(trustMark)).isEmpty());
+  }
+
+  @Test
+  void trustMarkFromUnlistedIssuerIsRejected() throws Exception {
+    final JSONArray issuers = new JSONArray();
+    issuers.add("https://example.com/other-issuer");
+    Assertions.assertTrue(this.collectWithIssuers(issuers).isEmpty());
+  }
+
+  @Test
+  void emptyIssuerListAllowsAnyIssuer() throws Exception {
+    Assertions.assertEquals(1, this.collectWithIssuers(new JSONArray()).size());
+  }
+
+  @Test
+  void invalidIssuerListRejectsTrustMark() throws Exception {
+    Assertions.assertTrue(this.collectWithIssuers("not-an-array").isEmpty());
+  }
+
+  private List<TrustMarkEntry> collectWithIssuers(final Object issuers) throws Exception {
+    final String trustMark = this.trustMark().build();
+    final List<SignedJWT> statements = List.of(
+        this.leafStatement(trustMark, "trust_mark_type"), this.otherStatement(), this.trustAnchor(null, issuers));
+    return this.collect(statements, Map.of(trustMark, this.activeStatus(trustMark)));
+  }
+
+  @Test
+  void statusIsKeptPerTrustMark() throws Exception {
+    final String active = this.trustMark().build();
+    final String revoked = this.trustMark().build();
+    final SignedJWT revokedStatus = this.status(this.issuerKey, STATUS_TYPE, ISSUER, revoked, "revoked");
+    final List<SignedJWT> statements = List.of(
+        this.leafStatement(List.of(active, revoked), "trust_mark_type"), this.otherStatement(),
+        this.trustAnchor(null));
+
+    final List<TrustMarkEntry> result = this.collect(statements, Map.of(
+        active, this.activeStatus(active),
+        revoked, new TrustMarkStatusResponse(revokedStatus, false)));
+
+    Assertions.assertEquals(1, result.size());
+    Assertions.assertEquals(active, result.getFirst().getTrustMark().serialize());
+  }
+
+  @Test
+  void chainWithSingleStatementIsHandled() throws Exception {
+    final String trustMark = this.trustMark().build();
+    final List<SignedJWT> statements = List.of(this.leafStatement(trustMark, "trust_mark_type"));
+    Assertions.assertEquals(1, this.collect(statements, Map.of(trustMark, this.activeStatus(trustMark))).size());
+  }
+
+  @Test
+  void trustMarksInSubordinateStatementAreIgnored() throws Exception {
+    final String leafTrustMark = this.trustMark().build();
+    final String superiorTrustMark = this.trustMark().build();
+    final List<SignedJWT> statements = List.of(
+        this.leafStatement(leafTrustMark, "trust_mark_type"),
+        this.subordinateStatementForSubject(superiorTrustMark),
+        this.trustAnchor(null));
+
+    final List<TrustMarkEntry> result = this.collect(statements, Map.of(
+        leafTrustMark, this.activeStatus(leafTrustMark),
+        superiorTrustMark, this.activeStatus(superiorTrustMark)));
+
+    Assertions.assertEquals(1, result.size());
+    Assertions.assertEquals(leafTrustMark, result.getFirst().getTrustMark().serialize());
+  }
+
+  @Test
+  void draftEntryAndTrustMarkWithIdIsCollected() throws Exception {
+    final String trustMark = this.trustMark().typeClaim("id").build();
+    final List<SignedJWT> statements = List.of(
+        this.leafStatement(trustMark, "id"), this.otherStatement(), this.trustAnchor(null));
+    Assertions.assertEquals(1, this.collect(statements, Map.of(trustMark, this.activeStatus(trustMark))).size());
+  }
+
+  @Test
+  void delegatedTrustMarkIsCollected() throws Exception {
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final String delegation = this.delegation(ownerKey, ISSUER, Instant.now().plusSeconds(3600));
+    Assertions.assertEquals(1, this.collectWithOwner(ownerKey, delegation).size());
+  }
+
+  @Test
+  void ownedTrustMarkWithoutDelegationIsRejected() throws Exception {
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    Assertions.assertTrue(this.collectWithOwner(ownerKey, null).isEmpty());
+  }
+
+  @Test
+  void delegationNotSignedByOwnerIsRejected() throws Exception {
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final JWK otherKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final String delegation = this.delegation(otherKey, ISSUER, Instant.now().plusSeconds(3600));
+    Assertions.assertTrue(this.collectWithOwner(ownerKey, delegation).isEmpty());
+  }
+
+  @Test
+  void delegationForOtherIssuerIsRejected() throws Exception {
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final String delegation =
+        this.delegation(ownerKey, "https://example.com/other-issuer", Instant.now().plusSeconds(3600));
+    Assertions.assertTrue(this.collectWithOwner(ownerKey, delegation).isEmpty());
+  }
+
+  @Test
+  void expiredDelegationIsRejected() throws Exception {
+    final JWK ownerKey = new RSAKeyGenerator(2048).keyID("owner-key").generate();
+    final String delegation = this.delegation(ownerKey, ISSUER, Instant.now().minusSeconds(60));
+    Assertions.assertTrue(this.collectWithOwner(ownerKey, delegation).isEmpty());
+  }
+
+  private List<TrustMarkEntry> collect(final String trustMark, final TrustMarkStatusResponse status)
       throws Exception {
-    return buildSignedJWTWithTrustMark(key, trustMarkJwt, "id");
+    final List<SignedJWT> statements = List.of(
+        this.leafStatement(trustMark, "trust_mark_type"), this.otherStatement(), this.trustAnchor(null));
+    final Map<String, TrustMarkStatusResponse> statuses = new HashMap<>();
+    if (status != null) {
+      statuses.put(trustMark, status);
+    }
+    return this.collect(statements, statuses);
   }
 
-  private SignedJWT buildSignedJWTWithTrustMark(final JWK key, final String trustMarkJwt, final String typeMember)
-      throws Exception {
-    final JSONObject trustMarkEntry = new JSONObject();
-    trustMarkEntry.put(typeMember, TRUST_MARK_TYPE);
-    trustMarkEntry.put("trust_mark", trustMarkJwt);
-
-    final JSONArray trustMarks = new JSONArray();
-    trustMarks.add(trustMarkEntry);
-
-    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-        .type(new JOSEObjectType("entity-statement+jwt"))
-        .keyID(key.getKeyID())
+  private List<TrustMarkEntry> collect(final List<SignedJWT> statements,
+      final Map<String, TrustMarkStatusResponse> statuses) throws Exception {
+    final ScrapedEntity leafEntity = ScrapedEntity.builder()
+        .entityID(new EntityID(SUBJECT))
+        .trustMarkStatuses(statuses)
         .build();
-
-    final JWKSet jwkSet = new JWKSet(key.toPublicJWK());
-    final JSONObject federationEntityMetadata = new JSONObject();
-    federationEntityMetadata.put("organization_name", "Test");
-    final JSONObject metadata = new JSONObject();
-    metadata.put("federation_entity", federationEntityMetadata);
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer(SUBJECT)
-        .subject(SUBJECT)
-        .issueTime(Date.from(Instant.now()))
-        .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-        .claim("trust_marks", trustMarks)
-        .claim("jwks", new JSONObject(jwkSet.toJSONObject()))
-        .claim("metadata", metadata)
-        .build();
-
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(new RSASSASigner(key.toRSAKey()));
-    return jwt;
+    final ResolverTrustChain chain = new ResolverTrustChain(new LinkedHashSet<>(statements), leafEntity);
+    return TrustMarkCollector.collectSubjectTrustMarks(chain, this.issuerKeys);
   }
 
-  private SignedJWT buildSignedJWTWithoutTrustMarks() throws Exception {
-    final JWK key = new RSAKeyGenerator(2048).keyID("superior-key").generate();
-    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-        .type(new JOSEObjectType("entity-statement+jwt"))
-        .keyID(key.getKeyID())
-        .build();
-
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer("https://example.com/intermediate")
-        .subject("https://example.com/other-entity")
-        .issueTime(Date.from(Instant.now()))
-        .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-        .claim("jwks", new JSONObject(new JWKSet(key.toPublicJWK()).toJSONObject()))
-        .claim("metadata", new JSONObject())
-        .build();
-
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(new RSASSASigner(key.toRSAKey()));
-    return jwt;
+  private List<TrustMarkEntry> collectWithOwner(final JWK ownerKey, final String delegation) throws Exception {
+    final String trustMark = this.trustMark().delegation(delegation).build();
+    final List<SignedJWT> statements = List.of(
+        this.leafStatement(trustMark, "trust_mark_type"), this.otherStatement(), this.trustAnchor(ownerKey));
+    return this.collect(statements, Map.of(trustMark, this.activeStatus(trustMark)));
   }
 
-  private SignedJWT buildStatusJwt(final String status) throws Exception {
-    final JWK key = new RSAKeyGenerator(2048).keyID("status-key").generate();
-    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(key.getKeyID()).build();
+  private TrustMarkBuilder trustMark() {
+    return new TrustMarkBuilder(this.issuerKey);
+  }
+
+  private TrustMarkStatusResponse activeStatus(final String trustMark) throws Exception {
+    return new TrustMarkStatusResponse(this.status(this.issuerKey, STATUS_TYPE, ISSUER, trustMark, "active"), false);
+  }
+
+  private SignedJWT status(final JWK key, final String typ, final String issuer, final String trustMark,
+      final String status) throws Exception {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer(ISSUER)
-        .subject(SUBJECT)
+        .issuer(issuer)
+        .issueTime(new Date())
+        .claim("trust_mark", trustMark)
         .claim("status", status)
         .build();
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(new RSASSASigner(key.toRSAKey()));
-    return jwt;
+    return sign(key, typ, claims);
   }
 
-  private SignedJWT buildSubordinateStatementWithoutTrustMarks() throws Exception {
-    final JWK key = new RSAKeyGenerator(2048).keyID("superior-key").generate();
-    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-        .type(new JOSEObjectType("entity-statement+jwt"))
-        .keyID(key.getKeyID())
-        .build();
-
+  private String delegation(final JWK ownerKey, final String subject, final Instant expiration) throws Exception {
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer("https://example.com/intermediate")
-        .subject(SUBJECT)
-        .issueTime(Date.from(Instant.now()))
+        .issuer(OWNER)
+        .subject(subject)
+        .claim("trust_mark_type", TRUST_MARK_TYPE)
+        .issueTime(Date.from(Instant.now().minusSeconds(7200)))
+        .expirationTime(Date.from(expiration))
+        .build();
+    return sign(ownerKey, "trust-mark-delegation+jwt", claims).serialize();
+  }
+
+  private SignedJWT leafStatement(final String trustMark, final String typeMember) throws Exception {
+    return this.leafStatement(List.of(trustMark), typeMember);
+  }
+
+  private SignedJWT leafStatement(final List<String> trustMarks, final String typeMember) throws Exception {
+    final JWTClaimsSet claims = this.statementClaims(SUBJECT, SUBJECT, this.leafKey)
+        .claim("trust_marks", trustMarksClaim(trustMarks, typeMember))
+        .build();
+    return sign(this.leafKey, "entity-statement+jwt", claims);
+  }
+
+  private static JSONArray trustMarksClaim(final List<String> trustMarks, final String typeMember) {
+    final JSONArray claim = new JSONArray();
+    for (final String trustMark : trustMarks) {
+      final JSONObject trustMarkEntry = new JSONObject();
+      trustMarkEntry.put(typeMember, TRUST_MARK_TYPE);
+      trustMarkEntry.put("trust_mark", trustMark);
+      claim.add(trustMarkEntry);
+    }
+    return claim;
+  }
+
+  private SignedJWT otherStatement() throws Exception {
+    final JWK key = new RSAKeyGenerator(2048).keyID("superior-key").generate();
+    return sign(key, "entity-statement+jwt",
+        this.statementClaims("https://example.com/intermediate", "https://example.com/other-entity", key).build());
+  }
+
+  private SignedJWT subordinateStatementForSubject(final String trustMark) throws Exception {
+    final JWK key = new RSAKeyGenerator(2048).keyID("superior-key").generate();
+    return sign(key, "entity-statement+jwt",
+        this.statementClaims("https://example.com/intermediate", SUBJECT, key)
+            .claim("trust_marks", trustMarksClaim(List.of(trustMark), "trust_mark_type"))
+            .build());
+  }
+
+  private SignedJWT trustAnchor(final JWK ownerKey) throws Exception {
+    final JSONArray issuers = new JSONArray();
+    issuers.add(ISSUER);
+    return this.trustAnchor(ownerKey, issuers);
+  }
+
+  private SignedJWT trustAnchor(final JWK ownerKey, final Object issuers) throws Exception {
+    final JWK taKey = new RSAKeyGenerator(2048).keyID("ta-key").generate();
+    final JSONObject trustMarkIssuers = new JSONObject();
+    trustMarkIssuers.put(TRUST_MARK_TYPE, issuers);
+
+    final JWTClaimsSet.Builder builder =
+        this.statementClaims("https://example.com/ta", "https://example.com/ta", taKey)
+            .claim("trust_mark_issuers", trustMarkIssuers);
+    if (ownerKey != null) {
+      final JSONObject owner = new JSONObject();
+      owner.put("sub", OWNER);
+      owner.put("jwks", new JSONObject(new JWKSet(ownerKey.toPublicJWK()).toJSONObject()));
+      final JSONObject trustMarkOwners = new JSONObject();
+      trustMarkOwners.put(TRUST_MARK_TYPE, owner);
+      builder.claim("trust_mark_owners", trustMarkOwners);
+    }
+    return sign(taKey, "entity-statement+jwt", builder.build());
+  }
+
+  private JWTClaimsSet.Builder statementClaims(final String issuer, final String subject, final JWK key) {
+    final JSONObject federationEntity = new JSONObject();
+    federationEntity.put("organization_name", "Test");
+    final JSONObject metadata = new JSONObject();
+    metadata.put("federation_entity", federationEntity);
+    return new JWTClaimsSet.Builder()
+        .issuer(issuer)
+        .subject(subject)
+        .issueTime(new Date())
         .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
         .claim("jwks", new JSONObject(new JWKSet(key.toPublicJWK()).toJSONObject()))
-        .claim("metadata", new JSONObject())
-        .build();
+        .claim("metadata", metadata);
+  }
 
+  private static SignedJWT sign(final JWK key, final String typ, final JWTClaimsSet claims) throws Exception {
+    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
+        .type(new JOSEObjectType(typ))
+        .keyID(key.getKeyID())
+        .build();
     final SignedJWT jwt = new SignedJWT(header, claims);
     jwt.sign(new RSASSASigner(key.toRSAKey()));
     return jwt;
   }
 
-  private SignedJWT buildTrustAnchorStatementWithoutTrustMarkOwners() throws Exception {
-    final JWK taKey = new RSAKeyGenerator(2048).keyID("ta-key").generate();
-    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-        .type(new JOSEObjectType("entity-statement+jwt"))
-        .keyID(taKey.getKeyID())
-        .build();
+  /**
+   * Builds trust mark JWTs that are valid unless a value is overridden.
+   */
+  private static class TrustMarkBuilder {
+    private JWK signingKey;
+    private String typ = TRUST_MARK_JWT_TYPE;
+    private String typeClaim = "trust_mark_type";
+    private String subject = SUBJECT;
+    private Instant expiration = Instant.now().plusSeconds(3600);
+    private String delegation;
 
-    final JSONArray issuerArray = new JSONArray();
-    final JSONObject issuerEntry = new JSONObject();
-    issuerEntry.put("value", ISSUER);
-    issuerArray.add(issuerEntry);
+    TrustMarkBuilder(final JWK signingKey) {
+      this.signingKey = signingKey;
+    }
 
-    final JSONObject trustMarkIssuers = new JSONObject();
-    trustMarkIssuers.put(TRUST_MARK_TYPE, issuerArray);
+    TrustMarkBuilder signingKey(final JWK signingKey) {
+      this.signingKey = signingKey;
+      return this;
+    }
 
-    final JSONObject federationEntityMetadata = new JSONObject();
-    federationEntityMetadata.put("organization_name", "TA");
-    final JSONObject metadata = new JSONObject();
-    metadata.put("federation_entity", federationEntityMetadata);
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer("https://example.com/ta")
-        .subject("https://example.com/ta")
-        .issueTime(Date.from(Instant.now()))
-        .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-        .claim("trust_mark_issuers", trustMarkIssuers)
-        .claim("jwks", new JSONObject(new JWKSet(taKey.toPublicJWK()).toJSONObject()))
-        .claim("metadata", metadata)
-        .build();
+    TrustMarkBuilder typ(final String typ) {
+      this.typ = typ;
+      return this;
+    }
 
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(new RSASSASigner(taKey.toRSAKey()));
-    return jwt;
-  }
+    TrustMarkBuilder typeClaim(final String typeClaim) {
+      this.typeClaim = typeClaim;
+      return this;
+    }
 
-  private SignedJWT buildTrustAnchorStatement(final JWK ownerKey) throws Exception {
-    final JWK taKey = new RSAKeyGenerator(2048).keyID("ta-key").generate();
-    final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
-        .type(new JOSEObjectType("entity-statement+jwt"))
-        .keyID(taKey.getKeyID())
-        .build();
+    TrustMarkBuilder subject(final String subject) {
+      this.subject = subject;
+      return this;
+    }
 
-    final JSONObject jwksObj = new JSONObject(new JWKSet(ownerKey.toPublicJWK()).toJSONObject());
-    final JSONObject ownerEntry = new JSONObject();
-    ownerEntry.put("jwks", jwksObj);
+    TrustMarkBuilder expiration(final Instant expiration) {
+      this.expiration = expiration;
+      return this;
+    }
 
-    final JSONObject trustMarkOwners = new JSONObject();
-    trustMarkOwners.put(TRUST_MARK_TYPE, ownerEntry);
+    TrustMarkBuilder delegation(final String delegation) {
+      this.delegation = delegation;
+      return this;
+    }
 
-    final JSONArray issuerArray = new JSONArray();
-    final JSONObject issuerEntry = new JSONObject();
-    issuerEntry.put("value", ISSUER);
-    issuerArray.add(issuerEntry);
-
-    final JSONObject trustMarkIssuers = new JSONObject();
-    trustMarkIssuers.put(TRUST_MARK_TYPE, issuerArray);
-
-    final JSONObject federationEntityMetadata = new JSONObject();
-    federationEntityMetadata.put("organization_name", "TA");
-    final JSONObject metadata = new JSONObject();
-    metadata.put("federation_entity", federationEntityMetadata);
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer("https://example.com/ta")
-        .subject("https://example.com/ta")
-        .issueTime(Date.from(Instant.now()))
-        .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-        .claim("trust_mark_owners", trustMarkOwners)
-        .claim("trust_mark_issuers", trustMarkIssuers)
-        .claim("jwks", new JSONObject(new JWKSet(taKey.toPublicJWK()).toJSONObject()))
-        .claim("metadata", metadata)
-        .build();
-
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(new RSASSASigner(taKey.toRSAKey()));
-    return jwt;
+    String build() throws Exception {
+      final JWTClaimsSet.Builder claims = new JWTClaimsSet.Builder()
+          .issuer(ISSUER)
+          .subject(this.subject)
+          .claim(this.typeClaim, TRUST_MARK_TYPE)
+          .issueTime(new Date())
+          .expirationTime(Date.from(this.expiration))
+          // Unique per trust mark, so that two trust marks never serialize the same
+          .jwtID(UUID.randomUUID().toString());
+      if (this.delegation != null) {
+        claims.claim("delegation", this.delegation);
+      }
+      return sign(this.signingKey, this.typ, claims.build()).serialize();
+    }
   }
 }

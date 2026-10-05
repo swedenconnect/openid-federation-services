@@ -21,6 +21,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRe
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
+import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 
 import java.util.List;
@@ -35,10 +36,12 @@ public interface TrustAnchor {
   /**
    * @param request to fetch entity statement for
    * @return entity statement
-   * @throws InvalidIssuerException
-   * @throws NotFoundException
+   * @throws InvalidIssuerException if the issuer is not known
+   * @throws NotFoundException if the subject is not a subordinate of the issuer
+   * @throws InvalidRequestException if the subject is the issuer itself
    */
-  String fetchEntityStatement(FetchRequest request) throws InvalidIssuerException, NotFoundException;
+  String fetchEntityStatement(FetchRequest request)
+      throws InvalidIssuerException, NotFoundException, InvalidRequestException;
 
   /**
    * @param request to get subordinate listing for current module

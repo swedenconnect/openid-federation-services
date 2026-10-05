@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.service.resolver;
 
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import com.redis.testcontainers.RedisContainer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,7 +45,6 @@ import se.swedenconnect.oidf.resolver.ValidatingResolver;
 import se.swedenconnect.oidf.resolver.chain.ChainValidator;
 import se.swedenconnect.oidf.resolver.chain.SignatureValidationStep;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
-import se.swedenconnect.oidf.resolver.metadata.OIDFPolicyOperationFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTreeLoader;
 import se.swedenconnect.oidf.resolver.tree.resolution.DFSExecution;
@@ -154,8 +152,7 @@ class ValidatingResolverRedisTreeTest {
     final ChainValidator validator = new ChainValidator(
         List.of(new SignatureValidationStep(new JWKSet(entities.taKey.toPublicJWK()))));
 
-    final MetadataProcessor processor = new MetadataProcessor(
-        new OIDFPolicyOperationFactory(), new DefaultPolicyOperationCombinationValidator());
+    final MetadataProcessor processor = new MetadataProcessor();
 
     resolver = new ValidatingResolver(props, validator, entityStatementTree, processor, factory);
   }
@@ -164,7 +161,7 @@ class ValidatingResolverRedisTreeTest {
   void resolveLeafReturnsSignedResponse() throws Exception {
     when(factory.sign(any())).thenReturn("mock-signed-resolve-response");
 
-    final ResolveRequest request = new ResolveRequest(LEAF_ID, TA_ID, "openid_relying_party", false);
+    final ResolveRequest request = new ResolveRequest(LEAF_ID, TA_ID, List.of("openid_relying_party"), false);
     assertNotNull(resolver.resolve(request));
   }
 
@@ -179,13 +176,13 @@ class ValidatingResolverRedisTreeTest {
 
   @Test
   void wrongTrustAnchorThrowsFederationException() {
-    final ResolveRequest request = new ResolveRequest(LEAF_ID, "https://other-ta.example.com", "openid_relying_party", false);
+    final ResolveRequest request = new ResolveRequest(LEAF_ID, "https://other-ta.example.com", List.of("openid_relying_party"), false);
     assertThrows(Exception.class, () -> resolver.resolve(request));
   }
 
   @Test
   void missingSubjectThrowsFederationException() {
-    final ResolveRequest request = new ResolveRequest("https://unknown.example.com", TA_ID, "openid_relying_party", false);
+    final ResolveRequest request = new ResolveRequest("https://unknown.example.com", TA_ID, List.of("openid_relying_party"), false);
     assertThrows(Exception.class, () -> resolver.resolve(request));
   }
 
@@ -193,7 +190,7 @@ class ValidatingResolverRedisTreeTest {
   void resolveSamlSpReturnsSignedResponse() throws Exception {
     when(factory.sign(any())).thenReturn("mock-signed-resolve-response");
 
-    final ResolveRequest request = new ResolveRequest(SAML_SP_ID, TA_ID, "saml_service_provider", false);
+    final ResolveRequest request = new ResolveRequest(SAML_SP_ID, TA_ID, List.of("saml_service_provider"), false);
     assertNotNull(resolver.resolve(request));
   }
 

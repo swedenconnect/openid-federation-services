@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Typed claims accessors for entity statement {@link SignedJWT}s.
@@ -295,6 +296,40 @@ public final class EntityStatementClaims {
   }
 
   /**
+   * Claim names defined for entity statements by OpenID Federation 1.0, which must not be listed in {@code crit}.
+   */
+  public static final Set<String> SPECIFIED_CLAIMS = Set.of(
+      "iss", "sub", "iat", "exp", "jwks", "aud", "authority_hints", "trust_anchor_hints", "metadata",
+      "metadata_policy", "constraints", "crit", "metadata_policy_crit", "trust_marks", "trust_mark_issuers",
+      "trust_mark_owners", "source_endpoint", "trust_anchor");
+
+  /**
+   * Adds the {@code crit} claim to a claims set that is about to be signed. Only names that are not defined by the
+   * specification, not repeated and present as claims are kept (OpenID Federation 1.0, Section 13.4). The claim is
+   * left out when no name is kept.
+   *
+   * @param builder the claims, with every claim except {@code crit} already set
+   * @param configured the configured critical claim names, may be null
+   * @return the claims with {@code crit} set when there is a name to list
+   */
+  public static JWTClaimsSet.Builder withCriticalClaims(final JWTClaimsSet.Builder builder,
+      final List<String> configured) {
+    if (configured == null || configured.isEmpty()) {
+      return builder;
+    }
+    final Set<String> present = builder.build().getClaims().keySet();
+    final List<String> crit = configured.stream()
+        .distinct()
+        .filter(name -> !SPECIFIED_CLAIMS.contains(name) && present.contains(name))
+        .toList();
+    if (crit.size() != configured.size()) {
+      log.warn("Configured crit {} reduced to {}, names defined by the specification, repeated or not present"
+          + " as claims are left out", configured, crit);
+    }
+    return crit.isEmpty() ? builder : builder.claim("crit", crit);
+  }
+
+  /**
    * Signs the given claims set as an entity statement.
    *
    * @param claimsSet  to sign
@@ -307,16 +342,24 @@ public final class EntityStatementClaims {
   }
 
   /**
-   * Verifies the signature of the given entity statement against the given jwk set.
+   * Verifies the signature of the given entity statement against the given jwk set. The statement must have a
+   * {@code kid} header that identifies a key in the jwk set (OpenID Federation 1.0, Section 3.2, steps 11 and 12).
    *
    * @param jwt    to verify
    * @param jwkSet to verify against
    * @return thumbprint of the jwk used to verify the signature
-   * @throws BadJOSEException if the jwt is invalid
+   * @throws BadJOSEException if the jwt is invalid, has no {@code kid}, or its {@code kid} is not in the jwk set
    * @throws JOSEException    if the signature verification failed
    */
   public static Base64URL verifySignature(final SignedJWT jwt, final JWKSet jwkSet)
       throws BadJOSEException, JOSEException {
+    final String kid = jwt.getHeader().getKeyID();
+    if (kid == null || kid.isBlank()) {
+      throw new BadJOSEException("Entity statement has no kid header");
+    }
+    if (jwkSet == null || jwkSet.getKeyByKeyId(kid) == null) {
+      throw new BadJOSEException("Entity statement kid '%s' does not match any key in the jwks".formatted(kid));
+    }
     return JWTUtils.verifySignature(jwt, ENTITY_STATEMENT_TYPE, new EntityStatementClaimsVerifier(null), jwkSet);
   }
 

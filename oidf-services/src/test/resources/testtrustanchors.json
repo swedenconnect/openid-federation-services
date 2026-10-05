@@ -9,10 +9,10 @@
         "constraints": {
           "naming": {
             "permitted": [
-              "http://localhost:11111/im/im"
+              "localhost"
             ],
             "excluded": [
-              "http://localhost:11111/im/im/rp"
+              ".localhost"
             ]
           }
         }
@@ -89,7 +89,7 @@
         "jwks": "federation:sign-key-1",
         "constraints": {
           "allowed-entity-types": [
-            "RELYING_PARTY"
+            "openid_relying_party"
           ]
         }
       },
@@ -204,8 +204,7 @@
         "virtual-entity-id": "http://localhost:11111/im",
         "jwks": "federation:sign-key-1",
         "metadata-policy-crit": [
-          "regexp",
-          "intersects"
+          "regexp"
         ]
       }
     ]

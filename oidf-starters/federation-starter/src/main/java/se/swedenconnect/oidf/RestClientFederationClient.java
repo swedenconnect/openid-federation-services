@@ -207,7 +207,12 @@ public class RestClientFederationClient implements FederationClient {
             request.federationEntityMetadata().get("federation_trust_mark_status_endpoint"))
         .filter(p -> p instanceof String)
         .map(String.class::cast)
-        .orElseGet(() -> request.parameters().trustMarkIssuer() + "/trust_mark_status");
+        .orElse(null);
+    if (path == null) {
+      log.info("Trust mark issuer {} has no valid federation_trust_mark_status_endpoint",
+          request.parameters().trustMarkIssuer());
+      return new TrustMarkStatusResponse(null, true);
+    }
     try {
       final MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
       form.add("trust_mark", request.parameters().trustMarkJwt());
@@ -220,7 +225,8 @@ public class RestClientFederationClient implements FederationClient {
           .body(String.class);
       return new TrustMarkStatusResponse(SignedJWT.parse(body), false);
     } catch (final Exception e) {
-      log.error("Failed to get Trust Mark Status for Trust Mark Request {}", request, e);
+      log.warn("Failed to get trust mark status from '{}': {}", path, e.getMessage());
+      log.debug("Trust mark status request {} failed", request, e);
       return new TrustMarkStatusResponse(null, true);
     }
   }

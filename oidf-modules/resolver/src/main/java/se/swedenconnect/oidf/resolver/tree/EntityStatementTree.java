@@ -33,6 +33,7 @@ import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedIntermediate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -71,21 +72,30 @@ public class EntityStatementTree {
     // Find the entity that matches our subject, include parents
     final SearchRequest<ScrapedEntity> request =
         new SearchRequest<>(resolveRequest.asPredicate(), true, snapshot, true);
+    final SequencedSet<ScrapedEntity> reversed;
     try {
-      final SequencedSet<ScrapedEntity> reversed = this.tree.search(request).stream()
+      reversed = this.tree.search(request).stream()
           //Sort by level in tree
           .sorted(Comparator.comparingInt(a -> a.context().level()))
           .map(Tree.SearchResult::getData)
           .collect(Collectors.toCollection(LinkedHashSet::new))
           //Reverse order to be leaf --> n --> root
           .reversed();
-      return this.resolverTrustChain(reversed);
     } catch (final IllegalStateException e) {
       log.error("Failed to load from cache due to internal error for request {}", resolveRequest);
       throw e;
     }
+    return this.resolverTrustChain(reversed);
   }
 
+  /**
+   * Builds the trust chain for a path of entities.
+   *
+   * @param entities the path, leaf first
+   * @return the trust chain
+   * @throws IllegalStateException if a superior is not among the authority hints of its subordinate, or holds no
+   *     subordinate statement about it
+   */
   private ResolverTrustChain resolverTrustChain(final SequencedSet<ScrapedEntity> entities) {
     //1. Use request to find path to the entity
     //2. Initial chain structure should be
@@ -106,6 +116,14 @@ public class EntityStatementTree {
     for (int i = 0; i < entityList.size() - 1; i++) {
       final ScrapedEntity child = entityList.get(i);
       final ScrapedEntity parent = entityList.get(i + 1);
+
+      // The superior must be among the authority hints of the entity (Section 3.2, step 6)
+      final String parentId = EntityStatementClaims.getEntityID(parent.getEntityStatement()).getValue();
+      final List<EntityID> hints = EntityStatementClaims.getAuthorityHints(child.getEntityStatement());
+      if (hints == null || hints.stream().noneMatch(hint -> hint.getValue().equals(parentId))) {
+        throw new IllegalStateException("Entity %s does not list %s in its authority_hints"
+            .formatted(child.getEntityID().getValue(), parentId));
+      }
 
       final ScrapedIntermediate parentIntermediate = parent.getIntermediate();
       if (parentIntermediate == null) {
@@ -201,49 +219,72 @@ public class EntityStatementTree {
   }
 
   /**
-   * Recursively follows authority hints from {@code subjectId} upward until {@code trustAnchorId}
-   * is reached. Returns the path in leaf-to-root order, or empty if no valid path exists.
+   * Follows authority hints from {@code subjectId} upward until {@code trustAnchorId} is reached. A hint is only
+   * followed when the hinted entity holds a subordinate statement about the current entity, and hints to an entity
+   * already on the path are skipped since they lead to a loop (OpenID Federation 1.0, Section 10.1). When a hint
+   * leads nowhere, the next hint is tried.
+   *
+   * @param subjectId the subject of the trust chain
+   * @param trustAnchorId the trust anchor to reach
+   * @return the path in leaf-to-root order, or empty if no valid path exists
    */
   private Optional<List<ScrapedEntity>> findPathToTrustAnchor(
       final String subjectId,
       final String trustAnchorId) {
 
     final ScrapedEntity node = this.tree.getNode(new NodeKey(subjectId));
-    if (node == null) {
+    if (node == null || node.getEntityStatement() == null) {
       return Optional.empty();
     }
-    final List<String> path = this.reverseTraverse(node, trustAnchorId, List.of(subjectId));
-    if (!path.isEmpty() && path.getLast().equals(trustAnchorId)) {
-      final List<ScrapedEntity> entities = path.stream().map(entityId -> {
-        return this.tree.getNode(new NodeKey(entityId));
-      }).toList();
-      return Optional.of(entities);
-    }
-    return Optional.empty();
+    final List<ScrapedEntity> path = new ArrayList<>(List.of(node));
+    final Set<String> onPath = new HashSet<>(Set.of(subjectId));
+    return this.reverseTraverse(node, trustAnchorId, path, onPath)
+        ? Optional.of(List.copyOf(path))
+        : Optional.empty();
   }
 
-  private List<String> reverseTraverse(
+  /**
+   * Depth first search through the authority hints of {@code node}.
+   *
+   * @param node the current entity, which is the last element of {@code path}
+   * @param trustAnchor the trust anchor to reach
+   * @param path the path so far, extended in place when a complete path is found
+   * @param onPath the entity identifiers of the entities in {@code path}
+   * @return true if {@code path} now ends with the trust anchor
+   */
+  private boolean reverseTraverse(
       final ScrapedEntity node,
       final String trustAnchor,
-      final List<String> path
+      final List<ScrapedEntity> path,
+      final Set<String> onPath
   ) {
-    if (EntityStatementClaims.getEntityID(node.getEntityStatement()).getValue().equals(trustAnchor)) {
-      return path;
+    final String entityId = EntityStatementClaims.getEntityID(node.getEntityStatement()).getValue();
+    if (entityId.equals(trustAnchor)) {
+      return true;
     }
-    final List<EntityID> hints = EntityStatementClaims.getAuthorityHints(node.getEntityStatement());
-    if (Objects.isNull(hints)) {
-      return path;
-    }
+    final List<EntityID> hints =
+        Optional.ofNullable(EntityStatementClaims.getAuthorityHints(node.getEntityStatement())).orElseGet(List::of);
     for (final EntityID authorityHint : hints) {
-      final List<String> temp = new ArrayList<>(path);
-      temp.add(authorityHint.getValue());
-      final ScrapedEntity nextNode = this.tree.getNode(new NodeKey(authorityHint.getValue()));
-      if (nextNode == null) {
+      final String hint = authorityHint.getValue();
+      if (onPath.contains(hint)) {
+        log.debug("Skipping authority hint {} of {}, it leads to a loop", hint, entityId);
         continue;
       }
-      return this.reverseTraverse(nextNode, trustAnchor, List.copyOf(temp));
+      final ScrapedEntity superior = this.tree.getNode(new NodeKey(hint));
+      if (superior == null || superior.getEntityStatement() == null || superior.getIntermediate() == null
+          || superior.getIntermediate().subordinates().get(entityId) == null) {
+        log.debug("Skipping authority hint {} of {}, no subordinate statement found", hint, entityId);
+        continue;
+      }
+      path.add(superior);
+      onPath.add(hint);
+      if (this.reverseTraverse(superior, trustAnchor, path, onPath)) {
+        return true;
+      }
+      path.removeLast();
+      onPath.remove(hint);
     }
-    return path;
+    return false;
   }
 
   /**

@@ -22,6 +22,7 @@ import com.nimbusds.jwt.SignedJWT;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -67,10 +68,6 @@ public class SubordinateStatementFactory {
             builder.claim("constraints", constraint.toJson());
           });
 
-      Optional.ofNullable(subordinate.getCrit())
-          .filter(crit -> !crit.isEmpty())
-          .ifPresent(crit -> builder.claim("crit", crit));
-
       Optional.ofNullable(subordinate.getMetadataPolicyCrit())
           .filter(metadataPolicyCrit -> !metadataPolicyCrit.isEmpty())
           .ifPresent(metadataPolicyCrit -> builder.claim("metadata_policy_crit", metadataPolicyCrit));
@@ -89,13 +86,14 @@ public class SubordinateStatementFactory {
 
       builder.claim("jwks", subordinate.getJwks().toJSONObject(true));
 
-      final JWTClaimsSet jwtClaimsSet = builder
+      builder
           .issueTime(Date.from(Instant.now()))
           .expirationTime(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
           .jwtID(new BigInteger(128, RNG).toString(16))
           .issuer(issuer.getEntityIdentifier().getValue())
-          .subject(subordinate.getEntityIdentifier().getValue())
-          .build();
+          .subject(subordinate.getEntityIdentifier().getValue());
+      final JWTClaimsSet jwtClaimsSet =
+          EntityStatementClaims.withCriticalClaims(builder, subordinate.getCrit()).build();
 
       return this.signerFactory
           .createSigner(issuer)

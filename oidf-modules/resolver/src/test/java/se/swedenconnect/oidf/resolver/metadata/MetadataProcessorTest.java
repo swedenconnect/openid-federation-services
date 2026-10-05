@@ -26,11 +26,11 @@ import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
-import com.nimbusds.openid.connect.sdk.federation.policy.operations.DefaultPolicyOperationCombinationValidator;
 import com.nimbusds.openid.connect.sdk.federation.policy.operations.ValueOperation;
 import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import se.swedenconnect.oidf.common.entity.exception.InvalidMetadataException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -43,7 +43,7 @@ class MetadataProcessorTest {
   private static final String SUPERIOR_ID = "https://superior.example.com";
 
   private final MetadataProcessor processor =
-      new MetadataProcessor(new OIDFPolicyOperationFactory(), new DefaultPolicyOperationCombinationValidator());
+      new MetadataProcessor();
 
   @Test
   void superiorMetadataAddsKeyLeafDidNotSet() throws Exception {
@@ -126,6 +126,229 @@ class MetadataProcessorTest {
     Assertions.assertEquals("Leaf Org", rp.get("organization_name"));
   }
 
+  @Test
+  void regexpOperatorIsApplied() throws Exception {
+    final JSONObject policy = policy("organization_name", java.util.Map.of("regexp", List.of("^Policy.*")));
+    final InvalidMetadataException e =
+        Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
+    Assertions.assertInstanceOf(MetadataPolicyException.class, e.getCause());
+  }
+
+  @Test
+  void unknownOperatorIsIgnored() throws Exception {
+    final JSONObject policy = policy("organization_name",
+        java.util.Map.of("value", "Policy Org", "unknown_op", "anything"));
+    final JSONObject rp = (JSONObject) this.processWithPolicy(policy, null).get("openid_relying_party");
+    Assertions.assertEquals("Policy Org", rp.get("organization_name"));
+  }
+
+  @Test
+  void unknownCriticalOperatorFails() throws Exception {
+    final JSONObject policy = policy("organization_name",
+        java.util.Map.of("value", "Policy Org", "unknown_op", "anything"));
+    Assertions.assertThrows(InvalidMetadataException.class,
+        () -> this.processWithPolicy(policy, List.of("unknown_op")));
+  }
+
+  @Test
+  void invalidOperatorCombinationFails() throws Exception {
+    final JSONObject policy = policy("organization_name",
+        java.util.Map.of("value", "Policy Org", "one_of", List.of("Other Org")));
+    Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
+  }
+
+  @Test
+  void malformedPolicyFails() throws Exception {
+    final JSONObject policy = new JSONObject();
+    policy.put("openid_relying_party", new JSONObject(java.util.Map.of("organization_name", "not an object")));
+    Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
+  }
+
+  @Test
+  void policiesAreAppliedPerEntityType() throws Exception {
+    final JWK leafKey = generateKey();
+    final JSONObject metadata = metadata(java.util.Map.of("organization_name", "Leaf Org"));
+    metadata.put("federation_entity", new JSONObject(java.util.Map.of("organization_name", "Leaf Org")));
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata);
+
+    final JSONObject policy = policy("organization_name", java.util.Map.of("value", "RP Org"));
+    policy.put("federation_entity",
+        new JSONObject(java.util.Map.of("organization_name", new JSONObject(java.util.Map.of("value", "Fed Org")))));
+    final SignedJWT superiorStatement = subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, policy);
+
+    final JSONObject result = this.processor.processMetadata(List.of(leafEc, superiorStatement));
+
+    Assertions.assertEquals("RP Org", ((JSONObject) result.get("openid_relying_party")).get("organization_name"));
+    Assertions.assertEquals("Fed Org", ((JSONObject) result.get("federation_entity")).get("organization_name"));
+  }
+
+  @Test
+  void policyForOneTypeIsNotAppliedToAnother() throws Exception {
+    final JWK leafKey = generateKey();
+    final JSONObject metadata = metadata(java.util.Map.of("organization_name", "Leaf Org"));
+    metadata.put("federation_entity", new JSONObject(java.util.Map.of("organization_name", "Fed Leaf Org")));
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata);
+
+    final JSONObject policy = policy("organization_name", java.util.Map.of("value", "RP Org"));
+    final SignedJWT superiorStatement = subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, policy);
+
+    final JSONObject result = this.processor.processMetadata(List.of(leafEc, superiorStatement));
+
+    Assertions.assertEquals("RP Org", ((JSONObject) result.get("openid_relying_party")).get("organization_name"));
+    Assertions.assertEquals("Fed Leaf Org",
+        ((JSONObject) result.get("federation_entity")).get("organization_name"));
+  }
+
+  @Test
+  void typesNotAllowedAreRemoved() throws Exception {
+    final JSONObject result = this.processWithAllowedTypes(List.of(List.of("openid_provider")));
+    Assertions.assertEquals(java.util.Set.of("federation_entity"), result.keySet());
+  }
+
+  @Test
+  void emptyAllowedTypesKeepsOnlyFederationEntity() throws Exception {
+    final JSONObject result = this.processWithAllowedTypes(List.of(List.of()));
+    Assertions.assertEquals(java.util.Set.of("federation_entity"), result.keySet());
+  }
+
+  @Test
+  void allowedTypesAreKept() throws Exception {
+    final JSONObject result = this.processWithAllowedTypes(List.of(List.of("openid_relying_party")));
+    Assertions.assertEquals(java.util.Set.of("federation_entity", "openid_relying_party"), result.keySet());
+  }
+
+  @Test
+  void allowedTypesOfAllStatementsMustMatch() throws Exception {
+    final JSONObject result = this.processWithAllowedTypes(
+        List.of(List.of("openid_relying_party"), List.of("openid_provider")));
+    Assertions.assertEquals(java.util.Set.of("federation_entity"), result.keySet());
+  }
+
+  @Test
+  void policyErrorGivesInvalidMetadata() throws Exception {
+    final JSONObject policy = policy("contacts", java.util.Map.of("subset_of", "not-an-array"));
+    final InvalidMetadataException e =
+        Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
+    Assertions.assertEquals("invalid_metadata", e.toJSONObject().get("error"));
+    Assertions.assertEquals(400, e.httpStatusCode());
+  }
+
+  @Test
+  void leafWithoutMetadataGivesEmptyMetadata() throws Exception {
+    final JWK leafKey = generateKey();
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, null);
+    final SignedJWT superiorStatement = subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, null);
+    Assertions.assertEquals(new JSONObject(), this.processor.processMetadata(List.of(leafEc, superiorStatement)));
+  }
+
+  @Test
+  void policyInEntityConfigurationIsIgnored() throws Exception {
+    final JWK leafKey = generateKey();
+    final JWTClaimsSet claims = new JWTClaimsSet.Builder(selfStatement(leafKey, LEAF_ID,
+        metadata(java.util.Map.of("organization_name", "Leaf Org"))).getJWTClaimsSet())
+        .claim("metadata_policy", policy("organization_name", java.util.Map.of("value", "Policy Org")))
+        .build();
+    final SignedJWT leafEc = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), claims);
+    final SignedJWT superiorStatement = subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, null);
+
+    final JSONObject rp = (JSONObject) this.processor.processMetadata(List.of(leafEc, superiorStatement))
+        .get("openid_relying_party");
+    Assertions.assertEquals("Leaf Org", rp.get("organization_name"));
+  }
+
+  @Test
+  void specExampleIsResolvedAsInSection615() throws Exception {
+    final JSONObject taPolicy = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"openid_relying_party": {
+          "grant_types": {"default": ["authorization_code"],
+                          "subset_of": ["authorization_code", "refresh_token"],
+                          "superset_of": ["authorization_code"]},
+          "token_endpoint_auth_method": {"one_of": ["private_key_jwt", "self_signed_tls_client_auth"],
+                                         "essential": true},
+          "token_endpoint_auth_signing_alg": {"one_of": ["PS256", "ES256"]},
+          "subject_type": {"value": "pairwise"},
+          "contacts": {"add": ["helpdesk@federation.example.org"]}}}
+        """);
+    final JSONObject intermediatePolicy = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"openid_relying_party": {
+          "grant_types": {"subset_of": ["authorization_code"]},
+          "token_endpoint_auth_method": {"one_of": ["self_signed_tls_client_auth"]},
+          "contacts": {"add": ["helpdesk@org.example.org"]}}}
+        """);
+    final JSONObject intermediateMetadata = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"openid_relying_party": {"sector_identifier_uri": "https://org.example.org/sector-ids.json",
+                                  "policy_uri": "https://org.example.org/policy.html"}}
+        """);
+    final JSONObject leafMetadata = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"openid_relying_party": {"redirect_uris": ["https://rp.example.org/callback"],
+                                  "response_types": ["code"],
+                                  "token_endpoint_auth_method": "self_signed_tls_client_auth",
+                                  "contacts": ["rp_admins@rp.example.org"]}}
+        """);
+    final JWK leafKey = generateKey();
+    final List<SignedJWT> chain = List.of(
+        selfStatement(leafKey, LEAF_ID, leafMetadata),
+        subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, intermediateMetadata, intermediatePolicy),
+        subordinateStatement(generateKey(), "https://ta.example.com", SUPERIOR_ID, null, taPolicy));
+
+    final JSONObject rp = (JSONObject) this.processor.processMetadata(chain).get("openid_relying_party");
+
+    final JSONObject expected = (JSONObject) net.minidev.json.JSONValue.parse("""
+        {"redirect_uris": ["https://rp.example.org/callback"],
+         "grant_types": ["authorization_code"],
+         "response_types": ["code"],
+         "token_endpoint_auth_method": "self_signed_tls_client_auth",
+         "subject_type": "pairwise",
+         "sector_identifier_uri": "https://org.example.org/sector-ids.json",
+         "policy_uri": "https://org.example.org/policy.html",
+         "contacts": ["rp_admins@rp.example.org", "helpdesk@federation.example.org", "helpdesk@org.example.org"]}
+        """);
+    Assertions.assertEquals(expected, rp);
+  }
+
+  private JSONObject processWithAllowedTypes(final List<List<String>> allowedTypesPerStatement) throws Exception {
+    final JWK leafKey = generateKey();
+    final JSONObject metadata = metadata(java.util.Map.of("organization_name", "Leaf Org"));
+    metadata.put("federation_entity", new JSONObject(java.util.Map.of("organization_name", "Leaf Org")));
+    final List<SignedJWT> chain = new java.util.ArrayList<>();
+    chain.add(selfStatement(leafKey, LEAF_ID, metadata));
+    for (final List<String> allowedTypes : allowedTypesPerStatement) {
+      final JWK key = generateKey();
+      final JWTClaimsSet claims = new JWTClaimsSet.Builder()
+          .issuer(SUPERIOR_ID)
+          .subject(LEAF_ID)
+          .issueTime(Date.from(Instant.now()))
+          .expirationTime(Date.from(Instant.now().plus(Duration.ofDays(1))))
+          .claim("jwks", new JSONObject(new JWKSet(leafKey.toPublicJWK()).toJSONObject()))
+          .claim("constraints", new JSONObject(java.util.Map.of("allowed_entity_types", allowedTypes)))
+          .build();
+      final SignedJWT statement = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256)
+          .type(new JOSEObjectType("entity-statement+jwt")).keyID(key.getKeyID()).build(), claims);
+      statement.sign(new RSASSASigner(key.toRSAKey()));
+      chain.add(statement);
+    }
+    return this.processor.processMetadata(chain);
+  }
+
+  private JSONObject processWithPolicy(final JSONObject metadataPolicy, final List<String> metadataPolicyCrit)
+      throws Exception {
+    final JWK leafKey = generateKey();
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata(java.util.Map.of(
+        "organization_name", "Leaf Org"
+    )));
+    final SignedJWT superiorStatement =
+        subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, metadataPolicy, metadataPolicyCrit);
+    return this.processor.processMetadata(List.of(leafEc, superiorStatement));
+  }
+
+  private static JSONObject policy(final String parameter, final java.util.Map<String, Object> operators) {
+    final JSONObject typePolicy = new JSONObject();
+    typePolicy.put(parameter, new JSONObject(operators));
+    final JSONObject policy = new JSONObject();
+    policy.put("openid_relying_party", typePolicy);
+    return policy;
+  }
+
   private static JWK generateKey() throws Exception {
     return new RSAKeyGenerator(2048).keyID("key").generate();
   }
@@ -158,6 +381,13 @@ class MetadataProcessorTest {
   private static SignedJWT subordinateStatement(
       final JWK subjectKey, final String issuer, final String subject,
       final JSONObject metadata, final JSONObject metadataPolicy) throws Exception {
+    return subordinateStatement(subjectKey, issuer, subject, metadata, metadataPolicy, null);
+  }
+
+  private static SignedJWT subordinateStatement(
+      final JWK subjectKey, final String issuer, final String subject,
+      final JSONObject metadata, final JSONObject metadataPolicy, final List<String> metadataPolicyCrit)
+      throws Exception {
     final JWK signingKey = generateKey();
     final JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.RS256)
         .type(new JOSEObjectType("entity-statement+jwt"))
@@ -174,6 +404,9 @@ class MetadataProcessorTest {
     }
     if (metadataPolicy != null) {
       claims.claim("metadata_policy", metadataPolicy);
+    }
+    if (metadataPolicyCrit != null) {
+      claims.claim("metadata_policy_crit", metadataPolicyCrit);
     }
     final SignedJWT jwt = new SignedJWT(header, claims.build());
     jwt.sign(new RSASSASigner(signingKey.toRSAKey()));

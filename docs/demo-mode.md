@@ -196,21 +196,21 @@ A subordinate entry supports:
 
 | Operator      | Effect                                                              |
 |---------------|----------------------------------------------------------------------|
-| `value`       | Force the claim to exactly this value                               |
+| `value`       | Force the claim to exactly this value, `null` removes the claim     |
 | `add`         | Add value(s) to a list-valued claim                                 |
 | `default`     | Value to use if the claim is not already present                    |
 | `essential`   | `true`/`false` — whether the claim must be present after merging    |
 | `one_of`      | The claim's value must be one of the listed values                  |
-| `subset_of`   | The claim's (list) value must be a subset of the listed values      |
+| `subset_of`   | Reduce the claim's (list) value to the values that are listed       |
 | `superset_of` | The claim's (list) value must be a superset of the listed values    |
 
 This service also registers two operators from the [Swedish OIDC Federation
-profile](https://github.com/oidc-sweden/specifications/blob/main/swedish-oidc-fed-profile.md) that are
+profile](https://github.com/oidc-sweden/specifications/blob/main/attic/swedish-oidc-fed-profile.md) that are
 **not** part of the base specification:
 
 | Operator     | Effect                                                                                          |
 |--------------|--------------------------------------------------------------------------------------------------|
-| `regexp`     | The claim's string value must match every listed regular expression                              |
+| `regexp`     | The claim's value, or every value in a list, must match every listed regular expression          |
 | `intersects` | The claim's (list) value must share at least one element with the listed values                  |
 
 In the example above, the policy forces `/op`'s `oauth_client.organization_identifier` and
@@ -234,8 +234,8 @@ instead of inlined, which is convenient for sharing one policy across several su
   "max-path-length": 1,
   "allowed-entity-types": ["openid_provider", "openid_relying_party"],
   "naming": {
-    "permitted": ["https://example.com/"],
-    "excluded": ["https://example.com/blocked/"]
+    "permitted": [".example.com"],
+    "excluded": ["blocked.example.com"]
   }
 }
 ```
@@ -244,8 +244,16 @@ instead of inlined, which is convenient for sharing one policy across several su
 |-------------------------|-------------------------------------------------------------------------------|----------------|
 | `max-path-length`       | Maximum number of intermediates allowed below this entity                    | Long           |
 | `allowed-entity-types`  | Entity types (`openid_provider`, `openid_relying_party`, …) permitted below  | List\<String\> |
-| `naming.permitted`      | URI prefixes subordinate identifiers must start with                        | List\<String\> |
-| `naming.excluded`       | URI prefixes subordinate identifiers must not start with                    | List\<String\> |
+| `naming.permitted`      | Hosts (`host.example.com`) or domains (`.example.com`) subordinate identifiers must be under | List\<String\> |
+| `naming.excluded`       | Hosts or domains subordinate identifiers must not be under, takes precedence over `permitted` | List\<String\> |
+
+Naming constraints use the domain name syntax of RFC 5280 and apply to the host part of the entity
+identifier. `.example.com` matches any host below `example.com` but not `example.com` itself, while
+`host.example.com` matches that host only.
+
+Entity types not listed in `allowed-entity-types` are removed from the metadata of entities below this
+subordinate when a trust chain is resolved. `federation_entity` is always kept, and an empty list allows only
+`federation_entity`.
 
 The demo does not set any constraints, so any entity type and any nesting depth is allowed under `/im`.
 

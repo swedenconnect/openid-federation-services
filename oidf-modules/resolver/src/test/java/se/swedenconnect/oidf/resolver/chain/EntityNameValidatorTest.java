@@ -24,24 +24,40 @@ import java.util.List;
 class EntityNameValidatorTest {
 
   @Test
-  void testValidExamples() {
-    List.of("https://test.example.com", "https://beef.example.com/stuff")
-        .forEach(entity -> {
-          EntityNameValidator.validate(entity, "https://.example.com");
-        });
+  void domainConstraintMatchesSubdomains() {
+    List.of("https://test.example.com", "https://beef.example.com/stuff", "https://my.host.example.com:8443/x")
+        .forEach(entity -> Assertions.assertTrue(EntityNameValidator.validate(entity, ".example.com"), entity));
   }
 
   @Test
-  void testFailingExamples() {
-    List.of("https://test.eexample.com")
-        .forEach(entity -> {
-          Assertions.assertFalse(EntityNameValidator.validate(entity, "https://.example.com")
-          );
-        });
+  void domainConstraintDoesNotMatchDomainItself() {
+    Assertions.assertFalse(EntityNameValidator.validate("https://example.com", ".example.com"));
+  }
 
-    List.of("https://test.example.com")
-        .forEach(entity -> {
-          Assertions.assertFalse(EntityNameValidator.validate(entity, "https://.example.com/path"));
-        });
+  @Test
+  void domainConstraintRequiresLabelBoundary() {
+    Assertions.assertFalse(EntityNameValidator.validate("https://test.eexample.com", ".example.com"));
+    Assertions.assertFalse(EntityNameValidator.validate("https://evilexample.com", ".example.com"));
+  }
+
+  @Test
+  void hostConstraintMatchesHostOnly() {
+    Assertions.assertTrue(EntityNameValidator.validate("https://host.example.com/path", "host.example.com"));
+    Assertions.assertTrue(EntityNameValidator.validate("https://HOST.example.com", "host.EXAMPLE.com"));
+    Assertions.assertFalse(EntityNameValidator.validate("https://sub.host.example.com", "host.example.com"));
+    Assertions.assertFalse(EntityNameValidator.validate("https://evilhost.example.com", "host.example.com"));
+  }
+
+  @Test
+  void uriFormattedConstraintMatchesNothing() {
+    Assertions.assertFalse(EntityNameValidator.validate("https://example.com/path", "https://example.com"));
+  }
+
+  @Test
+  void anyMatch() {
+    Assertions.assertTrue(EntityNameValidator.anyMatch("https://a.example.com",
+        List.of("other.com", ".example.com")));
+    Assertions.assertFalse(EntityNameValidator.anyMatch("https://a.example.com", List.of("other.com")));
+    Assertions.assertFalse(EntityNameValidator.anyMatch("https://a.example.com", List.of()));
   }
 }

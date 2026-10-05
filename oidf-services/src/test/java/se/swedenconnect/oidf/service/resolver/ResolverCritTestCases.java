@@ -70,8 +70,6 @@ public class ResolverCritTestCases {
 
     final List<String> metadataPolicyCrit =
         (List<String>) trustChainEntryDifference.get("metadata_policy_crit").leftValue();
-    final List<String> requiredPolicyCrit = List.of("regexp", "intersects");
-
-    Assertions.assertTrue(metadataPolicyCrit.containsAll(requiredPolicyCrit));
+    Assertions.assertEquals(List.of("regexp"), metadataPolicyCrit);
   }
 }

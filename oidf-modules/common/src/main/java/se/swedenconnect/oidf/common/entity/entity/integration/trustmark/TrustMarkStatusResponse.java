@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.common.entity.entity.integration.trustmark;
 
 import com.nimbusds.jwt.SignedJWT;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,8 +27,30 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@AllArgsConstructor
 public class TrustMarkStatusResponse {
   private SignedJWT signedJWT;
   private boolean error;
+  private boolean noStatusEndpoint;
+
+  /**
+   * Constructor.
+   *
+   * @param signedJWT the status response, null if the status call failed
+   * @param error true if the status call failed
+   */
+  public TrustMarkStatusResponse(final SignedJWT signedJWT, final boolean error) {
+    this.signedJWT = signedJWT;
+    this.error = error;
+  }
+
+  /**
+   * Creates a response for a trust mark issuer that publishes no status endpoint.
+   *
+   * @return response marking that no status endpoint exists
+   */
+  public static TrustMarkStatusResponse noStatusEndpoint() {
+    final TrustMarkStatusResponse response = new TrustMarkStatusResponse(null, false);
+    response.noStatusEndpoint = true;
+    return response;
+  }
 }

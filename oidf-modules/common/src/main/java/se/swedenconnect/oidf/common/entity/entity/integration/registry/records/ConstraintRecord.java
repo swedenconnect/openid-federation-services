@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,12 +34,15 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
+@Slf4j
 @Builder
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class ConstraintRecord {
+  private static final String FEDERATION_ENTITY = "federation_entity";
+
   @SerializedName("max-path-length")
   private Long maxPathLength;
   @SerializedName("naming")
@@ -62,7 +66,11 @@ public class ConstraintRecord {
 
     Optional.ofNullable(this.allowedEntityTypes)
         .ifPresent(allowed -> {
-          json.put("allowed_entity_types", allowed);
+          // federation_entity is always allowed and MUST NOT be listed (Section 6.2.3)
+          if (allowed.contains(FEDERATION_ENTITY)) {
+            log.warn("Ignoring {} in configured allowed-entity-types {}", FEDERATION_ENTITY, allowed);
+          }
+          json.put("allowed_entity_types", allowed.stream().filter(type -> !FEDERATION_ENTITY.equals(type)).toList());
         });
 
     return json;
