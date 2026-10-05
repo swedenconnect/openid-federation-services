@@ -19,7 +19,11 @@ package se.swedenconnect.oidf.configuration;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.shaded.gson.GsonBuilder;
+import com.nimbusds.jose.shaded.gson.JsonElement;
+import com.nimbusds.jose.shaded.gson.JsonParser;
+import com.nimbusds.jose.shaded.gson.JsonPrimitive;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
+import com.nimbusds.jose.shaded.gson.stream.JsonReader;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -34,11 +38,14 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMark
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.JWKSerializer;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord.EXCLUSION_STRATEGY;
 
@@ -54,6 +61,9 @@ public class JsonReferenceLoader {
   private final JWKSPropertyLoader jwksPropertyLoader;
 
   private static final List<String> SUPPORTED_REFERENCES = List.of("classpath:", "file:");
+
+  /** Matches one segment of a JSON path, either {@code .name} or {@code [index]}. */
+  private static final Pattern PATH_SEGMENT = Pattern.compile("\\.([^.\\[]+)|\\[(\\d+)]");
 
   /**
    * Load json from reference
@@ -74,8 +84,14 @@ public class JsonReferenceLoader {
    */
   public <T> T loadJson(final String source, final TypeToken<T> typeToken) {
     if (SUPPORTED_REFERENCES.stream().anyMatch(source::startsWith)) {
+      final String json;
       try {
-        final String json = getJson(source);
+        json = getJson(source);
+      } catch (final IOException e) {
+        throw new IllegalArgumentException("Failed to read %s: %s".formatted(source, e.getMessage()), e);
+      }
+      final JsonReader reader = new JsonReader(new StringReader(json));
+      try {
         return new GsonBuilder()
             .registerTypeAdapter(JWK.class, new JWKSerializer())
             .registerTypeAdapter(JWKSet.class,
@@ -88,12 +104,52 @@ public class JsonReferenceLoader {
             .addDeserializationExclusionStrategy(EXCLUSION_STRATEGY)
             .create()
             .getAdapter(typeToken)
-            .fromJson(json);
-      } catch (final IOException e) {
-        throw new RuntimeException(e);
+            .read(reader);
+      } catch (final IOException | RuntimeException e) {
+        // Not set as cause, since Spring Boot only reports the root cause when binding fails
+        final IllegalArgumentException failure = new IllegalArgumentException("Failed to load %s at %s: %s"
+            .formatted(source, describeLocation(json, reader.getPath()), e.getMessage()));
+        failure.addSuppressed(e);
+        throw failure;
       }
     }
     throw new IllegalArgumentException("Could not determine metadata reference for %s".formatted(source));
+  }
+
+  /**
+   * Describes where in a JSON document loading failed. The description holds the JSON path, followed by the entity
+   * identifier of the closest enclosing entry that has one.
+   *
+   * @param json the document
+   * @param path the JSON path where loading failed, for example {@code $[0].subordinates[1].jwks}
+   * @return the description
+   */
+  static String describeLocation(final String json, final String path) {
+    String entityId = null;
+    try {
+      JsonElement element = JsonParser.parseString(json);
+      final Matcher matcher = PATH_SEGMENT.matcher(path);
+      while (element != null && matcher.find()) {
+        if (element.isJsonObject() && element.getAsJsonObject().get("entity-identifier") instanceof
+            final JsonPrimitive id) {
+          entityId = id.getAsString();
+        }
+        if (matcher.group(1) != null && element.isJsonObject()) {
+          element = element.getAsJsonObject().get(matcher.group(1));
+        }
+        else if (matcher.group(2) != null && element.isJsonArray()
+            && Integer.parseInt(matcher.group(2)) < element.getAsJsonArray().size()) {
+          element = element.getAsJsonArray().get(Integer.parseInt(matcher.group(2)));
+        }
+        else {
+          element = null;
+        }
+      }
+    }
+    catch (final RuntimeException e) {
+      // The location is only used in an error message, so an unparsable document gives the path alone
+    }
+    return entityId == null ? path : "%s (entry %s)".formatted(path, entityId);
   }
 
   private static @NonNull String getJson(final String source) throws IOException {

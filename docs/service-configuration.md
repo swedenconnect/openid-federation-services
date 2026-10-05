@@ -133,6 +133,12 @@ Routing dispatches an incoming request path to the correct virtual entity — se
 | `trust-store-bundle-name` | Trust store bundle used for TLS | String |
 | `name`                    | Logical name of the client      | String |
 
+Every key named by a key reference from the registry, such as `hosted:sign-key`, must exist on this instance. An
+entity with a reference to a missing key is left out and logged as an error. A reference to a missing key in the
+module records (Trust Anchors, resolvers and Trust Mark Issuers) makes the whole module load fail, and the previously
+loaded modules stay in use. An entity without `jwks`, or with an empty key reference, is signed with the default
+key, which is the first hosted key.
+
 ---
 
 ## 2.5 Local Registry (Federation components)

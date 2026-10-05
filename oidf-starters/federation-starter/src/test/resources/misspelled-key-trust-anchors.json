@@ -1,0 +1,15 @@
+[
+  {
+    "entity-identifier": "https://example.com/ta",
+    "subordinates": [
+      {
+        "entity-identifier": "https://example.com/op",
+        "jwks": "hosted:sign-key"
+      },
+      {
+        "entity-identifier": "https://example.com/rp",
+        "jwks": "hosted:sing-key"
+      }
+    ]
+  }
+]
