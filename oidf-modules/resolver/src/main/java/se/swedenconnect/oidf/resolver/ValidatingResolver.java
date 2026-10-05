@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 /**
  * Resolver implementation.
@@ -312,9 +313,53 @@ public class ValidatingResolver implements Resolver {
     return Optional.ofNullable(EntityStatementClaims.getJWKSet(issuerChain.getFirst()));
   }
 
+  /**
+   * Finds the entities matching a discovery request. With {@code trust_mark_type}, an entity is only included if it
+   * has a valid trust mark of one of the requested types, checked as in resolve: the trust mark must pass the checks
+   * of OpenID Federation 1.0, Section 7.3, its issuer must be reachable through a valid trust chain, and its status
+   * must be active when the issuer publishes a status endpoint.
+   *
+   * @param request the discovery request
+   * @return the matching entities
+   */
   @Override
   public DiscoveryResponse discovery(final DiscoveryRequest request) {
-    return new DiscoveryResponse(this.tree.discovery(request));
+    final List<String> entities = this.tree.discovery(request);
+    if (request.trustMarkTypes() == null || request.trustMarkTypes().isEmpty()) {
+      return new DiscoveryResponse(entities);
+    }
+    final Map<String, Optional<JWKSet>> issuerKeys = new HashMap<>();
+    final Function<String, Optional<JWKSet>> issuerKeyResolver = issuer -> issuerKeys.computeIfAbsent(issuer,
+        i -> this.resolveTrustMarkIssuerKeys(i, request.trustAnchor()));
+    return new DiscoveryResponse(entities.stream()
+        .filter(entityId -> this.hasValidTrustMark(entityId, request, issuerKeyResolver))
+        .toList());
+  }
+
+  /**
+   * Tells whether an entity has a valid trust mark of one of the requested types.
+   *
+   * @param entityId the entity
+   * @param request the discovery request
+   * @param issuerKeyResolver resolves the keys of trust mark issuers
+   * @return true if the entity has a valid trust mark of a requested type
+   */
+  private boolean hasValidTrustMark(final String entityId, final DiscoveryRequest request,
+      final Function<String, Optional<JWKSet>> issuerKeyResolver) {
+    final ResolveRequest resolveRequest = new ResolveRequest(entityId, request.trustAnchor(), null, false);
+    try {
+      final ResolverTrustChain chain = this.tree.getTrustChainViaAuthorityHints(resolveRequest)
+          .orElseGet(() -> this.tree.getTrustChain(resolveRequest));
+      if (chain.getTrustChain().isEmpty()) {
+        return false;
+      }
+      return TrustMarkCollector.collectSubjectTrustMarks(chain, issuerKeyResolver).stream()
+          .anyMatch(entry -> request.trustMarkTypes().contains(entry.getID().getValue()));
+    }
+    catch (final Exception e) {
+      log.debug("Discovery leaves out '{}', its trust marks could not be checked: {}", entityId, e.getMessage());
+      return false;
+    }
   }
 
   @Override
