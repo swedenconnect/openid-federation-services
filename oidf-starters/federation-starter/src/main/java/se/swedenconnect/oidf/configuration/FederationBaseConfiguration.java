@@ -33,6 +33,7 @@ import se.swedenconnect.oidf.UptimeRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.LocalRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.RecordSource;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.JWKSetSignerFactory;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
@@ -72,11 +73,17 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
+  EcLocationValidator ecLocationValidator(final FederationProperties properties) {
+    return new EcLocationValidator(properties.isAllowHttpEcLocation());
+  }
+
+  @Bean
   FederationClient federationClient(
       @Qualifier("federationRestClient") final RestClient restClient,
       final MeterRegistry registry,
-      final UptimeRegistry uptimeRegistry) {
-    return new RestClientFederationClient(restClient, registry, uptimeRegistry);
+      final UptimeRegistry uptimeRegistry,
+      final EcLocationValidator ecLocationValidator) {
+    return new RestClientFederationClient(restClient, registry, uptimeRegistry, ecLocationValidator);
   }
 
   @Bean

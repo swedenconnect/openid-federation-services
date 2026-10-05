@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.resolver.tree;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.tree.CacheSnapshot;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
@@ -84,21 +85,26 @@ public class EntityStatementTreeLoader {
 
   private final ErrorContextFactory errorContextFactory;
 
+  private final EcLocationValidator ecLocationValidator;
+
   private final List<Runnable> postHooks = new ArrayList<>();
 
   /**
    * @param client              to use for fetching statements
    * @param executionStrategy   to use when iterating through the federation
    * @param errorContextFactory to use when creating new error contexts
+   * @param ecLocationValidator to check ec_location values of Subordinate Statements with
    */
   public EntityStatementTreeLoader(
       final FederationClient client,
       final ExecutionStrategy executionStrategy,
-      final ErrorContextFactory errorContextFactory) {
+      final ErrorContextFactory errorContextFactory,
+      final EcLocationValidator ecLocationValidator) {
 
     this.client = client;
     this.executionStrategy = executionStrategy;
     this.errorContextFactory = errorContextFactory;
+    this.ecLocationValidator = ecLocationValidator;
   }
 
   /**
@@ -179,13 +185,18 @@ public class EntityStatementTreeLoader {
                           final CacheSnapshot<ScrapedEntity> snapshot,
                           final ResolutionContext resolutionContext) {
     final String subject;
+    final Object ecLocation;
     try {
       subject = subordinateStatement.getJWTClaimsSet().getSubject();
+      ecLocation = subordinateStatement.getJWTClaimsSet().getClaim(EcLocationValidator.CLAIM_NAME);
     } catch (final Exception e) {
       this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey, e);
       return;
     }
     log.debug("TreeLoader resolving subordinate {} of {}", subject, parentKey.getKey());
+    if (ecLocation != null && !this.isValidEcLocation(ecLocation, subject, parentKey)) {
+      return;
+    }
     if (!resolutionContext.add(subject)) {
       log.debug("TreeLoader skipping already visited subordinate {}", subject);
       return;
@@ -193,8 +204,7 @@ public class EntityStatementTreeLoader {
     final Node<ScrapedEntity> subNode = new Node<>(new NodeKey(subject));
     ScrapedEntity entity;
     try {
-      final String ecLocation = (String) subordinateStatement.getJWTClaimsSet().getClaim("ec_location");
-      entity = ScrapedEntity.builder().entityID(new EntityID(subject)).ecLocation(ecLocation).build();
+      entity = ScrapedEntity.builder().entityID(new EntityID(subject)).ecLocation((String) ecLocation).build();
       entity.scrape(this.client);
       log.debug("TreeLoader scraped subordinate {}", subject);
     } catch (final Exception e) {
@@ -222,6 +232,31 @@ public class EntityStatementTreeLoader {
       }
     } catch (final Exception e) {
       this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey, e);
+    }
+  }
+
+  /**
+   * Checks the ec_location claim of a Subordinate Statement. A subordinate whose statement has a disallowed value is
+   * left out of the tree, and its Entity Configuration is not fetched.
+   *
+   * @param ecLocation the claim value
+   * @param subject    the subject of the statement
+   * @param parentKey  key of the issuer of the statement
+   * @return true if the value is allowed
+   */
+  private boolean isValidEcLocation(final Object ecLocation, final String subject, final NodeKey parentKey) {
+    try {
+      if (!(ecLocation instanceof final String value)) {
+        throw new IllegalArgumentException("ec_location is not a string");
+      }
+      this.ecLocationValidator.validate(value);
+      return true;
+    }
+    catch (final IllegalArgumentException e) {
+      log.info("TreeLoader leaving out {}, Subordinate Statement from {} is invalid: {}", subject,
+          parentKey.getKey(), e.getMessage());
+      this.errorContextFactory.create(new NodeKey(subject), StepName.FETCH_SUBORDINATE_STATEMENT).increment();
+      return false;
     }
   }
 

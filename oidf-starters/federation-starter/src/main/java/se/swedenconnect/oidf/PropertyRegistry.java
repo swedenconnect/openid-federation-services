@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
@@ -28,6 +29,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Registry based on properties.
@@ -65,8 +67,9 @@ public class PropertyRegistry {
   /**
    * Validates configuration propety
    * @param key of parent
+   * @param ecLocationValidator for validating ec-location values
    */
-  public void validate(final String key) {
+  public void validate(final String key, final EcLocationValidator ecLocationValidator) {
     if (Objects.nonNull(this.resolvers)) {
       this.resolvers.forEach(r -> {
         final String entityIdentifier = r.getEntityIdentifier();
@@ -91,8 +94,32 @@ public class PropertyRegistry {
                   key, "entities"
               ));
         }
+        Optional.ofNullable(r.getSubordinates()).orElseGet(List::of).forEach(subordinate -> {
+          try {
+            ecLocationValidator.validate(subordinate);
+          }
+          catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException("%s.%s defines subordinate %s of %s with invalid ec-location: %s"
+                .formatted(key, "trust-anchors", subordinate.getEntityIdentifier().getValue(), entityIdentifier,
+                    e.getMessage()), e);
+          }
+        });
       });
     }
+    if (Objects.nonNull(this.entities)) {
+      this.entities.forEach(entity -> {
+        try {
+          ecLocationValidator.validate(entity);
+        }
+        catch (final IllegalArgumentException e) {
+          throw new IllegalArgumentException("%s.%s defines %s with invalid ec-location: %s"
+              .formatted(key, "entities", entity.getEntityIdentifier().getValue(), e.getMessage()), e);
+        }
+      });
+    }
+    EcLocationValidator.warnForDiscouragedUse(
+        Objects.requireNonNullElse(this.trustAnchors, List.of()),
+        Objects.requireNonNullElse(this.entities, List.of()));
     if (Objects.nonNull(this.trustMarkIssuers)) {
       this.trustMarkIssuers.forEach(r -> {
         final String entityIdentifier = r.entityIdentifier().getValue();

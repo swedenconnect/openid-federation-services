@@ -28,6 +28,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
@@ -128,7 +129,7 @@ class EntityStatementTreeLoaderTest {
     new EntityStatementTreeLoader(federationClient, new DFSExecution(), (key, stepName) -> {
       this.errors.add(key.getKey() + ":" + stepName.name());
       return new AtomicIntegerErrorContext();
-    }).resolveTree(TA_ID, this.tree, version);
+    }, new EcLocationValidator(false)).resolveTree(TA_ID, this.tree, version);
     this.cache.useNextVersion();
   }
 

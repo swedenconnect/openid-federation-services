@@ -30,6 +30,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.testcontainers.utility.DockerImageName;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
@@ -142,7 +143,7 @@ class ValidatingResolverRedisTreeTest {
     };
 
     final EntityStatementTreeLoader loader = new EntityStatementTreeLoader(
-        client, new DFSExecution(), errorContextFactory);
+        client, new DFSExecution(), errorContextFactory, new EcLocationValidator(false));
 
     loader.resolveTree(TA_ID, tree, 1L);
     cache.useNextVersion();

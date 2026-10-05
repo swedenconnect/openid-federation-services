@@ -135,6 +135,21 @@ class SubordinateStatementFactoryTest {
   }
 
   @Test
+  void dataUrlEcLocationIsIssued() throws Exception {
+    final String dataUrl = "data:application/entity-statement+jwt,eyJhbGciOiJFUzI1NiJ9.e30.c2ln";
+    final JWTClaimsSet claims = this.sign(this.subordinateBuilder().ecLocation(dataUrl).build());
+
+    Assertions.assertEquals(dataUrl, claims.getStringClaim("ec_location"));
+  }
+
+  @Test
+  void relativeEcLocationIsResolvedAgainstEntityIdentifier() throws Exception {
+    final JWTClaimsSet claims = this.sign(this.subordinateBuilder().ecLocation("/hosted/ec").build());
+
+    Assertions.assertEquals("https://example.com/im/hosted/ec", claims.getStringClaim("ec_location"));
+  }
+
+  @Test
   void omitsMetadataPolicyCritWhenNotConfigured() throws Exception {
     final JWTClaimsSet claims = this.sign(this.subordinateBuilder().build());
 
