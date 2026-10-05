@@ -69,32 +69,32 @@ public class RestClientFederationClient implements FederationClient {
   public SignedJWT entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
     final String entityId = request.parameters().entityID().getValue();
     final long startNanos = System.nanoTime();
-    final String jwt = Optional.ofNullable(request.parameters().ecLocation())
-        .map(location -> {
-          if (location.startsWith("data:application/entity-statement+jwt,")) {
-            return location.split(",")[1];
-          }
-          return this.client.mutate()
-              .baseUrl(location)
-              .build()
-              .get()
-              .retrieve()
-              .body(String.class);
-        })
-        .orElseGet(
-            () -> this.client.mutate()
-                .baseUrl(request.parameters().entityID().getValue())
+    try {
+      final String jwt = Optional.ofNullable(request.parameters().ecLocation())
+          .map(location -> {
+            if (location.startsWith("data:application/entity-statement+jwt,")) {
+              return location.split(",")[1];
+            }
+            return this.client.mutate()
+                .baseUrl(location)
                 .build()
                 .get()
-                .uri(builder -> builder.path("/.well-known/openid-federation").build()).retrieve()
-                .body(String.class)
-        );
-    try {
+                .retrieve()
+                .body(String.class);
+          })
+          .orElseGet(
+              () -> this.client.mutate()
+                  .baseUrl(request.parameters().entityID().getValue())
+                  .build()
+                  .get()
+                  .uri(builder -> builder.path("/.well-known/openid-federation").build()).retrieve()
+                  .body(String.class)
+          );
+      final SignedJWT result = SignedJWT.parse(jwt);
       this.registry.counter("GET_entity_configuration", List.of(
           Tag.of("entityId", entityId),
           Tag.of("outcome", "success")
       )).increment();
-      final SignedJWT result = SignedJWT.parse(jwt);
       final long responseTimeMs = (System.nanoTime() - startNanos) / 1_000_000;
       this.uptimeRegistry.record(entityId, true);
       this.uptimeRegistry.recordSuccess(entityId, responseTimeMs);
