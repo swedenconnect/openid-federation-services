@@ -136,6 +136,12 @@ class TrustMarkCollectorStatusTest {
   }
 
   @Test
+  void trustMarkOfOtherTypeThanEntryIsRejected() throws Exception {
+    final String trustMark = this.trustMark().type("https://example.com/trustmark/other").build();
+    Assertions.assertTrue(this.collect(trustMark, this.activeStatus(trustMark)).isEmpty());
+  }
+
+  @Test
   void trustMarkForOtherSubjectIsRejected() throws Exception {
     final String trustMark = this.trustMark().subject("https://example.com/other").build();
     Assertions.assertTrue(this.collect(trustMark, this.activeStatus(trustMark)).isEmpty());
@@ -425,6 +431,7 @@ class TrustMarkCollectorStatusTest {
     private JWK signingKey;
     private String typ = TRUST_MARK_JWT_TYPE;
     private String typeClaim = "trust_mark_type";
+    private String type = TRUST_MARK_TYPE;
     private String subject = SUBJECT;
     private Instant expiration = Instant.now().plusSeconds(3600);
     private String delegation;
@@ -448,6 +455,11 @@ class TrustMarkCollectorStatusTest {
       return this;
     }
 
+    TrustMarkBuilder type(final String type) {
+      this.type = type;
+      return this;
+    }
+
     TrustMarkBuilder subject(final String subject) {
       this.subject = subject;
       return this;
@@ -467,7 +479,7 @@ class TrustMarkCollectorStatusTest {
       final JWTClaimsSet.Builder claims = new JWTClaimsSet.Builder()
           .issuer(ISSUER)
           .subject(this.subject)
-          .claim(this.typeClaim, TRUST_MARK_TYPE)
+          .claim(this.typeClaim, this.type)
           .issueTime(new Date())
           .expirationTime(Date.from(this.expiration))
           // Unique per trust mark, so that two trust marks never serialize the same
