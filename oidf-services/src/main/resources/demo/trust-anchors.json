@@ -19,7 +19,7 @@
         "entity-identifier": "http://localhost:8080/rp",
         "jwks": "hosted:demo-hosted-key",
         "metadata": {
-          "relying_party": {
+          "openid_relying_party": {
             "organization_identifier": "urn:glue:iso6523:0007:2021006552",
             "organization_name": "Myndigheten för digital förvaltning"
           }
@@ -27,11 +27,9 @@
         "policy": {
           "id": "MyUltimatePolicy",
           "policy": {
-            "relying_party": {
-              "relying_party": {
-                "display_name": {
-                  "value": "Digg"
-                }
+            "openid_relying_party": {
+              "display_name": {
+                "value": "Digg"
               }
             }
           }
