@@ -27,13 +27,18 @@ import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
+import se.swedenconnect.oidf.common.entity.tree.scraping.WrongJwkKidException;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.ExecutionStrategy;
 import se.swedenconnect.oidf.resolver.tree.resolution.ResolutionContext;
 
+import java.text.ParseException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -164,29 +169,53 @@ public class EntityStatementTreeLoader {
     this.postHooks.forEach(this.executionStrategy::finalize);
   }
 
+  /**
+   * Scrapes a subordinate, adds it to the snapshot being built and continues with its own subordinates. If the scrape
+   * fails, the data from the previous load is used while it is still valid.
+   *
+   * @param subordinateStatement the superior's statement about the subordinate
+   * @param parentKey            key of the superior
+   * @param tree                 being loaded
+   * @param snapshot             being built
+   * @param resolutionContext    of this load
+   */
   void resolveSubordinate(final SignedJWT subordinateStatement,
                           final NodeKey parentKey,
                           final Tree<ScrapedEntity> tree,
                           final CacheSnapshot<ScrapedEntity> snapshot,
                           final ResolutionContext resolutionContext) {
+    final String subject;
+    final Object ecLocation;
     try {
-      final String subject = subordinateStatement.getJWTClaimsSet().getSubject();
-      log.debug("TreeLoader resolving subordinate {} of {}", subject, parentKey.getKey());
-      final Object ecLocation = subordinateStatement.getJWTClaimsSet().getClaim(EcLocationValidator.CLAIM_NAME);
-      if (ecLocation != null && !this.isValidEcLocation(ecLocation, subject, parentKey)) {
-        return;
-      }
-      if (!resolutionContext.add(subject)) {
-        log.debug("TreeLoader skipping already visited subordinate {}", subject);
-        return;
-      }
-      final Node<ScrapedEntity> subNode = new Node<>(NodeKey.fromSignedJwt(subordinateStatement));
-      final EntityID entityID = new EntityID(subject);
-
-      final ScrapedEntity entity =
-          ScrapedEntity.builder().entityID(entityID).ecLocation((String) ecLocation).build();
+      subject = subordinateStatement.getJWTClaimsSet().getSubject();
+      ecLocation = subordinateStatement.getJWTClaimsSet().getClaim(EcLocationValidator.CLAIM_NAME);
+    } catch (final Exception e) {
+      this.handleError(StepName.FETCH_SUBORDINATE_STATEMENT, parentKey, e);
+      return;
+    }
+    log.debug("TreeLoader resolving subordinate {} of {}", subject, parentKey.getKey());
+    if (ecLocation != null && !this.isValidEcLocation(ecLocation, subject, parentKey)) {
+      return;
+    }
+    if (!resolutionContext.add(subject)) {
+      log.debug("TreeLoader skipping already visited subordinate {}", subject);
+      return;
+    }
+    final Node<ScrapedEntity> subNode = new Node<>(new NodeKey(subject));
+    ScrapedEntity entity;
+    try {
+      entity = ScrapedEntity.builder().entityID(new EntityID(subject)).ecLocation((String) ecLocation).build();
       entity.scrape(this.client);
       log.debug("TreeLoader scraped subordinate {}", subject);
+    } catch (final Exception e) {
+      entity = this.previousData(subNode.getKey(), tree, snapshot, e);
+      if (entity == null) {
+        this.handleError(StepName.FETCH_ENTITY_CONFIGURATION, subNode.getKey(), e);
+        return;
+      }
+      this.errorContextFactory.create(subNode.getKey(), StepName.FETCH_ENTITY_CONFIGURATION).increment();
+    }
+    try {
       tree.addChild(subNode, parentKey, entity, snapshot);
       if (entity.getIntermediate() != null) {
         final List<CompletableFuture<Void>> futures = entity.getIntermediate().subordinates()
@@ -232,8 +261,58 @@ public class EntityStatementTreeLoader {
   }
 
   /**
+   * Looks up the data of an entity in the snapshot that is in use while a new snapshot is built. The data is used
+   * in place of a failed scrape, so that an entity that is temporarily unreachable is not dropped from the tree. Data
+   * whose Entity Configuration has expired is not used, nor is data for an entity whose Entity Configuration is
+   * invalid.
+   *
+   * @param key      of the entity
+   * @param tree     being loaded
+   * @param snapshot being built
+   * @param e        cause of the failed scrape
+   * @return a copy of the previous data, marked as coming from a failed scrape, or {@code null} if there is no data
+   *     to use
+   */
+  ScrapedEntity previousData(
+      final NodeKey key,
+      final Tree<ScrapedEntity> tree,
+      final CacheSnapshot<ScrapedEntity> snapshot,
+      final Exception e) {
+
+    if (e instanceof WrongJwkKidException) {
+      return null;
+    }
+    final CacheSnapshot<ScrapedEntity> previous = tree.getCurrentSnapshot();
+    if (previous.getVersion() == snapshot.getVersion()) {
+      return null;
+    }
+    final ScrapedEntity data = previous.getData(key);
+    if (data == null || data.getEntityStatement() == null) {
+      return null;
+    }
+    final Instant now = Instant.now();
+    final Date expiration;
+    try {
+      expiration = data.getEntityStatement().getJWTClaimsSet().getExpirationTime();
+    } catch (final ParseException pe) {
+      return null;
+    }
+    if (expiration == null || !expiration.toInstant().isAfter(now)) {
+      log.debug("TreeLoader previous data of {} has expired", key.getKey());
+      return null;
+    }
+    final Instant failedSince = Optional.ofNullable(data.getScrapeFailedAt()).orElse(now);
+    log.warn("TreeLoader failed to fetch {} ({}), keeping data from previous load until {}",
+        key.getKey(), e.getClass().getCanonicalName(), expiration.toInstant());
+    log.trace("TreeLoader failed to fetch {}: ", key.getKey(), e);
+    return data.copyForFailedScrape(failedSince);
+  }
+
+  /**
    * Records a failed step. The failing branch is left out of the snapshot being built; it is picked up
-   * again by the next scheduled tree load rather than retried against the current one.
+   * again by the next scheduled tree load rather than retried against the current one. A failed scrape of an
+   * entity that has valid data in the previous load does not end up here, see
+   * {@link #previousData(NodeKey, Tree, CacheSnapshot, Exception)}.
    *
    * @param stepName of the step that failed
    * @param node     the step was executing for

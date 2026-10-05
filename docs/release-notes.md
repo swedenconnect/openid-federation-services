@@ -52,6 +52,7 @@
 * All error responses now use the error codes and JSON format of OpenID Federation 1.0, Section 8.9. ([#224](https://github.com/swedenconnect/openid-federation-services/issues/224))
 * Entities whose identifier ends with `/` are now served at the well-known path and their endpoints without a double slash. ([#225](https://github.com/swedenconnect/openid-federation-services/issues/225))
 * The `crit` claim of signed statements now only lists extension claims that are present in the statement, and is left out when there are none. ([#226](https://github.com/swedenconnect/openid-federation-services/issues/226))
+* The resolver no longer drops an entity whose Entity Configuration cannot be fetched during a reload. The data from the previous load is kept until it expires, and the entity is listed by the `dead-nodes` actuator endpoint meanwhile. ([#227](https://github.com/swedenconnect/openid-federation-services/issues/227))
 
 ## Version 0.11.17
 
