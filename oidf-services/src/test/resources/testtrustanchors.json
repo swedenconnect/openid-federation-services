@@ -192,24 +192,6 @@
     ]
   },
   {
-    "entity-identifier": "http://localhost:11111/metadata_policy_crit/ta",
-    "subordinates": [
-      {
-        "entity-identifier": "http://localhost:11111/metadata_policy_crit/resolver",
-        "virtual-entity-id": "http://localhost:11111/metadata_policy_crit/resolver",
-        "jwks": "federation:sign-key-1"
-      },
-      {
-        "entity-identifier": "http://localhost:11111/im",
-        "virtual-entity-id": "http://localhost:11111/im",
-        "jwks": "federation:sign-key-1",
-        "metadata-policy-crit": [
-          "regexp"
-        ]
-      }
-    ]
-  },
-  {
     "entity-identifier": "http://localhost:11111/trust_mark_owner/ta",
     "subordinates": [
       {

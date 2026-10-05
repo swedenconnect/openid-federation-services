@@ -146,17 +146,6 @@ class ParameterPolicyTest {
     Assertions.assertThrows(MetadataPolicyException.class, () -> subsetOf.apply("a"));
   }
 
-  @Test
-  void regexpAndIntersects() throws Exception {
-    final ParameterPolicy regexp = policy("p", Map.of("regexp", "^https://.*"));
-    Assertions.assertEquals(List.of("https://a"), regexp.apply(List.of("https://a")));
-    Assertions.assertThrows(MetadataPolicyException.class, () -> regexp.apply("http://a"));
-
-    final ParameterPolicy intersects = policy("p", Map.of("intersects", List.of("a", "b")));
-    Assertions.assertEquals(List.of("b", "c"), intersects.apply(List.of("b", "c")));
-    Assertions.assertThrows(MetadataPolicyException.class, () -> intersects.apply(List.of("c")));
-  }
-
   private static ParameterPolicy policy(final String parameter, final Map<String, ?> operators)
       throws MetadataPolicyException {
     return ParameterPolicy.parse(parameter, operators);

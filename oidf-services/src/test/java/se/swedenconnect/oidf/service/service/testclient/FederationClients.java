@@ -76,15 +76,6 @@ public class FederationClients {
     );
   }
 
-  public ResolverDifferentiator metadataCrit() {
-    return new ResolverDifferentiator(this.client,
-        TestFederationEntities.Anarchy.TRUST_ANCHOR,
-        TestFederationEntities.Anarchy.RESOLVER,
-        TestFederationEntities.MetadataPolicyCrit.TRUST_ANCHOR,
-        TestFederationEntities.MetadataPolicyCrit.RESOLVER
-    );
-  }
-
   public ResolverDifferentiator trustMarkOwners() {
     return new ResolverDifferentiator(this.client,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,

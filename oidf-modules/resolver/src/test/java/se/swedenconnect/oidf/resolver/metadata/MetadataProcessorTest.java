@@ -127,14 +127,6 @@ class MetadataProcessorTest {
   }
 
   @Test
-  void regexpOperatorIsApplied() throws Exception {
-    final JSONObject policy = policy("organization_name", java.util.Map.of("regexp", List.of("^Policy.*")));
-    final InvalidMetadataException e =
-        Assertions.assertThrows(InvalidMetadataException.class, () -> this.processWithPolicy(policy, null));
-    Assertions.assertInstanceOf(MetadataPolicyException.class, e.getCause());
-  }
-
-  @Test
   void unknownOperatorIsIgnored() throws Exception {
     final JSONObject policy = policy("organization_name",
         java.util.Map.of("value", "Policy Org", "unknown_op", "anything"));

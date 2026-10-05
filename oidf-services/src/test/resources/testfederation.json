@@ -36,18 +36,6 @@
     }
   },
   {
-    "entity-identifier": "http://localhost:11111/metadata_policy_crit/ta",
-    "virtual-entity-id": "http://localhost:11111/metadata_policy_crit/ta",
-    "jwks": "federation:sign-key-1",
-    "metadata": {
-      "federation_entity": {
-        "organization_name": "Authorization",
-        "federation_fetch_endpoint": "http://localhost:11111/metadata_policy_crit/ta/fetch",
-        "federation_list_endpoint": "http://localhost:11111/metadata_policy_crit/ta/subordinate_listing"
-      }
-    }
-  },
-  {
     "entity-identifier": "http://localhost:11111/policy/ta",
     "virtual-entity-id": "http://localhost:11111/policy/ta",
     "jwks": "federation:sign-key-1",
@@ -106,7 +94,6 @@
       "http://localhost:11111/entity_type/ta",
       "http://localhost:11111/policy/ta",
       "http://localhost:11111/crit/ta",
-      "http://localhost:11111/metadata_policy_crit/ta",
       "http://localhost:11111/trust_mark_owner/ta"
     ],
     "jwks": "federation:sign-key-1",
@@ -305,20 +292,6 @@
     "virtual-entity-id": "http://localhost:11111/crit/resolver",
     "authority-hints": [
       "http://localhost:11111/crit/ta"
-    ],
-    "jwks": "federation:sign-key-1",
-    "metadata": {
-      "federation_entity": {
-        "organization_name": "Authorization",
-        "federation_resolve_endpoint": "/resolve"
-      }
-    }
-  },
-  {
-    "entity-identifier": "http://localhost:11111/metadata_policy_crit/resolver",
-    "virtual-entity-id": "http://localhost:11111/metadata_policy_crit/resolver",
-    "authority-hints": [
-      "http://localhost:11111/metadata_policy_crit/ta"
     ],
     "jwks": "federation:sign-key-1",
     "metadata": {

@@ -23,13 +23,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * The metadata policy for one metadata parameter, holding the operators and their values. Implements parsing,
- * merging, combination checks and application of the standard operators of OpenID Federation 1.0, Section 6.1.3.1,
- * and the additional operators {@code regexp} and {@code intersects} of the Swedish OpenID Federation profile.
+ * merging, combination checks and application of the standard operators of OpenID Federation 1.0, Section 6.1.3.1.
  *
  * @author Martin Lindström
  */
@@ -53,21 +50,12 @@ public final class ParameterPolicy {
   /** The {@code superset_of} operator. */
   public static final String SUPERSET_OF = "superset_of";
 
-  /** The {@code regexp} operator of the Swedish OpenID Federation profile. */
-  public static final String REGEXP = "regexp";
-
-  /** The {@code intersects} operator of the Swedish OpenID Federation profile. */
-  public static final String INTERSECTS = "intersects";
-
   /** The {@code essential} operator. */
   public static final String ESSENTIAL = "essential";
 
-  /**
-   * The supported operators, in the order they are applied. The additional value checks are applied before
-   * {@code essential}, as required by Section 6.1.3.2.
-   */
+  /** The supported operators, in the order they are applied (Section 6.1.3.2). */
   public static final List<String> OPERATORS =
-      List.of(VALUE, ADD, DEFAULT, ONE_OF, SUBSET_OF, SUPERSET_OF, REGEXP, INTERSECTS, ESSENTIAL);
+      List.of(VALUE, ADD, DEFAULT, ONE_OF, SUBSET_OF, SUPERSET_OF, ESSENTIAL);
 
   /** The {@code scope} parameter is a space separated string that operators handle as an array (Section 6.1.3.1.8). */
   private static final String SCOPE = "scope";
@@ -170,7 +158,7 @@ public final class ParameterPolicy {
         }
         yield copy(normalized);
       }
-      case ADD, ONE_OF, SUBSET_OF, SUPERSET_OF, INTERSECTS -> {
+      case ADD, ONE_OF, SUBSET_OF, SUPERSET_OF -> {
         if (!(normalized instanceof final List<?> values)) {
           throw new MetadataPolicyException("%s for '%s' must be an array".formatted(operator, parameter));
         }
@@ -182,27 +170,8 @@ public final class ParameterPolicy {
         }
         yield normalized;
       }
-      case REGEXP -> parseRegexp(parameter, value);
       default -> throw new MetadataPolicyException("Unsupported policy operator '%s'".formatted(operator));
     };
-  }
-
-  private static List<Object> parseRegexp(final String parameter, final Object value)
-      throws MetadataPolicyException {
-    final List<?> patterns = value instanceof final List<?> list ? list : Arrays.asList(value);
-    for (final Object pattern : patterns) {
-      if (!(pattern instanceof final String regexp)) {
-        throw new MetadataPolicyException("regexp for '%s' must be a string or an array of strings"
-            .formatted(parameter));
-      }
-      try {
-        Pattern.compile(regexp);
-      }
-      catch (final PatternSyntaxException e) {
-        throw new MetadataPolicyException("regexp '%s' for '%s' is not valid".formatted(regexp, parameter));
-      }
-    }
-    return new ArrayList<>(patterns);
   }
 
   private Object mergeValues(final String operator, final Object current, final Object subordinate)
@@ -215,7 +184,7 @@ public final class ParameterPolicy {
         }
         yield current;
       }
-      case ADD, SUPERSET_OF, REGEXP -> union(asList(current), asList(subordinate));
+      case ADD, SUPERSET_OF -> union(asList(current), asList(subordinate));
       case ONE_OF -> {
         final List<Object> intersection = intersection(asList(current), asList(subordinate));
         if (intersection.isEmpty()) {
@@ -224,7 +193,7 @@ public final class ParameterPolicy {
         }
         yield intersection;
       }
-      case SUBSET_OF, INTERSECTS -> intersection(asList(current), asList(subordinate));
+      case SUBSET_OF -> intersection(asList(current), asList(subordinate));
       case ESSENTIAL -> (Boolean) current || (Boolean) subordinate;
       default -> throw new MetadataPolicyException("Unsupported policy operator '%s'".formatted(operator));
     };
@@ -315,22 +284,6 @@ public final class ParameterPolicy {
       case SUPERSET_OF:
         if (value != null && !this.requireArray(operator, value).containsAll(asList(config))) {
           throw this.applyError(operator, "%s does not contain all of %s".formatted(value, config));
-        }
-        return value;
-      case REGEXP:
-        if (value != null) {
-          for (final Object item : asList(value)) {
-            for (final Object regexp : asList(config)) {
-              if (!(item instanceof final String text) || !Pattern.compile((String) regexp).matcher(text).matches()) {
-                throw this.applyError(operator, "%s does not match %s".formatted(item, regexp));
-              }
-            }
-          }
-        }
-        return value;
-      case INTERSECTS:
-        if (value != null && this.requireArray(operator, value).stream().noneMatch(asList(config)::contains)) {
-          throw this.applyError(operator, "%s has no value in common with %s".formatted(value, config));
         }
         return value;
       case ESSENTIAL:

@@ -47,17 +47,9 @@ class CriticalClaimsValidationStepTest {
   }
 
   @Test
-  void subsetOfSupportedOperatorsIsAccepted() {
-    Assertions.assertDoesNotThrow(
-        () -> this.step.validate(List.of(statement("metadata_policy_crit", List.of("regexp")))));
-    Assertions.assertDoesNotThrow(
-        () -> this.step.validate(List.of(statement("metadata_policy_crit", List.of("regexp", "intersects")))));
-  }
-
-  @Test
   void unknownOperatorIsRejected() {
     Assertions.assertThrows(IllegalArgumentException.class, () -> this.step.validate(
-        List.of(statement("metadata_policy_crit", List.of("regexp", "intersects", "unknown_op")))));
+        List.of(statement("metadata_policy_crit", List.of("unknown_op")))));
   }
 
   @Test
@@ -75,7 +67,7 @@ class CriticalClaimsValidationStepTest {
   @Test
   void metadataPolicyCritInEntityConfigurationIsRejected() {
     final SignedJWT entityConfiguration = statement("https://example.com/leaf", "metadata_policy_crit",
-        List.of("regexp"));
+        List.of("unknown_op"));
     Assertions.assertThrows(IllegalArgumentException.class, () -> this.step.validate(List.of(entityConfiguration)));
   }
 
