@@ -122,8 +122,8 @@ public class TrustMarkCollector {
     final String trustMarkType = EntityStatementClaims.getTrustMarkType(trustMark);
     try {
       final JWTClaimsSet claims = trustMark.getJWTClaimsSet();
-      final String error = TrustMarkCollector.validateTrustMark(trustMark, claims, trustMarkType, subject,
-          issuerKeys, statuses);
+      final String error = TrustMarkCollector.validateTrustMark(trustMark, claims, entry.getID().getValue(),
+          trustMarkType, subject, issuerKeys, statuses);
       if (error == null) {
         return true;
       }
@@ -143,7 +143,8 @@ public class TrustMarkCollector {
    *
    * @param trustMark the trust mark JWT
    * @param claims the trust mark claims
-   * @param trustMarkType the trust mark type
+   * @param entryType the trust mark type given by the {@code trust_marks} entry
+   * @param trustMarkType the trust mark type of the trust mark itself
    * @param subject the entity the trust mark is presented for
    * @param issuerKeys resolves the federation entity keys of the issuer
    * @param statuses status responses from the issuers, keyed by the serialized trust mark JWT
@@ -151,11 +152,15 @@ public class TrustMarkCollector {
    * @throws java.text.ParseException if the status response cannot be parsed
    */
   private static String validateTrustMark(final SignedJWT trustMark, final JWTClaimsSet claims,
-      final String trustMarkType, final String subject, final Function<String, Optional<JWKSet>> issuerKeys,
+      final String entryType, final String trustMarkType, final String subject,
+      final Function<String, Optional<JWKSet>> issuerKeys,
       final Map<String, TrustMarkStatusResponse> statuses) throws java.text.ParseException {
     final String claimsError = TrustMarkValidator.checkClaims(trustMark, subject, Instant.now());
     if (claimsError != null) {
       return claimsError;
+    }
+    if (!trustMarkType.equals(entryType)) {
+      return "trust_mark_type of the entry and the trust mark differ";
     }
     final Optional<JWKSet> keys = issuerKeys.apply(claims.getIssuer());
     if (keys.isEmpty()) {

@@ -186,9 +186,14 @@ public class RestClientFederationClient implements FederationClient {
     }
   }
 
+  /**
+   * Not implemented, nothing in the service uses resolve internally.
+   *
+   * @throws UnsupportedOperationException always
+   */
   @Override
   public SignedJWT resolve(final FederationRequest<ResolveRequest> request) {
-    return null;
+    throw new UnsupportedOperationException("Resolve requests are not implemented by RestClientFederationClient");
   }
 
   @Override

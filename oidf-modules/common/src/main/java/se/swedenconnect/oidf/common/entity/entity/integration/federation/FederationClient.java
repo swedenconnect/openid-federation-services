@@ -52,6 +52,8 @@ public interface FederationClient {
   SignedJWT trustMark(final FederationRequest<TrustMarkRequest> request);
 
   /**
+   * Not used internally by the service.
+   *
    * @param request for resolver
    * @return resolver jwt
    */
