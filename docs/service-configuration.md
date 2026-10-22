@@ -256,132 +256,108 @@ an `ec_location` that does not follow these rules.
 
 ## 2.6 Outbound HTTP Clients
 
-### How outbound requests are handled
+The service makes outbound HTTPS requests in three roles. Each role has its own client with its own
+connection pool and timeouts, so that one role cannot exhaust the connections another one needs.
 
-The service makes outbound HTTPS requests to other federation participants in two situations, and they
-behave very differently.
+| Properties                                 | Used for                                                             |
+|--------------------------------------------|----------------------------------------------------------------------|
+| `federation.request-client.*`              | Requests made while serving an inbound request                       |
+| `federation.resolver.client.*`             | Requests made by the background rebuild of the federation tree       |
+| `federation.registry.integration.client.*` | Requests to the [registry](#24-registry-integration) in managed mode |
 
-**In the background.** The Resolver rebuilds the federation tree every
-[`resolver-reload-rate`](#22-federation-service), fetching the Entity Configuration of every entity in
-the federation and the Subordinate Statements of every Intermediate. It fans out over the tree in
-parallel, so one slow participant does not slow down the others, but the rebuild is not finished until
-the slowest one has answered or timed out.
+The background rebuild fetches the Entity Configuration of every entity in the federation and the
+Subordinate Statements of every Intermediate, every [`resolver-reload-rate`](#22-federation-service),
+fanning out over the tree in parallel. The request path is used by two endpoints: a filtered
+`subordinate_listing`, which fetches the Entity Configuration of each subordinate, and an Entity
+Configuration configured with a trust mark source, which fetches those trust marks from their issuers.
+Both run in the request thread and make their requests one at a time, so their cost is the sum of every
+request they make. The request path therefore needs to fail fast, while the rebuild can afford to wait,
+which is why `request-client` has lower defaults.
 
-**While serving a request.** Two endpoints reach out to other participants before they can answer. A
-`subordinate_listing` with a filter has to know the Entity Types of the subordinates, so it fetches the
-Entity Configuration of each one. An Entity Configuration that is configured with a trust mark source
-fetches those trust marks from their issuers. Both of these run in the request thread and make their
-requests one at a time, so their cost is the sum of every request they make.
+Responses are cached per snapshot of the federation tree, so the first request after each rebuild is the
+one that pays for the outbound requests.
 
-The two situations have **separate clients with separate connection pools and timeouts**. A burst of
-inbound requests therefore cannot exhaust the connections the background rebuild needs, and the two can
-be tuned independently: the request path needs to fail fast, while the background rebuild can afford to
-wait.
+All three clients take the same properties:
 
-Every stage of a request is bounded by its own timeout, because a request that hangs in one stage is not
-bounded by the others. The sum of the stages is the worst case for a single request — see
-[Timeouts](#timeouts) — and a request that takes that long is a request that failed, not a slow one.
-
-Two things are **not** covered by the timeouts:
-
-- **A sequence of requests.** The underlying HTTP client bounds one request, not a series of them. An
-  endpoint that makes one request per subordinate is therefore only bounded by the number of
-  subordinates that fail to answer. The filtered `subordinate_listing` has a
-  [total budget](#listing-budget) for this reason.
-- **Name resolution.** The `connect` timeout starts once the host has been resolved. A name server that
-  does not answer is bounded by the resolver settings of the host, not by these properties.
-
-Finally, responses are cached per snapshot of the federation tree, so a successful listing is normally
-served from the cache and makes no outbound requests at all. The cache is replaced when the tree is
-rebuilt, which means the first request after each rebuild is the one that pays the full cost.
-
-### The clients
-
-| Properties                                    | Used for                                                                 |
-|-----------------------------------------------|--------------------------------------------------------------------------|
-| `federation.request-client.*`                 | Requests made while serving an inbound request                            |
-| `federation.resolver.client.*`                | Requests made by the background rebuild of the federation tree            |
-| `federation.registry.integration.client.*`    | Requests to the [registry](#24-registry-integration) in managed mode      |
-
-All three take the same properties:
-
-| Property                  | Description                                                                             | Type    | Default |
-|---------------------------|-----------------------------------------------------------------------------------------|---------|---------|
-| `name`                    | Logical name of the client. Used in log messages and as the `client` tag on its metrics  | String  | `federation-request` for `request-client`, otherwise – |
-| `trust-store-bundle-name` | Trust store bundle used to validate TLS server certificates, or `default` for the JVM's | String  | –       |
-| `base-uri`                | Base URI. Only used by the registry client; startup fails if it is set on the others     | String  | –       |
-| `max-retries`             | Times a failed request is retried. Each retry costs another worst case, so see below     | Integer | 0       |
-| `retry-interval`          | Interval between retries, when `max-retries` is above zero                               | Duration| PT0.5S  |
-| `follow-redirects`        | Whether redirects are followed. A redirect costs another worst case, and no federation endpoint needs one | Boolean | false |
+| Property                  | Description                                                                             | Type     | Default                                               |
+|---------------------------|-----------------------------------------------------------------------------------------|----------|-------------------------------------------------------|
+| `name`                    | Logical name. Used in log messages and as the `client` tag on the metrics below          | String   | `federation-request` for `request-client`, otherwise – |
+| `trust-store-bundle-name` | Trust store bundle used to validate TLS server certificates, or `default` for the JVM's  | String   | –                                                     |
+| `base-uri`                | Base URI. Only used by the registry client; startup fails if it is set on the others     | String   | –                                                     |
+| `max-retries`             | Times a failed request is retried                                                       | Integer  | 0                                                     |
+| `retry-interval`          | Interval between retries                                                                | Duration | PT0.5S                                                |
+| `follow-redirects`        | Whether redirects are followed. No federation endpoint needs one                        | Boolean  | false                                                 |
 
 `federation.request-client.trust-store-bundle-name` defaults to the value configured for
 `federation.resolver.client`, since both talk to the same participants.
 
-#### Pool
+### Pool
 
 `<client>.pool.*`
 
-Each client has its own connection pool. The pool is a ceiling, not a reservation — connections are
-opened when they are needed.
+| Property                    | Description                                                                              | Type     | Default                      |
+|-----------------------------|------------------------------------------------------------------------------------------|----------|------------------------------|
+| `max-total`                 | Connections the client may hold in total, across all hosts                               | Integer  | 100, 50 for `request-client` |
+| `max-per-route`             | Connections the client may hold to one host                                              | Integer  | 24, 10 for `request-client`  |
+| `time-to-live`              | How long a connection may be reused before it is closed, regardless of activity          | Duration | PT5M                         |
+| `validate-after-inactivity` | How long a pooled connection may be idle before it is checked for staleness when leased   | Duration | PT5S                         |
+| `evict-idle-after`          | Idle connections are closed after this long. Zero keeps them until their time to live ends | Duration | PT30S                        |
 
-| Property                    | Description                                                                                  | Type     | Default                                 |
-|-----------------------------|----------------------------------------------------------------------------------------------|----------|-----------------------------------------|
-| `max-total`                 | Connections the client may hold in total, across all hosts                                   | Integer  | 100, 50 for `request-client`            |
-| `max-per-route`             | Connections the client may hold to one host                                                   | Integer  | 24, 10 for `request-client`             |
-| `time-to-live`              | How long a connection may be reused before it is closed, regardless of activity               | Duration | PT5M                                    |
-| `validate-after-inactivity` | How long a pooled connection may be idle before it is checked for staleness when leased       | Duration | PT5S                                    |
-| `evict-idle-after`          | Idle connections are closed after this long. Zero keeps them until their time to live runs out | Duration | PT30S                                   |
+The pool is a ceiling, not a reservation — connections are opened when they are needed. `max-per-route`
+is the one to think about: several entities often share a host, and a value below the number of entities
+on a host makes the rebuild fetch them in waves of that size. On the request path it should be kept low
+rather than high, since it is the ceiling on how many connections a burst of inbound requests can open
+against a single participant, which one that rate-limits will answer `429` to.
 
-`max-per-route` matters more than it looks. Several entities often share a host — a test federation
-where fifteen Relying Parties live under the same domain is not unusual — and the background rebuild
-fetches all of them at the same time. A `max-per-route` below the number of entities on a host makes
-those requests run in waves of that size instead of in parallel.
-
-For the request path the value should be kept low rather than high. It is the ceiling on how many
-connections a burst of inbound requests can open against a single participant, and a participant that
-rate-limits will answer `429` if that ceiling is generous.
-
-#### Timeouts
+### Timeouts
 
 `<client>.timeouts.*`
 
-| Property             | Description                                                                                 | Type     | Default                        |
-|----------------------|---------------------------------------------------------------------------------------------|----------|--------------------------------|
-| `connection-request` | Waiting for a connection from the pool. Turns an exhausted pool into a fast failure         | Duration | PT5S, PT1S for `request-client`|
-| `connect`            | Establishing the TCP connection. Name resolution happens first and is not covered           | Duration | PT3S, PT2S for `request-client`|
-| `tls-handshake`      | Completing the TLS handshake, once the TCP connection is up                                  | Duration | PT3S, PT2S for `request-client`|
-| `response`           | Waiting for the first byte of the response, once the request has been sent                   | Duration | PT5S, PT3S for `request-client`|
-| `socket`             | Waiting between reads on the socket. Bounds a response that starts and then stops part way   | Duration | PT5S, PT3S for `request-client`|
+Every stage of a request is bounded by its own timeout, because a request that hangs in one stage is not
+bounded by the others.
 
-The worst case for a single request is `connection-request + connect + tls-handshake + response`, which
-is **8 seconds** for the request path and **16 seconds** for the background rebuild with the defaults.
-The effective worst case is multiplied by `max-retries + 1`, and again by each redirect that is followed.
+| Property             | Description                                                                               | Type     | Default                         |
+|----------------------|-------------------------------------------------------------------------------------------|----------|---------------------------------|
+| `connection-request` | Waiting for a connection from the pool. Turns an exhausted pool into a fast failure       | Duration | PT5S, PT1S for `request-client` |
+| `connect`            | Establishing the TCP connection. Name resolution happens first and is not covered         | Duration | PT3S, PT2S for `request-client` |
+| `tls-handshake`      | Completing the TLS handshake, once the TCP connection is up                               | Duration | PT3S, PT2S for `request-client` |
+| `response`           | Waiting for the first byte of the response, once the request has been sent                | Duration | PT5S, PT3S for `request-client` |
+| `socket`             | Waiting between reads on the socket. Bounds a response that starts and then stops part way | Duration | PT5S, PT3S for `request-client` |
 
-#### Listing budget
+The worst case for a single request is `connection-request + connect + tls-handshake + response`: 8
+seconds on the request path and 16 seconds for the rebuild with the defaults, multiplied by
+`max-retries + 1` and again by each redirect that is followed.
 
-| Property                                                 | Description                                                                                        | Type     | Default |
-|----------------------------------------------------------|----------------------------------------------------------------------------------------------------|----------|---------|
-| `federation.trust-anchor.subordinate-listing-budget`     | The longest a filtered `subordinate_listing` may spend fetching Entity Configurations               | Duration | PT10S   |
+Two things are **not** covered:
+
+- **A sequence of requests.** The timeouts bound one request, not a series of them. An endpoint that
+  makes one request per subordinate is only bounded by the number of subordinates that fail to answer,
+  which is what the [listing budget](#listing-budget) is for.
+- **Name resolution.** `connect` starts once the host has been resolved. A name server that does not
+  answer is bounded by the resolver settings of the host, not by these properties.
+
+### Listing budget
+
+| Property                                             | Description                                                                          | Type     | Default |
+|------------------------------------------------------|--------------------------------------------------------------------------------------|----------|---------|
+| `federation.trust-anchor.subordinate-listing-budget` | The longest a filtered `subordinate_listing` may spend fetching Entity Configurations | Duration | PT10S   |
 
 A filtered `subordinate_listing` fetches the Entity Configuration of each subordinate in turn, so its
 cost grows with the number of subordinates that do not answer. The budget bounds the endpoint as a
 whole.
 
-When the budget is spent, the request **fails** with `temporarily_unavailable` and HTTP 503, and a
-warning naming how many subordinates were evaluated is logged. It does not answer with the part of the
-listing it managed to evaluate: an answer based on how far the fetching happened to get would depend on
-the timing of the request rather than on the state of the federation, and two identical requests would
-give different listings without the client being able to tell. An error response is not cached, so the
-next request tries again.
+When the budget is spent the request **fails** with `temporarily_unavailable` and HTTP 503, and logs a
+warning naming how many subordinates were evaluated. It does not answer with the part of the listing it
+managed to evaluate: that answer would depend on the timing of the request rather than on the state of
+the federation, so two identical requests could give different listings with nothing to tell them apart.
+An error response is not cached, so the next request tries again.
 
-The budget is checked before each Entity Configuration is fetched, so a listing that has evaluated every
-subordinate answers even if it took longer than the budget. The upper bound on the endpoint is therefore
-the budget plus the worst case of one request — 18 seconds with the defaults.
+The budget is checked before each fetch, so a listing that has evaluated every subordinate answers even
+if it took longer than the budget. The endpoint is therefore bounded by the budget plus the worst case of
+one request — 18 seconds with the defaults. Set the budget above that worst case, or a single unreachable
+subordinate spends all of it, and below the timeout of whatever calls the endpoint.
 
-Set the budget below the timeout of whatever calls the endpoint, with room for the worst case of one
-request, and above that worst case, or a single unreachable subordinate spends the whole budget.
-
-#### Metrics
+### Metrics
 
 Each client reports its pool as `oidf.http.client.pool`, tagged with `client` and with `state` set to
 `leased`, `available`, `pending` or `max`. A pool that has run out shows up as `leased` at `max` with a

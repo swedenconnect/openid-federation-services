@@ -44,6 +44,10 @@ in managed mode against the
 - [Cache](internals/Cache.MD) — The layered caching model used when building the resolve tree,
   including the snapshot layer and scheduled recomputation.
 
+- [Caches and Scale](internals/caches-and-scale.md) — A sketch of the two paths through the service,
+  what each cache holds, and what a filtered `subordinate_listing` has to look like to answer for
+  several hundred subordinates.
+
 - [Building a Release Docker Image](internals/docker-release.md) — How snapshot and versioned
   Docker images are built and published to `ghcr.io` by the GitHub Actions workflows.
 

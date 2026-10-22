@@ -4,6 +4,9 @@
 
 ## Overview
 
+For the whole picture — every cache, what it holds, and how large federations change what the caches
+have to do — see [Caches and Scale](caches-and-scale.md).
+
 Caching operates on distinct layers. When a computation starts, the service commits to a specific layer version so it does not mix old and new information mid-computation.
 
 ## Snapshot Layer
