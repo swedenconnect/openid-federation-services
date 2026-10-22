@@ -8,7 +8,7 @@
 
 **Date:** _not yet released_
 
-*
+* The service no longer shuts down when the trust anchor cannot be fetched at startup. ([#247](https://github.com/swedenconnect/openid-federation-services/issues/247))
 
 ## Version 1.0.0
 
