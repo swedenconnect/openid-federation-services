@@ -39,6 +39,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
@@ -172,7 +173,7 @@ class DefaultTrustAnchorListingTest {
     final TrustAnchorProperties properties = new TrustAnchorProperties(new EntityID(TA), trustMarkIssuers, null);
     properties.setSubordinates(subordinates);
     final DefaultTrustAnchor trustAnchor = new DefaultTrustAnchor(this.source, properties,
-        Mockito.mock(SubordinateStatementFactory.class), this.client);
+        Mockito.mock(SubordinateStatementFactory.class), this.client, Duration.ofSeconds(10));
     return trustAnchor.subordinateListing(request);
   }
 

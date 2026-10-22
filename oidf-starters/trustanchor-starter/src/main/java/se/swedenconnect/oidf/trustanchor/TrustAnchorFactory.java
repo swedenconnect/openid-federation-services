@@ -21,6 +21,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
+import java.time.Duration;
+
 /**
  * Factory class for creating trust anchors.
  *
@@ -32,21 +34,26 @@ public class TrustAnchorFactory {
   private final FederationClient client;
   private final SignerFactory signerFactory;
 
+  private final Duration listingBudget;
+
   /**
    * Constructor.
    *
    * @param source        to use
    * @param signerFactory to use
    * @param client        to use
+   * @param listingBudget the longest a filtered subordinate listing may spend on fetching Entity Configurations
    */
   public TrustAnchorFactory(
       final CompositeRecordSource source,
       final SignerFactory signerFactory,
-      final FederationClient client
+      final FederationClient client,
+      final Duration listingBudget
   ) {
     this.source = source;
     this.client = client;
     this.signerFactory = signerFactory;
+    this.listingBudget = listingBudget;
   }
 
   /**
@@ -57,7 +64,8 @@ public class TrustAnchorFactory {
       final TrustAnchorProperties properties) {
     return new DefaultTrustAnchor(this.source, properties,
         new SubordinateStatementFactory(this.signerFactory),
-        this.client
+        this.client,
+        this.listingBudget
     );
   }
 }

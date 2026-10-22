@@ -22,6 +22,7 @@ import com.nimbusds.jose.shaded.gson.FieldAttributes;
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jose.shaded.gson.GsonBuilder;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -113,14 +114,39 @@ public class FederationRegistryConfiguration {
   }
 
   @Bean
-  RestClientFactory restClientFactory(final SslBundles sslBundle, final ObservationRegistry registry) {
-    return new RestClientFactory(sslBundle, registry);
+  RestClientFactory restClientFactory(final SslBundles sslBundle, final ObservationRegistry registry,
+                                      final MeterRegistry meterRegistry) {
+    return new RestClientFactory(sslBundle, registry, meterRegistry);
   }
 
+  /**
+   * Client for the tree scraping. The scraping fans out over every entity of the federation in parallel, so its pool
+   * has to hold the entities that share a host, and it can tolerate longer timeouts since it runs in the background.
+   *
+   * @param restClientFactory to create the client with
+   * @param properties of the federation
+   * @return the client of the tree scraping
+   */
   @Bean
-  RestClient federationRestClient(final RestClientFactory restClientFactory,
-                                  final FederationProperties properties) {
+  RestClient federationScrapeRestClient(final RestClientFactory restClientFactory,
+                                        final FederationProperties properties) {
     return restClientFactory.create(properties.getResolver().getClient()).mutate()
+        .defaultHeader("cache-control", "no-cache")
+        .build();
+  }
+
+  /**
+   * Client for the outbound requests that are made while serving an inbound request. Its timeouts are tight, since a
+   * request thread waits for them, and its pool is separate from the one of the scraping.
+   *
+   * @param restClientFactory to create the client with
+   * @param properties of the federation
+   * @return the client of the request path
+   */
+  @Bean
+  RestClient federationRequestRestClient(final RestClientFactory restClientFactory,
+                                         final FederationProperties properties) {
+    return restClientFactory.create(properties.getRequestClient()).mutate()
         .defaultHeader("cache-control", "no-cache")
         .build();
   }

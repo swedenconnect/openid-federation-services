@@ -8,7 +8,11 @@
 
 **Date:** _not yet released_
 
-*
+* Outbound requests now have timeouts, so an unreachable subordinate no longer blocks a filtered subordinate listing until the operating system gives up. ([#245](https://github.com/swedenconnect/openid-federation-services/issues/245))
+* A filtered subordinate listing now has a time budget, so it cannot take longer than the budget regardless of how many subordinates are unreachable. ([#245](https://github.com/swedenconnect/openid-federation-services/issues/245))
+* A filtered subordinate listing no longer drops subordinates whose Entity Configuration was issued while the listing was running. ([#245](https://github.com/swedenconnect/openid-federation-services/issues/245))
+* Requests made while serving a request and requests made by the tree scraping now use separate clients, with their own connection pools and timeouts. ([#245](https://github.com/swedenconnect/openid-federation-services/issues/245))
+* Connection pool sizes and timeouts are now configurable per client. ([#245](https://github.com/swedenconnect/openid-federation-services/issues/245))
 
 ## Version 1.0.0
 

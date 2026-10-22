@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.resolver;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -83,7 +84,7 @@ public class FederationResolverConfiguration {
   @Bean
   @ConditionalOnMissingBean
   EntityStatementTreeLoaderFactory entityStatementTreeLoaderFactory(
-      final FederationClient client,
+      @Qualifier("federationScrapeClient") final FederationClient client,
       final ErrorContextFactory errorContextFactory,
       final ApplicationEventPublisher publisher,
       final EcLocationValidator ecLocationValidator) {

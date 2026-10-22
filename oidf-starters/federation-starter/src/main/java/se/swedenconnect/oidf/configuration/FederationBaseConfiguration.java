@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.ServletContext;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -77,9 +78,39 @@ public class FederationBaseConfiguration {
     return new EcLocationValidator(properties.isAllowHttpEcLocation());
   }
 
+  /**
+   * Federation client of the tree scraping. It is the primary one, so that code outside of this starter that injects
+   * a {@link FederationClient} without qualifying it keeps getting a client with background timeouts rather than the
+   * tight ones of the request path.
+   *
+   * @param restClient of the tree scraping
+   * @param registry for metrics
+   * @param uptimeRegistry for per-cycle uptime tracking
+   * @param ecLocationValidator for checking ec_location values before they are used
+   * @return the federation client of the tree scraping
+   */
   @Bean
-  FederationClient federationClient(
-      @Qualifier("federationRestClient") final RestClient restClient,
+  @Primary
+  FederationClient federationScrapeClient(
+      @Qualifier("federationScrapeRestClient") final RestClient restClient,
+      final MeterRegistry registry,
+      final UptimeRegistry uptimeRegistry,
+      final EcLocationValidator ecLocationValidator) {
+    return new RestClientFederationClient(restClient, registry, uptimeRegistry, ecLocationValidator);
+  }
+
+  /**
+   * Federation client for the outbound requests that are made while serving an inbound request.
+   *
+   * @param restClient of the request path
+   * @param registry for metrics
+   * @param uptimeRegistry for per-cycle uptime tracking
+   * @param ecLocationValidator for checking ec_location values before they are used
+   * @return the federation client of the request path
+   */
+  @Bean
+  FederationClient federationRequestClient(
+      @Qualifier("federationRequestRestClient") final RestClient restClient,
       final MeterRegistry registry,
       final UptimeRegistry uptimeRegistry,
       final EcLocationValidator ecLocationValidator) {

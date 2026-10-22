@@ -16,11 +16,15 @@
  */
 package se.swedenconnect.oidf.trustanchor;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
+
+import java.time.Duration;
 
 /**
  * Configuration class for TrustAnchor.
@@ -29,12 +33,20 @@ import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
  */
 @Configuration
 public class TrustAnchorConfiguration {
+  /**
+   * The longest a filtered subordinate listing may spend on fetching the Entity Configurations of the subordinates.
+   * Apache HttpClient bounds each request on its own but not a sequence of them, so without a budget the endpoint
+   * takes as long as the number of unreachable subordinates allows.
+   */
+  @Value("${federation.trust-anchor.subordinate-listing-budget:PT10S}")
+  private Duration subordinateListingBudget;
+
   @Bean
   TrustAnchorFactory trustAnchorFactory(
       final CompositeRecordSource recordSource,
       final SignerFactory signerFactory,
-      final FederationClient client
+      @Qualifier("federationRequestClient") final FederationClient client
   ) {
-    return new TrustAnchorFactory(recordSource, signerFactory, client);
+    return new TrustAnchorFactory(recordSource, signerFactory, client, this.subordinateListingBudget);
   }
 }

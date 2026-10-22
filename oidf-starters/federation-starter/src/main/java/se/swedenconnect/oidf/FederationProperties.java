@@ -49,6 +49,15 @@ public class FederationProperties {
   private ResolverConfigurationProperties resolver;
 
   /**
+   * Client for the outbound requests that are made while serving an inbound request, see
+   * {@link RestClientProperty#requestPath()}. It is separate from the client of the tree scraping, so that a burst
+   * of inbound requests cannot exhaust the connections the scraping needs, and so that the two can be given their
+   * own timeouts. Its trust store defaults to the one of {@code resolver.client}, since both talk to the same peers.
+   */
+  @NestedConfigurationProperty
+  private RestClientProperty requestClient = RestClientProperty.requestPath();
+
+  /**
    * Property key for this configuration property.
    */
   public static final String PROPERTY_KEY = "federation";
@@ -80,6 +89,13 @@ public class FederationProperties {
   void validate() {
     Assert.notNull(this.resolver, "%s.%s can not be empty".formatted(PROPERTY_KEY, "resolver"));
     this.resolver.validate("%s.%s".formatted(PROPERTY_KEY, "resolver"));
+    Assert.notNull(this.requestClient, "%s.%s can not be empty".formatted(PROPERTY_KEY, "request-client"));
+    Assert.isNull(this.requestClient.getBaseUri(),
+        "%s.%s can not be set".formatted(PROPERTY_KEY, "request-client.base-uri"));
+    if (this.requestClient.getTrustStoreBundleName() == null) {
+      this.requestClient.setTrustStoreBundleName(this.resolver.getClient().getTrustStoreBundleName());
+    }
+    this.requestClient.validateClient("%s.%s".formatted(PROPERTY_KEY, "request-client"));
     if (Objects.nonNull(this.localRegistry)) {
       this.localRegistry.validate("%s.%s".formatted(PROPERTY_KEY, "local-registry"),
           new EcLocationValidator(this.allowHttpEcLocation));

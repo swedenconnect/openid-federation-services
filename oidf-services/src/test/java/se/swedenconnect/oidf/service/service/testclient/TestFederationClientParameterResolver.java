@@ -16,6 +16,7 @@
  */
 package se.swedenconnect.oidf.service.service.testclient;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -40,7 +41,7 @@ public class TestFederationClientParameterResolver implements ParameterResolver 
     final RestClientProperty property = new RestClientProperty();
     property.setTrustStoreBundleName("oidf-internal");
     property.setName("test");
-    final RestClient client = new RestClientFactory(bundles, ObservationRegistry.NOOP).create(property);
+    final RestClient client = new RestClientFactory(bundles, ObservationRegistry.NOOP, new SimpleMeterRegistry()).create(property);
     return new FederationClients(client);
   }
 }

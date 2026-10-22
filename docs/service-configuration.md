@@ -137,6 +137,9 @@ Routing dispatches an incoming request path to the correct virtual entity — se
 | `trust-store-bundle-name` | Trust store bundle used for TLS | String |
 | `name`                    | Logical name of the client      | String |
 
+This client also takes the pool and timeout properties documented under
+[Outbound HTTP Clients](#26-outbound-http-clients).
+
 Every key named by a key reference from the registry, such as `hosted:sign-key`, must exist on this instance. An
 entity with a reference to a missing key is left out and logged as an error. A reference to a missing key in the
 module records (Trust Anchors, resolvers and Trust Mark Issuers) makes the whole module load fail, and the previously
@@ -251,19 +254,130 @@ an `ec_location` that does not follow these rules.
 
 ---
 
-## 2.6 Resolver HTTP Client
+## 2.6 Outbound HTTP Clients
 
-`federation.resolver.client.*`
+### How outbound requests are handled
 
-The REST client the service's Resolver module uses to fetch entity configurations and subordinate
-statements from other federation participants over HTTPS while walking a trust chain. Same shape as
-[`federation.registry.integration.client`](#24-registry-integration):
+The service makes outbound HTTPS requests to other federation participants in two situations, and they
+behave very differently.
 
-| Property                  | Description                                                       | Type   |
-|----------------------------|---------------------------------------------------------------------|--------|
-| `name`                    | Logical name of the client                                         | String |
-| `trust-store-bundle-name` | Trust store bundle used to validate TLS server certs               | String |
-| `base-uri`                | Not used for this client — startup fails validation if this is set | String |
+**In the background.** The Resolver rebuilds the federation tree every
+[`resolver-reload-rate`](#22-federation-service), fetching the Entity Configuration of every entity in
+the federation and the Subordinate Statements of every Intermediate. It fans out over the tree in
+parallel, so one slow participant does not slow down the others, but the rebuild is not finished until
+the slowest one has answered or timed out.
+
+**While serving a request.** Two endpoints reach out to other participants before they can answer. A
+`subordinate_listing` with a filter has to know the Entity Types of the subordinates, so it fetches the
+Entity Configuration of each one. An Entity Configuration that is configured with a trust mark source
+fetches those trust marks from their issuers. Both of these run in the request thread and make their
+requests one at a time, so their cost is the sum of every request they make.
+
+The two situations have **separate clients with separate connection pools and timeouts**. A burst of
+inbound requests therefore cannot exhaust the connections the background rebuild needs, and the two can
+be tuned independently: the request path needs to fail fast, while the background rebuild can afford to
+wait.
+
+Every stage of a request is bounded by its own timeout, because a request that hangs in one stage is not
+bounded by the others. The sum of the stages is the worst case for a single request — see
+[Timeouts](#timeouts) — and a request that takes that long is a request that failed, not a slow one.
+
+Two things are **not** covered by the timeouts:
+
+- **A sequence of requests.** The underlying HTTP client bounds one request, not a series of them. An
+  endpoint that makes one request per subordinate is therefore only bounded by the number of
+  subordinates that fail to answer. The filtered `subordinate_listing` has a
+  [total budget](#listing-budget) for this reason.
+- **Name resolution.** The `connect` timeout starts once the host has been resolved. A name server that
+  does not answer is bounded by the resolver settings of the host, not by these properties.
+
+Finally, responses are cached per snapshot of the federation tree, so a successful listing is normally
+served from the cache and makes no outbound requests at all. The cache is replaced when the tree is
+rebuilt, which means the first request after each rebuild is the one that pays the full cost.
+
+### The clients
+
+| Properties                                    | Used for                                                                 |
+|-----------------------------------------------|--------------------------------------------------------------------------|
+| `federation.request-client.*`                 | Requests made while serving an inbound request                            |
+| `federation.resolver.client.*`                | Requests made by the background rebuild of the federation tree            |
+| `federation.registry.integration.client.*`    | Requests to the [registry](#24-registry-integration) in managed mode      |
+
+All three take the same properties:
+
+| Property                  | Description                                                                             | Type    | Default |
+|---------------------------|-----------------------------------------------------------------------------------------|---------|---------|
+| `name`                    | Logical name of the client. Used in log messages and as the `client` tag on its metrics  | String  | `federation-request` for `request-client`, otherwise – |
+| `trust-store-bundle-name` | Trust store bundle used to validate TLS server certificates, or `default` for the JVM's | String  | –       |
+| `base-uri`                | Base URI. Only used by the registry client; startup fails if it is set on the others     | String  | –       |
+| `max-retries`             | Times a failed request is retried. Each retry costs another worst case, so see below     | Integer | 0       |
+| `retry-interval`          | Interval between retries, when `max-retries` is above zero                               | Duration| PT0.5S  |
+| `follow-redirects`        | Whether redirects are followed. A redirect costs another worst case, and no federation endpoint needs one | Boolean | false |
+
+`federation.request-client.trust-store-bundle-name` defaults to the value configured for
+`federation.resolver.client`, since both talk to the same participants.
+
+#### Pool
+
+`<client>.pool.*`
+
+Each client has its own connection pool. The pool is a ceiling, not a reservation — connections are
+opened when they are needed.
+
+| Property                    | Description                                                                                  | Type     | Default                                 |
+|-----------------------------|----------------------------------------------------------------------------------------------|----------|-----------------------------------------|
+| `max-total`                 | Connections the client may hold in total, across all hosts                                   | Integer  | 100, 50 for `request-client`            |
+| `max-per-route`             | Connections the client may hold to one host                                                   | Integer  | 24, 10 for `request-client`             |
+| `time-to-live`              | How long a connection may be reused before it is closed, regardless of activity               | Duration | PT5M                                    |
+| `validate-after-inactivity` | How long a pooled connection may be idle before it is checked for staleness when leased       | Duration | PT5S                                    |
+| `evict-idle-after`          | Idle connections are closed after this long. Zero keeps them until their time to live runs out | Duration | PT30S                                   |
+
+`max-per-route` matters more than it looks. Several entities often share a host — a test federation
+where fifteen Relying Parties live under the same domain is not unusual — and the background rebuild
+fetches all of them at the same time. A `max-per-route` below the number of entities on a host makes
+those requests run in waves of that size instead of in parallel.
+
+For the request path the value should be kept low rather than high. It is the ceiling on how many
+connections a burst of inbound requests can open against a single participant, and a participant that
+rate-limits will answer `429` if that ceiling is generous.
+
+#### Timeouts
+
+`<client>.timeouts.*`
+
+| Property             | Description                                                                                 | Type     | Default                        |
+|----------------------|---------------------------------------------------------------------------------------------|----------|--------------------------------|
+| `connection-request` | Waiting for a connection from the pool. Turns an exhausted pool into a fast failure         | Duration | PT5S, PT1S for `request-client`|
+| `connect`            | Establishing the TCP connection. Name resolution happens first and is not covered           | Duration | PT3S, PT2S for `request-client`|
+| `tls-handshake`      | Completing the TLS handshake, once the TCP connection is up                                  | Duration | PT3S, PT2S for `request-client`|
+| `response`           | Waiting for the first byte of the response, once the request has been sent                   | Duration | PT5S, PT3S for `request-client`|
+| `socket`             | Waiting between reads on the socket. Bounds a response that starts and then stops part way   | Duration | PT5S, PT3S for `request-client`|
+
+The worst case for a single request is `connection-request + connect + tls-handshake + response`, which
+is **8 seconds** for the request path and **16 seconds** for the background rebuild with the defaults.
+The effective worst case is multiplied by `max-retries + 1`, and again by each redirect that is followed.
+
+#### Listing budget
+
+| Property                                                 | Description                                                                                        | Type     | Default |
+|----------------------------------------------------------|----------------------------------------------------------------------------------------------------|----------|---------|
+| `federation.trust-anchor.subordinate-listing-budget`     | The longest a filtered `subordinate_listing` may spend fetching Entity Configurations               | Duration | PT10S   |
+
+A filtered `subordinate_listing` fetches the Entity Configuration of each subordinate in turn, so its
+cost grows with the number of subordinates that do not answer. The budget bounds the endpoint as a
+whole. When it is spent, the subordinates that have not been fetched are treated as if their Entity
+Configuration could not be fetched, which keeps them in the listing — an unfetched subordinate has
+unknown Entity Types and is therefore not filtered out (OpenID Federation 1.0, Section 8.2.1) — and a
+warning is logged.
+
+Set it below the timeout of whatever calls the endpoint, and above the worst case of a single request,
+or a single unreachable subordinate spends the whole budget.
+
+#### Metrics
+
+Each client reports its pool as `oidf.http.client.pool`, tagged with `client` and with `state` set to
+`leased`, `available`, `pending` or `max`. A pool that has run out shows up as `leased` at `max` with a
+growing `pending`, which is otherwise only visible as requests that are mysteriously slow.
 
 ---
 

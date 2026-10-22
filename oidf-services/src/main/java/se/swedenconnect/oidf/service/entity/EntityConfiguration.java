@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.service.entity;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationClaimCustomizer;
@@ -43,8 +44,9 @@ public class EntityConfiguration {
    * @return an instance of {@link SigningEntityConfigurationFactory} configured with the specified signing key
    */
   @Bean
-  EntityConfigurationFactory entityConfigurationFactory(final FederationClient client,
-                                                        final List<EntityConfigurationClaimCustomizer> customizers) {
+  EntityConfigurationFactory entityConfigurationFactory(
+      @Qualifier("federationRequestClient") final FederationClient client,
+      final List<EntityConfigurationClaimCustomizer> customizers) {
     return new SigningEntityConfigurationFactory(client, customizers);
   }
 

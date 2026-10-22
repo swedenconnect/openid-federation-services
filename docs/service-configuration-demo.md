@@ -87,7 +87,7 @@ Read top to bottom, this configures:
    would use, just pointed at `classpath:` instead of `file:`.
 6. **`federation.resolver.client.name`** — names the outbound HTTP client the service's Resolver module
    uses when it needs to fetch entity/subordinate statements over the network (see
-   [2.6 Resolver HTTP Client](service-configuration.md#26-resolver-http-client)). It is required
+   [2.6 Outbound HTTP Clients](service-configuration.md#26-outbound-http-clients)). It is required
    configuration even in the demo, although the demo's single resolver only ever resolves entities that
    are already present in its own local registry, so this client is never actually dispatched against a
    remote host.
