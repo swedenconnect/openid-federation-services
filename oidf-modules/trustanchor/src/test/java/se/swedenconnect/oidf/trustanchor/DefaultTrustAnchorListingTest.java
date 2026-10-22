@@ -38,6 +38,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
+import se.swedenconnect.oidf.common.entity.exception.TemporarilyUnavailableException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -63,6 +64,7 @@ class DefaultTrustAnchorListingTest {
   private final Map<String, SignedJWT> configurations = new HashMap<>();
   private CompositeRecordSource source;
   private FederationClient client;
+  private Duration fetchDelay = Duration.ZERO;
 
   @BeforeEach
   @SuppressWarnings("unchecked")
@@ -74,6 +76,9 @@ class DefaultTrustAnchorListingTest {
     Mockito.when(this.source.getEntity(Mockito.any())).thenReturn(Optional.empty());
     this.client = Mockito.mock(FederationClient.class);
     Mockito.when(this.client.entityConfiguration(Mockito.any())).thenAnswer(invocation -> {
+      if (!this.fetchDelay.isZero()) {
+        Thread.sleep(this.fetchDelay);
+      }
       final FederationRequest<EntityConfigurationRequest> request = invocation.getArgument(0);
       final SignedJWT configuration = this.configurations.get(request.parameters().entityID().getValue());
       if (configuration == null) {
@@ -157,6 +162,34 @@ class DefaultTrustAnchorListingTest {
         List.of(this.subordinate(ISSUER), holder)));
   }
 
+  @Test
+  void listingThatRunsOutOfBudgetFailsInsteadOfAnsweringWithWhatItHas() throws Exception {
+    this.configurations.put(HOLDER, this.configuration(HOLDER, HOLDER,
+        List.of(this.trustMark(ISSUER, HOLDER, Instant.now().plusSeconds(600)))));
+    // One fetch already spends more than the budget, so the second subordinate is never evaluated.
+    this.fetchDelay = Duration.ofMillis(100);
+
+    final TemporarilyUnavailableException exception = Assertions.assertThrows(
+        TemporarilyUnavailableException.class,
+        () -> this.list(new SubordinateListingRequest(null, null, TYPE, null), null,
+            List.of(this.subordinate(ISSUER), this.subordinate(HOLDER)), Duration.ofMillis(50)));
+    Assertions.assertEquals("temporarily_unavailable", exception.toJSONObject().get("error"));
+    Assertions.assertEquals(503, exception.httpStatusCode());
+  }
+
+  @Test
+  void listingThatEvaluatedEverySubordinateAnswersEvenIfItTookLongerThanTheBudget() throws Exception {
+    this.configurations.put(HOLDER, this.configuration(HOLDER, HOLDER,
+        List.of(this.trustMark(ISSUER, HOLDER, Instant.now().plusSeconds(600)))));
+    // Two fetches take 200 ms in total, which is past the budget, but the budget is only checked before a fetch, so
+    // a listing that has evaluated every subordinate answers rather than failing on the way out.
+    this.fetchDelay = Duration.ofMillis(100);
+
+    Assertions.assertEquals(List.of(HOLDER),
+        this.list(new SubordinateListingRequest(null, null, TYPE, null), null,
+            List.of(this.subordinate(ISSUER), this.subordinate(HOLDER)), Duration.ofMillis(150)));
+  }
+
   private List<String> listByType(final Map<EntityID, List<EntityID>> trustMarkIssuers) throws Exception {
     return this.list(new SubordinateListingRequest(null, null, TYPE, null), trustMarkIssuers);
   }
@@ -170,10 +203,17 @@ class DefaultTrustAnchorListingTest {
   private List<String> list(final SubordinateListingRequest request,
       final Map<EntityID, List<EntityID>> trustMarkIssuers,
       final List<TrustAnchorProperties.SubordinateListingProperty> subordinates) throws Exception {
+    return this.list(request, trustMarkIssuers, subordinates, Duration.ofSeconds(10));
+  }
+
+  private List<String> list(final SubordinateListingRequest request,
+      final Map<EntityID, List<EntityID>> trustMarkIssuers,
+      final List<TrustAnchorProperties.SubordinateListingProperty> subordinates,
+      final Duration listingBudget) throws Exception {
     final TrustAnchorProperties properties = new TrustAnchorProperties(new EntityID(TA), trustMarkIssuers, null);
     properties.setSubordinates(subordinates);
     final DefaultTrustAnchor trustAnchor = new DefaultTrustAnchor(this.source, properties,
-        Mockito.mock(SubordinateStatementFactory.class), this.client, Duration.ofSeconds(10));
+        Mockito.mock(SubordinateStatementFactory.class), this.client, listingBudget);
     return trustAnchor.subordinateListing(request);
   }
 

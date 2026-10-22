@@ -38,6 +38,7 @@ import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
+import se.swedenconnect.oidf.common.entity.exception.TemporarilyUnavailableException;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
@@ -143,19 +144,21 @@ public class DefaultTrustAnchor implements TrustAnchor {
     // mark filter asks for evidence that it cannot give.
     final boolean keepUnavailable = request.trustMarkType() == null && !Boolean.TRUE.equals(request.trustMarked());
     // The Entity Configurations are fetched one at a time, so the listing bounds itself rather than taking as long
-    // as the slowest subordinate allows. Once the budget is spent the rest are treated as not fetched.
+    // as the slowest subordinate allows. A listing that runs out of budget has not been evaluated for every
+    // subordinate, and an answer based on the part that was evaluated would depend on how far the fetching got. The
+    // request fails instead, so that the client is not given a listing that looks complete but is not.
     final Instant deadline = Instant.now().plus(this.listingBudget);
-    boolean budgetSpent = false;
+    int fetchCount = 0;
     final List<String> result = new ArrayList<>();
     for (final TrustAnchorProperties.SubordinateListingProperty subordinate : subordinates) {
-      if (!budgetSpent && !Instant.now().isBefore(deadline)) {
-        budgetSpent = true;
-        log.warn("Listing budget of {} is spent for {}, the remaining subordinates are treated as unavailable",
-            this.listingBudget, this.properties.getEntityIdentifier().getValue());
+      if (!Instant.now().isBefore(deadline)) {
+        log.warn("Listing budget of {} is spent for {} after {} of {} subordinates, failing the request",
+            this.listingBudget, this.properties.getEntityIdentifier().getValue(), fetchCount, subordinates.size());
+        throw new TemporarilyUnavailableException(
+            "The Entity Configurations of the subordinates could not be read in time");
       }
-      final FetchedConfiguration fetched = budgetSpent
-          ? new FetchedConfiguration(null, false, null)
-          : this.fetchEntityConfiguration(subordinate);
+      final FetchedConfiguration fetched = this.fetchEntityConfiguration(subordinate);
+      fetchCount++;
       final boolean include;
       if (fetched.configuration() != null) {
         // The trust marks are checked against the time the Entity Configuration was fetched, not the time the

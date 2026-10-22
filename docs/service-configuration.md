@@ -365,13 +365,21 @@ The effective worst case is multiplied by `max-retries + 1`, and again by each r
 
 A filtered `subordinate_listing` fetches the Entity Configuration of each subordinate in turn, so its
 cost grows with the number of subordinates that do not answer. The budget bounds the endpoint as a
-whole. When it is spent, the subordinates that have not been fetched are treated as if their Entity
-Configuration could not be fetched, which keeps them in the listing — an unfetched subordinate has
-unknown Entity Types and is therefore not filtered out (OpenID Federation 1.0, Section 8.2.1) — and a
-warning is logged.
+whole.
 
-Set it below the timeout of whatever calls the endpoint, and above the worst case of a single request,
-or a single unreachable subordinate spends the whole budget.
+When the budget is spent, the request **fails** with `temporarily_unavailable` and HTTP 503, and a
+warning naming how many subordinates were evaluated is logged. It does not answer with the part of the
+listing it managed to evaluate: an answer based on how far the fetching happened to get would depend on
+the timing of the request rather than on the state of the federation, and two identical requests would
+give different listings without the client being able to tell. An error response is not cached, so the
+next request tries again.
+
+The budget is checked before each Entity Configuration is fetched, so a listing that has evaluated every
+subordinate answers even if it took longer than the budget. The upper bound on the endpoint is therefore
+the budget plus the worst case of one request — 18 seconds with the defaults.
+
+Set the budget below the timeout of whatever calls the endpoint, with room for the worst case of one
+request, and above that worst case, or a single unreachable subordinate spends the whole budget.
 
 #### Metrics
 

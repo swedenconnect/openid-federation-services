@@ -25,9 +25,13 @@ set to `true` — has to know the Entity Types and trust marks of the subordinat
 Entity Configuration of each one over the network. A request without a filter, or with `trust_marked` or
 `intermediate` set to `false`, is answered from the service's own records and makes no outbound
 requests. A subordinate whose Entity Configuration cannot be fetched has unknown Entity Types and is
-therefore kept in the listing, unless a trust mark filter asks for evidence it cannot give. See
+therefore kept in the listing, unless a trust mark filter asks for evidence it cannot give.
+
+A filtered request that cannot read the Entity Configurations within its budget answers
+`temporarily_unavailable` with HTTP 503 rather than returning the part of the listing it managed to
+evaluate, so a `200` is always a listing that every subordinate was evaluated for. See
 [Outbound HTTP Clients](service-configuration.md#26-outbound-http-clients) for the timeouts and the
-budget that bound this.
+budget.
 
 ### Fetch
 
