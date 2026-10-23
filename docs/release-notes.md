@@ -8,7 +8,7 @@
 
 **Date:** _not yet released_
 
-*
+* Filtered subordinate listings of a Trust Anchor now read the Entity Configurations of subordinates from the resolver for the same Trust Anchor, instead of fetching each one. Subordinates the resolver has no Entity Configuration for are still fetched.
 
 ## Version 1.0.0
 
@@ -64,7 +64,6 @@
 * A key reference from the registry that names a missing key no longer falls back to the default key. The entity is left out, or the module load fails, and the missing key reference is logged.
 * Corrected the service configuration documentation for `kid-algorithm`, metadata policies and the resolver response duration. JSON resolver configuration now reads `resolve-response-duration`, as documented, and still accepts `resolver-response-duration`. ([#229](https://github.com/swedenconnect/openid-federation-services/issues/229))
 * The demo now resolves its OpenID Provider and Relying Party, and its metadata policy is applied. The demo entities lacked `authority_hints` and used the entity type `relying_party` instead of `openid_relying_party`.
-* Filtered subordinate listings of a Trust Anchor now read the Entity Configurations of subordinates from the resolver for the same Trust Anchor, instead of fetching each one. Subordinates the resolver has no Entity Configuration for are still fetched.
 
 ## Version 0.11.17
 
