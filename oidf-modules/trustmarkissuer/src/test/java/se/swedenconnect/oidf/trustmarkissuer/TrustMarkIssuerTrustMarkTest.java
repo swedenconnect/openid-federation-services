@@ -87,6 +87,13 @@ class TrustMarkIssuerTrustMarkTest {
   }
 
   @Test
+  void typeWithoutSubjectsIsNotFound() {
+    final TrustMarkIssuer issuer =
+        new TrustMarkIssuer(this.properties(null), this.signer, this.source, Clock.systemUTC());
+    Assertions.assertThrows(NotFoundException.class, () -> issuer.trustMark(new TrustMarkRequest(TYPE, SUBJECT)));
+  }
+
+  @Test
   void validSubjectIsSigned() throws Exception {
     final SignedJWT trustMark = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), new JWTClaimsSet.Builder().build());
     trustMark.sign(new RSASSASigner(new RSAKeyGenerator(2048).generate()));

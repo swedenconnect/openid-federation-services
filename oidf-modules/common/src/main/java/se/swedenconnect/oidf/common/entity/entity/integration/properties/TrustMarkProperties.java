@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.T
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Felix Hellman
@@ -49,6 +50,16 @@ public final class TrustMarkProperties {
   private TrustMarkDelegation delegation;
   @SerializedName("trust-mark-subjects")
   private List<TrustMarkSubjectProperty> trustMarkSubjects;
+
+  /**
+   * The subjects of this trust mark. Subjects are optional in the configuration, a trust mark without
+   * subjects is simply held by no one.
+   *
+   * @return the subjects, an empty list if none are configured
+   */
+  public List<TrustMarkSubjectProperty> getTrustMarkSubjects() {
+    return Optional.ofNullable(this.trustMarkSubjects).orElseGet(List::of);
+  }
 
   /**
    * Validate content of configuration.
