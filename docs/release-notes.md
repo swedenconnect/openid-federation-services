@@ -8,7 +8,7 @@
 
 **Date:** _not yet released_
 
-*
+* Filtered subordinate listings of a Trust Anchor now read the Entity Configurations of subordinates from the resolver for the same Trust Anchor, instead of fetching each one. Subordinates the resolver has no Entity Configuration for are still fetched.
 
 ## Version 1.0.0
 
