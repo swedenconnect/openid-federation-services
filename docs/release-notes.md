@@ -8,7 +8,7 @@
 
 **Date:** _not yet released_
 
-*
+* A request for a trust mark whose type has no subjects now gives 404 instead of 500. ([#249](https://github.com/swedenconnect/openid-federation-services/issues/249))
 
 ## Version 1.0.0
 
