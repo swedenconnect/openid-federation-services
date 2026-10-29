@@ -58,7 +58,10 @@ public class TrustAnchorEntityCustomizer implements EntityConfigurationClaimCust
             builder.claim("trust_mark_issuers", claim);
           });
 
-          builder.claim("trust_mark_owners", new HashMap<>(ta.trustMarkOwnersJson()));
+          final Map<String, Object> trustMarkOwners = ta.trustMarkOwnersJson();
+          if (!trustMarkOwners.isEmpty()) {
+            builder.claim("trust_mark_owners", new HashMap<>(trustMarkOwners));
+          }
         });
     return builder;
   }
