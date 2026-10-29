@@ -51,6 +51,13 @@ public final class TrustMarkProperties {
   private List<TrustMarkSubjectProperty> trustMarkSubjects;
 
   /**
+   * @return configured trust mark subjects, or an empty list if none are configured
+   */
+  public List<TrustMarkSubjectProperty> getTrustMarkSubjects() {
+    return this.trustMarkSubjects == null ? List.of() : this.trustMarkSubjects;
+  }
+
+  /**
    * Validate content of configuration.
    *
    * @throws IllegalArgumentException is thrown when configuration is missing
