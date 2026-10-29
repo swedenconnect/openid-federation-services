@@ -185,6 +185,17 @@
     }
   },
   {
+    "entity-identifier": "http://localhost:11111/hosted-rp",
+    "virtual-entity-id": "http://localhost:11111/im/hosted/http%3A%2F%2Flocalhost%3A11111%2Fhosted-rp",
+    "jwks": "federation:359433581122628090150675142465804663870388233428",
+    "authority-hints": ["http://localhost:11111/im"],
+    "metadata": {
+      "relying_party": {
+        "logo_uri": "http://test.test"
+      }
+    }
+  },
+  {
     "entity-identifier": "http://localhost:11111/policy/resolver",
     "virtual-entity-id": "http://localhost:11111/policy/resolver",
     "authority-hints": [

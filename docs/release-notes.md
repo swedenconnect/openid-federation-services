@@ -9,6 +9,7 @@
 **Date:** _not yet released_
 
 * Filtered subordinate listings of a Trust Anchor now read the Entity Configurations of subordinates from the resolver for the same Trust Anchor, instead of fetching each one. Subordinates the resolver has no Entity Configuration for are still fetched.
+* Hosted entities with a URL-encoded entity identifier in their virtual entity id, for example `<ie>/hosted/https%3A%2F%2Frp.example.se`, are now served instead of being rejected by Tomcat.
 
 ## Version 1.0.0
 
