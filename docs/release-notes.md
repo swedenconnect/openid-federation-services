@@ -12,6 +12,7 @@
 * Hosted entities with a URL-encoded entity identifier in their virtual entity id, for example `<ie>/hosted/https%3A%2F%2Frp.example.se`, are now served instead of being rejected by Tomcat.
 * The trust mark endpoint now returns 404 `not_found` instead of 500 for a trust mark type configured without `trust-mark-subjects`, and the trust marked entities listing returns an empty array. ([#249](https://github.com/swedenconnect/openid-federation-services/issues/249))
 * An empty `trust_mark_owners` is no longer published. ([#242](https://github.com/swedenconnect/openid-federation-services/issues/242))
+* The new `nimbus-extensions` module adds Nimbus metadata policy operators for `one_of` with booleans and numbers, and `value` set to `null`. Metadata policies read through `EntityStatementClaims` use them. ([#244](https://github.com/swedenconnect/openid-federation-services/issues/244))
 
 ## Version 1.0.0
 
