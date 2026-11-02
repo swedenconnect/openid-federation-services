@@ -210,7 +210,7 @@ mvn -Prelease clean deploy
 | Published | Not published |
 |-----------|----------------|
 | `oidf-parent` | `oidf-services` |
-| `oidf-modules` and `common`, `resolver`, `trustanchor`, `trustmarkissuer` | |
+| `oidf-modules` and `nimbus-extensions`, `common`, `resolver`, `trustanchor`, `trustmarkissuer` | |
 | `oidf-starters` and `federation-starter`, `trustanchor-starter`, `trustmarkissuer-starter`, `resolver-starter` | |
 
 `oidf-services` is the application, not a library, and sets `maven.deploy.skip`. It ships as a

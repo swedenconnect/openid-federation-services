@@ -37,6 +37,7 @@ import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import com.nimbusds.openid.connect.sdk.federation.utils.JWTUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedMetadataPolicy;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -181,7 +182,7 @@ public final class EntityStatementClaims {
       if (typePolicy == null) {
         return null;
       }
-      return MetadataPolicy.parse(typePolicy);
+      return ExtendedMetadataPolicy.parse(typePolicy);
     } catch (final java.text.ParseException | ParseException | PolicyViolationException e) {
       return null;
     }

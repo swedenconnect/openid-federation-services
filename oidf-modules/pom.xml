@@ -33,6 +33,7 @@
     <url>https://docs.swedenconnect.se/openid-federation-services</url>
 
     <modules>
+        <module>nimbus-extensions</module>
         <module>common</module>
         <module>resolver</module>
         <module>trustmarkissuer</module>
