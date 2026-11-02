@@ -27,9 +27,10 @@ fail() {
   fi
 }
 
-# Prints one "<pom path> <version> <deploy skip>" line per module in the reactor. The deploy skip
-# column is "true" for modules that set maven.deploy.skip, and the Maven help plugin's placeholder
-# text for the rest.
+# Prints one "<pom path> <version> <deploy skip>" line per pom.xml under version control. Only those
+# are read, so a POM that is not part of the build, such as one left behind in an ignored directory,
+# is never checked. The deploy skip column is "true" for modules that set maven.deploy.skip, and the
+# Maven help plugin's placeholder text for the rest.
 list_modules() {
   local pom version skip
   while IFS= read -r pom; do
@@ -39,7 +40,7 @@ list_modules() {
       exit 1
     fi
     echo "${pom} ${version} ${skip}"
-  done < <(find . -name pom.xml -not -path '*/target/*' | sort)
+  done < <(git ls-files -- pom.xml '**/pom.xml' | sort)
 }
 
 TAG="${1:-}"

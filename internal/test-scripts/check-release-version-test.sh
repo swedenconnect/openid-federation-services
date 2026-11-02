@@ -67,6 +67,15 @@ expect "a module left behind at an older version is rejected" 1 "is 1.2.2, but t
 expect "a tag that is a prefix of the version is rejected" 1 "but the tag v1.2.3 requires 1.2.3" \
   v1.2.3 './pom.xml 1.2.30 null object or invalid expression'
 
+expect "a module that sets the deploy skip to false is checked" 1 "is 1.2.2, but the tag v1.2.3 requires 1.2.3" \
+  v1.2.3 './pom.xml 1.2.3 null object or invalid expression
+./oidf-modules/common/pom.xml 1.2.2 false'
+
+expect "every module that is wrong is listed, not only the first" 1 "2 module(s) do not match the tag v1.2.3" \
+  v1.2.3 './pom.xml 1.2.3-SNAPSHOT null object or invalid expression
+./oidf-modules/common/pom.xml 1.2.2 null object or invalid expression
+./oidf-services/pom.xml 9.9.9 true'
+
 expect "a version that is a prefix of the tag is rejected" 1 "but the tag v1.2.30 requires 1.2.30" \
   v1.2.30 './pom.xml 1.2.3 null object or invalid expression'
 
