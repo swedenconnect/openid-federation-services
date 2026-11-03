@@ -28,6 +28,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMark
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -49,6 +50,8 @@ public final class TrustMarkProperties {
   private TrustMarkDelegation delegation;
   @SerializedName("trust-mark-subjects")
   private List<TrustMarkSubjectProperty> trustMarkSubjects;
+  @SerializedName("trust-mark-validity-duration")
+  private Duration trustMarkValidityDuration;
 
   /**
    * @return configured trust mark subjects, or an empty list if none are configured
@@ -65,5 +68,22 @@ public final class TrustMarkProperties {
   @PostConstruct
   public void validate() throws IllegalArgumentException {
     FederationAssert.assertNotEmpty(this.trustMarkType, "TrustMarkId is expected");
+    assertValidityDuration(this.trustMarkValidityDuration);
+  }
+
+  /**
+   * Asserts that a validity duration, when given, is long enough to be useful. A missing duration means that the
+   * issued trust marks never expire.
+   *
+   * @param validityDuration the duration to check, may be null
+   * @throws IllegalArgumentException if the duration is given and shorter than 5 minutes
+   */
+  static void assertValidityDuration(final Duration validityDuration) throws IllegalArgumentException {
+    if (validityDuration == null) {
+      return;
+    }
+    FederationAssert.assertTrue(validityDuration.minus(Duration.ofMinutes(4)).isPositive(),
+        "Expect trust mark validity duration to be greater than 5 minutes. Current value:'%s'"
+            .formatted(validityDuration));
   }
 }

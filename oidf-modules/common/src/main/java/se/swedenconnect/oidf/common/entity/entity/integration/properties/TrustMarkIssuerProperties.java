@@ -29,7 +29,9 @@ import java.util.List;
 /**
  * Properties for TrustMarkIssuer
  *
- * @param trustMarkValidityDuration The validity duration of issued Trust Marks
+ * @param trustMarkValidityDuration The validity duration of issued Trust Marks, deprecated in favour of the
+ *     validity duration of each trust mark. It is only used as a fallback for trust marks without a duration of
+ *     their own, and is removed once the registry no longer sends it.
  * @param entityIdentifier            IssuerEntityId
  * @param trustMarks                TrustMark Issuer
  * @author Per Fredrik Plars
@@ -48,12 +50,9 @@ public record TrustMarkIssuerProperties(
    */
   @PostConstruct
   public void validate() throws IllegalArgumentException {
-    FederationAssert.assertNotEmpty(this.trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
     FederationAssert.assertNotEmpty(this.entityIdentifier, "IssuerEntityId is expected");
     FederationAssert.assertNotEmpty(this.trustMarks, "TrustMarks is expected");
-    FederationAssert.assertTrue(this.trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
-        "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'%s'"
-            .formatted(this.trustMarkValidityDuration));
+    TrustMarkProperties.assertValidityDuration(this.trustMarkValidityDuration);
 
     this.trustMarks.forEach(TrustMarkProperties::validate);
   }

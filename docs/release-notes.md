@@ -8,7 +8,8 @@
 
 **Date:** _not yet released_
 
-*
+* A trust mark issuer without a validity duration no longer gives 500. A trust mark without a validity duration is issued without `exp` and never expires. ([#262](https://github.com/swedenconnect/openid-federation-services/issues/262))
+* The validity of a trust mark can now be set per trust mark with `trust-mark-validity-duration`. The value of the trust mark issuer is still used for trust marks without one of their own, and is deprecated.
 
 ## Version 1.0.1
 

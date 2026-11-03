@@ -37,6 +37,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.JWKSKidReferenceLo
 import se.swedenconnect.oidf.common.entity.entity.integration.JWKSSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.EntityRecordDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
@@ -74,6 +75,33 @@ class JsonRegistryLoaderTest {
     final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader(this.createGson(new KeyRegistry()));
     final ModuleRecord moduleRecord = jsonRegistryLoader.parseModuleJson(new ClassPathResource("modules.json").getContentAsString(StandardCharsets.UTF_8));
     System.out.println(moduleRecord);
+  }
+
+  @Test
+  void trustMarkValidityDurationIsReadPerTrustMark() {
+    final ModuleRecord modules = new JsonRegistryLoader(this.createGson(new KeyRegistry())).parseModuleJson("""
+        {"trust-mark-issuers": [{"entity-identifier": "https://example.com/tmi",
+          "trust-mark-validity-duration": "PT30M",
+          "trust-marks": [
+            {"trust-mark-type": "https://example.com/tmi/certified", "trust-mark-validity-duration": "P2D"},
+            {"trust-mark-type": "https://example.com/tmi/accepted"}]}]}
+        """);
+
+    final List<TrustMarkProperties> trustMarks = modules.getTrustMarkIssuers().getFirst().trustMarks();
+    Assertions.assertEquals(Duration.ofMinutes(30),
+        modules.getTrustMarkIssuers().getFirst().trustMarkValidityDuration());
+    Assertions.assertEquals(Duration.ofDays(2), trustMarks.getFirst().getTrustMarkValidityDuration());
+    Assertions.assertNull(trustMarks.getLast().getTrustMarkValidityDuration());
+  }
+
+  @Test
+  void trustMarkIssuerWithoutValidityDurationIsRead() {
+    final ModuleRecord modules = new JsonRegistryLoader(this.createGson(new KeyRegistry())).parseModuleJson("""
+        {"trust-mark-issuers": [{"entity-identifier": "https://example.com/tmi",
+          "trust-marks": [{"trust-mark-type": "https://example.com/tmi/certified"}]}]}
+        """);
+
+    Assertions.assertNull(modules.getTrustMarkIssuers().getFirst().trustMarkValidityDuration());
   }
 
   @Test
