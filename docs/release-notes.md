@@ -8,7 +8,7 @@
 
 **Date:** _not yet released_
 
-*
+* The resolver now parses, merges and applies metadata policies with the operators from the `nimbus-extensions` module.
 
 ## Version 1.0.1
 
