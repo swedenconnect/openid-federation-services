@@ -40,6 +40,12 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public final class TrustMarkProperties {
+
+  /**
+   * The shortest validity duration that is not likely to be a configuration mistake.
+   */
+  static final Duration MINIMUM_VALIDITY_DURATION = Duration.ofMinutes(5);
+
   @SerializedName("trust-mark-type")
   private TrustMarkType trustMarkType;
   @SerializedName("logo-uri")
@@ -76,14 +82,22 @@ public final class TrustMarkProperties {
    * issued trust marks never expire.
    *
    * @param validityDuration the duration to check, may be null
-   * @throws IllegalArgumentException if the duration is given and shorter than 5 minutes
+   * @throws IllegalArgumentException if the duration is given and shorter than the minimum
    */
   static void assertValidityDuration(final Duration validityDuration) throws IllegalArgumentException {
-    if (validityDuration == null) {
-      return;
-    }
-    FederationAssert.assertTrue(validityDuration.minus(Duration.ofMinutes(4)).isPositive(),
-        "Expect trust mark validity duration to be greater than 5 minutes. Current value:'%s'"
-            .formatted(validityDuration));
+    FederationAssert.assertTrue(!isShorterThanMinimum(validityDuration),
+        "Expect trust mark validity duration to be at least %s. Current value:'%s'"
+            .formatted(MINIMUM_VALIDITY_DURATION, validityDuration));
+  }
+
+  /**
+   * Checks whether a validity duration is shorter than the minimum. A duration that is not given is not short, it
+   * means that the issued trust marks never expire.
+   *
+   * @param validityDuration the duration to check, may be null
+   * @return true if the duration is given and shorter than the minimum
+   */
+  static boolean isShorterThanMinimum(final Duration validityDuration) {
+    return validityDuration != null && validityDuration.compareTo(MINIMUM_VALIDITY_DURATION) < 0;
   }
 }

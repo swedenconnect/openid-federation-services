@@ -51,6 +51,37 @@ class TrustMarkValidityDurationTest {
   }
 
   @Test
+  void durationOfExactlyTheMinimumIsAccepted() {
+    assertDoesNotThrow(() -> issuer(Duration.ofMinutes(5), Duration.ofMinutes(5)).validate());
+  }
+
+  @Test
+  void durationJustUnderTheMinimumIsRejected() {
+    assertThrows(IllegalArgumentException.class,
+        () -> issuer(null, Duration.ofMinutes(4).plusSeconds(30)).validate());
+  }
+
+  @Test
+  void shortDurationsAreOnlyWarnedAboutWhenRecordsAreLoaded() {
+    assertDoesNotThrow(() -> issuer(Duration.ofMinutes(1), Duration.ofMinutes(1)).warnForShortValidityDurations());
+  }
+
+  @Test
+  void warningForShortDurationsHandlesIncompleteConfiguration() {
+    assertDoesNotThrow(() -> TrustMarkIssuerProperties.builder()
+        .entityIdentifier(ISSUER)
+        .build()
+        .warnForShortValidityDurations());
+    assertDoesNotThrow(() -> TrustMarkIssuerProperties.builder()
+        .entityIdentifier(ISSUER)
+        .trustMarks(List.of(TrustMarkProperties.builder()
+            .trustMarkValidityDuration(Duration.ofMinutes(1))
+            .build()))
+        .build()
+        .warnForShortValidityDurations());
+  }
+
+  @Test
   void shortDurationOfIssuerIsRejected() {
     assertThrows(IllegalArgumentException.class, () -> issuer(Duration.ofMinutes(1), null).validate());
   }

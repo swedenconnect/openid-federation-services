@@ -203,14 +203,14 @@ without support for the claim will then reject the statement.
 | Property                       | Description                                                                                         | Type     |
 |--------------------------------|-----------------------------------------------------------------------------------------------------|----------|
 | `trust-mark-type`              | Unique identifier of the trust mark                                                                 | String   |
-| `trust-mark-validity-duration` | Validity of issued trust marks (ISO‑8601), for example `P2D`. Without a value the issued trust marks have no `exp` and never expire | Duration |
+| `trust-mark-validity-duration` | Validity of issued trust marks (ISO‑8601), for example `P2D`. Without a value the issued trust marks have no `exp` and never expire, unless the trust mark issuer has a (deprecated) duration | Duration |
 | `logo-uri`                     | Logo URI                                                                                            | String   |
 | `ref-uri`                      | Reference URI                                                                                       | String   |
 | `delegation`                   | TrustMarkDelegation JWT                                                                             | String   |
 | `trust-mark-subjects`          | Subjects granted this trust mark                                                                    | List     |
 
 A trust mark expires at the earliest of its validity duration and the `expires` of its subject. A validity duration
-shorter than 5 minutes is logged as a warning at startup.
+shorter than 5 minutes is logged as a warning when the configuration is loaded, and is still used.
 
 `federation.local-registry.trust-mark-issuers[*].trust-mark-subjects[*]`
 

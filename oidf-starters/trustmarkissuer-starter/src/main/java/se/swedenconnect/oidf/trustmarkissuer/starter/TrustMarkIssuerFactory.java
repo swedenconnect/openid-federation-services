@@ -17,8 +17,6 @@
 package se.swedenconnect.oidf.trustmarkissuer.starter;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.trustmarkissuer.TrustMarkIssuer;
@@ -32,8 +30,6 @@ import java.time.Clock;
  * @author Felix Hellman
  */
 public class TrustMarkIssuerFactory {
-
-  private static final Logger log = LoggerFactory.getLogger(TrustMarkIssuerFactory.class);
 
   private final TrustMarkSigner signer;
   private final CompositeRecordSource source;
