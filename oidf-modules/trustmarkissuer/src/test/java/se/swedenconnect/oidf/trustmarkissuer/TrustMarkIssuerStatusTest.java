@@ -85,6 +85,12 @@ class TrustMarkIssuerStatusTest {
   }
 
   @Test
+  void trustMarkWithoutExpIsActive() throws Exception {
+    this.registerSubject(false);
+    Assertions.assertEquals("active", this.status(this.trustMark(ISSUER, TYPE, null)));
+  }
+
+  @Test
   void expiredTrustMark() throws Exception {
     this.registerSubject(false);
     Assertions.assertEquals("expired", this.status(this.trustMark(ISSUER, TYPE, Instant.now().minusSeconds(60))));
@@ -148,13 +154,15 @@ class TrustMarkIssuerStatusTest {
 
   private String trustMark(final String iss, final String type, final Instant expiration, final String typ)
       throws Exception {
-    return this.sign(typ, new JWTClaimsSet.Builder()
+    final JWTClaimsSet.Builder claims = new JWTClaimsSet.Builder()
         .issuer(iss)
         .subject(SUBJECT)
         .claim("trust_mark_type", type)
-        .issueTime(new Date())
-        .expirationTime(Date.from(expiration))
-        .build()).serialize();
+        .issueTime(new Date());
+    if (expiration != null) {
+      claims.expirationTime(Date.from(expiration));
+    }
+    return this.sign(typ, claims.build()).serialize();
   }
 
   private SignedJWT sign(final JWTClaimsSet claims) throws Exception {

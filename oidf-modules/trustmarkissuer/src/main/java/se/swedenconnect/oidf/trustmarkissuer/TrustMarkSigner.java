@@ -91,13 +91,16 @@ public class TrustMarkSigner {
         .subject(trustMarkSubjectProperty.sub());
 
 
-    final Date expirationTime =
-        this.calculateExp(trustMarkIssuerProperties.trustMarkValidityDuration(), trustMarkSubjectProperty.expires());
-    if (!expirationTime.toInstant().isAfter(Instant.now(this.clock))) {
-      throw new ServerErrorException("Refusing to issue trust mark for %s with exp in the past"
-          .formatted(trustMarkSubjectProperty.sub()));
+    final Optional<Date> expirationTime = this.calculateExp(
+        resolveValidityDuration(trustMarkIssuerProperties, trustMarkProperties),
+        trustMarkSubjectProperty.expires());
+    if (expirationTime.isPresent()) {
+      if (!expirationTime.get().toInstant().isAfter(Instant.now(this.clock))) {
+        throw new ServerErrorException("Refusing to issue trust mark for %s with exp in the past"
+            .formatted(trustMarkSubjectProperty.sub()));
+      }
+      claimsSetBuilder.expirationTime(expirationTime.get());
     }
-    claimsSetBuilder.expirationTime(expirationTime);
 
     final Optional<EntityID> issuerEntityId = Optional.ofNullable(trustMarkIssuerProperties.entityIdentifier());
 
@@ -121,14 +124,43 @@ public class TrustMarkSigner {
         .sign(TRUST_MARK_JWT_TYPE, claimsSet);
   }
 
-  protected Date calculateExp(final Duration trustMarkDurationToLive, @Nullable final Instant subjectTimeToLive) {
-    final Instant calculatedTrustMarkTTL = Instant.now(this.clock).plus(trustMarkDurationToLive);
+  /**
+   * Resolves the validity duration to use for a trust mark. The duration of the trust mark itself is used when it is
+   * present, otherwise the duration of the trust mark issuer, which the registry sends until the duration has been
+   * moved to every trust mark.
+   *
+   * @param trustMarkIssuerProperties properties of the trust mark issuer
+   * @param trustMarkProperties properties of the trust mark
+   * @return the validity duration, or null if the trust mark never expires
+   */
+  @Nullable
+  private static Duration resolveValidityDuration(final TrustMarkIssuerProperties trustMarkIssuerProperties,
+      final TrustMarkProperties trustMarkProperties) {
+    return Optional.ofNullable(trustMarkProperties.getTrustMarkValidityDuration())
+        .orElseGet(trustMarkIssuerProperties::trustMarkValidityDuration);
+  }
+
+  /**
+   * Calculates the exp of a trust mark. A trust mark never expires when neither a validity duration nor an expiry of
+   * the subject is given, and otherwise expires at the earliest of the two.
+   *
+   * @param trustMarkDurationToLive validity duration of the trust mark, may be null
+   * @param subjectTimeToLive expiry of the trust mark subject, may be null
+   * @return the exp to use, empty if the trust mark never expires
+   */
+  protected Optional<Date> calculateExp(@Nullable final Duration trustMarkDurationToLive,
+      @Nullable final Instant subjectTimeToLive) {
+    final Optional<Instant> calculatedTrustMarkTTL = Optional.ofNullable(trustMarkDurationToLive)
+        .map(duration -> Instant.now(this.clock).plus(duration));
     final Optional<Instant> subTimeToLive = Optional.ofNullable(subjectTimeToLive);
 
-    if (subTimeToLive.isPresent() && calculatedTrustMarkTTL.isAfter(subTimeToLive.get())) {
-      return new Date(subTimeToLive.get().toEpochMilli());
+    if (calculatedTrustMarkTTL.isEmpty()) {
+      return subTimeToLive.map(instant -> new Date(instant.toEpochMilli()));
     }
-    return new Date(calculatedTrustMarkTTL.toEpochMilli());
+    if (subTimeToLive.isPresent() && calculatedTrustMarkTTL.get().isAfter(subTimeToLive.get())) {
+      return Optional.of(new Date(subTimeToLive.get().toEpochMilli()));
+    }
+    return calculatedTrustMarkTTL.map(instant -> new Date(instant.toEpochMilli()));
   }
 
   /**

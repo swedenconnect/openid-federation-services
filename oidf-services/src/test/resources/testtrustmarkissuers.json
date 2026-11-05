@@ -1,10 +1,10 @@
 [
   {
     "entity-identifier": "http://localhost:11111/im/tmi",
-    "trust-mark-validity-duration": "PT30M",
     "trust-marks": [
       {
         "trust-mark-type": "http://localhost:11111/im/tmi/certified",
+        "trust-mark-validity-duration": "PT30M",
         "logo-uri": "http://localhost:11111/im/tmi/certified",
         "ref-uri": "http://localhost:11111/im/tmi/certified",
         "trust-mark-subjects": [

@@ -122,6 +122,7 @@ public class PropertyRegistry {
         Objects.requireNonNullElse(this.entities, List.of()));
     if (Objects.nonNull(this.trustMarkIssuers)) {
       this.trustMarkIssuers.forEach(r -> {
+        r.warnForShortValidityDurations();
         final String entityIdentifier = r.entityIdentifier().getValue();
         if (!this.entityExists(entityIdentifier)) {
           throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"
