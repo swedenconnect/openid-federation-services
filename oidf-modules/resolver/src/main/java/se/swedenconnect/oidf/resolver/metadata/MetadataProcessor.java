@@ -18,15 +18,32 @@ package se.swedenconnect.oidf.resolver.metadata;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
+import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicyEntry;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.OperationName;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyOperationApplication;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.EssentialOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.OneOfOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.PolicyOperationFactory;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.SubsetOfOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.SupersetOfOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.ValueOperation;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import se.swedenconnect.oidf.common.entity.exception.InvalidMetadataException;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedMetadataPolicy;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedPolicyOperationCombinationValidator;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedPolicyOperationFactory;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedValueOperation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +59,18 @@ import java.util.stream.Collectors;
 public class MetadataProcessor {
 
   private static final String FEDERATION_ENTITY = "federation_entity";
+
+  /** The {@code scope} parameter is a space separated string that operators handle as an array (Section 6.1.3.1.8). */
+  private static final String SCOPE = "scope";
+
+  private static final String SCOPE_SEPARATOR = " ";
+
+  private static final int MAX_SCOPE_LENGTH = 8192;
+
+  private static final Set<OperationName> VALUE_CHECKS =
+      Set.of(OneOfOperation.NAME, SubsetOfOperation.NAME, SupersetOfOperation.NAME);
+
+  private final PolicyOperationFactory operationFactory = new ExtendedPolicyOperationFactory();
 
   /**
    * Constructor.
@@ -78,7 +107,7 @@ public class MetadataProcessor {
       // Policies are bound to an entity type and are merged and applied per type (Sections 6.1.1 and 6.1.4)
       final JSONObject result = new JSONObject();
       for (final String type : metadataType) {
-        final Map<String, ParameterPolicy> typePolicy = this.resolvePolicy(chain, type);
+        final MetadataPolicy typePolicy = this.resolvePolicy(chain, type);
         final JSONObject baseMetadata = mergeSubordinateMetadata(
             EntityStatementClaims.getMetadata(leafNode, new EntityType(type)),
             immediateSuperiorStatement,
@@ -87,7 +116,8 @@ public class MetadataProcessor {
       }
       return result;
     }
-    catch (final MetadataPolicyException | java.text.ParseException e) {
+    catch (final MetadataPolicyException | PolicyViolationException | ParseException
+                 | java.text.ParseException e) {
       throw new InvalidMetadataException("Failed to resolve metadata: " + e.getMessage(), e);
     }
   }
@@ -98,28 +128,29 @@ public class MetadataProcessor {
    *
    * @param chain the trust chain, leaf first
    * @param type the entity type
-   * @return the resolved policy, keyed by metadata parameter
-   * @throws MetadataPolicyException on a policy error
+   * @return the resolved policy
+   * @throws MetadataPolicyException if the policy is malformed or uses an unsupported critical operator
+   * @throws PolicyViolationException if the policies cannot be merged
+   * @throws ParseException if an operator value cannot be parsed
    * @throws java.text.ParseException if the statement claims cannot be parsed
    */
-  private Map<String, ParameterPolicy> resolvePolicy(final List<SignedJWT> chain, final String type)
-      throws MetadataPolicyException, java.text.ParseException {
-    final Map<String, ParameterPolicy> resolved = new LinkedHashMap<>();
+  private MetadataPolicy resolvePolicy(final List<SignedJWT> chain, final String type)
+      throws MetadataPolicyException, PolicyViolationException, ParseException, java.text.ParseException {
+    final List<MetadataPolicy> policies = new ArrayList<>();
     for (final SignedJWT statement : chain.reversed()) {
       if (EntityStatementClaims.isSelfStatement(statement)) {
         // metadata_policy is only used from Subordinate Statements (Sections 3.2 and 6.1.4.1)
         continue;
       }
-      final Map<String, ParameterPolicy> statementPolicy = this.parsePolicy(statement, type);
-      if (statementPolicy == null) {
-        continue;
-      }
-      for (final Map.Entry<String, ParameterPolicy> parameter : statementPolicy.entrySet()) {
-        final ParameterPolicy current = resolved.get(parameter.getKey());
-        resolved.put(parameter.getKey(), current == null ? parameter.getValue() : current.merge(parameter.getValue()));
+      final MetadataPolicy statementPolicy = this.parsePolicy(statement, type);
+      if (statementPolicy != null) {
+        policies.add(statementPolicy);
       }
     }
-    return resolved;
+    if (policies.isEmpty()) {
+      return new MetadataPolicy();
+    }
+    return MetadataPolicy.combine(policies, new ExtendedPolicyOperationCombinationValidator());
   }
 
   /**
@@ -128,24 +159,92 @@ public class MetadataProcessor {
    * @param metadata the metadata, may be null
    * @param policy the resolved policy
    * @return the resulting metadata, or null if the metadata is null and there is no policy
-   * @throws MetadataPolicyException if the metadata does not comply with the policy
+   * @throws PolicyViolationException if the metadata does not comply with the policy
    */
-  private static JSONObject applyPolicy(final JSONObject metadata, final Map<String, ParameterPolicy> policy)
-      throws MetadataPolicyException {
-    if (metadata == null && policy.isEmpty()) {
+  private static JSONObject applyPolicy(final JSONObject metadata, final MetadataPolicy policy)
+      throws PolicyViolationException {
+    if (metadata == null && policy.entrySet().isEmpty()) {
       return null;
     }
-    final JSONObject result = metadata == null ? new JSONObject() : new JSONObject(metadata);
-    for (final Map.Entry<String, ParameterPolicy> parameter : policy.entrySet()) {
-      final Object value = parameter.getValue().apply(result.get(parameter.getKey()));
-      if (value == null) {
-        result.remove(parameter.getKey());
+    final JSONObject input = metadata == null ? new JSONObject() : new JSONObject(metadata);
+    final boolean scopePolicy = policy.getEntry(SCOPE) != null;
+    if (scopePolicy && input.get(SCOPE) instanceof final String scope) {
+      input.put(SCOPE, splitScope(scope));
+    }
+    final JSONObject result = apply(policy, input);
+    if (scopePolicy && result.get(SCOPE) instanceof final List<?> scopes
+        && scopes.stream().allMatch(String.class::isInstance)) {
+      result.put(SCOPE, String.join(" ", scopes.stream().map(String.class::cast).toList()));
+    }
+    return result;
+  }
+
+  /**
+   * Applies a metadata policy in the same way as {@link MetadataPolicy#apply(JSONObject)}, with support for
+   * {@link ExtendedValueOperation}s.
+   *
+   * @param policy the policy
+   * @param metadata the metadata
+   * @return the resulting metadata
+   * @throws PolicyViolationException if the metadata does not comply with the policy
+   */
+  private static JSONObject apply(final MetadataPolicy policy, final JSONObject metadata)
+      throws PolicyViolationException {
+    final JSONObject result = new JSONObject();
+    for (final Map.Entry<String, Object> parameter : metadata.entrySet()) {
+      if (policy.getEntry(parameter.getKey()) == null) {
+        result.put(parameter.getKey(), parameter.getValue());
       }
-      else {
-        result.put(parameter.getKey(), value);
+    }
+    for (final MetadataPolicyEntry entry : policy.entrySet()) {
+      final Object value = applyEntry(entry, metadata.get(entry.getParameterName()));
+      if (value != null) {
+        result.put(entry.getParameterName(), value);
       }
     }
     return result;
+  }
+
+  /**
+   * Applies the operations of one policy entry in the same way as {@link MetadataPolicyEntry#apply(Object)}, with
+   * support for {@link ExtendedValueOperation}s.
+   *
+   * @param entry the policy entry
+   * @param value the parameter value, null if absent
+   * @return the resulting value, null if the parameter is to be removed or stays absent
+   * @throws PolicyViolationException if the value does not comply with the policy
+   */
+  private static Object applyEntry(final MetadataPolicyEntry entry, final Object value)
+      throws PolicyViolationException {
+    Object updated = value;
+    boolean essential = false;
+    for (final Map.Entry<OperationName, PolicyOperation> operation : entry.getOperationsMap().entrySet()) {
+      final OperationName name = operation.getKey();
+      if (value == null && !essential && VALUE_CHECKS.contains(name)) {
+        continue;
+      }
+      if (operation.getValue() instanceof final ExtendedValueOperation extended) {
+        updated = extended.apply(updated);
+      }
+      else {
+        updated = PolicyOperationApplication.apply(operation.getValue(), updated);
+      }
+      if (ValueOperation.NAME.equals(name)) {
+        return updated;
+      }
+      if (operation.getValue() instanceof final EssentialOperation essentialOperation) {
+        if (essentialOperation.getBooleanConfiguration()) {
+          essential = true;
+        }
+        else if (updated == null) {
+          return null;
+        }
+      }
+      if (SubsetOfOperation.NAME.equals(name) && essential && updated == null) {
+        throw new PolicyViolationException("Essential parameter failed subset_of check");
+      }
+    }
+    return updated;
   }
 
   /**
@@ -189,13 +288,14 @@ public class MetadataProcessor {
    *
    * @param statement the statement holding the policy
    * @param type the entity type
-   * @return the policy keyed by metadata parameter, or null if the statement has no policy for the type
-   * @throws MetadataPolicyException if the policy is malformed, has an invalid combination of operators, or uses an
-   *     unsupported critical operator
+   * @return the policy, or null if the statement has no policy for the type
+   * @throws MetadataPolicyException if the policy is malformed or uses an unsupported critical operator
+   * @throws PolicyViolationException if the policy has an invalid combination of operators
+   * @throws ParseException if an operator value cannot be parsed
    * @throws java.text.ParseException if the statement claims cannot be parsed
    */
-  private Map<String, ParameterPolicy> parsePolicy(final SignedJWT statement, final String type)
-      throws MetadataPolicyException, java.text.ParseException {
+  private MetadataPolicy parsePolicy(final SignedJWT statement, final String type)
+      throws MetadataPolicyException, PolicyViolationException, ParseException, java.text.ParseException {
     final JWTClaimsSet claims = EntityStatementClaims.claims(statement);
     final Map<String, Object> policy = claims.getJSONObjectClaim("metadata_policy");
     if (policy == null || !policy.containsKey(type)) {
@@ -207,18 +307,23 @@ public class MetadataProcessor {
     final List<String> critical =
         Optional.ofNullable(claims.getStringListClaim("metadata_policy_crit")).orElseGet(List::of);
 
-    final Map<String, ParameterPolicy> parsed = new LinkedHashMap<>();
+    final JSONObject parsed = new JSONObject();
     for (final Map.Entry<?, ?> parameter : typePolicy.entrySet()) {
       final String parameterName = String.valueOf(parameter.getKey());
       if (!(parameter.getValue() instanceof final Map<?, ?> operators)) {
         throw new MetadataPolicyException("metadata_policy for '%s.%s' is not a JSON object"
             .formatted(type, parameterName));
       }
-      final Map<String, Object> supportedOperators = new LinkedHashMap<>();
+      final JSONObject supportedOperators = new JSONObject();
       for (final Map.Entry<?, ?> operator : operators.entrySet()) {
         final String name = String.valueOf(operator.getKey());
-        if (ParameterPolicy.isSupported(name)) {
-          supportedOperators.put(name, operator.getValue());
+        if (this.operationFactory.createForName(new OperationName(name)) != null) {
+          if (SCOPE.equals(parameterName) && operator.getValue() instanceof final String scope) {
+            supportedOperators.put(name, splitScope(scope));
+          }
+          else {
+            supportedOperators.put(name, operator.getValue());
+          }
         }
         else if (critical.contains(name)) {
           throw new MetadataPolicyException("Critical policy operator '%s' is not supported".formatted(name));
@@ -229,10 +334,25 @@ public class MetadataProcessor {
         }
       }
       if (!supportedOperators.isEmpty()) {
-        parsed.put(parameterName, ParameterPolicy.parse(parameterName, supportedOperators));
+        parsed.put(parameterName, supportedOperators);
       }
     }
-    return parsed;
+    return ExtendedMetadataPolicy.parse(parsed);
+  }
+
+  /**
+   * Splits a scope string on {@value #SCOPE_SEPARATOR}. A single character separator makes {@link String#split}
+   * skip the regex engine.
+   *
+   * @param scope the scope string
+   * @return the scope values
+   * @throws PolicyViolationException if the scope string exceeds {@value #MAX_SCOPE_LENGTH} characters
+   */
+  private static List<String> splitScope(final String scope) throws PolicyViolationException {
+    if (scope.length() > MAX_SCOPE_LENGTH) {
+      throw new PolicyViolationException("scope exceeds %d characters".formatted(MAX_SCOPE_LENGTH));
+    }
+    return new ArrayList<>(Arrays.stream(scope.split(SCOPE_SEPARATOR)).filter(s -> !s.isEmpty()).toList());
   }
 
   private static JSONObject mergeSubordinateMetadata(

@@ -62,5 +62,10 @@
             <artifactId>common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>se.swedenconnect.oidf</groupId>
+            <artifactId>nimbus-extensions</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>
