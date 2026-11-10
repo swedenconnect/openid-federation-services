@@ -96,9 +96,9 @@
     </developers>
 
     <!--
-      A plain "mvn deploy" publishes to GitHub Packages, as it always has. Publishing to
-      Maven Central is done by the "release" profile below, which the Maven Central workflow
-      runs when a version tag is pushed.
+      Releases are published to the GitHub Packages Maven registry of this repository. The
+      "release" profile below adds what a release needs, and the GitHub Packages workflow runs it
+      when a version tag is pushed.
     -->
     <distributionManagement>
         <repository>
@@ -277,12 +277,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
                     <version>3.2.8</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.sonatype.central</groupId>
-                    <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>0.12.0</version>
                 </plugin>
 
             </plugins>
@@ -496,14 +490,14 @@
 
     <profiles>
         <!--
-          Publishing to Maven Central. Attaches the sources and javadoc jars that Central requires,
-          signs every artifact with GPG, and uploads through the Sonatype Central publishing plugin.
-          The credentials are taken from the server with id "central" in settings.xml:
+          Publishing a release. Attaches the sources and javadoc jars and signs every artifact with
+          GPG. The deploy plugin uploads to the repository in distributionManagement above, with the
+          credentials of the server with id "github" in settings.xml:
 
               mvn -Prelease clean deploy
 
-          This is what .github/workflows/maven-central-deploy.yml runs when a version tag is
-          pushed. It signs with the Bouncy Castle signer of the GPG plugin, selected with
+          .github/workflows/maven-github-deploy.yml runs this, with -DskipTests, when a version tag
+          is pushed. It signs with the Bouncy Castle signer of the GPG plugin, selected with
           -Dgpg.signer=bc, so the profile stays usable as it is from a developer machine.
 
           oidf-services is not published, it sets maven.deploy.skip.
@@ -549,15 +543,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.central</groupId>
-                        <artifactId>central-publishing-maven-plugin</artifactId>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <publishingServerId>central</publishingServerId>
-                            <autoPublish>true</autoPublish>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>

@@ -52,6 +52,10 @@ in managed mode against the
 - [Build](build.md) — Building and verifying the project, and building Docker images for
   AMD and ARM.
 
+- [Using the Artifacts from GitHub Packages](github-packages.md) — How to use the Maven
+  artifacts in your own build. Versions after 1.0.1 are published to GitHub Packages and need a
+  token to download.
+
 ---
 
 Copyright &copy; 2024-2026, [Sweden Connect](https://swedenconnect.se). Licensed under version
