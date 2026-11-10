@@ -11,13 +11,13 @@
 # release is made on that branch.
 #
 # Pushing the tag is what starts publishing, so the script asks before it does that. Publishing to
-# Maven Central and of the Docker image is done by GitHub workflows when the tag is pushed, see
+# GitHub Packages and of the Docker image is done by GitHub workflows when the tag is pushed, see
 # internal/release.md.
 set -euo pipefail
 
 REMOTE="origin"
 MAIN_BRANCH="main"
-WORKFLOW_URL="https://github.com/swedenconnect/openid-federation-services/actions/workflows/maven-central-deploy.yml"
+WORKFLOW_URL="https://github.com/swedenconnect/openid-federation-services/actions/workflows/maven-github-deploy.yml"
 
 # Prints the version that follows the given tag or version: the last number raised by one.
 suggest_next_version() {
@@ -162,8 +162,8 @@ main() {
 
   echo
   echo "== Tagging =="
-  echo "Pushing the tag $tag starts publishing. The artifacts go to Maven Central and the Docker"
-  echo "image is pushed. A version that has been published cannot be removed or replaced."
+  echo "Pushing the tag $tag starts publishing. The artifacts go to GitHub Packages and the Docker"
+  echo "image is pushed. A version that has been published must never be replaced."
   read -r -p "Create the tag $tag and push it? [y/N]: " tag_answer
 
   case "$tag_answer" in
@@ -190,8 +190,8 @@ main() {
 
   echo
   echo "== Publishing =="
-  echo "The tag started the Maven Central workflow, the Docker release workflow and the GitHub"
-  echo "release workflow. Follow the Maven Central run here:"
+  echo "The tag started the GitHub Packages workflow, the Docker release workflow and the GitHub"
+  echo "release workflow. Follow the GitHub Packages run here:"
   echo
   echo "    $WORKFLOW_URL"
   echo
@@ -201,7 +201,7 @@ main() {
   echo "Done. Version $version is tagged as $tag on '$branch'."
   echo
   echo "== What is left =="
-  echo "1. Check that the Maven Central workflow for $tag succeeded."
+  echo "1. Check that the GitHub Packages workflow for $tag succeeded."
   echo
   echo "2. Open a pull request from '$branch' into $MAIN_BRANCH and merge it with \"Create a merge"
   echo "   commit\". The other two buttons, \"Squash and merge\" and \"Rebase and merge\", write new"
