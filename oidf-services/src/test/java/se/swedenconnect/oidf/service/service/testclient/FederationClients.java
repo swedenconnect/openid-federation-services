@@ -67,6 +67,14 @@ public class FederationClients {
     );
   }
 
+  public TrustAnchorClient policyTrustAnchor() {
+    return new TrustAnchorClient(this.client, TestFederationEntities.Policy.TRUST_ANCHOR);
+  }
+
+  public ResolverClient policyResolver() {
+    return new ResolverClient(this.client, TestFederationEntities.Policy.RESOLVER);
+  }
+
   public ResolverDifferentiator crit() {
     return new ResolverDifferentiator(this.client,
         TestFederationEntities.Anarchy.TRUST_ANCHOR,

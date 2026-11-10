@@ -16,77 +16,106 @@
  */
 package se.swedenconnect.oidf.configuration;
 
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.shaded.gson.JsonDeserializationContext;
-import com.nimbusds.jose.shaded.gson.JsonDeserializer;
+import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jose.shaded.gson.JsonElement;
 import com.nimbusds.jose.shaded.gson.JsonObject;
-import com.nimbusds.jose.shaded.gson.JsonParseException;
-import com.nimbusds.jose.shaded.gson.JsonSerializationContext;
-import com.nimbusds.jose.shaded.gson.JsonSerializer;
+import com.nimbusds.jose.shaded.gson.JsonParser;
+import com.nimbusds.jose.shaded.gson.TypeAdapter;
+import com.nimbusds.jose.shaded.gson.TypeAdapterFactory;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
-import lombok.AllArgsConstructor;
+import com.nimbusds.jose.shaded.gson.stream.JsonReader;
+import com.nimbusds.jose.shaded.gson.stream.JsonWriter;
 import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
-import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
- * GSON serializer for composite records.
+ * GSON type adapter factory for composite records.
+ *
+ * <p>
+ * The record is written in streaming mode, not as a tree, so that adapters further down (see
+ * {@code PolicyRecordTypeAdapterFactory}) can write JSON null values that must be kept.
+ * </p>
  *
  * @author Felix Hellman
  */
-public class CompositeRecordSerializer implements JsonSerializer<CompositeRecord>, JsonDeserializer<CompositeRecord> {
+public class CompositeRecordSerializer implements TypeAdapterFactory {
 
+  private static final Type ENTITIES_TYPE = new TypeToken<ArrayList<EntityRecord>>() {
+  }.getType();
+
+  /** {@inheritDoc} */
   @Override
-  public CompositeRecord deserialize(
-      final JsonElement jsonElement,
-      final Type type,
-      final JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-    final Instant expiration = jsonDeserializationContext
-        .deserialize(jsonElement.getAsJsonObject().get("expiration"), Instant.class);
-    final Instant issuedAt = jsonDeserializationContext
-        .deserialize(jsonElement.getAsJsonObject().get("issuedAt"), Instant.class);
-
-    final Type entityType = new TypeToken<ArrayList<EntityRecord>>() {
-    }.getType();
-    final Type moduleType = new TypeToken<ModuleRecord>() {
-    }.getType();
-    final List<EntityRecord> entityRecords = jsonDeserializationContext
-        .deserialize(jsonElement.getAsJsonObject().get("entities"), entityType);
-    final ModuleRecord moduleRecord = jsonDeserializationContext
-        .deserialize(jsonElement.getAsJsonObject().get("module"), moduleType);
-
-    return new CompositeRecord(
-        new Expirable<>(expiration, issuedAt, entityRecords),
-        new Expirable<>(expiration, issuedAt, moduleRecord)
-    );
+  @SuppressWarnings("unchecked")
+  public <T> TypeAdapter<T> create(final Gson gson, final TypeToken<T> type) {
+    if (!CompositeRecord.class.equals(type.getRawType())) {
+      return null;
+    }
+    return (TypeAdapter<T>) new CompositeRecordTypeAdapter(gson);
   }
 
-  @Override
-  public JsonElement serialize(
-      final CompositeRecord compositeRecord,
-      final Type type,
-      final JsonSerializationContext jsonSerializationContext) {
+  /**
+   * Type adapter for composite records.
+   *
+   * @author Felix Hellman
+   */
+  private static class CompositeRecordTypeAdapter extends TypeAdapter<CompositeRecord> {
 
-    final JsonObject json = new JsonObject();
+    private final Gson gson;
 
-    final Instant expiration = compositeRecord.getExpiration();
-    final Instant issuedAt = compositeRecord.getIssuedAt();
-    json.add("expiration", jsonSerializationContext.serialize(expiration));
-    json.add("issuedAt", jsonSerializationContext.serialize(issuedAt));
-    final ModuleRecord moduleRecord = compositeRecord.getModuleRecord().getValue();
-    final List<EntityRecord> entityRecords = compositeRecord.getEntityRecords().getValue();
-    json.add("entities", jsonSerializationContext.serialize(entityRecords));
-    json.add("module", jsonSerializationContext.serialize(moduleRecord));
-    return json;
+    /**
+     * Constructor.
+     *
+     * @param gson for the parts of the record
+     */
+    CompositeRecordTypeAdapter(final Gson gson) {
+      this.gson = gson;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void write(final JsonWriter out, final CompositeRecord compositeRecord) throws IOException {
+      if (compositeRecord == null) {
+        out.nullValue();
+        return;
+      }
+      out.beginObject();
+      out.name("expiration");
+      this.gson.getAdapter(Instant.class).write(out, compositeRecord.getExpiration());
+      out.name("issuedAt");
+      this.gson.getAdapter(Instant.class).write(out, compositeRecord.getIssuedAt());
+      out.name("entities");
+      this.gson.getAdapter(new TypeToken<List<EntityRecord>>() {
+      }).write(out, compositeRecord.getEntityRecords().getValue());
+      out.name("module");
+      this.gson.getAdapter(ModuleRecord.class).write(out, compositeRecord.getModuleRecord().getValue());
+      out.endObject();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public CompositeRecord read(final JsonReader in) throws IOException {
+      final JsonElement jsonElement = JsonParser.parseReader(in);
+      if (jsonElement.isJsonNull()) {
+        return null;
+      }
+      final JsonObject json = jsonElement.getAsJsonObject();
+      final Instant expiration = this.gson.fromJson(json.get("expiration"), Instant.class);
+      final Instant issuedAt = this.gson.fromJson(json.get("issuedAt"), Instant.class);
+      final List<EntityRecord> entityRecords = this.gson.fromJson(json.get("entities"), ENTITIES_TYPE);
+      final ModuleRecord moduleRecord = this.gson.fromJson(json.get("module"), ModuleRecord.class);
+
+      return new CompositeRecord(
+          new Expirable<>(expiration, issuedAt, entityRecords),
+          new Expirable<>(expiration, issuedAt, moduleRecord)
+      );
+    }
   }
 }

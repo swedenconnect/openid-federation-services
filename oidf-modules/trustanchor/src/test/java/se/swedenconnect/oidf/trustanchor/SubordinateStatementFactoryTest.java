@@ -32,9 +32,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 import se.swedenconnect.oidf.common.entity.jwt.FederationSigner;
+import se.swedenconnect.oidf.common.entity.jwt.JWKFederationSigner;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -180,6 +183,25 @@ class SubordinateStatementFactoryTest {
     final String payload = claims.toString();
     Assertions.assertFalse(payload.contains("\"crit\""));
     Assertions.assertFalse(payload.contains("\"metadata_policy_crit\""));
+  }
+
+  @Test
+  void signedStatementKeepsNullOperatorValueInMetadataPolicy() throws Exception {
+    final JWK issuerKey = new RSAKeyGenerator(2048).keyID("issuer-key").generate();
+    when(this.signerFactory.createSigner(any())).thenReturn(new JWKFederationSigner(issuerKey));
+
+    final Map<String, Object> signedJwksUri = new HashMap<>();
+    signedJwksUri.put("value", null);
+    final Map<String, Object> policy = Map.of("openid_relying_party", Map.of(
+        "signed_jwks_uri", signedJwksUri,
+        "grant_types", Map.of("subset_of", List.of("authorization_code"))));
+
+    final SignedJWT jwt = new SubordinateStatementFactory(this.signerFactory).createEntityStatement(
+        EntityRecord.builder().entityIdentifier(ISSUER_ID).build(),
+        this.subordinateBuilder().policy(new PolicyRecord("policy-1", policy)).build());
+
+    final Map<String, Object> published = SignedJWT.parse(jwt.serialize()).getPayload().toJSONObject();
+    Assertions.assertEquals(policy, published.get("metadata_policy"));
   }
 
   private TrustAnchorProperties.SubordinateListingProperty.SubordinateListingPropertyBuilder subordinateBuilder() {

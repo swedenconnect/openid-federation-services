@@ -559,6 +559,9 @@
             "id": "policy-1",
             "policy": {
               "openid_provider": {
+                "logo_uri": {
+                  "value": null
+                },
                 "id_token_signing_alg_values_supported": {
                   "subset_of": [
                     "RS256"

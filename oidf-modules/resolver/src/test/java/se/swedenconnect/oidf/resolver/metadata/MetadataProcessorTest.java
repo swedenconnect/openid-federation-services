@@ -114,6 +114,28 @@ class MetadataProcessorTest {
   }
 
   @Test
+  void metadataPolicyNullValueRemovesParameter() throws Exception {
+    final JWK leafKey = generateKey();
+    final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata(java.util.Map.of(
+        "organization_name", "Leaf Org",
+        "signed_jwks_uri", "https://example.com/signed-jwks"
+    )));
+
+    final java.util.Map<String, Object> nullValue = new java.util.HashMap<>();
+    nullValue.put("value", null);
+    final JSONObject policy = policy("signed_jwks_uri", nullValue);
+    // Serialize and parse, as a resolver receives the statement
+    final SignedJWT superiorStatement = SignedJWT.parse(
+        subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, policy).serialize());
+
+    final JSONObject result = this.processor.processMetadata(List.of(leafEc, superiorStatement));
+
+    final JSONObject rp = (JSONObject) result.get("openid_relying_party");
+    Assertions.assertFalse(rp.containsKey("signed_jwks_uri"));
+    Assertions.assertEquals("Leaf Org", rp.get("organization_name"));
+  }
+
+  @Test
   void selfIssuedOnlyChainDoesNotThrow() throws Exception {
     final JWK leafKey = generateKey();
     final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata(java.util.Map.of(
