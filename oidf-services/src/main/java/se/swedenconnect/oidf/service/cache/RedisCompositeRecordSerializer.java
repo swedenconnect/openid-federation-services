@@ -18,9 +18,9 @@ package se.swedenconnect.oidf.service.cache;
 
 import com.nimbusds.jose.shaded.gson.Gson;
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
-import org.springframework.lang.Nullable;
 import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 
@@ -36,15 +36,13 @@ import java.util.Objects;
 public class RedisCompositeRecordSerializer implements RedisSerializer<Expirable<CompositeRecord>> {
   private final Gson gson;
 
-  @Nullable
   @Override
-  public byte[] serialize(@Nullable final Expirable<CompositeRecord> value) throws SerializationException {
+  public byte @Nullable [] serialize(final @Nullable Expirable<CompositeRecord> value) throws SerializationException {
     return this.gson.toJson(value.getValue()).getBytes(StandardCharsets.UTF_8);
   }
 
-  @Nullable
   @Override
-  public Expirable<CompositeRecord> deserialize(@Nullable final byte[] bytes) throws SerializationException {
+  public @Nullable Expirable<CompositeRecord> deserialize(final byte @Nullable [] bytes) throws SerializationException {
     if (Objects.nonNull(bytes)) {
       final CompositeRecord compositeRecord = this.gson.fromJson(new String(bytes), CompositeRecord.class);
       return new Expirable<>(compositeRecord.getExpiration(), compositeRecord.getIssuedAt(), compositeRecord);
