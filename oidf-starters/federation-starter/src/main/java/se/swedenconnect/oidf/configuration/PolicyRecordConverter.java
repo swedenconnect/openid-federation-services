@@ -17,8 +17,9 @@
 package se.swedenconnect.oidf.configuration;
 
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.lang.Nullable;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.PolicyRecord;
 
 import java.util.Map;
@@ -31,9 +32,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class PolicyRecordConverter implements Converter<String, PolicyRecord> {
   private final JsonReferenceLoader jsonReferenceLoader;
-  @Nullable
   @Override
-  public PolicyRecord convert(final String source) {
+  public @Nullable PolicyRecord convert(final @NonNull String source) {
     final Map<String, Object> policy = this.jsonReferenceLoader.loadJson(source);
     return new PolicyRecord(source, policy);
   }

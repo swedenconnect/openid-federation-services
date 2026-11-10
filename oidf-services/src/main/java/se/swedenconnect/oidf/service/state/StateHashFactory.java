@@ -18,23 +18,11 @@ package se.swedenconnect.oidf.service.state;
 
 import com.nimbusds.jose.shaded.gson.Gson;
 import lombok.AllArgsConstructor;
-import tools.jackson.core.JsonGenerator;
-import tools.jackson.core.JsonParser;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.DeserializationContext;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.module.SimpleModule;
-import com.nimbusds.jose.jwk.JWKSet;
 import org.bouncycastle.util.encoders.Hex;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Class responsible for hashing internal state.

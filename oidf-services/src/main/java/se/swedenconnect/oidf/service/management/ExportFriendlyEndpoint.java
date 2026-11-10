@@ -16,14 +16,14 @@
  */
 package se.swedenconnect.oidf.service.management;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -61,10 +61,9 @@ public class ExportFriendlyEndpoint {
    * Exports federation in grafana friendly format
    * @param trustAnchor optional trust anchor entity identifier to select resolver, defaults to first available
    * @return json string
-   * @throws JsonProcessingException
    */
   @ReadOperation
-  public String getGrafanaFriendlyJson(@Nullable final String trustAnchor) throws JsonProcessingException {
+  public @NonNull String getGrafanaFriendlyJson(final @Nullable String trustAnchor) {
     final long snapshot = this.lookup.getLatestSnapshotVersion();
     final String effectiveTrustAnchor = this.exportEndpoint.resolveEffectiveTrustAnchor(trustAnchor);
     final String cacheKey = cacheKey(effectiveTrustAnchor);
@@ -79,7 +78,7 @@ public class ExportFriendlyEndpoint {
     }
     final Map<String, List<Map<String, Object>>> nodesAndEdges =
         this.exportEndpoint.getNodesAndEdges(effectiveTrustAnchor);
-    final String result = formatAsGrafana(nodesAndEdges);
+    final String result = this.formatAsGrafana(nodesAndEdges);
     this.cache.put(snapshot, cacheKey, new CachedResponse(result, "application/json", 200));
     return result;
   }
@@ -102,8 +101,13 @@ public class ExportFriendlyEndpoint {
       Map.entry("CHAIN_TOO_SHORT", "chain too short")
   );
 
-  static String formatAsGrafana(final Map<String, List<Map<String, Object>>> nodesAndEdges)
-      throws JsonProcessingException {
+  /**
+   * Formats the nodes and edges from {@link ExportEndpoint#getNodesAndEdges(String)} as Grafana node graph data.
+   *
+   * @param nodesAndEdges the nodes and edges to format
+   * @return JSON string
+   */
+  String formatAsGrafana(final Map<String, List<Map<String, Object>>> nodesAndEdges) {
     final Map<String, String> icons = Map.of(
         "tmi", "pen",
         "ta", "anchor",
@@ -170,11 +174,13 @@ public class ExportFriendlyEndpoint {
                     final double ratio = (double) uptime.get("ratio");
                     nodeJson.put("arc__up", ratio);
                     nodeJson.put("arc__down", 1.0 - ratio);
-                  } else {
+                  }
+                  else {
                     nodeJson.put("arc__success", metrics.get("success"));
                     nodeJson.put("arc__failure", metrics.get("failure"));
                   }
-                } else {
+                }
+                else {
                   nodeJson.put("arc__validation", 1.0);
                 }
                 nodeJson.put("mainstat", node.get("mainstat"));
@@ -202,7 +208,8 @@ public class ExportFriendlyEndpoint {
                 .forEach(kid -> {
                   nodeJson.put("detail__kid_%s".formatted(counter.getAndIncrement()), kid);
                 });
-          } catch (final ParseException e) {
+          }
+          catch (final ParseException e) {
             nodeJson.put("detail__kid_failed_to_parse", "true");
           }
 
@@ -228,7 +235,8 @@ public class ExportFriendlyEndpoint {
               final AtomicInteger counter = new AtomicInteger();
               explanation.forEach((i, m) -> nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()),
                   m.getOrDefault("type", "") + ": " + m.getOrDefault("message", "")));
-            } else {
+            }
+            else {
               final AtomicInteger counter = new AtomicInteger();
               explanation.forEach((a, b) -> {
                 nodeJson.put("detail__expl_%d".formatted(counter.getAndIncrement()),
@@ -261,7 +269,8 @@ public class ExportFriendlyEndpoint {
             .forEach(kid -> {
               edgeJson.put("detail__kid_%s".formatted(counter.getAndIncrement()), kid);
             });
-      } catch (final ParseException e) {
+      }
+      catch (final ParseException e) {
         edgeJson.put("detail__kid_failed_to_parse", "true");
       }
       return edgeJson;
@@ -288,6 +297,6 @@ public class ExportFriendlyEndpoint {
       }
     });
 
-    return ExportEndpoint.MAPPER.writeValueAsString(Map.of("nodes", allNodes, "edges", edges));
+    return this.exportEndpoint.toJson(Map.of("nodes", allNodes, "edges", edges));
   }
 }

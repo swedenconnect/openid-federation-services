@@ -17,16 +17,13 @@
 package se.swedenconnect.oidf.service.management;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.UptimeRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
@@ -37,146 +34,197 @@ import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Export endpoint for oidf service.
+ * Actuator endpoint that exports the federation tree of a resolver as a JSON graph of nodes and edges.
+ * <p>
+ * Nodes are the self-signed entity configurations, enriched with the resolver explanation, request metrics and
+ * uptime data. Edges are the subordinate statements.
+ * </p>
  *
  * @author Felix Hellman
  */
 @Endpoint(id = "export")
 @Component
 @Slf4j
-@AllArgsConstructor
 public class ExportEndpoint {
-  private final ResolverCacheRegistry registry;
-  private final CompositeRecordSource source;
-  private final ResolverFactory factory;
-  private final MeterRegistry meterRegistry;
-  private final UptimeRegistry uptimeRegistry;
+
+  private final @NonNull ResolverCacheRegistry registry;
+  private final @NonNull CompositeRecordSource source;
+  private final @NonNull ResolverFactory factory;
+  private final @NonNull MeterRegistry meterRegistry;
+  private final @NonNull UptimeRegistry uptimeRegistry;
+
+  /** JSON mapper for the export, leaving out null and empty values. */
+  private final @NonNull JsonMapper mapper;
+
   /**
-   * JSON mapper for serializing graphs
+   * Constructor.
+   *
+   * @param registry the resolver cache registry holding the resolve trees
+   * @param source the record source used to find resolver configuration
+   * @param factory the resolver factory, used to explain resolve results
+   * @param meterRegistry the meter registry holding entity configuration request metrics
+   * @param uptimeRegistry the uptime registry holding scraping results
+   * @param jsonMapper the application JSON mapper, used as the base for the export mapper
    */
-  public static final ObjectMapper MAPPER = new ObjectMapper();
-
-  static {
-    MAPPER.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-
-    final SimpleModule module = new SimpleModule();
-    MAPPER.registerModule(module);
+  public ExportEndpoint(
+      final @NonNull ResolverCacheRegistry registry,
+      final @NonNull CompositeRecordSource source,
+      final @NonNull ResolverFactory factory,
+      final @NonNull MeterRegistry meterRegistry,
+      final @NonNull UptimeRegistry uptimeRegistry,
+      final @NonNull JsonMapper jsonMapper) {
+    this.registry = registry;
+    this.source = source;
+    this.factory = factory;
+    this.meterRegistry = meterRegistry;
+    this.uptimeRegistry = uptimeRegistry;
+    this.mapper = jsonMapper.rebuild()
+        .changeDefaultPropertyInclusion(incl -> incl
+            .withValueInclusion(JsonInclude.Include.NON_EMPTY)
+            .withContentInclusion(JsonInclude.Include.NON_EMPTY))
+        .build();
   }
 
   /**
-   * Exports federation as json
-   * @param trustAnchor optional trust anchor entity identifier to select resolver, defaults to first available
-   * @return federation as json
-   * @throws JsonProcessingException
+   * Exports the federation as JSON.
+   *
+   * @param trustAnchor optional trust anchor entity identifier selecting the resolver, defaults to the first
+   *     configured resolver
+   * @return the federation as a JSON object with the members {@code nodes} and {@code edges}
+   * @throws IllegalArgumentException if no resolver is configured for the given trust anchor
    */
   @ReadOperation
-  public String exportFederation(@Nullable final String trustAnchor) throws JsonProcessingException {
-    final Map<String, List<Map<String, Object>>> nodes = this.getNodesAndEdges(trustAnchor);
-    return MAPPER.writeValueAsString(nodes);
+  public @NonNull String exportFederation(final @Nullable String trustAnchor) {
+    return this.toJson(this.getNodesAndEdges(trustAnchor));
   }
 
   /**
-   * Gets nodes an edges in map format
-   * @param trustAnchor optional trust anchor entity identifier to select resolver, defaults to first available
-   * @return map of nodes and edges
-   */
-  /**
-   * Resolves the effective trust anchor, defaulting to the first available when null is supplied.
+   * Serializes an object to JSON using the export mapper, where null and empty values are left out.
    *
-   * @param trustAnchor optional trust anchor identifier
-   * @return the resolved trust anchor identifier
+   * @param value the object to serialize
+   * @return JSON string
    */
-  public String resolveEffectiveTrustAnchor(@Nullable final String trustAnchor) {
-    if (trustAnchor == null) {
-      return this.source.getResolverProperties().getFirst().getTrustAnchor();
-    }
-    return this.source.getResolverProperties().stream()
-        .filter(p -> trustAnchor.equals(p.getTrustAnchor()))
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("No resolver found for trust anchor: " + trustAnchor))
-        .getTrustAnchor();
+  public @NonNull String toJson(final @NonNull Object value) {
+    return this.mapper.writeValueAsString(value);
   }
 
   /**
-   * Returns nodes and edges for the given trust anchor.
+   * Resolves the effective trust anchor.
    *
-   * @param trustAnchor the trust anchor entity ID, or null to use the first available
-   * @return map with nodes and edges lists
+   * @param trustAnchor optional trust anchor entity identifier, defaults to the trust anchor of the first
+   *     configured resolver
+   * @return the trust anchor entity identifier
+   * @throws IllegalArgumentException if no resolver is configured for the given trust anchor
    */
-  public Map<String, List<Map<String, Object>>> getNodesAndEdges(@Nullable final String trustAnchor) {
-    final ResolverProperties properties = trustAnchor == null
-        ? this.source.getResolverProperties().getFirst()
-        : this.source.getResolverProperties().stream()
-            .filter(p -> trustAnchor.equals(p.getTrustAnchor()))
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("No resolver found for trust anchor: " + trustAnchor));
+  public @NonNull String resolveEffectiveTrustAnchor(final @Nullable String trustAnchor) {
+    return this.getResolverProperties(trustAnchor).getTrustAnchor();
+  }
+
+  /**
+   * Returns the nodes and edges of the federation tree for the given trust anchor.
+   *
+   * @param trustAnchor optional trust anchor entity identifier selecting the resolver, defaults to the first
+   *     configured resolver
+   * @return map with the lists {@code nodes} (entity configurations) and {@code edges} (subordinate statements)
+   * @throws IllegalArgumentException if no resolver is configured for the given trust anchor
+   */
+  public @NonNull Map<String, List<Map<String, Object>>> getNodesAndEdges(final @Nullable String trustAnchor) {
+    final ResolverProperties properties = this.getResolverProperties(trustAnchor);
     final List<ExportStatement> selfStatements = new ArrayList<>();
     final List<ExportStatement> subordinateStatements = new ArrayList<>();
 
-    final EntityStatementTree tree = this.registry.getRegistration(properties.getEntityIdentifier()).get().tree();
+    final EntityStatementTree tree = this.registry.getRegistration(properties.getEntityIdentifier())
+        .orElseThrow(() -> new IllegalStateException(
+            "No resolver tree registered for " + properties.getEntityIdentifier()))
+        .tree();
     tree.getAll()
         .stream()
         .map(Tree.SearchResult::getData)
         .filter(Objects::nonNull)
-        .peek(entity -> {
+        .forEach(entity -> {
           if (Objects.nonNull(entity.getIntermediate())) {
             entity.getIntermediate().subordinates().values().forEach(jwt ->
                 subordinateStatements.add(new ExportStatement(jwt)));
           }
-        })
-        .map(resolverEntity -> resolverEntity.getEntityStatement())
-        .peek(es -> EntityStatementClaims.claims(es).toJSONObject())
-        .forEach(es -> {
-          if (EntityStatementClaims.isSelfStatement(es)) {
-            selfStatements.add(new ExportStatement(es));
-          } else {
-            subordinateStatements.add(new ExportStatement(es));
+          final ExportStatement statement = new ExportStatement(entity.getEntityStatement());
+          if (EntityStatementClaims.isSelfStatement(entity.getEntityStatement())) {
+            selfStatements.add(statement);
+          }
+          else {
+            subordinateStatements.add(statement);
           }
         });
 
-    selfStatements.forEach(ss -> {
-      try {
-        final Map<Integer, Map<String, String>> explain = this.factory.create(properties).explain(new ResolveRequest(
-            EntityStatementClaims.getEntityID(ss.getEntityStatement()).getValue(), properties.getTrustAnchor(), null,
-            true));
-        if (explain != null) {
-          ss.withResolverExplanation(explain);
-        }
-        final String entityId = EntityStatementClaims.getEntityID(ss.getEntityStatement()).getValue();
-        final double success = this.meterRegistry.counter("GET_entity_configuration", List.of(
-            Tag.of("entityId", entityId),
-            Tag.of("outcome", "success")
-        )).count();
-        final double failure = this.meterRegistry.counter("GET_entity_configuration", List.of(
-            Tag.of("entityId", entityId),
-            Tag.of("outcome", "failure")
-        )).count();
-        final double total = success + failure;
-        ss.withMetrics(total, success, failure);
+    selfStatements.forEach(statement -> this.addNodeDetails(statement, properties));
 
-        this.uptimeRegistry.uptimeRatio(entityId).ifPresent(ratio -> {
-          final String lastSeen = this.uptimeRegistry.getLastSeenReachable(entityId)
-              .map(java.time.Instant::toString)
-              .orElse(null);
-          final Long avgMs = this.uptimeRegistry.getAvgResponseMs(entityId).orElse(null);
-          ss.withUptimeData(ratio, lastSeen, avgMs);
-        });
-      } catch (final Exception e) {
-        log.error("Failed to add explanation to entity statement from resolver", e);
-      }
-    });
-
-    final Map<String, List<Map<String, Object>>> nodes = Map.of(
+    return Map.of(
         "nodes", selfStatements.stream().map(ExportStatement::toJsonObject).toList(),
         "edges", subordinateStatements.stream().map(ExportStatement::toJsonObject).toList()
     );
-    return nodes;
+  }
+
+  /**
+   * Finds the resolver configuration for a trust anchor.
+   *
+   * @param trustAnchor optional trust anchor entity identifier, null gives the first configured resolver
+   * @return the resolver configuration
+   * @throws IllegalArgumentException if no resolver is configured for the given trust anchor
+   */
+  private @NonNull ResolverProperties getResolverProperties(final @Nullable String trustAnchor) {
+    if (trustAnchor == null) {
+      return this.source.getResolverProperties().getFirst();
+    }
+    return this.source.getResolverProperties().stream()
+        .filter(p -> trustAnchor.equals(p.getTrustAnchor()))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("No resolver found for trust anchor: " + trustAnchor));
+  }
+
+  /**
+   * Adds the resolver explanation, request metrics and uptime data to a node. A failure is logged and leaves the
+   * node without the remaining details.
+   *
+   * @param statement the self-signed entity configuration
+   * @param properties the resolver configuration
+   */
+  private void addNodeDetails(final @NonNull ExportStatement statement, final @NonNull ResolverProperties properties) {
+    try {
+      final String entityId = EntityStatementClaims.getEntityID(statement.getEntityStatement()).getValue();
+      final Map<Integer, Map<String, String>> explain = this.factory.create(properties)
+          .explain(new ResolveRequest(entityId, properties.getTrustAnchor(), null, true));
+      if (explain != null) {
+        statement.withResolverExplanation(explain);
+      }
+
+      final double success = this.meterRegistry.counter("GET_entity_configuration", List.of(
+          Tag.of("entityId", entityId),
+          Tag.of("outcome", "success")
+      )).count();
+      final double failure = this.meterRegistry.counter("GET_entity_configuration", List.of(
+          Tag.of("entityId", entityId),
+          Tag.of("outcome", "failure")
+      )).count();
+      statement.withMetrics(success + failure, success, failure);
+
+      this.uptimeRegistry.uptimeRatio(entityId).ifPresent(ratio -> {
+        final String lastSeen = this.uptimeRegistry.getLastSeenReachable(entityId)
+            .map(Instant::toString)
+            .orElse(null);
+        final Long avgMs = this.uptimeRegistry.getAvgResponseMs(entityId).orElse(null);
+        statement.withUptimeData(ratio, lastSeen, avgMs);
+      });
+    }
+    catch (final Exception e) {
+      log.warn("Failed to add resolver explanation and metrics to export node", e);
+    }
   }
 }
