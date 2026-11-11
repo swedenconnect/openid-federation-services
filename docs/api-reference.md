@@ -78,6 +78,8 @@ Response: `200` with content type `application/trust-mark-status-response+jwt`.
 
 ## Resolver
 
+Both endpoints answer 503 `temporarily_unavailable` until the resolver has loaded its tree.
+
 ### Resolve
 
 `GET /resolve`

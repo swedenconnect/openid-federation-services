@@ -27,6 +27,7 @@ import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.SearchRequest;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
+import se.swedenconnect.oidf.common.entity.tree.TreeNotLoadedException;
 import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedIntermediate;
@@ -81,6 +82,8 @@ public class EntityStatementTree {
           .collect(Collectors.toCollection(LinkedHashSet::new))
           //Reverse order to be leaf --> n --> root
           .reversed();
+    } catch (final TreeNotLoadedException e) {
+      throw e;
     } catch (final IllegalStateException e) {
       log.error("Failed to load from cache due to internal error for request {}", resolveRequest);
       throw e;

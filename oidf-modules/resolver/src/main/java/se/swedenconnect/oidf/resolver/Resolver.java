@@ -38,8 +38,9 @@ public interface Resolver {
   /**
    * @param request to process
    * @return discovery response
+   * @throws FederationException
    */
-  DiscoveryResponse discovery(final DiscoveryRequest request);
+  DiscoveryResponse discovery(final DiscoveryRequest request) throws FederationException;
 
   /**
    * @return entity id of this resolver
