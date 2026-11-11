@@ -20,23 +20,30 @@ import com.nimbusds.jwt.SignedJWT;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.util.UriBuilder;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
+import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryResponseException;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 
+import java.net.URI;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,34 +51,57 @@ import java.util.Optional;
  * {@link RestClient} implementation of {@link FederationClient}.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Slf4j
 public class RestClientFederationClient implements FederationClient {
-  private final RestClient client;
-  private final MeterRegistry registry;
-  private final UptimeRegistry uptimeRegistry;
-  private final EcLocationValidator ecLocationValidator;
+
+  /** Type reference for a response body holding a JSON array of strings. */
+  private static final ParameterizedTypeReference<List<String>> STRING_LIST = new ParameterizedTypeReference<>() {
+  };
+
+  /** The client used for all requests. */
+  private final @NonNull RestClient client;
+
+  /** Registry for request metrics. */
+  private final @NonNull MeterRegistry registry;
+
+  /** Registry for per-cycle uptime tracking. */
+  private final @NonNull UptimeRegistry uptimeRegistry;
+
+  /** Validator for ec_location values. */
+  private final @NonNull EcLocationValidator ecLocationValidator;
 
   /**
+   * Constructor.
+   *
    * @param client to use for requests
    * @param registry for metrics
    * @param uptimeRegistry for per-cycle uptime tracking
    * @param ecLocationValidator for checking ec_location values before they are used
    */
   public RestClientFederationClient(
-      final RestClient client,
-      final MeterRegistry registry,
-      final UptimeRegistry uptimeRegistry,
-      final EcLocationValidator ecLocationValidator
-  ) {
+      final @NonNull RestClient client,
+      final @NonNull MeterRegistry registry,
+      final @NonNull UptimeRegistry uptimeRegistry,
+      final @NonNull EcLocationValidator ecLocationValidator) {
     this.client = client;
     this.registry = registry;
     this.uptimeRegistry = uptimeRegistry;
     this.ecLocationValidator = ecLocationValidator;
   }
 
+  /**
+   * Gets the Entity Configuration of an entity. If the request has an {@code ec_location}, the Entity
+   * Configuration is read from that location, which may be a data URL. Otherwise it is fetched from
+   * {@code /.well-known/openid-federation} under the entity identifier.
+   *
+   * @param request for entity configuration
+   * @return entity configuration as a signed JWT
+   */
   @Override
-  public SignedJWT entityConfiguration(final FederationRequest<EntityConfigurationRequest> request) {
+  public @NonNull SignedJWT entityConfiguration(
+      final @NonNull FederationRequest<EntityConfigurationRequest> request) {
     final String entityId = request.parameters().entityID().getValue();
     final long startNanos = System.nanoTime();
     try {
@@ -81,20 +111,19 @@ public class RestClientFederationClient implements FederationClient {
             if (EcLocationValidator.isDataUrl(location)) {
               return EcLocationValidator.getDataUrlContent(location);
             }
-            return this.client.mutate()
-                .baseUrl(location)
-                .build()
-                .get()
+            // The ec_location may already be percent-encoded, so it is passed as a URI to avoid encoding it again
+            return requireBody(this.client.get()
+                .uri(URI.create(location))
                 .retrieve()
-                .body(String.class);
+                .body(String.class), location);
           })
           .orElseGet(
-              () -> this.client.mutate()
-                  .baseUrl(request.parameters().entityID().getValue())
+              () -> requireBody(this.client.mutate()
+                  .baseUrl(entityId)
                   .build()
                   .get()
                   .uri(builder -> builder.path("/.well-known/openid-federation").build()).retrieve()
-                  .body(String.class)
+                  .body(String.class), entityId)
           );
       final SignedJWT result = SignedJWT.parse(jwt);
       this.registry.counter("GET_entity_configuration", List.of(
@@ -105,14 +134,16 @@ public class RestClientFederationClient implements FederationClient {
       this.uptimeRegistry.record(entityId, true);
       this.uptimeRegistry.recordSuccess(entityId, responseTimeMs);
       return result;
-    } catch (final java.text.ParseException e) {
+    }
+    catch (final ParseException e) {
       this.registry.counter("GET_entity_configuration", List.of(
           Tag.of("entityId", entityId),
           Tag.of("outcome", "failure")
       )).increment();
       this.uptimeRegistry.record(entityId, false);
       throw new RuntimeException(e);
-    } catch (final Exception e) {
+    }
+    catch (final Exception e) {
       this.registry.counter("GET_entity_configuration", List.of(
           Tag.of("entityId", entityId),
           Tag.of("outcome", "failure")
@@ -122,12 +153,15 @@ public class RestClientFederationClient implements FederationClient {
     }
   }
 
+  /**
+   * Fetches a Subordinate Statement from the {@code federation_fetch_endpoint} of the request metadata.
+   *
+   * @param request for subordinate statement
+   * @return entity statement with subordinate statement
+   */
   @Override
-  public SignedJWT fetch(final FederationRequest<FetchRequest> request) {
-    final String url = Optional.ofNullable(request.federationEntityMetadata().get("federation_fetch_endpoint"))
-        .filter(u -> u instanceof String)
-        .map(String.class::cast)
-        .orElseThrow();
+  public @NonNull SignedJWT fetch(final @NonNull FederationRequest<FetchRequest> request) {
+    final String url = getEndpoint(request, "federation_fetch_endpoint").orElseThrow();
     try {
       final String body = this.client.mutate().baseUrl(url).build()
           .get()
@@ -137,51 +171,62 @@ public class RestClientFederationClient implements FederationClient {
               .build())
           .retrieve()
           .body(String.class);
-      return SignedJWT.parse(body);
-    } catch (final java.text.ParseException e) {
+      return SignedJWT.parse(requireBody(body, url));
+    }
+    catch (final ParseException e) {
       log.error("Failed to parse entity statement for fetch request {}", request, e);
       throw new RegistryResponseException("Failed to fetch entity statement", e);
-    } catch (final Exception e) {
+    }
+    catch (final Exception e) {
       log.error("Failed to fetch entity statement for request {}", request, e);
       throw e;
     }
   }
 
+  /**
+   * Gets the subordinates from the {@code federation_list_endpoint} of the request metadata.
+   *
+   * @param request for subordinate listing
+   * @return list of subordinates
+   */
   @Override
-  public List<String> subordinateListing(final FederationRequest<SubordinateListingRequest> request) {
-    final String url = Optional.ofNullable(request.federationEntityMetadata().get("federation_list_endpoint"))
-        .filter(u -> u instanceof String)
-        .map(String.class::cast)
-        .orElseThrow();
-
+  public @NonNull List<String> subordinateListing(final @NonNull FederationRequest<SubordinateListingRequest> request) {
+    final String url = getEndpoint(request, "federation_list_endpoint").orElseThrow();
     try {
-      return (List<String>) this.client.mutate().baseUrl(url).build()
+      return requireBody(this.client.mutate().baseUrl(url).build()
           .get()
           .retrieve()
-          .body(List.class);
-    } catch (final Exception e) {
+          .body(STRING_LIST), url);
+    }
+    catch (final Exception e) {
       log.error("Failed to fetch subordinate listing for request {}", request, e);
       throw e;
     }
   }
 
+  /**
+   * Gets a trust mark from the {@code federation_trust_mark_endpoint} of the request metadata, or from
+   * {@code /trust_mark} under the trust mark issuer if the metadata has no such endpoint.
+   *
+   * @param request for trust mark
+   * @return trust mark jwt
+   */
   @Override
-  public SignedJWT trustMark(final FederationRequest<TrustMarkRequest> request) {
-    final String path = Optional.ofNullable(request.federationEntityMetadata().get("federation_trust_mark_endpoint"))
-        .filter(p -> p instanceof String)
-        .map(String.class::cast)
+  public @NonNull SignedJWT trustMark(final @NonNull FederationRequest<TrustMarkRequest> request) {
+    final String path = getEndpoint(request, "federation_trust_mark_endpoint")
         .orElseGet(() -> request.parameters().trustMarkIssuer().getValue() + "/trust_mark");
     final String body = this.client.mutate().baseUrl(path).build()
         .get()
-        .uri(buidler -> buidler
+        .uri(builder -> builder
             .queryParam("trust_mark_type", request.parameters().trustMarkType().getValue())
             .queryParam("sub", request.parameters().subject().getValue())
             .build())
         .retrieve()
         .body(String.class);
     try {
-      return SignedJWT.parse(body);
-    } catch (final java.text.ParseException e) {
+      return SignedJWT.parse(requireBody(body, path));
+    }
+    catch (final ParseException e) {
       throw new RegistryResponseException("Failed to fetch entity statement", e);
     }
   }
@@ -189,36 +234,44 @@ public class RestClientFederationClient implements FederationClient {
   /**
    * Not implemented, nothing in the service uses resolve internally.
    *
+   * @param request for resolver
+   * @return never returns
    * @throws UnsupportedOperationException always
    */
   @Override
-  public SignedJWT resolve(final FederationRequest<ResolveRequest> request) {
+  public @NonNull SignedJWT resolve(final @NonNull FederationRequest<ResolveRequest> request) {
     throw new UnsupportedOperationException("Resolve requests are not implemented by RestClientFederationClient");
   }
 
+  /**
+   * Gets the trust marked entities from the {@code federation_trust_mark_list_endpoint} of the request metadata.
+   *
+   * @param request for trust marked listing
+   * @return list of trust marked subjects
+   */
   @Override
-  public List<String> trustMarkedListing(final FederationRequest<TrustMarkListingRequest> request) {
-    final String path = Optional.ofNullable(
-            request.federationEntityMetadata().get("federation_trust_mark_list_endpoint"))
-        .filter(p -> p instanceof String)
-        .map(String.class::cast)
-        .orElseThrow();
-    return (List<String>) this.client.mutate().baseUrl(path).build()
+  public @NonNull List<String> trustMarkedListing(final @NonNull FederationRequest<TrustMarkListingRequest> request) {
+    final String path = getEndpoint(request, "federation_trust_mark_list_endpoint").orElseThrow();
+    return requireBody(this.client.mutate().baseUrl(path).build()
         .get()
         .uri(builder -> builder
             .queryParam("trust_mark_type", request.parameters().trustMarkType())
             .build())
         .retrieve()
-        .body(List.class);
+        .body(STRING_LIST), path);
   }
 
+  /**
+   * Gets the status of a trust mark from the {@code federation_trust_mark_status_endpoint} of the request
+   * metadata. If the metadata has no such endpoint, or the request fails, the response is marked as an error.
+   *
+   * @param request containing the trust mark JWT and issuer entity ID
+   * @return the trust mark status response
+   */
   @Override
-  public TrustMarkStatusResponse trustMarkStatus(final FederationRequest<FederationTrustMarkStatusRequest> request) {
-    final String path = Optional.ofNullable(
-            request.federationEntityMetadata().get("federation_trust_mark_status_endpoint"))
-        .filter(p -> p instanceof String)
-        .map(String.class::cast)
-        .orElse(null);
+  public @NonNull TrustMarkStatusResponse trustMarkStatus(
+      final @NonNull FederationRequest<FederationTrustMarkStatusRequest> request) {
+    final String path = getEndpoint(request, "federation_trust_mark_status_endpoint").orElse(null);
     if (path == null) {
       log.info("Trust mark issuer {} has no valid federation_trust_mark_status_endpoint",
           request.parameters().trustMarkIssuer());
@@ -229,16 +282,47 @@ public class RestClientFederationClient implements FederationClient {
       form.add("trust_mark", request.parameters().trustMarkJwt());
       final String body = this.client.mutate().baseUrl(path).build()
           .post()
-          .uri(builder -> builder.build())
+          .uri(UriBuilder::build)
           .contentType(MediaType.APPLICATION_FORM_URLENCODED)
           .body(form)
           .retrieve()
           .body(String.class);
-      return new TrustMarkStatusResponse(SignedJWT.parse(body), false);
-    } catch (final Exception e) {
+      return new TrustMarkStatusResponse(SignedJWT.parse(requireBody(body, path)), false);
+    }
+    catch (final Exception e) {
       log.warn("Failed to get trust mark status from '{}': {}", path, e.getMessage());
       log.debug("Trust mark status request {} failed", request, e);
       return new TrustMarkStatusResponse(null, true);
     }
+  }
+
+  /**
+   * Gets an endpoint URL from the federation entity metadata of a request.
+   *
+   * @param request the request holding the metadata
+   * @param name the metadata parameter name of the endpoint
+   * @return the endpoint URL, or an empty optional if the metadata has no such string value
+   */
+  private static @NonNull Optional<String> getEndpoint(
+      final @NonNull FederationRequest<?> request, final @NonNull String name) {
+    return Optional.ofNullable(request.federationEntityMetadata().get(name))
+        .filter(String.class::isInstance)
+        .map(String.class::cast);
+  }
+
+  /**
+   * Checks that a response has a body.
+   *
+   * @param body the response body
+   * @param url the URL the response came from
+   * @param <T> the body type
+   * @return the body
+   * @throws RestClientException if the response has no body
+   */
+  private static <T> @NonNull T requireBody(final @Nullable T body, final @NonNull String url) {
+    if (body == null) {
+      throw new RestClientException("Empty response from '%s'".formatted(url));
+    }
+    return body;
   }
 }

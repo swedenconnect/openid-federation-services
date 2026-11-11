@@ -20,6 +20,10 @@
 
 * Subordinate listings are answered from the records only, without fetching the Entity Configurations of subordinates. Subordinate records must now have `entity-types`, and `is-intermediate` for Intermediate Entities, otherwise they are rejected when loaded. See [#274](https://github.com/swedenconnect/openid-federation-services/issues/274).
 
+* The resolver and filtered subordinate listings can now fetch an Entity Configuration from an `ec_location` with a URL-encoded entity identifier, for example `<ie>/hosted/https%3A%2F%2Frp.example.se/.well-known/openid-federation`. Before, the URL was encoded a second time and the fetch failed. ([#281](https://github.com/swedenconnect/openid-federation-services/issues/281))
+
+* Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). ([#275](https://github.com/swedenconnect/openid-federation-services/issues/275))
+
 * The `trust_marked` and `trust_mark_type` filters of subordinate listings are only supported by an entity that is also a Trust Mark Issuer, and are answered from its trust mark subjects. Other entities answer 400 `unsupported_parameter`. See [#273](https://github.com/swedenconnect/openid-federation-services/issues/273).
 
 ## Version 1.0.1
