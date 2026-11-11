@@ -14,6 +14,8 @@
 
 * A metadata policy operator with the value `null`, for example `{"value": null}`, from the registry is now published as is in Subordinate Statements when Redis storage is used. Before, it was published as `{}`, so the parameter was not removed. ([#276](https://github.com/swedenconnect/openid-federation-services/issues/276))
 
+* The resolver and filtered subordinate listings can now fetch an Entity Configuration from an `ec_location` with a URL-encoded entity identifier, for example `<ie>/hosted/https%3A%2F%2Frp.example.se/.well-known/openid-federation`. Before, the URL was encoded a second time and the fetch failed. ([#281](https://github.com/swedenconnect/openid-federation-services/issues/281))
+
 * Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). ([#275](https://github.com/swedenconnect/openid-federation-services/issues/275))
 
 
