@@ -16,14 +16,14 @@
  */
 package se.swedenconnect.oidf.service.service.actuator;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.service.suites.Context;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.Set;
@@ -57,7 +57,7 @@ public class ActuatorTestCases {
         .retrieve()
         .body(String.class);
     assertNotNull(body);
-    final JsonNode json = new ObjectMapper().readTree(body);
+    final JsonNode json = new JsonMapper().readTree(body);
     assertTrue(json.has("nodes"), "Response should contain 'nodes' key");
     assertTrue(json.has("edges"), "Response should contain 'edges' key");
     assertTrue(json.get("nodes").isArray(), "'nodes' should be an array");
@@ -75,7 +75,7 @@ public class ActuatorTestCases {
         .retrieve()
         .body(String.class);
     assertNotNull(body);
-    final JsonNode json = new ObjectMapper().readTree(body);
+    final JsonNode json = new JsonMapper().readTree(body);
     assertTrue(json.has("nodes"), "Response should contain 'nodes' key");
     assertTrue(json.has("edges"), "Response should contain 'edges' key");
     assertTrue(json.get("nodes").isArray(), "'nodes' should be an array");
@@ -102,7 +102,7 @@ public class ActuatorTestCases {
     final Set<String> statFields = Set.of("mainstat", "secondarystat");
 
     json.get("nodes").forEach(node -> {
-      assertTrue(node.has("id") && node.get("id").isTextual() && !node.get("id").asText().isBlank(),
+      assertTrue(node.has("id") && node.get("id").isString() && !node.get("id").asString().isBlank(),
           "Each node must have a non-blank string 'id' — got: " + node);
       assertTrue(node.has("nodeRadius") && node.get("nodeRadius").isNumber(),
           "Each node must have a numeric 'nodeRadius' — missing field causes: " +
@@ -128,21 +128,21 @@ public class ActuatorTestCases {
     });
 
     final Set<String> nodeIds = new java.util.HashSet<>();
-    json.get("nodes").forEach(node -> nodeIds.add(node.get("id").asText()));
+    json.get("nodes").forEach(node -> nodeIds.add(node.get("id").asString()));
 
     json.get("edges").forEach(edge -> {
-      assertTrue(edge.has("id") && edge.get("id").isTextual() && !edge.get("id").asText().isBlank(),
+      assertTrue(edge.has("id") && edge.get("id").isString() && !edge.get("id").asString().isBlank(),
           "Each edge must have a non-blank string 'id' — got: " + edge);
-      assertTrue(edge.has("source") && edge.get("source").isTextual() && !edge.get("source").asText().isBlank(),
+      assertTrue(edge.has("source") && edge.get("source").isString() && !edge.get("source").asString().isBlank(),
           "Each edge must have a non-blank string 'source' — got: " + edge);
-      assertTrue(edge.has("target") && edge.get("target").isTextual() && !edge.get("target").asText().isBlank(),
+      assertTrue(edge.has("target") && edge.get("target").isString() && !edge.get("target").asString().isBlank(),
           "Each edge must have a non-blank string 'target' — got: " + edge);
 
-      final String source = edge.get("source").asText();
+      final String source = edge.get("source").asString();
       assertTrue(nodeIds.contains(source),
           "Edge source '" + source + "' has no matching node id — edge: " + edge);
 
-      final String target = edge.get("target").asText();
+      final String target = edge.get("target").asString();
       assertTrue(nodeIds.contains(target),
           "Edge target '" + target + "' has no matching node id — edge: " + edge);
     });
@@ -156,7 +156,7 @@ public class ActuatorTestCases {
         .retrieve()
         .body(String.class);
     assertNotNull(body);
-    final List<String> deadNodes = new ObjectMapper().readValue(body, new TypeReference<>() {});
+    final List<String> deadNodes = new JsonMapper().readValue(body, new TypeReference<>() {});
     assertTrue(deadNodes.contains("http://localhost:11112/broken/subordinate"),
         "Dead nodes should contain the broken subordinate");
   }

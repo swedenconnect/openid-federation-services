@@ -42,6 +42,7 @@ import java.util.Map;
 public class GrafanaExportCacheWarmer {
 
   private final ExportEndpoint exportEndpoint;
+  private final ExportFriendlyEndpoint exportFriendlyEndpoint;
   private final ModuleResponseCache cache;
   private final CacheSnapshotVersionLookup lookup;
   private final CompositeRecordSource source;
@@ -62,12 +63,13 @@ public class GrafanaExportCacheWarmer {
             log.debug("Pre-warming Grafana export cache for trust anchor '{}'", trustAnchor);
             final Map<String, List<Map<String, Object>>> nodesAndEdges =
                 this.exportEndpoint.getNodesAndEdges(trustAnchor);
-            final String result = ExportFriendlyEndpoint.formatAsGrafana(nodesAndEdges);
+            final String result = this.exportFriendlyEndpoint.formatAsGrafana(nodesAndEdges);
             final long snapshot = this.lookup.getLatestSnapshotVersion();
             this.cache.put(snapshot, ExportFriendlyEndpoint.cacheKey(trustAnchor),
                 new CachedResponse(result, "application/json", 200));
             log.debug("Grafana export cache warmed for trust anchor '{}'", trustAnchor);
-          } catch (final Exception e) {
+          }
+          catch (final Exception e) {
             log.warn("Failed to pre-warm Grafana export cache for trust anchor '{}'", trustAnchor, e);
           }
         });

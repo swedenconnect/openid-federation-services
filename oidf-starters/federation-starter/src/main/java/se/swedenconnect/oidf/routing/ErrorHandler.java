@@ -17,13 +17,14 @@
 package se.swedenconnect.oidf.routing;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
@@ -73,8 +74,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   }
 
   @Override
-  protected ResponseEntity<Object> createResponseEntity(final @Nullable Object body, final HttpHeaders headers,
-                                                        final HttpStatusCode statusCode, final WebRequest request) {
+  protected @NonNull ResponseEntity<Object> createResponseEntity(final @Nullable Object body,
+      final @NonNull HttpHeaders headers, final @NonNull HttpStatusCode statusCode, final @NonNull WebRequest request) {
     final String errorDescription = Optional.ofNullable(body)
         .filter(ProblemDetail.class::isInstance)
         .map(ProblemDetail.class::cast)

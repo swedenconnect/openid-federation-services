@@ -4,6 +4,10 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:8080/im",
+        "entity-types": [
+          "federation_entity"
+        ],
+        "is-intermediate": true,
         "jwks": "federation:demo-federation-key"
       }
     ]
@@ -13,10 +17,17 @@
     "subordinates": [
       {
         "entity-identifier": "http://localhost:8080/op",
+        "entity-types": [
+          "federation_entity",
+          "openid_provider"
+        ],
         "jwks": "hosted:demo-hosted-key"
       },
       {
         "entity-identifier": "http://localhost:8080/rp",
+        "entity-types": [
+          "openid_relying_party"
+        ],
         "jwks": "hosted:demo-hosted-key",
         "metadata": {
           "openid_relying_party": {

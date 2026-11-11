@@ -27,7 +27,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tests for the {@code ec-location} checks of {@link PropertyRegistry#validate(String, EcLocationValidator)}.
+ * Tests for the subordinate and {@code ec-location} checks of
+ * {@link PropertyRegistry#validate(String, EcLocationValidator)}.
  */
 class PropertyRegistryTest {
 
@@ -52,7 +53,7 @@ class PropertyRegistryTest {
 
   @Test
   void entityWithBase64DataUrlIsRejected() {
-    final PropertyRegistry registry = this.registry(null, "data:application/entity-statement+jwt;base64,e30");
+    final PropertyRegistry registry = this.registry((String) null, "data:application/entity-statement+jwt;base64,e30");
 
     Assertions.assertThrows(IllegalArgumentException.class,
         () -> registry.validate("federation.local-registry", new EcLocationValidator(false)));
@@ -65,12 +66,56 @@ class PropertyRegistryTest {
     Assertions.assertDoesNotThrow(() -> registry.validate("federation.local-registry", new EcLocationValidator(false)));
   }
 
-  private PropertyRegistry registry(final String subordinateEcLocation, final String entityEcLocation) {
-    final TrustAnchorProperties trustAnchor = new TrustAnchorProperties(TA, Map.of(), List.of());
-    trustAnchor.setSubordinates(List.of(TrustAnchorProperties.SubordinateListingProperty.builder()
+  @Test
+  void subordinateWithoutEntityTypesIsRejected() {
+    for (final List<String> entityTypes : java.util.Arrays.asList(null, List.<String>of())) {
+      final PropertyRegistry registry = this.registry(TrustAnchorProperties.SubordinateListingProperty.builder()
+          .entityIdentifier(LEAF)
+          .entityTypes(entityTypes)
+          .build(), null);
+
+      final IllegalArgumentException e = Assertions.assertThrows(IllegalArgumentException.class,
+          () -> registry.validate("federation.local-registry", new EcLocationValidator(false)));
+      Assertions.assertTrue(e.getMessage().contains("entity-types is missing"), e.getMessage());
+    }
+  }
+
+  @Test
+  void intermediateWithoutFederationEntityIsRejected() {
+    final PropertyRegistry registry = this.registry(TrustAnchorProperties.SubordinateListingProperty.builder()
         .entityIdentifier(LEAF)
+        .entityTypes(List.of("openid_provider"))
+        .intermediate(true)
+        .build(), null);
+
+    final IllegalArgumentException e = Assertions.assertThrows(IllegalArgumentException.class,
+        () -> registry.validate("federation.local-registry", new EcLocationValidator(false)));
+    Assertions.assertTrue(e.getMessage().contains("is-intermediate"), e.getMessage());
+  }
+
+  @Test
+  void intermediateWithFederationEntityIsAccepted() {
+    final PropertyRegistry registry = this.registry(TrustAnchorProperties.SubordinateListingProperty.builder()
+        .entityIdentifier(LEAF)
+        .entityTypes(List.of("federation_entity"))
+        .intermediate(true)
+        .build(), null);
+
+    Assertions.assertDoesNotThrow(() -> registry.validate("federation.local-registry", new EcLocationValidator(false)));
+  }
+
+  private PropertyRegistry registry(final String subordinateEcLocation, final String entityEcLocation) {
+    return this.registry(TrustAnchorProperties.SubordinateListingProperty.builder()
+        .entityIdentifier(LEAF)
+        .entityTypes(List.of("openid_relying_party"))
         .ecLocation(subordinateEcLocation)
-        .build()));
+        .build(), entityEcLocation);
+  }
+
+  private PropertyRegistry registry(final TrustAnchorProperties.SubordinateListingProperty subordinate,
+      final String entityEcLocation) {
+    final TrustAnchorProperties trustAnchor = new TrustAnchorProperties(TA, Map.of(), List.of());
+    trustAnchor.setSubordinates(List.of(subordinate));
     return new PropertyRegistry(List.of(), List.of(trustAnchor), List.of(), List.of(
         EntityRecord.builder().entityIdentifier(TA).build(),
         EntityRecord.builder().entityIdentifier(LEAF).ecLocation(entityEcLocation).build()));

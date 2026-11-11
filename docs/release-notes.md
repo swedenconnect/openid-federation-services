@@ -4,11 +4,39 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Version 1.0.1
+## Version 1.1.0
 
 **Date:** _not yet released_
 
+* A trust mark issuer without a validity duration no longer gives 500. A trust mark without a validity duration is issued without `exp` and never expires. See [#262](https://github.com/swedenconnect/openid-federation-services/issues/262).
+
+* The validity of a trust mark can now be set per trust mark with `trust-mark-validity-duration`. The value of the trust mark issuer is still used for trust marks without one of their own, and is deprecated.
+
+* The resolver now parses, merges and applies metadata policies with the operators from the `nimbus-extensions` module.
+
+* A metadata policy operator with the value `null`, for example `{"value": null}`, from the registry is now published as is in Subordinate Statements when Redis storage is used. Before, it was published as `{}`, so the parameter was not removed. See [#276](https://github.com/swedenconnect/openid-federation-services/issues/276).
+
+* Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). See [#275](https://github.com/swedenconnect/openid-federation-services/issues/275).
+
+* Subordinate listings are answered from the records only, without fetching the Entity Configurations of subordinates. Subordinate records must now have `entity-types`, and `is-intermediate` for Intermediate Entities, otherwise they are rejected when loaded. See [#274](https://github.com/swedenconnect/openid-federation-services/issues/274).
+
+* The resolver and filtered subordinate listings can now fetch an Entity Configuration from an `ec_location` with a URL-encoded entity identifier, for example `<ie>/hosted/https%3A%2F%2Frp.example.se/.well-known/openid-federation`. Before, the URL was encoded a second time and the fetch failed. ([#281](https://github.com/swedenconnect/openid-federation-services/issues/281))
+
+* Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). ([#275](https://github.com/swedenconnect/openid-federation-services/issues/275))
+
+* The `trust_marked` and `trust_mark_type` filters of subordinate listings are only supported by an entity that is also a Trust Mark Issuer, and are answered from its trust mark subjects. Other entities answer 400 `unsupported_parameter`. See [#273](https://github.com/swedenconnect/openid-federation-services/issues/273).
+
 * The service no longer shuts down when the trust anchor cannot be fetched at startup. ([#247](https://github.com/swedenconnect/openid-federation-services/issues/247))
+
+## Version 1.0.1
+
+**Date:** 2026-11-02
+
+* Filtered subordinate listings of a Trust Anchor now read the Entity Configurations of subordinates from the resolver for the same Trust Anchor, instead of fetching each one. Subordinates the resolver has no Entity Configuration for are still fetched.
+* Hosted entities with a URL-encoded entity identifier in their virtual entity id, for example `<ie>/hosted/https%3A%2F%2Frp.example.se`, are now served instead of being rejected by Tomcat.
+* The trust mark endpoint now returns 404 `not_found` instead of 500 for a trust mark type configured without `trust-mark-subjects`, and the trust marked entities listing returns an empty array. ([#249](https://github.com/swedenconnect/openid-federation-services/issues/249))
+* An empty `trust_mark_owners` is no longer published. ([#242](https://github.com/swedenconnect/openid-federation-services/issues/242))
+* The new `nimbus-extensions` module adds Nimbus metadata policy operators for `one_of` with booleans and numbers, and `value` set to `null`. Metadata policies read through `EntityStatementClaims` use them. ([#244](https://github.com/swedenconnect/openid-federation-services/issues/244))
 
 ## Version 1.0.0
 

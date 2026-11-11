@@ -18,8 +18,9 @@ package se.swedenconnect.oidf.configuration;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.lang.Nullable;
 
 import java.util.Arrays;
 
@@ -33,9 +34,8 @@ public class JWKSPropertyLoader implements Converter<String, JWKSet> {
 
   private final JWKPropertyLoader jwkPropertyLoader;
 
-  @Nullable
   @Override
-  public JWKSet convert(final String source) {
+  public @Nullable JWKSet convert(final @NonNull String source) {
     return new JWKSet(Arrays.stream(source.split(",")).map(this.jwkPropertyLoader::convert).toList());
   }
 }

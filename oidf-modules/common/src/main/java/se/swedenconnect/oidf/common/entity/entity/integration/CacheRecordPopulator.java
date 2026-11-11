@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.common.entity.entity.integration;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
@@ -32,6 +33,7 @@ import java.util.UUID;
  * Responsible for populating cache from registry.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Slf4j
 public class CacheRecordPopulator {
@@ -75,9 +77,11 @@ public class CacheRecordPopulator {
         Optional.ofNullable(modules.getValue()).map(ModuleRecord::getTrustAnchors).orElseGet(List::of);
     trustAnchors.forEach(ta -> ta.setSubordinates(Optional.ofNullable(ta.getSubordinates()).orElseGet(List::of)
         .stream()
-        .filter(subordinate -> this.hasValidEcLocation(ta, subordinate))
+        .filter(subordinate -> this.isValidSubordinate(ta, subordinate))
         .toList()));
     EcLocationValidator.warnForDiscouragedUse(trustAnchors, entityRecords.getValue());
+    Optional.ofNullable(modules.getValue()).map(ModuleRecord::getTrustMarkIssuers).orElseGet(List::of)
+        .forEach(TrustMarkIssuerProperties::warnForShortValidityDurations);
     final CompositeRecord compositeRecord = new CompositeRecord(entityRecords, modules);
     this.source.addRecord(compositeRecord);
     return compositeRecord;
@@ -101,15 +105,16 @@ public class CacheRecordPopulator {
   }
 
   /**
-   * Checks the ec_location that would be issued for a subordinate from the registry.
+   * Checks a subordinate from the registry: its listing fields and the ec_location that would be issued for it.
    *
    * @param trustAnchor the Trust Anchor of the subordinate
    * @param subordinate the subordinate
-   * @return true if no ec_location is issued or it is valid
+   * @return true if the subordinate is valid
    */
-  private boolean hasValidEcLocation(
+  private boolean isValidSubordinate(
       final TrustAnchorProperties trustAnchor, final TrustAnchorProperties.SubordinateListingProperty subordinate) {
     try {
+      subordinate.validate();
       this.ecLocationValidator.validate(subordinate);
       return true;
     }

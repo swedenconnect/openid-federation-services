@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.trustanchor;
 
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
@@ -25,11 +24,11 @@ import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
  * Factory class for creating trust anchors.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 public class TrustAnchorFactory {
 
   private final CompositeRecordSource source;
-  private final FederationClient client;
   private final SignerFactory signerFactory;
 
   /**
@@ -37,15 +36,12 @@ public class TrustAnchorFactory {
    *
    * @param source        to use
    * @param signerFactory to use
-   * @param client        to use
    */
   public TrustAnchorFactory(
       final CompositeRecordSource source,
-      final SignerFactory signerFactory,
-      final FederationClient client
+      final SignerFactory signerFactory
   ) {
     this.source = source;
-    this.client = client;
     this.signerFactory = signerFactory;
   }
 
@@ -56,8 +52,7 @@ public class TrustAnchorFactory {
   public TrustAnchor create(
       final TrustAnchorProperties properties) {
     return new DefaultTrustAnchor(this.source, properties,
-        new SubordinateStatementFactory(this.signerFactory),
-        this.client
+        new SubordinateStatementFactory(this.signerFactory)
     );
   }
 }

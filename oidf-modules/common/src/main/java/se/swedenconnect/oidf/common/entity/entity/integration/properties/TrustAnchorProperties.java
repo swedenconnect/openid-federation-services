@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.common.entity.entity.integration.properties;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
  * Property class for trust anchor.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Getter
 @Setter
@@ -95,6 +97,7 @@ public class TrustAnchorProperties {
    * Entity of an individual subordinate.
    *
    * @author Felix Hellman
+   * @author Martin Lindström
    */
   @Getter
   @Setter
@@ -122,6 +125,35 @@ public class TrustAnchorProperties {
     private ConstraintRecord constraints;
     @SerializedName("metadata")
     private Map<String, Object> metadata;
+    @SerializedName("entity-types")
+    private List<String> entityTypes;
+    @SerializedName("is-intermediate")
+    private Boolean intermediate;
+
+    /**
+     * Validates the fields used for subordinate listing. {@code entity-types} must be present and not empty, and
+     * {@code is-intermediate} may only be set when {@code entity-types} contains {@code federation_entity}.
+     *
+     * @throws IllegalArgumentException if the record is not valid
+     */
+    public void validate() throws IllegalArgumentException {
+      if (this.entityTypes == null || this.entityTypes.isEmpty()) {
+        throw new IllegalArgumentException("entity-types is missing");
+      }
+      if (this.isIntermediate() && !this.entityTypes.contains(EntityType.FEDERATION_ENTITY.getValue())) {
+        throw new IllegalArgumentException("is-intermediate is set, but entity-types does not contain "
+            + EntityType.FEDERATION_ENTITY.getValue());
+      }
+    }
+
+    /**
+     * Tells whether the subordinate is an Intermediate Entity.
+     *
+     * @return true if {@code is-intermediate} is set to true
+     */
+    public boolean isIntermediate() {
+      return Boolean.TRUE.equals(this.intermediate);
+    }
 
     /**
      * Gets the {@code ec_location} to issue for this subordinate. A configured value starting with {@code /} is

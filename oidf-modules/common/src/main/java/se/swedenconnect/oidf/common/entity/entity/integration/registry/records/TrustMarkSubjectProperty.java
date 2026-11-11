@@ -35,6 +35,7 @@ import java.util.Objects;
  * @param revoked If this trust mark is revoked, no new trustmarks for this subject will be issued
  * @author Per Fredrik Plars
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Slf4j
 @Builder(toBuilder = true)
@@ -60,6 +61,16 @@ public record TrustMarkSubjectProperty(
       }
     }
   }
+
+  /**
+   * Tells whether trust marks may be issued for this subject: it is not revoked, is granted and has not expired.
+   *
+   * @param now the current time
+   * @return true if the subject is valid
+   */
+  public boolean isValid(final Instant now) {
+    return !this.revoked
+        && (this.granted == null || !now.isBefore(this.granted))
+        && (this.expires == null || now.isBefore(this.expires));
+  }
 }
-
-

@@ -16,8 +16,6 @@
  */
 package se.swedenconnect.oidf.service.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +26,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.service.suites.Context;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import java.util.List;
 
 @ActiveProfiles({"integration-test"})
@@ -35,7 +36,7 @@ public class GeneralErrorHandlingTestCases {
 
   private RestClient restClient;
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper = new JsonMapper();
 
   @BeforeEach
   public void beforeMethod() {
@@ -64,8 +65,8 @@ public class GeneralErrorHandlingTestCases {
 
     Assertions.assertEquals(404, response.getStatusCode().value());
     final JsonNode body = this.objectMapper.readTree(response.getBody());
-    Assertions.assertEquals("not_found", body.get("error").asText());
-    Assertions.assertEquals("No static resource notfound/myfrend.", body.get("error_description").asText());
+    Assertions.assertEquals("not_found", body.get("error").asString());
+    Assertions.assertEquals("No static resource notfound/myfrend.", body.get("error_description").asString());
     Assertions.assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
   }
 
@@ -79,8 +80,8 @@ public class GeneralErrorHandlingTestCases {
 
     Assertions.assertEquals(404, response.getStatusCode().value());
     final JsonNode body = this.objectMapper.readTree(response.getBody());
-    Assertions.assertEquals("not_found", body.get("error").asText());
-    Assertions.assertEquals("No static resource authorization-tmi/trust_mark.", body.get("error_description").asText());
+    Assertions.assertEquals("not_found", body.get("error").asString());
+    Assertions.assertEquals("No static resource authorization-tmi/trust_mark.", body.get("error_description").asString());
     Assertions.assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
   }
 
@@ -95,9 +96,9 @@ public class GeneralErrorHandlingTestCases {
 
     Assertions.assertEquals(400, response.getStatusCode().value());
     final JsonNode body = this.objectMapper.readTree(response.getBody());
-    Assertions.assertEquals("invalid_request", body.get("error").asText());
+    Assertions.assertEquals("invalid_request", body.get("error").asString());
     Assertions.assertEquals("Required request parameter [trust_mark_type] was missing.",
-        body.get("error_description").asText());
+        body.get("error_description").asString());
     Assertions.assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
   }
 
@@ -114,7 +115,7 @@ public class GeneralErrorHandlingTestCases {
 
       Assertions.assertEquals(400, response.getStatusCode().value(), uri);
       final JsonNode body = this.objectMapper.readTree(response.getBody());
-      Assertions.assertEquals("invalid_request", body.get("error").asText(), uri);
+      Assertions.assertEquals("invalid_request", body.get("error").asString(), uri);
     }
   }
 
@@ -130,8 +131,29 @@ public class GeneralErrorHandlingTestCases {
 
       Assertions.assertEquals(400, response.getStatusCode().value(), uri);
       final JsonNode body = this.objectMapper.readTree(response.getBody());
-      Assertions.assertEquals("invalid_request", body.get("error").asText(), uri);
+      Assertions.assertEquals("invalid_request", body.get("error").asString(), uri);
     }
+  }
+
+  @Test
+  public void testTrustMarkFilterAtNonTrustMarkIssuerExpect400() throws Exception {
+    for (final String uri : List.of("/im/subordinate_listing?trust_marked=true",
+        "/im/subordinate_listing?trust_mark_type=http://localhost:11111/tm/any")) {
+      final ResponseEntity<String> response = this.restClient.get()
+          .uri(uri)
+          .retrieve()
+          .onStatus(HttpStatusCode::isError, (req, res) -> {})
+          .toEntity(String.class);
+
+      Assertions.assertEquals(400, response.getStatusCode().value(), uri);
+      final JsonNode body = this.objectMapper.readTree(response.getBody());
+      Assertions.assertEquals("unsupported_parameter", body.get("error").asString(), uri);
+    }
+    final ResponseEntity<String> response = this.restClient.get()
+        .uri("/im/subordinate_listing?trust_marked=false")
+        .retrieve()
+        .toEntity(String.class);
+    Assertions.assertEquals(200, response.getStatusCode().value());
   }
 
 }

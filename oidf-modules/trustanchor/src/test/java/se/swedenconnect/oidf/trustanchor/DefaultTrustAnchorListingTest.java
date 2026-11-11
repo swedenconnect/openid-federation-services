@@ -16,206 +16,147 @@
  */
 package se.swedenconnect.oidf.trustanchor;
 
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jose.jwk.Curve;
-import com.nimbusds.jose.jwk.ECKey;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import net.minidev.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
+import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
+import se.swedenconnect.oidf.common.entity.exception.UnsupportedParameterException;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
- * Tests for the trust mark filters of {@link DefaultTrustAnchor#subordinateListing(SubordinateListingRequest)}.
+ * Tests for {@link DefaultTrustAnchor#subordinateListing(SubordinateListingRequest)}.
  *
  * @author Martin Lindström
  */
 class DefaultTrustAnchorListingTest {
 
   private static final String TA = "https://ta.example.com";
-  private static final String ISSUER = "https://tmi.example.com";
-  private static final String HOLDER = "https://holder.example.com";
+  private static final String IE = "https://ie.example.com";
+  private static final String OP = "https://op.example.com";
+  private static final String RP = "https://rp.example.com";
   private static final String TYPE = "https://example.com/tm/certified";
+  private static final String OTHER_TYPE = "https://example.com/tm/other";
 
-  private final Map<String, ECKey> keys = new HashMap<>();
-  private final Map<String, SignedJWT> configurations = new HashMap<>();
   private CompositeRecordSource source;
-  private FederationClient client;
 
   @BeforeEach
-  @SuppressWarnings("unchecked")
-  void setUp() throws Exception {
-    for (final String id : List.of(ISSUER, HOLDER, "https://other.example.com")) {
-      this.keys.put(id, new ECKeyGenerator(Curve.P_256).keyID(id + "#key").generate());
-    }
+  void setUp() {
     this.source = Mockito.mock(CompositeRecordSource.class);
     Mockito.when(this.source.getEntity(Mockito.any())).thenReturn(Optional.empty());
-    this.client = Mockito.mock(FederationClient.class);
-    Mockito.when(this.client.entityConfiguration(Mockito.any())).thenAnswer(invocation -> {
-      final FederationRequest<EntityConfigurationRequest> request = invocation.getArgument(0);
-      final SignedJWT configuration = this.configurations.get(request.parameters().entityID().getValue());
-      if (configuration == null) {
-        throw new IllegalStateException("connection refused");
-      }
-      return configuration;
-    });
-    this.configurations.put(ISSUER, this.configuration(ISSUER, ISSUER, List.of()));
+    Mockito.when(this.source.getTrustMarkIssuerProperties()).thenReturn(List.of());
   }
 
   @Test
-  void validTrustMarkFromDirectSubordinateCounts() throws Exception {
-    this.configurations.put(HOLDER, this.configuration(HOLDER, HOLDER,
-        List.of(this.trustMark(ISSUER, HOLDER, Instant.now().plusSeconds(600)))));
-    Assertions.assertEquals(List.of(HOLDER), this.listByType(null));
+  void noFilterListsAllOnce() throws Exception {
+    Assertions.assertEquals(List.of(IE, OP, RP), this.list(SubordinateListingRequest.requestAll()));
   }
 
   @Test
-  void trustMarkFromIssuerOutsideTheTrustAnchorDoesNotCount() throws Exception {
-    this.configurations.put(HOLDER, this.configuration(HOLDER, HOLDER,
-        List.of(this.trustMark("https://other.example.com", HOLDER, Instant.now().plusSeconds(600)))));
-    Assertions.assertEquals(List.of(), this.listByType(null));
+  void entityTypeFilterUsesRecords() throws Exception {
+    Assertions.assertEquals(List.of(OP), this.list(new SubordinateListingRequest(
+        List.of("openid_provider"), null, null, null)));
+    Assertions.assertEquals(List.of(OP, RP), this.list(new SubordinateListingRequest(
+        List.of("openid_provider", "openid_relying_party"), null, null, null)));
   }
 
   @Test
-  void copiedTrustMarkDoesNotCount() throws Exception {
-    this.configurations.put(HOLDER, this.configuration(HOLDER, HOLDER,
-        List.of(this.trustMark(ISSUER, "https://someone-else.example.com", Instant.now().plusSeconds(600)))));
-    Assertions.assertEquals(List.of(), this.listByType(null));
+  void intermediateFilterUsesRecords() throws Exception {
+    Assertions.assertEquals(List.of(IE), this.list(new SubordinateListingRequest(null, null, null, true)));
+    Assertions.assertEquals(List.of(IE, OP, RP), this.list(new SubordinateListingRequest(null, null, null, false)));
   }
 
   @Test
-  void expiredTrustMarkDoesNotCount() throws Exception {
-    this.configurations.put(HOLDER, this.configuration(HOLDER, HOLDER,
-        List.of(this.trustMark(ISSUER, HOLDER, Instant.now().minusSeconds(60)))));
-    Assertions.assertEquals(List.of(), this.listByType(null));
+  void trustMarkFiltersAreUnsupportedWhenNotTrustMarkIssuer() throws Exception {
+    final UnsupportedParameterException e = Assertions.assertThrows(UnsupportedParameterException.class,
+        () -> this.list(new SubordinateListingRequest(null, null, TYPE, null)));
+    Assertions.assertEquals("unsupported_parameter", e.toJSONObject().get("error"));
+    Assertions.assertThrows(UnsupportedParameterException.class,
+        () -> this.list(new SubordinateListingRequest(null, true, null, null)));
+    Assertions.assertEquals(List.of(IE, OP, RP), this.list(new SubordinateListingRequest(null, false, null, null)));
   }
 
   @Test
-  void issuerNotAllowedByTrustMarkIssuersDoesNotCount() throws Exception {
-    this.configurations.put(HOLDER, this.configuration(HOLDER, HOLDER,
-        List.of(this.trustMark(ISSUER, HOLDER, Instant.now().plusSeconds(600)))));
-    Assertions.assertEquals(List.of(),
-        this.listByType(Map.of(new EntityID(TYPE), List.of(new EntityID("https://other.example.com")))));
+  void trustMarkTypeFilterUsesTrustMarkSubjects() throws Exception {
+    this.trustMarkIssuer();
+    Assertions.assertEquals(List.of(OP), this.list(new SubordinateListingRequest(null, null, TYPE, null)));
   }
 
   @Test
-  void entityConfigurationSignedWithOtherKeyIsSkipped() throws Exception {
-    this.configurations.put(HOLDER, this.configuration(HOLDER, "https://other.example.com",
-        List.of(this.trustMark(ISSUER, HOLDER, Instant.now().plusSeconds(600)))));
-    Assertions.assertEquals(List.of(), this.listByType(null));
+  void trustMarkedFilterUsesAllTypes() throws Exception {
+    this.trustMarkIssuer();
+    Assertions.assertEquals(List.of(OP, RP), this.list(new SubordinateListingRequest(null, true, null, null)));
   }
 
   @Test
-  void unavailableSubordinateIsKeptForEntityTypeFilter() throws Exception {
-    // No Entity Configuration is registered for the holder, so fetching it fails
-    Assertions.assertEquals(List.of(HOLDER),
-        this.list(new SubordinateListingRequest(List.of("openid_provider"), null, null, null), null));
+  void trustMarkFilterIsCombinedWithEntityType() throws Exception {
+    this.trustMarkIssuer();
+    Assertions.assertEquals(List.of(RP), this.list(new SubordinateListingRequest(
+        List.of("openid_relying_party"), true, null, null)));
   }
 
   @Test
-  void duplicateSubordinatesAreListedOnce() throws Exception {
-    Assertions.assertEquals(List.of(ISSUER, HOLDER), this.list(SubordinateListingRequest.requestAll(), null));
+  void unknownTrustMarkTypeIsInvalid() throws Exception {
+    this.trustMarkIssuer();
+    final InvalidRequestException e = Assertions.assertThrows(InvalidRequestException.class,
+        () -> this.list(new SubordinateListingRequest(null, null, "https://example.com/tm/unknown", null)));
+    Assertions.assertEquals("trust_mark_type 'https://example.com/tm/unknown' is not issued by this entity",
+        e.toJSONObject().get("error_description"));
   }
 
-  @Test
-  void unavailableSubordinateIsLeftOutForTrustMarkFilter() throws Exception {
-    Assertions.assertEquals(List.of(), this.listByType(null));
+  /**
+   * Makes the Trust Anchor a Trust Mark Issuer. The OP holds {@code TYPE}, the RP holds {@code OTHER_TYPE}, a revoked
+   * subject and a subject that is not a subordinate hold {@code TYPE}.
+   */
+  private void trustMarkIssuer() {
+    final TrustMarkIssuerProperties tmi = TrustMarkIssuerProperties.builder()
+        .entityIdentifier(new EntityID(TA))
+        .trustMarks(List.of(
+            TrustMarkProperties.builder().trustMarkType(new TrustMarkType(TYPE)).build(),
+            TrustMarkProperties.builder().trustMarkType(new TrustMarkType(OTHER_TYPE)).build()))
+        .build();
+    Mockito.when(this.source.getTrustMarkIssuerProperties()).thenReturn(List.of(tmi));
+    Mockito.when(this.source.getTrustMarkSubjects(new EntityID(TA), new TrustMarkType(TYPE))).thenReturn(List.of(
+        this.subject(OP, false),
+        this.subject(IE, true),
+        this.subject("https://not-a-subordinate.example.com", false)));
+    Mockito.when(this.source.getTrustMarkSubjects(new EntityID(TA), new TrustMarkType(OTHER_TYPE)))
+        .thenReturn(List.of(this.subject(RP, false)));
   }
 
-  @Test
-  void relativeEcLocationIsResolvedForFilteredListing() throws Exception {
-    final SignedJWT holderConfiguration = this.configuration(HOLDER, HOLDER,
-        List.of(this.trustMark(ISSUER, HOLDER, Instant.now().plusSeconds(600))));
-    Mockito.doReturn(holderConfiguration).when(this.client).entityConfiguration(Mockito.argThat(request ->
-        request != null && (HOLDER + "/hosted/ec").equals(request.parameters().ecLocation())));
-    final TrustAnchorProperties.SubordinateListingProperty holder = this.subordinate(HOLDER);
-    holder.setEcLocation("/hosted/ec");
-
-    Assertions.assertEquals(List.of(HOLDER), this.list(new SubordinateListingRequest(null, null, TYPE, null), null,
-        List.of(this.subordinate(ISSUER), holder)));
+  private TrustMarkSubjectProperty subject(final String sub, final boolean revoked) {
+    return new TrustMarkSubjectProperty(sub, Instant.now().minusSeconds(60), null, revoked);
   }
 
-  private List<String> listByType(final Map<EntityID, List<EntityID>> trustMarkIssuers) throws Exception {
-    return this.list(new SubordinateListingRequest(null, null, TYPE, null), trustMarkIssuers);
-  }
-
-  private List<String> list(final SubordinateListingRequest request,
-      final Map<EntityID, List<EntityID>> trustMarkIssuers) throws Exception {
-    return this.list(request, trustMarkIssuers,
-        List.of(this.subordinate(ISSUER), this.subordinate(HOLDER), this.subordinate(HOLDER)));
-  }
-
-  private List<String> list(final SubordinateListingRequest request,
-      final Map<EntityID, List<EntityID>> trustMarkIssuers,
-      final List<TrustAnchorProperties.SubordinateListingProperty> subordinates) throws Exception {
-    final TrustAnchorProperties properties = new TrustAnchorProperties(new EntityID(TA), trustMarkIssuers, null);
-    properties.setSubordinates(subordinates);
+  private List<String> list(final SubordinateListingRequest request) throws Exception {
+    final TrustAnchorProperties properties = new TrustAnchorProperties(new EntityID(TA), null, null);
+    properties.setSubordinates(List.of(
+        this.subordinate(IE, List.of("federation_entity"), true),
+        this.subordinate(OP, List.of("federation_entity", "openid_provider"), null),
+        this.subordinate(RP, List.of("openid_relying_party"), null),
+        this.subordinate(OP, List.of("federation_entity", "openid_provider"), null)));
     final DefaultTrustAnchor trustAnchor = new DefaultTrustAnchor(this.source, properties,
-        Mockito.mock(SubordinateStatementFactory.class), this.client);
+        Mockito.mock(SubordinateStatementFactory.class));
     return trustAnchor.subordinateListing(request);
   }
 
-  private TrustAnchorProperties.SubordinateListingProperty subordinate(final String id) {
+  private TrustAnchorProperties.SubordinateListingProperty subordinate(
+      final String id, final List<String> entityTypes, final Boolean intermediate) {
     return TrustAnchorProperties.SubordinateListingProperty.builder()
         .entityIdentifier(new EntityID(id))
-        .jwks(new JWKSet(this.keys.get(id).toPublicJWK()))
+        .entityTypes(entityTypes)
+        .intermediate(intermediate)
         .build();
-  }
-
-  private SignedJWT configuration(final String id, final String signer, final List<SignedJWT> trustMarks)
-      throws Exception {
-    final List<Object> entries = trustMarks.stream().map(tm -> (Object) new JSONObject(
-        Map.of("trust_mark_type", TYPE, "trust_mark", tm.serialize()))).toList();
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer(id)
-        .subject(id)
-        .issueTime(new Date())
-        .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
-        .claim("jwks", new JSONObject(new JWKSet(this.keys.get(signer).toPublicJWK()).toJSONObject()))
-        .claim("trust_marks", entries)
-        .build();
-    return this.sign(signer, "entity-statement+jwt", claims);
-  }
-
-  private SignedJWT trustMark(final String issuer, final String subject, final Instant expiration) throws Exception {
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer(issuer)
-        .subject(subject)
-        .claim("trust_mark_type", TYPE)
-        .issueTime(new Date())
-        .expirationTime(Date.from(expiration))
-        .build();
-    return this.sign(issuer, "trust-mark+jwt", claims);
-  }
-
-  private SignedJWT sign(final String signer, final String typ, final JWTClaimsSet claims) throws Exception {
-    final ECKey key = this.keys.get(signer);
-    final SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.ES256)
-        .type(new JOSEObjectType(typ))
-        .keyID(key.getKeyID())
-        .build(), claims);
-    jwt.sign(new ECDSASigner(key));
-    return jwt;
   }
 }

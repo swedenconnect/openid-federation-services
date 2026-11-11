@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 #
-# Runs a release from start to finish, on a branch.
+# Runs a release, on a branch, up to and including the release tag.
 #
 # The script works out the next version from the tags that exist, lets you confirm it or enter
 # another one, sets that version in every pom.xml, builds the project, commits, pushes the branch,
-# tags the release commit, pushes the tag, and then opens the next snapshot version on the same
-# branch. Merging the branch into main is left to you, afterwards.
+# tags the release commit and pushes the tag. Merging the branch into main is left to you, and the
+# next snapshot version is opened afterwards with internal/post-release-bump.sh, run on main.
 #
 # Run from main, the release is made on a new release/X_Y_Z branch. Run from any other branch, the
 # release is made on that branch.
 #
 # Pushing the tag is what starts publishing, so the script asks before it does that. Publishing to
-# Maven Central is done by a GitHub workflow when the tag is pushed, see internal/release.md.
+# GitHub Packages and of the Docker image is done by GitHub workflows when the tag is pushed, see
+# internal/release.md.
 set -euo pipefail
 
 REMOTE="origin"
 MAIN_BRANCH="main"
-WORKFLOW_URL="https://github.com/swedenconnect/openid-federation-services/actions/workflows/maven-central-deploy.yml"
+WORKFLOW_URL="https://github.com/swedenconnect/openid-federation-services/actions/workflows/maven-github-deploy.yml"
 
 # Prints the version that follows the given tag or version: the last number raised by one.
 suggest_next_version() {
@@ -32,45 +33,9 @@ is_valid_version() {
   [[ "$1" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
 }
 
-# Prints the snapshot version that development continues on after the given release version.
-next_snapshot_version() {
-  echo "$(suggest_next_version "$1")-SNAPSHOT"
-}
-
 # Prints the message of the commit that holds the given release version.
 release_commit_message() {
   echo "build: $1 release"
-}
-
-# Prints the message of the commit that opens the next snapshot version after the given release.
-bump_commit_message() {
-  echo "build: bump version after $1"
-}
-
-# Adds a section for the given coming version at the top of the given release notes file, above the
-# first "## Version" heading, with the date set to not yet released. If there is no such heading the
-# section is added at the end. If the file already has a section for that version it is left as it is.
-add_release_notes_section() {
-  local version="$1" file="$2" tmp
-  if grep -qxF "## Version $version" "$file"; then
-    return 0
-  fi
-  tmp="$(mktemp)"
-  awk -v version="$version" '
-    function section() {
-      print "## Version " version
-      print ""
-      print "**Date:** _not yet released_"
-      print ""
-      print "*"
-      print ""
-    }
-    !done && /^## Version / { section(); done = 1 }
-    { print; last = $0 }
-    END { if (!done) { if (last != "") print ""; section() } }
-  ' "$file" > "$tmp"
-  cat "$tmp" > "$file"
-  rm -f "$tmp"
 }
 
 # Prints the branch the release is made on. From main that is a new release/X_Y_Z branch, from any
@@ -123,7 +88,8 @@ main() {
   git fetch --tags --quiet "$REMOTE" || echo "Could not fetch tags from $REMOTE, using the local tags."
 
   local latest_tag suggested_version
-  latest_tag="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -1)"
+  # Only vX.Y.Z tags count. The pattern of git tag -l would also let through a tag such as v1.0.0-RC1.
+  latest_tag="$(git tag -l 'v[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)"
 
   if [ -z "$latest_tag" ]; then
     echo "There is no tag of the form vX.Y.Z."
@@ -154,10 +120,9 @@ main() {
     exit 1
   fi
 
-  local branch tag next_version
+  local branch tag
   branch="$(release_branch_for "$current_branch" "$version")"
   tag="v$version"
-  next_version="$(next_snapshot_version "$version")"
 
   if [ "$branch" != "$current_branch" ] && ! branch_is_free "$branch"; then
     echo "The branch '$branch' already exists here or on $REMOTE. Remove it, or pick another version." >&2
@@ -197,8 +162,8 @@ main() {
 
   echo
   echo "== Tagging =="
-  echo "Pushing the tag $tag starts publishing. The artifacts go to Maven Central and the Docker"
-  echo "image is pushed. A version that has been published cannot be removed or replaced."
+  echo "Pushing the tag $tag starts publishing. The artifacts go to GitHub Packages and the Docker"
+  echo "image is pushed. A version that has been published must never be replaced."
   read -r -p "Create the tag $tag and push it? [y/N]: " tag_answer
 
   case "$tag_answer" in
@@ -213,6 +178,8 @@ main() {
       echo
       echo "    git tag -a $tag -m \"Version $version\""
       echo "    git push $REMOTE $tag"
+      echo
+      echo "Then merge '$branch' into $MAIN_BRANCH and run internal/post-release-bump.sh on $MAIN_BRANCH."
       exit 0
       ;;
   esac
@@ -223,35 +190,30 @@ main() {
 
   echo
   echo "== Publishing =="
-  echo "The tag started the Maven Central workflow, the Docker release workflow and the GitHub"
-  echo "release workflow. Follow the Maven Central run here:"
+  echo "The tag started the GitHub Packages workflow, the Docker release workflow and the GitHub"
+  echo "release workflow. Follow the GitHub Packages run here:"
   echo
   echo "    $WORKFLOW_URL"
   echo
   echo "It publishes nothing unless every deployed module is at version $version."
 
   echo
-  echo "== Next snapshot version =="
-  echo "Setting the version to $next_version in every pom.xml ..."
-  mvn versions:set -DnewVersion="$next_version" -DprocessAllModules=true -DgenerateBackupPoms=false
-
-  echo "Adding version ${next_version%-SNAPSHOT} to docs/release-notes.md ..."
-  add_release_notes_section "${next_version%-SNAPSHOT}" docs/release-notes.md
-
-  git add -- '**/pom.xml' pom.xml docs/release-notes.md
-  git commit -m "$(bump_commit_message "$version")"
-  git push "$REMOTE" "$branch"
-
-  echo
-  echo "Done. Version $version is tagged as $tag, and '$branch' is now on $next_version."
+  echo "Done. Version $version is tagged as $tag on '$branch'."
   echo
   echo "== What is left =="
-  echo "Open a pull request from '$branch' into $MAIN_BRANCH and merge it with \"Create a merge"
-  echo "commit\". The other two buttons, \"Squash and merge\" and \"Rebase and merge\", write new"
-  echo "commits onto $MAIN_BRANCH. The commit that $tag points at would then not be part of the"
-  echo "history of $MAIN_BRANCH, and GitHub would not show $tag on $MAIN_BRANCH."
+  echo "1. Check that the GitHub Packages workflow for $tag succeeded."
   echo
-  echo "Check that the Maven Central workflow for $tag succeeded."
+  echo "2. Open a pull request from '$branch' into $MAIN_BRANCH and merge it with \"Create a merge"
+  echo "   commit\". The other two buttons, \"Squash and merge\" and \"Rebase and merge\", write new"
+  echo "   commits onto $MAIN_BRANCH. The commit that $tag points at would then not be part of the"
+  echo "   history of $MAIN_BRANCH, and GitHub would not show $tag on $MAIN_BRANCH."
+  echo
+  echo "3. Once it is merged, open the next snapshot version from an up to date $MAIN_BRANCH:"
+  echo
+  echo "       git checkout $MAIN_BRANCH && git pull"
+  echo "       internal/post-release-bump.sh"
+  echo
+  echo "   It makes the bump on a new branch, which you then merge into $MAIN_BRANCH."
 }
 
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then

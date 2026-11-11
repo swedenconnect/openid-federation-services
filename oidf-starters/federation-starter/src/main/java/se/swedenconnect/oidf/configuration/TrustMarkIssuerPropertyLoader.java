@@ -18,8 +18,9 @@ package se.swedenconnect.oidf.configuration;
 
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.lang.Nullable;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 
 import java.util.List;
@@ -33,9 +34,8 @@ import java.util.List;
 public class TrustMarkIssuerPropertyLoader implements Converter<String, List<TrustMarkIssuerProperties>> {
   private final JsonReferenceLoader jsonReferenceLoader;
 
-  @Nullable
   @Override
-  public List<TrustMarkIssuerProperties> convert(final String source) {
+  public @Nullable List<TrustMarkIssuerProperties> convert(final @NonNull String source) {
     return this.jsonReferenceLoader.loadJson(source, new TypeToken<>() {
     });
   }

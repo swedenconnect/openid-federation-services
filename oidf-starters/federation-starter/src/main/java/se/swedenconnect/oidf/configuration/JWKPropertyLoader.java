@@ -18,9 +18,10 @@ package se.swedenconnect.oidf.configuration;
 
 import com.nimbusds.jose.jwk.JWK;
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.lang.Nullable;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
 
 /**
@@ -33,9 +34,8 @@ public class JWKPropertyLoader implements Converter<String, JWK> {
 
   private final ObjectProvider<KeyRegistry> registry;
 
-  @Nullable
   @Override
-  public JWK convert(final String source) {
+  public @Nullable JWK convert(final @NonNull String source) {
     if (source.startsWith("federation:")
         || source.startsWith("hosted:")
         || source.startsWith("public")) {

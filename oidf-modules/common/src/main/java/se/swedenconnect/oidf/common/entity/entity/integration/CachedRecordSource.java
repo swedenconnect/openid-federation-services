@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Cache backed implementation of {@link RecordSource}.
@@ -41,6 +42,8 @@ public class CachedRecordSource implements RecordSource {
   private static final Duration TTL = Duration.ofSeconds(10);
 
   private final Cache<String, CompositeRecord> cache;
+  private final Duration ttl;
+  private final ReentrantLock refreshLock = new ReentrantLock();
   private volatile CompositeRecord localRecord;
   private volatile Instant localRecordFetchedAt = Instant.MIN;
 
@@ -50,7 +53,18 @@ public class CachedRecordSource implements RecordSource {
    * @param cache for saving a single composite record
    */
   public CachedRecordSource(final Cache<String, CompositeRecord> cache) {
+    this(cache, TTL);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param cache for saving a single composite record
+   * @param ttl   how long the local copy is used before it is refreshed from the cache
+   */
+  CachedRecordSource(final Cache<String, CompositeRecord> cache, final Duration ttl) {
     this.cache = cache;
+    this.ttl = ttl;
   }
 
   /**
@@ -63,16 +77,37 @@ public class CachedRecordSource implements RecordSource {
   }
 
   private Optional<CompositeRecord> getRecord() {
-    final Instant now = Instant.now();
-    if (this.localRecord != null && Duration.between(this.localRecordFetchedAt, now).compareTo(TTL) < 0) {
-      return Optional.of(this.localRecord);
+    final CompositeRecord current = this.localRecord;
+    if (current != null && this.isFresh()) {
+      return Optional.of(current);
     }
-    final CompositeRecord fetched = this.cache.get("record");
-    if (fetched != null) {
-      this.localRecord = fetched;
-      this.localRecordFetchedAt = now;
+    if (current != null) {
+      if (!this.refreshLock.tryLock()) {
+        return Optional.of(current);
+      }
     }
-    return Optional.ofNullable(fetched);
+    else {
+      this.refreshLock.lock();
+    }
+    try {
+      final CompositeRecord refreshed = this.localRecord;
+      if (refreshed != null && this.isFresh()) {
+        return Optional.of(refreshed);
+      }
+      final CompositeRecord fetched = this.cache.get("record");
+      if (fetched != null) {
+        this.localRecord = fetched;
+        this.localRecordFetchedAt = Instant.now();
+      }
+      return Optional.ofNullable(fetched);
+    }
+    finally {
+      this.refreshLock.unlock();
+    }
+  }
+
+  private boolean isFresh() {
+    return Duration.between(this.localRecordFetchedAt, Instant.now()).compareTo(this.ttl) < 0;
   }
 
   @Override

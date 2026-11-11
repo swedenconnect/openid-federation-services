@@ -179,6 +179,12 @@ See [Demo Mode Configuration → `trust-anchors.json`](service-configuration-dem
 for the full list of properties a subordinate entry supports, including worked examples of `policy` and
 `constraints`.
 
+Every subordinate must have `entity-types`, and `is-intermediate` may only be set when `entity-types` contains
+`federation_entity`. A subordinate that does not meet this is rejected when the configuration is loaded. Filtered
+subordinate listings are answered from these fields, without fetching the Entity Configurations of the
+subordinates. The `trust_marked` and `trust_mark_type` filters are only supported when the entity is also a Trust
+Mark Issuer, and are then answered from its `trust-mark-subjects`.
+
 A subordinate gets an `ec_location` claim in its Subordinate Statement when `ec-location` is set, or when its
 `virtual-entity-id` differs from its `entity-identifier` (the well-known location under the virtual entity ID is
 then used). See [`ec-location` values](#ec-location-values) for the accepted values. A warning is logged at
@@ -192,21 +198,25 @@ without support for the claim will then reject the statement.
 
 `federation.local-registry.trust-mark-issuers[*]`
 
-| Property                       | Description                               | Type     | Default |
-|--------------------------------|-------------------------------------------|----------|---------|
-| `entity-identifier`            | Entity ID of the trust mark issuer        | String   | –       |
-| `trust-mark-validity-duration` | Validity of issued trust marks (ISO‑8601) | Duration | PT30M   |
-| `trust-marks`                  | List of trust marks                       | List     | –       |
+| Property                       | Description                                                                                                  | Type     | Default |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------|----------|---------|
+| `entity-identifier`            | Entity ID of the trust mark issuer                                                                           | String   | –       |
+| `trust-mark-validity-duration` | Deprecated, use the validity duration of each trust mark. Only used for trust marks without a duration of their own | Duration | –       |
+| `trust-marks`                  | List of trust marks                                                                                          | List     | –       |
 
 `federation.local-registry.trust-mark-issuers[*].trust-marks[*]`
 
-| Property              | Description                         | Type   |
-|-----------------------|-------------------------------------|--------|
-| `trust-mark-type`     | Unique identifier of the trust mark | String |
-| `logo-uri`            | Logo URI                            | String |
-| `ref-uri`             | Reference URI                       | String |
-| `delegation`          | TrustMarkDelegation JWT             | String |
-| `trust-mark-subjects` | Subjects granted this trust mark    | List   |
+| Property                       | Description                                                                                         | Type     |
+|--------------------------------|-----------------------------------------------------------------------------------------------------|----------|
+| `trust-mark-type`              | Unique identifier of the trust mark                                                                 | String   |
+| `trust-mark-validity-duration` | Validity of issued trust marks (ISO‑8601), for example `P2D`. Without a value the issued trust marks have no `exp` and never expire, unless the trust mark issuer has a (deprecated) duration | Duration |
+| `logo-uri`                     | Logo URI                                                                                            | String   |
+| `ref-uri`                      | Reference URI                                                                                       | String   |
+| `delegation`                   | TrustMarkDelegation JWT                                                                             | String   |
+| `trust-mark-subjects`          | Subjects granted this trust mark                                                                    | List     |
+
+A trust mark expires at the earliest of its validity duration and the `expires` of its subject. A validity duration
+shorter than 5 minutes is logged as a warning when the configuration is loaded, and is still used.
 
 `federation.local-registry.trust-mark-issuers[*].trust-mark-subjects[*]`
 

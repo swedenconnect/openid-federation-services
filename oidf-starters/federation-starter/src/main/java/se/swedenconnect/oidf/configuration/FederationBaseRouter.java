@@ -95,7 +95,6 @@ public class FederationBaseRouter implements Router {
       }
       catch (final RuntimeException e) {
         log.error("Failed to handle request {}", request.uri(), e);
-        // Section 8.9 error format, also for errors the module did not handle
         response = new CachedResponse(JSONObjectUtils.toJSONString(Map.of("error", "server_error",
             "error_description", "The request could not be handled")), "application/json", 500);
       }
@@ -105,7 +104,6 @@ public class FederationBaseRouter implements Router {
       return this.toServerResponse(response);
     };
     route.GET(predicate, handler);
-    // POST is used by the Trust Mark Status endpoint, see section 8.4.1 of OpenID Federation 1.0.
     route.POST(predicate, handler);
   }
 

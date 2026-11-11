@@ -35,6 +35,7 @@ import java.util.Optional;
  * Registry based on properties.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @AllArgsConstructor
 @NoArgsConstructor
@@ -96,6 +97,14 @@ public class PropertyRegistry {
         }
         Optional.ofNullable(r.getSubordinates()).orElseGet(List::of).forEach(subordinate -> {
           try {
+            subordinate.validate();
+          }
+          catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException("%s.%s defines invalid subordinate %s of %s: %s"
+                .formatted(key, "trust-anchors", subordinate.getEntityIdentifier().getValue(), entityIdentifier,
+                    e.getMessage()), e);
+          }
+          try {
             ecLocationValidator.validate(subordinate);
           }
           catch (final IllegalArgumentException e) {
@@ -122,6 +131,7 @@ public class PropertyRegistry {
         Objects.requireNonNullElse(this.entities, List.of()));
     if (Objects.nonNull(this.trustMarkIssuers)) {
       this.trustMarkIssuers.forEach(r -> {
+        r.warnForShortValidityDurations();
         final String entityIdentifier = r.entityIdentifier().getValue();
         if (!this.entityExists(entityIdentifier)) {
           throw new IllegalArgumentException("%s.%s defines %s but could not be found in %s.%s"

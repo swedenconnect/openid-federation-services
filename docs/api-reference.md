@@ -13,12 +13,18 @@ Each module _has_ to belong to a given entity that is present in properties or r
 
 *Query Parameters*
 
-| Required | Name          | Description                                                            |
-|----------|---------------|------------------------------------------------------------------------|
-| No       | entity_type   | Filters the response on entity type                                    |
-| No       | trust_marked  | Filters the response with entities that contain ATLEAST one Trust Mark |
-| No       | trust_mark_type | Filters the response with entities containing a specific Trust Mark    |
-| No       | intermediate  | Filters the response to only contain intermediates.                    |
+| Required | Name | Description |
+| :--- | :--- | :--- |
+| No | `entity_type` | Filters the response on entity type. |
+| No | `trust_marked` | Filters the response with entities that hold at least one Trust Mark from this entity. |
+| No | `trust_mark_type` | Filters the response with entities that hold a Trust Mark of this type from this entity. |
+| No | `intermediate` | Filters the response to only contain intermediates. |
+
+`trust_marked` and `trust_mark_type` are only supported by an entity that is also a Trust Mark Issuer. Otherwise
+`trust_marked=true` and `trust_mark_type` give 400 `unsupported_parameter`, and `trust_marked=false` is ignored. A
+`trust_mark_type` that the entity does not issue gives 400 `invalid_request`.
+
+A Trust Mark Issuer that is not a Trust Anchor or Intermediate Entity always returns an empty list.
 
 ### Fetch
 

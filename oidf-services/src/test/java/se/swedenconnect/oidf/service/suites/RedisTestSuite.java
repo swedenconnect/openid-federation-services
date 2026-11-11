@@ -30,6 +30,7 @@ import org.springframework.mock.env.MockEnvironment;
 import org.testcontainers.utility.DockerImageName;
 import se.swedenconnect.oidf.service.Application;
 import se.swedenconnect.oidf.service.CacheTestCases;
+import se.swedenconnect.oidf.service.HostedEntityConfigurationTestCases;
 import se.swedenconnect.oidf.service.JWKSTestCases;
 import se.swedenconnect.oidf.service.TestConfiguration;
 import se.swedenconnect.oidf.service.entity.ApplicationReadyEndpoint;
@@ -63,7 +64,8 @@ import java.util.Random;
     ResolverPolicyTestCases.class,
     ResolverCritTestCases.class,
     ResolverSamlSpTestCases.class,
-    JWKSTestCases.class
+    JWKSTestCases.class,
+    HostedEntityConfigurationTestCases.class
 })
 public class RedisTestSuite {
 

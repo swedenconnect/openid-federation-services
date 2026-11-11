@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.web.client.RestClient;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import org.testcontainers.shaded.com.google.common.collect.MapDifference;
 import org.testcontainers.shaded.com.google.common.collect.Maps;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
@@ -111,8 +110,6 @@ public class ResolverDifferentiator {
     private Response response;
 
     private static final List<String> IGNORED_FIELDS = List.of("iat", "exp", "trust_chain", "iss", "jti");
-
-    private final ObjectMapper mapper = new ObjectMapper();
 
     public Map<String, MapDifference.ValueDifference<Object>> getJsonDifference() throws ParseException {
 
