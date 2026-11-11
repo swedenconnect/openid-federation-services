@@ -47,6 +47,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.JWKSSerializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.EntityRecordDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.PolicyRecordTypeAdapterFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
@@ -336,7 +337,8 @@ public class RegistryMock {
         .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
         .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
         .registerTypeAdapter(JWKSet.class, new JWKSSerializer(loader, loader))
-        .registerTypeAdapter(CompositeRecord.class, new CompositeRecordSerializer())
+        .registerTypeAdapterFactory(new CompositeRecordSerializer())
+        .registerTypeAdapterFactory(new PolicyRecordTypeAdapterFactory())
         .registerTypeAdapter(EntityRecord.class, new EntityRecordDeserializer(loader, registry))
         .create();
   }

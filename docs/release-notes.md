@@ -9,7 +9,11 @@
 **Date:** _not yet released_
 
 * The resolver now parses, merges and applies metadata policies with the operators from the `nimbus-extensions` module.
+
+* A metadata policy operator with the value `null`, for example `{"value": null}`, from the registry is now published as is in Subordinate Statements when Redis storage is used. Before, it was published as `{}`, so the parameter was not removed. ([#276](https://github.com/swedenconnect/openid-federation-services/issues/276))
+
 * Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). ([#275](https://github.com/swedenconnect/openid-federation-services/issues/275))
+
 
 ## Version 1.0.1
 

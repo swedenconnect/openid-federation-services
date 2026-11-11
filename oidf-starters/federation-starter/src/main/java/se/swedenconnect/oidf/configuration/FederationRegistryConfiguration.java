@@ -48,6 +48,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader
 import se.swedenconnect.oidf.common.entity.entity.integration.TrustMarkIdentifierDeserializer;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.EntityRecordDeserializer;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.PolicyRecordTypeAdapterFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
@@ -97,7 +98,8 @@ public class FederationRegistryConfiguration {
         .registerTypeAdapter(EntityID.class, new EntityIdentifierDeserializer())
         .registerTypeAdapter(TrustMarkType.class, new TrustMarkIdentifierDeserializer())
         .registerTypeAdapter(JWKSet.class, new JWKSSerializer(loader, loader))
-        .registerTypeAdapter(CompositeRecord.class, new CompositeRecordSerializer())
+        .registerTypeAdapterFactory(new CompositeRecordSerializer())
+        .registerTypeAdapterFactory(new PolicyRecordTypeAdapterFactory())
         .registerTypeAdapter(EntityRecord.class, new EntityRecordDeserializer(loader, registry))
         .create();
   }
