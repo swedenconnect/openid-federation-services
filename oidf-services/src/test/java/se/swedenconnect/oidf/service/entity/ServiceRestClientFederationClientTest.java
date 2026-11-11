@@ -23,6 +23,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.PlainJWT;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.match.MockRestRequestMatchers;
+import org.springframework.test.web.client.response.MockRestResponseCreators;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.RestClientFederationClient;
 import se.swedenconnect.oidf.UptimeRegistry;
@@ -31,6 +37,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityC
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 
+import java.net.URI;
 import java.util.Map;
 
 public class ServiceRestClientFederationClientTest {
@@ -50,6 +57,30 @@ public class ServiceRestClientFederationClientTest {
         Map.of()));
 
     Assertions.assertEquals("https://op.umu.se", entityStatement.getJWTClaimsSet().getSubject());
+  }
+
+  @Test
+  void testEncodedEcLocationIsNotEncodedAgain() throws Exception {
+    final MeterRegistry mock = Mockito.mock(MeterRegistry.class);
+    Mockito.when(mock.counter(Mockito.anyString(), Mockito.anyList())).thenReturn(Mockito.mock(Counter.class));
+    final RestClient.Builder builder = RestClient.builder();
+    final MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+    final FederationClient federationClient =
+        new RestClientFederationClient(builder.build(), mock, new UptimeRegistry(), new EcLocationValidator(true));
+
+    final String ecLocation =
+        "http://localhost:8080/im-reg-sc/hosted/http%3A%2F%2Flocalhost%3A8080%2Frp/.well-known/openid-federation";
+    final String jwt = new PlainJWT(new JWTClaimsSet.Builder().subject("http://localhost:8080/rp").build())
+        .serialize();
+    final String signed = "eyJhbGciOiJIUzI1NiJ9." + jwt.split("\\.")[1] + ".c2ln";
+    server.expect(MockRestRequestMatchers.requestTo(URI.create(ecLocation)))
+        .andRespond(MockRestResponseCreators.withSuccess(signed, MediaType.TEXT_PLAIN));
+
+    final SignedJWT entityStatement = federationClient.entityConfiguration(new FederationRequest<>(
+        new EntityConfigurationRequest(new EntityID("http://localhost:8080/rp"), ecLocation), Map.of()));
+
+    server.verify();
+    Assertions.assertEquals("http://localhost:8080/rp", entityStatement.getJWTClaimsSet().getSubject());
   }
 
 }
