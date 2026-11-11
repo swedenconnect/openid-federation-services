@@ -17,8 +17,9 @@
 package se.swedenconnect.oidf.configuration;
 
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.lang.Nullable;
 
 import java.util.Map;
 
@@ -30,9 +31,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class MetadataPropertyLoader implements Converter<String, Map<String, Object>> {
   private final JsonReferenceLoader jsonReferenceLoader;
-  @Nullable
   @Override
-  public Map<String, Object> convert(final String source) {
+  public @Nullable Map<String, Object> convert(final @NonNull String source) {
     return this.jsonReferenceLoader.loadJson(source);
   }
 }

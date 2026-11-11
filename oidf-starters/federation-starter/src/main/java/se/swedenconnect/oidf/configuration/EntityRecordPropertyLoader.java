@@ -18,8 +18,9 @@ package se.swedenconnect.oidf.configuration;
 
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.lang.Nullable;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
 import java.util.List;
@@ -32,9 +33,8 @@ import java.util.List;
 @AllArgsConstructor
 public class EntityRecordPropertyLoader implements Converter<String, List<EntityRecord>> {
   private final JsonReferenceLoader jsonReferenceLoader;
-  @Nullable
   @Override
-  public List<EntityRecord> convert(final String source) {
+  public @Nullable List<EntityRecord> convert(final @NonNull String source) {
     final List<EntityRecord> entityRecords = this.jsonReferenceLoader.loadJson(source, new TypeToken<>() {
     });
     return entityRecords;

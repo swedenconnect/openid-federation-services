@@ -101,7 +101,7 @@ equals "from main: the version is set once" "1" "$(grep -c 'versions:set' "$dir/
 contains "from main: the bump script is pointed at" "$dir/output" "internal/post-release-bump.sh"
 contains "from main: the merge is explained" "$dir/output" "Create a merge"
 contains "from main: the workflow run is pointed at" "$dir/output" \
-  "swedenconnect/openid-federation-services/actions/workflows/maven-central-deploy.yml"
+  "swedenconnect/openid-federation-services/actions/workflows/maven-github-deploy.yml"
 
 # --- the version is typed instead of confirmed -----------------------------------------------------
 

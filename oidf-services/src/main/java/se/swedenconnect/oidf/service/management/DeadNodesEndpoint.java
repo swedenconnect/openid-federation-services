@@ -17,9 +17,10 @@
 package se.swedenconnect.oidf.service.management;
 
 import lombok.AllArgsConstructor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
@@ -54,7 +55,7 @@ public class DeadNodesEndpoint {
    * @return list of entity identifiers that could not be scraped
    */
   @ReadOperation
-  public List<String> getDeadNodes(@Nullable final String trustAnchor) {
+  public @NonNull List<String> getDeadNodes(final @Nullable String trustAnchor) {
     final ResolverProperties properties = trustAnchor == null
         ? this.source.getResolverProperties().getFirst()
         : this.source.getResolverProperties().stream()
