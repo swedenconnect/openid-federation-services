@@ -148,6 +148,7 @@ One entry per trust anchor **or intermediate**, listing its immediate subordinat
   "subordinates": [
     {
       "entity-identifier": "http://localhost:8080/op",
+      "entity-types": ["federation_entity", "openid_provider"],
       "jwks": "hosted:demo-hosted-key",
       "policy": {
         "id": "MyMetadataProfile",
@@ -165,6 +166,7 @@ One entry per trust anchor **or intermediate**, listing its immediate subordinat
     },
     {
       "entity-identifier": "http://localhost:8080/rp",
+      "entity-types": ["openid_relying_party"],
       "jwks": "hosted:demo-hosted-key"
     }
   ]
@@ -181,6 +183,8 @@ A subordinate entry supports:
 | Property               | Description                                                                     | Type              |
 |-------------------------|----------------------------------------------------------------------------------|-------------------|
 | `entity-identifier`     | Entity ID of the subordinate                                                     | String            |
+| `entity-types`          | Required. The Entity Type Identifiers of the subordinate, used by the `entity_type` filter of `/subordinate_listing` | List\<String\>    |
+| `is-intermediate`       | `true` if the subordinate is an Intermediate Entity, used by the `intermediate` filter of `/subordinate_listing`. Requires `federation_entity` in `entity-types` | Boolean           |
 | `virtual-entity-id`     | Overrides the entity ID used inside the statement, if different                  | String            |
 | `jwks`                  | Key(s) the subordinate signs its own entity configuration with                   | Object/reference  |
 | `metadata`              | Metadata asserted directly in the subordinate statement's `metadata` claim       | Object            |

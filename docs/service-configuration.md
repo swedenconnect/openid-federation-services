@@ -179,6 +179,12 @@ See [Demo Mode Configuration → `trust-anchors.json`](service-configuration-dem
 for the full list of properties a subordinate entry supports, including worked examples of `policy` and
 `constraints`.
 
+Every subordinate must have `entity-types`, and `is-intermediate` may only be set when `entity-types` contains
+`federation_entity`. A subordinate that does not meet this is rejected when the configuration is loaded. Filtered
+subordinate listings are answered from these fields, without fetching the Entity Configurations of the
+subordinates. The `trust_marked` and `trust_mark_type` filters are only supported when the entity is also a Trust
+Mark Issuer, and are then answered from its `trust-mark-subjects`.
+
 A subordinate gets an `ec_location` claim in its Subordinate Statement when `ec-location` is set, or when its
 `virtual-entity-id` differs from its `entity-identifier` (the well-known location under the virtual entity ID is
 then used). See [`ec-location` values](#ec-location-values) for the accepted values. A warning is logged at

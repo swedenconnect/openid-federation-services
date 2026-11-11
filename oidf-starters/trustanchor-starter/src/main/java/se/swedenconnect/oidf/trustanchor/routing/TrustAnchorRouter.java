@@ -54,6 +54,7 @@ import java.util.Optional;
  * Responsible for matching trust anchor requests for any configured module.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 public class TrustAnchorRouter implements Router, ModuleRouter {
 
@@ -114,10 +115,16 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
         .lowCardinalityKeyValue("endpoint", normalizedEndpoint)
         .start();
     try {
-      final TrustAnchorProperties properties = this.source.getTrustAnchorProperties().stream()
+      final Optional<TrustAnchorProperties> trustAnchorProperties = this.source.getTrustAnchorProperties().stream()
           .filter(p -> p.getEntityIdentifier().getValue().equals(entity.getEntityIdentifier().getValue()))
-          .findFirst()
-          .orElseThrow(() -> missingConfiguration(entity, "trust anchor"));
+          .findFirst();
+      if (trustAnchorProperties.isEmpty() && !this.isFetchEndpoint(request, entity)
+          && this.isTrustMarkIssuer(entity)) {
+        // A Trust Mark Issuer that is not a Trust Anchor or Intermediate Entity has no subordinates
+        return new CachedResponse(GSON.toJson(List.of()), "application/json", 200);
+      }
+      final TrustAnchorProperties properties =
+          trustAnchorProperties.orElseThrow(() -> missingConfiguration(entity, "trust anchor"));
       final TrustAnchor trustAnchor = this.trustAnchorFactory.create(properties);
       if (this.isFetchEndpoint(request, entity)) {
         final MultiValueMap<String, String> params = RequireParameters.validate(request.params(), List.of("sub"));
@@ -145,6 +152,17 @@ public class TrustAnchorRouter implements Router, ModuleRouter {
   public boolean willHandleRequest(final ServerRequest request, final EntityRecord entity) {
     return HttpMethod.GET.equals(request.method())
            && (this.isFetchEndpoint(request, entity) || this.isSubordinateListingEndpoint(request, entity));
+  }
+
+  /**
+   * Tells whether an entity is configured as a Trust Mark Issuer.
+   *
+   * @param entity the entity
+   * @return true if the entity is a Trust Mark Issuer
+   */
+  private boolean isTrustMarkIssuer(final EntityRecord entity) {
+    return this.source.getTrustMarkIssuerProperties().stream()
+        .anyMatch(tmi -> entity.getEntityIdentifier().equals(tmi.entityIdentifier()));
   }
 
   private boolean isFetchEndpoint(final ServerRequest request, final EntityRecord entity) {

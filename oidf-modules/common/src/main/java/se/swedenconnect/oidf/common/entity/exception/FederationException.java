@@ -20,9 +20,7 @@ package se.swedenconnect.oidf.common.entity.exception;
 import java.util.Map;
 
 /**
- * Federation Error Response defines in specification. https://openid.net/specs/openid-federation-1_0.html#section-8.9
- *
- * Complemented https://www.iana.org/assignments/oauth-parameters/oauth-parameters.xhtml#extensions-error
+ * Federation Error Response defines in specification.
  *
  * @author Per Fredrik Plars
  */
