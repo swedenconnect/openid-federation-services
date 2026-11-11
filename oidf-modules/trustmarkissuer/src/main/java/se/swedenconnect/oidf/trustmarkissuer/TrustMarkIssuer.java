@@ -106,7 +106,7 @@ public class TrustMarkIssuer {
     final Instant now = Instant.now(this.clock);
     final List<String> result = this.source.getTrustMarkSubjects(this.trustMarkIssuerProperties.entityIdentifier(), id)
         .stream()
-        .filter(tms -> isValid(tms, now))
+        .filter(tms -> tms.isValid(now))
         .map(TrustMarkSubjectProperty::sub)
         .toList();
     if (Objects.nonNull(request.subject())) {
@@ -225,7 +225,7 @@ public class TrustMarkIssuer {
       throw new NotFoundException("Could not find subject");
     }
     final TrustMarkSubjectProperty trustMarkSubjectProperty = subject.get();
-    if (!isValid(trustMarkSubjectProperty, Instant.now(this.clock))) {
+    if (!trustMarkSubjectProperty.isValid(Instant.now(this.clock))) {
       throw new NotFoundException("Trust mark for subject is revoked, expired or not yet granted");
     }
     try {
@@ -238,19 +238,6 @@ public class TrustMarkIssuer {
     }
   }
 
-
-  /**
-   * Checks whether a subject currently holds its trust mark.
-   *
-   * @param subject the trust mark subject
-   * @param now the current time
-   * @return true if the subject is not revoked, is granted and has not expired
-   */
-  private static boolean isValid(final TrustMarkSubjectProperty subject, final Instant now) {
-    return !subject.revoked()
-        && (subject.granted() == null || !now.isBefore(subject.granted()))
-        && (subject.expires() == null || now.isBefore(subject.expires()));
-  }
 
   /**
    * @return entity id of this trust mark issuer.

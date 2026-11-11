@@ -189,7 +189,7 @@ files to the GitHub Packages Maven registry of this repository:
 https://maven.pkg.github.com/swedenconnect/openid-federation-services
 ```
 
-Versions up to 1.0.1 were published to Maven Central and stay there. 1.0.2 is the first version in
+Versions up to 1.0.1 were published to Maven Central and stay there. 1.1.0 is the first version in
 GitHub Packages. Downloading from GitHub Packages always needs a token, also for public packages.
 How relying parties set that up is described in
 [Using the Artifacts from GitHub Packages](../docs/github-packages.md).

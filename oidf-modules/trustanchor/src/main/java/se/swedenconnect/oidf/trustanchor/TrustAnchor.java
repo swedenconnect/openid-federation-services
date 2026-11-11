@@ -46,7 +46,7 @@ public interface TrustAnchor {
   /**
    * @param request to get subordinate listing for current module
    * @return listing of subordinates
-   * @throws FederationException when loading entity configurations fails
+   * @throws FederationException if the request cannot be answered
    */
   List<String> subordinateListing(SubordinateListingRequest request) throws FederationException;
 

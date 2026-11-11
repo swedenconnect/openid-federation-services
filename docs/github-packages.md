@@ -15,7 +15,7 @@ How to use the Maven artifacts of the OpenID Federation Services, such as `feder
   https://maven.pkg.github.com/swedenconnect/openid-federation-services
   ```
 
-The group IDs, artifact IDs and versions are the same as before. To move from 1.0.1 to 1.0.2 you add the repository and a token, as described below, and change the version. Nothing else.
+The group IDs, artifact IDs and versions are the same as before. To move from 1.0.1 to 1.1.0 you add the repository and a token, as described below, and change the version.
 
 Snapshot versions are not published.
 
@@ -101,7 +101,7 @@ Maven Central is still used for everything else. The dependencies themselves are
 <dependency>
   <groupId>se.swedenconnect.oidf</groupId>
   <artifactId>resolver-starter</artifactId>
-  <version>1.0.2</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 

@@ -168,6 +168,9 @@ public class RegistryMock {
     for (int i = 0; i < 500; i++) {
       final JsonObject subordinate = new JsonObject();
       subordinate.addProperty("entity-identifier", "http://localhost:11111/im/subordinate-" + i);
+      final JsonArray entityTypes = new JsonArray();
+      entityTypes.add("federation_entity");
+      subordinate.add("entity-types", entityTypes);
       subordinate.add("jwks", imSubordinateJwks.deepCopy());
       imSubordinates.add(subordinate);
     }

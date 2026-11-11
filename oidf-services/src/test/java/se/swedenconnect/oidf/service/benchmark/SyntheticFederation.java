@@ -199,11 +199,11 @@ public class SyntheticFederation {
     final JsonArray trustAnchors = new JsonArray();
     final JsonArray taSubordinates = new JsonArray();
     for (int k = 0; k < this.intermediates(); k++) {
-      taSubordinates.add(this.subordinate(this.intermediate(k)));
+      taSubordinates.add(this.subordinate(this.intermediate(k), true));
     }
-    taSubordinates.add(this.subordinate(this.trustMarkIssuer()));
+    taSubordinates.add(this.subordinate(this.trustMarkIssuer(), false));
     if (this.resolver) {
-      taSubordinates.add(this.subordinate(this.resolverEntity()));
+      taSubordinates.add(this.subordinate(this.resolverEntity(), false));
     }
     trustAnchors.add(this.trustAnchorModule(this.trustAnchor(), taSubordinates));
     for (int k = 0; k < this.intermediates(); k++) {
@@ -211,7 +211,7 @@ public class SyntheticFederation {
       final int from = k * this.leavesPerIntermediate;
       final int to = Math.min(this.leaves, from + this.leavesPerIntermediate);
       for (int i = from; i < to; i++) {
-        iaSubordinates.add(this.subordinate(this.leaf(i)));
+        iaSubordinates.add(this.subordinate(this.leaf(i), false));
       }
       trustAnchors.add(this.trustAnchorModule(this.intermediate(k), iaSubordinates));
     }
@@ -279,9 +279,15 @@ public class SyntheticFederation {
     return module;
   }
 
-  private JsonObject subordinate(final String id) {
+  private JsonObject subordinate(final String id, final boolean intermediate) {
     final JsonObject subordinate = new JsonObject();
     subordinate.addProperty("entity-identifier", id);
+    final JsonArray entityTypes = new JsonArray();
+    entityTypes.add("federation_entity");
+    subordinate.add("entity-types", entityTypes);
+    if (intermediate) {
+      subordinate.addProperty("is-intermediate", true);
+    }
     subordinate.add("jwks", this.jwks());
     return subordinate;
   }

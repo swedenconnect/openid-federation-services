@@ -16,138 +16,157 @@
  */
 package se.swedenconnect.oidf.trustanchor;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FetchRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.SubordinateListingRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
-import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkOwner;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
-import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkValidator;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.exception.FederationException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidIssuerException;
 import se.swedenconnect.oidf.common.entity.exception.InvalidRequestException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
-import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
+import se.swedenconnect.oidf.common.entity.exception.UnsupportedParameterException;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
- * Default implementation of trust anchor.
+ * Default implementation of {@link TrustAnchor}, used for both Trust Anchors and Intermediate Entities. Subordinate
+ * Statements and subordinate listings are created from the records of the entity.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Slf4j
 public class DefaultTrustAnchor implements TrustAnchor {
 
+  /** The source of entity records and trust mark subjects. */
   private final CompositeRecordSource source;
 
+  /** The record of this Trust Anchor, holding its subordinates. */
   private final TrustAnchorProperties properties;
 
+  /** Factory for creating Subordinate Statements. */
   private final SubordinateStatementFactory factory;
-
-  private final FederationClient federationClient;
-
 
   /**
    * Constructor.
    *
-   * @param source           to use
-   * @param properties       to use
-   * @param factory          to constructor entity statements
-   * @param federationClient to use for resolving entity configurations
+   * @param source the source of entity records and trust mark subjects
+   * @param properties the record of this Trust Anchor
+   * @param factory the factory for creating Subordinate Statements
    */
   public DefaultTrustAnchor(
       final CompositeRecordSource source,
       final TrustAnchorProperties properties,
-      final SubordinateStatementFactory factory,
-      final FederationClient federationClient
-  ) {
-
+      final SubordinateStatementFactory factory) {
     this.source = source;
     this.properties = properties;
     this.factory = factory;
-    this.federationClient = federationClient;
   }
 
+  /**
+   * Creates a Subordinate Statement about a subordinate of this Trust Anchor (OpenID Federation 1.0, Section 8.1).
+   *
+   * @param request the fetch request
+   * @return the signed Subordinate Statement
+   * @throws InvalidRequestException if the subject is this Trust Anchor itself
+   * @throws InvalidIssuerException if there is no entity record for this Trust Anchor
+   * @throws NotFoundException if the subject is not a subordinate of this Trust Anchor
+   */
   @Override
   public String fetchEntityStatement(final FetchRequest request)
       throws InvalidIssuerException, NotFoundException, InvalidRequestException {
     this.debugLogRequest(request);
-    if (this.properties.getEntityIdentifier().getValue().equals(request.subject())) {
+    final String issuerId = this.properties.getEntityIdentifier().getValue();
+    if (issuerId.equals(request.subject())) {
       // A statement about the issuer itself is never issued (Section 8.1.2)
       throw new InvalidRequestException("sub must not be the issuer itself");
     }
-    final EntityRecord issuer = this.source.getEntity(
-            new NodeKey(this.properties.getEntityIdentifier().getValue())
-        )
-        .orElseThrow(
-            () -> new InvalidIssuerException(
-                "Entity not found for:'%s'".formatted(this.properties.getEntityIdentifier())
-            )
-        );
-
-    final Optional<TrustAnchorProperties.SubordinateListingProperty> first = this.subordinates().stream()
+    final EntityRecord issuer = this.source.getEntity(new NodeKey(issuerId))
+        .orElseThrow(() -> new InvalidIssuerException("Entity not found for:'%s'".formatted(issuerId)));
+    final TrustAnchorProperties.SubordinateListingProperty subordinate = this.subordinates().stream()
         .filter(p -> request.subject().equals(p.getEntityIdentifier().getValue()))
-        .findFirst();
-
-    if (first.isEmpty()) {
-      throw new NotFoundException("No subordinates found");
-    }
-
-    final TrustAnchorProperties.SubordinateListingProperty subordinate = first.get();
-
-
-    return this.factory
-        .createEntityStatement(issuer, subordinate)
-        .serialize();
+        .findFirst()
+        .orElseThrow(() -> new NotFoundException("No subordinates found"));
+    return this.factory.createEntityStatement(issuer, subordinate).serialize();
   }
 
+  /**
+   * Lists the subordinates of this Trust Anchor (OpenID Federation 1.0, Section 8.2). {@code entity_type} and
+   * {@code intermediate} use the subordinate records. {@code trust_marked} and {@code trust_mark_type} use the trust
+   * mark subjects of this entity, which must also be a Trust Mark Issuer.
+   *
+   * @param request the listing request
+   * @return the entity identifiers of the matching subordinates
+   * @throws UnsupportedParameterException if a trust mark filter is used and this entity is not a Trust Mark Issuer
+   * @throws InvalidRequestException if {@code trust_mark_type} is a type this entity does not issue
+   */
   @Override
   public List<String> subordinateListing(final SubordinateListingRequest request) throws FederationException {
     this.debugLogRequest(request);
 
-    final List<TrustAnchorProperties.SubordinateListingProperty> subordinates = this.subordinates();
-
-    if (!request.requiresFiltering()) {
-      return subordinates.stream().map(e -> e.getEntityIdentifier().getValue()).toList();
+    Predicate<TrustAnchorProperties.SubordinateListingProperty> filter = subordinate -> true;
+    if (request.entityType() != null && !request.entityType().isEmpty()) {
+      filter = filter.and(subordinate -> Optional.ofNullable(subordinate.getEntityTypes()).orElseGet(List::of)
+          .stream()
+          .anyMatch(request.entityType()::contains));
     }
+    // trust_marked and intermediate only filter when true (Section 8.2.1)
+    if (Boolean.TRUE.equals(request.intermediate())) {
+      filter = filter.and(TrustAnchorProperties.SubordinateListingProperty::isIntermediate);
+    }
+    if (request.trustMarkType() != null || Boolean.TRUE.equals(request.trustMarked())) {
+      final Set<String> trustMarked = this.trustMarkedSubjects(request.trustMarkType());
+      filter = filter.and(subordinate -> trustMarked.contains(subordinate.getEntityIdentifier().getValue()));
+    }
+    return this.subordinates().stream()
+        .filter(filter)
+        .map(subordinate -> subordinate.getEntityIdentifier().getValue())
+        .toList();
+  }
 
+  /**
+   * Gets the subjects that hold a valid trust mark issued by this entity, which must also be a Trust Mark Issuer.
+   *
+   * @param trustMarkType the trust mark type to include, or {@code null} for all types this entity issues
+   * @return the entity identifiers of the subjects
+   * @throws UnsupportedParameterException if this entity is not a Trust Mark Issuer
+   * @throws InvalidRequestException if this entity does not issue the given trust mark type
+   */
+  private Set<String> trustMarkedSubjects(final String trustMarkType)
+      throws UnsupportedParameterException, InvalidRequestException {
+    final TrustMarkIssuerProperties trustMarkIssuer = this.source.getTrustMarkIssuerProperties().stream()
+        .filter(tmi -> this.properties.getEntityIdentifier().equals(tmi.entityIdentifier()))
+        .findFirst()
+        .orElseThrow(() -> new UnsupportedParameterException("%s is only supported by a Trust Mark Issuer"
+            .formatted(trustMarkType != null ? "trust_mark_type" : "trust_marked")));
+    final List<TrustMarkType> types = Optional.ofNullable(trustMarkIssuer.trustMarks()).orElseGet(List::of).stream()
+        .map(TrustMarkProperties::getTrustMarkType)
+        .filter(type -> trustMarkType == null || trustMarkType.equals(type.getTrustMarkType()))
+        .toList();
+    if (trustMarkType != null && types.isEmpty()) {
+      throw new InvalidRequestException("trust_mark_type '%s' is not issued by this entity".formatted(trustMarkType));
+    }
     final Instant now = Instant.now();
-    final Map<String, JWKSet> issuerKeys = this.trustMarkIssuerKeys(subordinates);
-    final Predicate<SignedJWT> filter = request.toPredicate(ec -> this.validTrustMarks(ec, issuerKeys, now));
-    // The entity_type and intermediate filters only apply when the type of a subordinate is known (Section 8.2.1).
-    // A subordinate whose Entity Configuration cannot be fetched has unknown types, so it is kept, unless a trust
-    // mark filter asks for evidence that it cannot give.
-    final boolean keepUnavailable = request.trustMarkType() == null && !Boolean.TRUE.equals(request.trustMarked());
-    final List<String> result = new ArrayList<>();
-    for (final TrustAnchorProperties.SubordinateListingProperty subordinate : subordinates) {
-      final FetchedConfiguration fetched = this.fetchEntityConfiguration(subordinate, now);
-      if (fetched.configuration() != null ? filter.test(fetched.configuration())
-          : !fetched.available() && keepUnavailable) {
-        result.add(subordinate.getEntityIdentifier().getValue());
-      }
-    }
-    return result;
+    return types.stream()
+        .flatMap(type -> this.source.getTrustMarkSubjects(trustMarkIssuer.entityIdentifier(), type).stream())
+        .filter(subject -> subject.isValid(now))
+        .map(TrustMarkSubjectProperty::sub)
+        .collect(Collectors.toSet());
   }
 
   /**
@@ -164,173 +183,20 @@ public class DefaultTrustAnchor implements TrustAnchor {
   }
 
   /**
-   * The outcome of fetching the Entity Configuration of a subordinate.
+   * Gets the entity identifier of this Trust Anchor.
    *
-   * @param configuration the valid Entity Configuration, or null if none was obtained
-   * @param available false if the Entity Configuration could not be fetched
+   * @return the entity identifier
    */
-  private record FetchedConfiguration(SignedJWT configuration, boolean available) {
-  }
-
-  /**
-   * Fetches and validates the Entity Configuration of a subordinate. The signature is checked against the keys in
-   * the Trust Anchor's own record of the subordinate.
-   *
-   * @param entity the subordinate
-   * @param now the current time
-   * @return the outcome, holding the Entity Configuration if it was fetched and is valid
-   */
-  private FetchedConfiguration fetchEntityConfiguration(final TrustAnchorProperties.SubordinateListingProperty entity,
-      final Instant now) {
-    final EntityID entityID = entity.getEntityIdentifier();
-    final SignedJWT entityConfiguration;
-    try {
-      entityConfiguration = this.federationClient.entityConfiguration(new FederationRequest<>(
-          new EntityConfigurationRequest(entityID, entity.resolveEcLocation()),
-          Map.of()));
-    } catch (final Exception e) {
-      log.info("Entity configuration of subordinate {} unavailable for filtered listing: {}",
-          entityID.getValue(), e.getMessage());
-      return new FetchedConfiguration(null, false);
-    }
-    if (entityConfiguration == null) {
-      log.info("Entity configuration of subordinate {} unavailable for filtered listing", entityID.getValue());
-      return new FetchedConfiguration(null, false);
-    }
-    try {
-      final JWTClaimsSet claims = entityConfiguration.getJWTClaimsSet();
-      final String error;
-      if (!entityID.getValue().equals(claims.getIssuer()) || !entityID.getValue().equals(claims.getSubject())) {
-        error = "iss and sub are not the subordinate";
-      }
-      else if (entity.getJwks() == null) {
-        error = "no jwks registered for the subordinate";
-      }
-      else if (claims.getIssueTime() == null
-          || claims.getIssueTime().toInstant().isAfter(now.plus(TrustMarkValidator.CLOCK_SKEW))) {
-        error = "iat is missing or in the future";
-      }
-      else if (claims.getExpirationTime() == null || claims.getExpirationTime().toInstant().isBefore(now)) {
-        error = "exp is missing or has passed";
-      }
-      else {
-        EntityStatementClaims.verifySignature(entityConfiguration, entity.getJwks());
-        return new FetchedConfiguration(entityConfiguration, true);
-      }
-      log.info("Skipping subordinate {} in filtered listing, invalid entity configuration: {}",
-          entityID.getValue(), error);
-    }
-    catch (final java.text.ParseException | BadJOSEException | JOSEException e) {
-      log.info("Skipping subordinate {} in filtered listing, invalid entity configuration: {}",
-          entityID.getValue(), e.getMessage());
-    }
-    return new FetchedConfiguration(null, true);
-  }
-
-  /**
-   * Collects the keys of the entities whose trust marks can be validated: this Trust Anchor and its direct
-   * subordinates, whose keys are in the Trust Anchor's own records.
-   *
-   * @param subordinates the subordinates of this Trust Anchor
-   * @return keys by entity identifier
-   */
-  private Map<String, JWKSet> trustMarkIssuerKeys(
-      final List<TrustAnchorProperties.SubordinateListingProperty> subordinates) {
-    final Map<String, JWKSet> keys = new HashMap<>();
-    subordinates.stream()
-        .filter(subordinate -> subordinate.getJwks() != null)
-        .forEach(subordinate -> keys.put(subordinate.getEntityIdentifier().getValue(), subordinate.getJwks()));
-    final String trustAnchorId = this.properties.getEntityIdentifier().getValue();
-    this.source.getEntity(new NodeKey(trustAnchorId))
-        .map(EntityRecord::getJwks)
-        .ifPresent(jwks -> keys.put(trustAnchorId, jwks));
-    return keys;
-  }
-
-  /**
-   * Gets the trust marks of an Entity Configuration that are valid (OpenID Federation 1.0, Section 7.3). Trust in the
-   * issuer is established only for this Trust Anchor and its direct subordinates, whose keys are known from the
-   * Trust Anchor's own records. Trust marks from other issuers are not counted.
-   *
-   * @param entityConfiguration the Entity Configuration of a subordinate
-   * @param issuerKeys keys of the issuers that can be trusted
-   * @param now the current time
-   * @return the valid trust marks
-   */
-  private List<TrustMarkEntry> validTrustMarks(final SignedJWT entityConfiguration,
-      final Map<String, JWKSet> issuerKeys, final Instant now) {
-    final String subject = EntityStatementClaims.getEntityID(entityConfiguration).getValue();
-    return Optional.ofNullable(EntityStatementClaims.getTrustMarks(entityConfiguration)).orElseGet(List::of).stream()
-        .filter(entry -> {
-          final String error = this.checkTrustMark(entry, subject, issuerKeys, now);
-          if (error != null) {
-            log.debug("Trust mark of type '{}' of {} not counted in listing: {}", entry.getID(), subject, error);
-          }
-          return error == null;
-        })
-        .toList();
-  }
-
-  private String checkTrustMark(final TrustMarkEntry entry, final String subject,
-      final Map<String, JWKSet> issuerKeys, final Instant now) {
-    final SignedJWT trustMark = entry.getTrustMark();
-    try {
-      final String claimsError = TrustMarkValidator.checkClaims(trustMark, subject, now);
-      if (claimsError != null) {
-        return claimsError;
-      }
-      final String type = EntityStatementClaims.getTrustMarkType(trustMark);
-      if (!entry.getID().getValue().equals(type)) {
-        return "trust_mark_type of the entry and the trust mark differ";
-      }
-      final String issuer = trustMark.getJWTClaimsSet().getIssuer();
-      if (!this.isIssuerAllowed(type, issuer)) {
-        return "issuer %s is not allowed by trust_mark_issuers".formatted(issuer);
-      }
-      final JWKSet keys = issuerKeys.get(issuer);
-      if (keys == null) {
-        return "issuer %s is not this Trust Anchor or one of its direct subordinates".formatted(issuer);
-      }
-      if (!TrustMarkValidator.verify(trustMark, keys)) {
-        return "signature is not valid for the issuer keys";
-      }
-      final Optional<TrustMarkOwner> owner = Optional.ofNullable(this.properties.getTrustMarkOwners())
-          .orElseGet(List::of).stream()
-          .filter(o -> o.getTrustmarkIdentifier() != null && type.equals(o.getTrustmarkIdentifier().getValue()))
-          .findFirst();
-      if (owner.isPresent()) {
-        return TrustMarkValidator.checkDelegation(trustMark, type, owner.get().getSub().getValue(),
-            owner.get().getJwks(), now);
-      }
-      return null;
-    }
-    catch (final java.text.ParseException e) {
-      return "failed to parse: " + e.getMessage();
-    }
-  }
-
-  /**
-   * Checks the issuer against the {@code trust_mark_issuers} of this Trust Anchor. When none are configured, any
-   * issuer is allowed. A type with an empty list allows any issuer.
-   *
-   * @param type the trust mark type
-   * @param issuer the trust mark issuer
-   * @return true if the issuer may issue trust marks of the type
-   */
-  private boolean isIssuerAllowed(final String type, final String issuer) {
-    final Map<EntityID, List<EntityID>> trustMarkIssuers = this.properties.getTrustMarkIssuers();
-    if (trustMarkIssuers == null || trustMarkIssuers.isEmpty()) {
-      return true;
-    }
-    final List<EntityID> issuers = trustMarkIssuers.get(new EntityID(type));
-    return issuers != null && (issuers.isEmpty() || issuers.contains(new EntityID(issuer)));
-  }
-
   @Override
   public EntityID getEntityId() {
     return this.properties.getEntityIdentifier();
   }
 
+  /**
+   * Logs a received request at debug level.
+   *
+   * @param request the request
+   */
   private void debugLogRequest(final Object request) {
     log.debug("{} trust anchor module received request {}", this.properties, request);
   }

@@ -16,15 +16,10 @@
  */
 package se.swedenconnect.oidf.common.entity.entity.integration.federation;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Tests for {@link SubordinateListingRequest}.
@@ -33,35 +28,19 @@ import java.util.function.Predicate;
  */
 class SubordinateListingRequestTest {
 
-  private static final SignedJWT LEAF = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256),
-      new JWTClaimsSet.Builder().issuer("https://leaf.example.com").subject("https://leaf.example.com").build());
-
   @Test
   void falseValuesDoNotFilter() {
-    final SubordinateListingRequest request = new SubordinateListingRequest(null, false, null, false);
-    Assertions.assertFalse(request.requiresFiltering());
-    Assertions.assertTrue(request.toPredicate(es -> List.of()).test(LEAF));
+    Assertions.assertFalse(new SubordinateListingRequest(null, false, null, false).requiresFiltering());
+    Assertions.assertFalse(new SubordinateListingRequest(List.of(), null, null, null).requiresFiltering());
   }
 
   @Test
   void trueValuesFilter() {
-    final Predicate<SignedJWT> trustMarked =
-        new SubordinateListingRequest(null, true, null, null).toPredicate(es -> List.of());
-    final Predicate<SignedJWT> intermediate =
-        new SubordinateListingRequest(null, null, null, true).toPredicate(es -> List.of());
-    Assertions.assertFalse(trustMarked.test(LEAF));
-    Assertions.assertFalse(intermediate.test(LEAF));
-  }
-
-  @Test
-  void entityWithOnlyFetchEndpointIsIntermediate() {
-    final SignedJWT intermediate = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), new JWTClaimsSet.Builder()
-        .issuer("https://im.example.com")
-        .subject("https://im.example.com")
-        .claim("metadata", java.util.Map.of("federation_entity",
-            java.util.Map.of("federation_fetch_endpoint", "https://im.example.com/fetch")))
-        .build());
-    Assertions.assertTrue(new SubordinateListingRequest(null, null, null, true)
-        .toPredicate(es -> List.of()).test(intermediate));
+    Assertions.assertTrue(new SubordinateListingRequest(null, true, null, null).requiresFiltering());
+    Assertions.assertTrue(new SubordinateListingRequest(null, null, null, true).requiresFiltering());
+    Assertions.assertTrue(new SubordinateListingRequest(null, null, "https://tm.example.com", null)
+        .requiresFiltering());
+    Assertions.assertTrue(new SubordinateListingRequest(List.of("openid_provider"), null, null, null)
+        .requiresFiltering());
   }
 }

@@ -19,7 +19,6 @@ package se.swedenconnect.oidf.trustanchor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
-import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
 /**
@@ -32,9 +31,8 @@ public class TrustAnchorConfiguration {
   @Bean
   TrustAnchorFactory trustAnchorFactory(
       final CompositeRecordSource recordSource,
-      final SignerFactory signerFactory,
-      final FederationClient client
+      final SignerFactory signerFactory
   ) {
-    return new TrustAnchorFactory(recordSource, signerFactory, client);
+    return new TrustAnchorFactory(recordSource, signerFactory);
   }
 }

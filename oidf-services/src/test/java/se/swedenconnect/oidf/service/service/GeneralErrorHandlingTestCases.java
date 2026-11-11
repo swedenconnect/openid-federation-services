@@ -135,4 +135,25 @@ public class GeneralErrorHandlingTestCases {
     }
   }
 
+  @Test
+  public void testTrustMarkFilterAtNonTrustMarkIssuerExpect400() throws Exception {
+    for (final String uri : List.of("/im/subordinate_listing?trust_marked=true",
+        "/im/subordinate_listing?trust_mark_type=http://localhost:11111/tm/any")) {
+      final ResponseEntity<String> response = this.restClient.get()
+          .uri(uri)
+          .retrieve()
+          .onStatus(HttpStatusCode::isError, (req, res) -> {})
+          .toEntity(String.class);
+
+      Assertions.assertEquals(400, response.getStatusCode().value(), uri);
+      final JsonNode body = this.objectMapper.readTree(response.getBody());
+      Assertions.assertEquals("unsupported_parameter", body.get("error").asString(), uri);
+    }
+    final ResponseEntity<String> response = this.restClient.get()
+        .uri("/im/subordinate_listing?trust_marked=false")
+        .retrieve()
+        .toEntity(String.class);
+    Assertions.assertEquals(200, response.getStatusCode().value());
+  }
+
 }

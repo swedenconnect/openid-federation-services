@@ -4,18 +4,23 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Version 1.0.2
+## Version 1.1.0
 
 **Date:** _not yet released_
 
-* A trust mark issuer without a validity duration no longer gives 500. A trust mark without a validity duration is issued without `exp` and never expires. ([#262](https://github.com/swedenconnect/openid-federation-services/issues/262))
+* A trust mark issuer without a validity duration no longer gives 500. A trust mark without a validity duration is issued without `exp` and never expires. See [#262](https://github.com/swedenconnect/openid-federation-services/issues/262).
+
 * The validity of a trust mark can now be set per trust mark with `trust-mark-validity-duration`. The value of the trust mark issuer is still used for trust marks without one of their own, and is deprecated.
+
 * The resolver now parses, merges and applies metadata policies with the operators from the `nimbus-extensions` module.
 
-* A metadata policy operator with the value `null`, for example `{"value": null}`, from the registry is now published as is in Subordinate Statements when Redis storage is used. Before, it was published as `{}`, so the parameter was not removed. ([#276](https://github.com/swedenconnect/openid-federation-services/issues/276))
+* A metadata policy operator with the value `null`, for example `{"value": null}`, from the registry is now published as is in Subordinate Statements when Redis storage is used. Before, it was published as `{}`, so the parameter was not removed. See [#276](https://github.com/swedenconnect/openid-federation-services/issues/276).
 
-* Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). ([#275](https://github.com/swedenconnect/openid-federation-services/issues/275))
+* Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). See [#275](https://github.com/swedenconnect/openid-federation-services/issues/275).
 
+* Subordinate listings are answered from the records only, without fetching the Entity Configurations of subordinates. Subordinate records must now have `entity-types`, and `is-intermediate` for Intermediate Entities, otherwise they are rejected when loaded. See [#274](https://github.com/swedenconnect/openid-federation-services/issues/274).
+
+* The `trust_marked` and `trust_mark_type` filters of subordinate listings are only supported by an entity that is also a Trust Mark Issuer, and are answered from its trust mark subjects. Other entities answer 400 `unsupported_parameter`. See [#273](https://github.com/swedenconnect/openid-federation-services/issues/273).
 
 ## Version 1.0.1
 
