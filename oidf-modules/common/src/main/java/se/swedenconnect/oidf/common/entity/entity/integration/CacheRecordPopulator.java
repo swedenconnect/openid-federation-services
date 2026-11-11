@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.common.entity.entity.integration;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustAnchorProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.TrustMarkIssuerProperties;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordRegistryIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
@@ -78,6 +79,8 @@ public class CacheRecordPopulator {
         .filter(subordinate -> this.hasValidEcLocation(ta, subordinate))
         .toList()));
     EcLocationValidator.warnForDiscouragedUse(trustAnchors, entityRecords.getValue());
+    Optional.ofNullable(modules.getValue()).map(ModuleRecord::getTrustMarkIssuers).orElseGet(List::of)
+        .forEach(TrustMarkIssuerProperties::warnForShortValidityDurations);
     final CompositeRecord compositeRecord = new CompositeRecord(entityRecords, modules);
     this.source.addRecord(compositeRecord);
     return compositeRecord;

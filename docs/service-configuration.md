@@ -192,21 +192,25 @@ without support for the claim will then reject the statement.
 
 `federation.local-registry.trust-mark-issuers[*]`
 
-| Property                       | Description                               | Type     | Default |
-|--------------------------------|-------------------------------------------|----------|---------|
-| `entity-identifier`            | Entity ID of the trust mark issuer        | String   | –       |
-| `trust-mark-validity-duration` | Validity of issued trust marks (ISO‑8601) | Duration | PT30M   |
-| `trust-marks`                  | List of trust marks                       | List     | –       |
+| Property                       | Description                                                                                                  | Type     | Default |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------|----------|---------|
+| `entity-identifier`            | Entity ID of the trust mark issuer                                                                           | String   | –       |
+| `trust-mark-validity-duration` | Deprecated, use the validity duration of each trust mark. Only used for trust marks without a duration of their own | Duration | –       |
+| `trust-marks`                  | List of trust marks                                                                                          | List     | –       |
 
 `federation.local-registry.trust-mark-issuers[*].trust-marks[*]`
 
-| Property              | Description                         | Type   |
-|-----------------------|-------------------------------------|--------|
-| `trust-mark-type`     | Unique identifier of the trust mark | String |
-| `logo-uri`            | Logo URI                            | String |
-| `ref-uri`             | Reference URI                       | String |
-| `delegation`          | TrustMarkDelegation JWT             | String |
-| `trust-mark-subjects` | Subjects granted this trust mark    | List   |
+| Property                       | Description                                                                                         | Type     |
+|--------------------------------|-----------------------------------------------------------------------------------------------------|----------|
+| `trust-mark-type`              | Unique identifier of the trust mark                                                                 | String   |
+| `trust-mark-validity-duration` | Validity of issued trust marks (ISO‑8601), for example `P2D`. Without a value the issued trust marks have no `exp` and never expire, unless the trust mark issuer has a (deprecated) duration | Duration |
+| `logo-uri`                     | Logo URI                                                                                            | String   |
+| `ref-uri`                      | Reference URI                                                                                       | String   |
+| `delegation`                   | TrustMarkDelegation JWT                                                                             | String   |
+| `trust-mark-subjects`          | Subjects granted this trust mark                                                                    | List     |
+
+A trust mark expires at the earliest of its validity duration and the `expires` of its subject. A validity duration
+shorter than 5 minutes is logged as a warning when the configuration is loaded, and is still used.
 
 `federation.local-registry.trust-mark-issuers[*].trust-mark-subjects[*]`
 

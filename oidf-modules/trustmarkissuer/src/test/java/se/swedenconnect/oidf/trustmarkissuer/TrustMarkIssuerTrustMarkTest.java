@@ -26,6 +26,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkListingRequest;
@@ -36,6 +37,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
+import se.swedenconnect.oidf.common.entity.jwt.FederationSigner;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 
 import java.time.Clock;
@@ -132,6 +134,30 @@ class TrustMarkIssuerTrustMarkTest {
     final TrustMarkIssuer issuer = this.issuer(new TrustMarkSubjectProperty(SUBJECT, null, null, false));
     Assertions.assertThrows(NotFoundException.class,
         () -> issuer.trustMarkListing(new TrustMarkListingRequest("http://tm.digg.se/other", null)));
+  }
+
+  @Test
+  void issuerWithoutValidityDurationIssuesTrustMarkWithoutExp() throws Exception {
+    final SignedJWT signed = new SignedJWT(new JWSHeader(JWSAlgorithm.RS256), new JWTClaimsSet.Builder().build());
+    signed.sign(new RSASSASigner(new RSAKeyGenerator(2048).generate()));
+    final FederationSigner federationSigner = Mockito.mock(FederationSigner.class);
+    Mockito.when(federationSigner.sign(Mockito.any(), Mockito.any())).thenReturn(signed);
+    final SignerFactory signerFactory = Mockito.mock(SignerFactory.class);
+    Mockito.when(signerFactory.createSigner(Mockito.any())).thenReturn(federationSigner);
+    final TrustMarkIssuerProperties properties = TrustMarkIssuerProperties.builder()
+        .entityIdentifier(new EntityID("https://tmissuer.digg.se"))
+        .trustMarks(List.of(TrustMarkProperties.builder()
+            .trustMarkType(TrustMarkType.create(TYPE))
+            .trustMarkSubjects(List.of(new TrustMarkSubjectProperty(SUBJECT, null, null, false)))
+            .build()))
+        .build();
+    final TrustMarkIssuer issuer = new TrustMarkIssuer(properties,
+        new TrustMarkSigner(signerFactory, Clock.systemUTC()), this.source, Clock.systemUTC());
+
+    Assertions.assertEquals(signed.serialize(), issuer.trustMark(new TrustMarkRequest(TYPE, SUBJECT)));
+    final ArgumentCaptor<JWTClaimsSet> claims = ArgumentCaptor.forClass(JWTClaimsSet.class);
+    Mockito.verify(federationSigner).sign(Mockito.any(), claims.capture());
+    Assertions.assertNull(claims.getValue().getExpirationTime());
   }
 
   @Test

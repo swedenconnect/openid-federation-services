@@ -21,15 +21,19 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import jakarta.annotation.PostConstruct;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMarkType;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Properties for TrustMarkIssuer
  *
- * @param trustMarkValidityDuration The validity duration of issued Trust Marks
+ * @param trustMarkValidityDuration The validity duration of issued Trust Marks, deprecated in favour of the
+ *     validity duration of each trust mark. It is only used as a fallback for trust marks without a duration of
+ *     their own, and is removed once the registry no longer sends it.
  * @param entityIdentifier            IssuerEntityId
  * @param trustMarks                TrustMark Issuer
  * @author Per Fredrik Plars
@@ -48,13 +52,28 @@ public record TrustMarkIssuerProperties(
    */
   @PostConstruct
   public void validate() throws IllegalArgumentException {
-    FederationAssert.assertNotEmpty(this.trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
     FederationAssert.assertNotEmpty(this.entityIdentifier, "IssuerEntityId is expected");
     FederationAssert.assertNotEmpty(this.trustMarks, "TrustMarks is expected");
-    FederationAssert.assertTrue(this.trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
-        "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'%s'"
-            .formatted(this.trustMarkValidityDuration));
+    TrustMarkProperties.assertValidityDuration(this.trustMarkValidityDuration);
 
     this.trustMarks.forEach(TrustMarkProperties::validate);
+  }
+
+  /**
+   * Logs a warning for each configured validity duration that is shorter than the minimum. Such a duration is still
+   * used, it is accepted but is likely to be a configuration mistake. Called when records are loaded.
+   */
+  public void warnForShortValidityDurations() {
+    if (TrustMarkProperties.isShorterThanMinimum(this.trustMarkValidityDuration)) {
+      log.warn("Trust mark issuer {} has a trust mark validity duration of {}, shorter than the minimum of {}",
+          this.entityIdentifier, this.trustMarkValidityDuration, TrustMarkProperties.MINIMUM_VALIDITY_DURATION);
+    }
+    Optional.ofNullable(this.trustMarks).orElseGet(List::of).stream()
+        .filter(trustMark -> TrustMarkProperties.isShorterThanMinimum(trustMark.getTrustMarkValidityDuration()))
+        .forEach(trustMark -> log.warn(
+            "Trust mark {} of {} has a validity duration of {}, shorter than the minimum of {}",
+            Optional.ofNullable(trustMark.getTrustMarkType()).map(TrustMarkType::getTrustMarkType).orElse("unknown"),
+            this.entityIdentifier, trustMark.getTrustMarkValidityDuration(),
+            TrustMarkProperties.MINIMUM_VALIDITY_DURATION));
   }
 }
