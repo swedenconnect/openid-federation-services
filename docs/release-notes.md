@@ -6,7 +6,7 @@
 
 ## Version 1.1.0
 
-**Date:** _not yet released_
+**Date:** 2026-11-12
 
 * Connect and read timeouts can now be set for the resolver and registry clients with `timeout.connect` and `timeout.read`. Before, a fetch from a host that did not respond could hang for about a minute. See [#289](https://github.com/swedenconnect/openid-federation-services/issues/289).
 
@@ -20,8 +20,6 @@
 
 * A metadata policy operator with the value `null`, for example `{"value": null}`, from the registry is now published as is in Subordinate Statements when Redis storage is used. Before, it was published as `{}`, so the parameter was not removed. See [#276](https://github.com/swedenconnect/openid-federation-services/issues/276).
 
-* Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). See [#275](https://github.com/swedenconnect/openid-federation-services/issues/275).
-
 * Subordinate listings are answered from the records only, without fetching the Entity Configurations of subordinates. Subordinate records must now have `entity-types`, and `is-intermediate` for Intermediate Entities, otherwise they are rejected when loaded. See [#274](https://github.com/swedenconnect/openid-federation-services/issues/274).
 
 * The resolver and filtered subordinate listings can now fetch an Entity Configuration from an `ec_location` with a URL-encoded entity identifier, for example `<ie>/hosted/https%3A%2F%2Frp.example.se/.well-known/openid-federation`. Before, the URL was encoded a second time and the fetch failed. See [#281](https://github.com/swedenconnect/openid-federation-services/issues/281).
@@ -31,6 +29,8 @@
 * The service no longer shuts down when the trust anchor cannot be fetched at startup. The first scheduled resolver reload now runs a minute after startup, so a failed initial load is retried without waiting for a full reload rate. See [#247](https://github.com/swedenconnect/openid-federation-services/issues/247).
 
 * The resolve and discovery endpoints answer 503 `temporarily_unavailable` while the resolver has no loaded tree, instead of 400 `invalid_trust_chain` and 500 `server_error`.
+
+* Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). See [#275](https://github.com/swedenconnect/openid-federation-services/issues/275).
 
 ## Version 1.0.1
 
