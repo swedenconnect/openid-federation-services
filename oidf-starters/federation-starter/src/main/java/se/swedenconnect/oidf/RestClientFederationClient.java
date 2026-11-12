@@ -28,6 +28,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriBuilder;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EntityConfigurationRequest;
@@ -41,6 +42,8 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMa
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.TrustMarkRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryResponseException;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
+import se.swedenconnect.oidf.common.entity.tree.scraping.FederationFetchException;
+import se.swedenconnect.oidf.common.entity.tree.scraping.FetchError;
 
 import java.net.URI;
 import java.text.ParseException;
@@ -98,6 +101,7 @@ public class RestClientFederationClient implements FederationClient {
    *
    * @param request for entity configuration
    * @return entity configuration as a signed JWT
+   * @throws FederationFetchException if the response has a non-2xx status
    */
   @Override
   public @NonNull SignedJWT entityConfiguration(
@@ -149,6 +153,9 @@ public class RestClientFederationClient implements FederationClient {
           Tag.of("outcome", "failure")
       )).increment();
       this.uptimeRegistry.record(entityId, false);
+      if (e instanceof final RestClientResponseException re) {
+        throw new FederationFetchException(FetchError.httpStatus(re.getStatusCode().value()), e.getMessage(), e);
+      }
       throw e;
     }
   }

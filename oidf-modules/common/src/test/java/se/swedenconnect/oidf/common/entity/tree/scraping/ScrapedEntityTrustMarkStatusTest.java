@@ -39,6 +39,11 @@ import se.swedenconnect.oidf.common.entity.entity.integration.federation.Federat
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationTrustMarkStatusRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,6 +62,7 @@ class ScrapedEntityTrustMarkStatusTest {
   private ECKey key;
   private FederationClient client;
   private SignedJWT trustMark;
+  private final List<Boolean> failures = new ArrayList<>();
 
   @BeforeEach
   void setUp() throws Exception {
@@ -109,13 +115,70 @@ class ScrapedEntityTrustMarkStatusTest {
     Assertions.assertFalse(status.isNoStatusEndpoint());
   }
 
+  @Test
+  void statusResponseSetsLastChecked() throws Exception {
+    this.mockConfigurations(Map.of("federation_trust_mark_status_endpoint", STATUS_ENDPOINT));
+    Mockito.when(this.client.trustMarkStatus(Mockito.any()))
+        .thenReturn(new TrustMarkStatusResponse(this.statusResponse(), false));
+
+    final ScrapedEntity entity = this.scrape();
+
+    Assertions.assertNotNull(entity.getTrustMarkStatuses().get(this.trustMark.serialize()).getLastChecked());
+  }
+
+  @Test
+  void failedStatusKeepsPreviousStatus() throws Exception {
+    this.mockConfigurations(Map.of("federation_trust_mark_status_endpoint", STATUS_ENDPOINT));
+    Mockito.when(this.client.trustMarkStatus(Mockito.any())).thenReturn(new TrustMarkStatusResponse(null, true));
+    final TrustMarkStatusResponse old = new TrustMarkStatusResponse(this.statusResponse(), false);
+    old.setLastChecked(Instant.now().minus(Duration.ofHours(1)));
+
+    final ScrapedEntity entity = this.scrape(this.previous(old));
+
+    Assertions.assertSame(old, entity.getTrustMarkStatuses().get(this.trustMark.serialize()));
+    Assertions.assertEquals(List.of(true), this.failures);
+  }
+
+  @Test
+  void failedStatusOfExpiredTrustMarkDoesNotKeepPreviousStatus() throws Exception {
+    final SignedJWT leaf = this.leafConfiguration(Date.from(Instant.now().minus(Duration.ofMinutes(1))));
+    final SignedJWT issuer = this.configuration(ISSUER, Map.of(
+        "federation_trust_mark_status_endpoint", STATUS_ENDPOINT), null);
+    Mockito.when(this.client.entityConfiguration(Mockito.any())).thenAnswer(invocation ->
+        isIssuer(invocation.getArgument(0)) ? issuer : leaf);
+    Mockito.when(this.client.trustMarkStatus(Mockito.any())).thenReturn(new TrustMarkStatusResponse(null, true));
+
+    final ScrapedEntity entity = this.scrape(this.previous(new TrustMarkStatusResponse(this.statusResponse(), false)));
+
+    Assertions.assertTrue(entity.getTrustMarkStatuses().get(this.trustMark.serialize()).isError());
+    Assertions.assertEquals(List.of(false), this.failures);
+  }
+
+  private ScrapedEntity previous(final TrustMarkStatusResponse status) {
+    final Map<String, TrustMarkStatusResponse> statuses = new HashMap<>();
+    statuses.put(this.trustMark.serialize(), status);
+    return ScrapedEntity.builder().entityID(new EntityID(SUBJECT)).trustMarkStatuses(statuses).build();
+  }
+
+  private SignedJWT statusResponse() throws Exception {
+    return this.sign("trust-mark-status-response+jwt", new JWTClaimsSet.Builder()
+        .issuer(ISSUER)
+        .claim("trust_mark", this.trustMark.serialize())
+        .claim("status", "active")
+        .build());
+  }
+
   private static boolean isIssuer(final FederationRequest<EntityConfigurationRequest> request) {
     return ISSUER.equals(request.parameters().entityID().getValue());
   }
 
   private ScrapedEntity scrape() {
+    return this.scrape(null);
+  }
+
+  private ScrapedEntity scrape(final ScrapedEntity previous) {
     final ScrapedEntity entity = ScrapedEntity.builder().entityID(new EntityID(SUBJECT)).build();
-    entity.scrape(this.client);
+    entity.scrape(this.client, previous, (part, entityId, reason, previousUsed) -> this.failures.add(previousUsed));
     return entity;
   }
 
@@ -128,10 +191,15 @@ class ScrapedEntityTrustMarkStatusTest {
   }
 
   private SignedJWT leafConfiguration() throws Exception {
+    return this.leafConfiguration(null);
+  }
+
+  private SignedJWT leafConfiguration(final Date trustMarkExpiration) throws Exception {
     this.trustMark = this.sign("trust-mark+jwt", new JWTClaimsSet.Builder()
         .issuer(ISSUER)
         .subject(SUBJECT)
         .claim("trust_mark_type", TYPE)
+        .expirationTime(trustMarkExpiration)
         .build());
     final JSONObject entry = new JSONObject();
     entry.put("trust_mark_type", TYPE);

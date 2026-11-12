@@ -8,6 +8,8 @@
 
 **Date:** _not yet released_
 
+* When the resolver reloads its tree, each part of an entity (Entity Configuration, subordinate listing, Subordinate Statement and trust mark status) that cannot be fetched is taken from the previous load while it is still valid. This also applies to the trust anchor. An intermediate or trust anchor whose Entity Configuration has expired is kept, so its subordinates are still loaded. The `export` and `export-grafana` actuator endpoints now show when each entity was last seen, its latest fetch error and the status of its trust marks. In `export`, `uptime.lastSeen` is replaced by `last_seen`. See [#285](https://github.com/swedenconnect/openid-federation-services/issues/285).
+
 * A trust mark issuer without a validity duration no longer gives 500. A trust mark without a validity duration is issued without `exp` and never expires. See [#262](https://github.com/swedenconnect/openid-federation-services/issues/262).
 
 * The validity of a trust mark can now be set per trust mark with `trust-mark-validity-duration`. The value of the trust mark issuer is still used for trust marks without one of their own, and is deprecated.
@@ -20,13 +22,11 @@
 
 * Subordinate listings are answered from the records only, without fetching the Entity Configurations of subordinates. Subordinate records must now have `entity-types`, and `is-intermediate` for Intermediate Entities, otherwise they are rejected when loaded. See [#274](https://github.com/swedenconnect/openid-federation-services/issues/274).
 
-* The resolver and filtered subordinate listings can now fetch an Entity Configuration from an `ec_location` with a URL-encoded entity identifier, for example `<ie>/hosted/https%3A%2F%2Frp.example.se/.well-known/openid-federation`. Before, the URL was encoded a second time and the fetch failed. ([#281](https://github.com/swedenconnect/openid-federation-services/issues/281))
-
-* Releases are published to GitHub Packages instead of Maven Central. Versions up to 1.0.1 stay on Maven Central. Downloading needs a GitHub token, see [Using the Artifacts from GitHub Packages](https://docs.swedenconnect.se/openid-federation-services/github-packages.html). ([#275](https://github.com/swedenconnect/openid-federation-services/issues/275))
+* The resolver and filtered subordinate listings can now fetch an Entity Configuration from an `ec_location` with a URL-encoded entity identifier, for example `<ie>/hosted/https%3A%2F%2Frp.example.se/.well-known/openid-federation`. Before, the URL was encoded a second time and the fetch failed. See [#281](https://github.com/swedenconnect/openid-federation-services/issues/281).
 
 * The `trust_marked` and `trust_mark_type` filters of subordinate listings are only supported by an entity that is also a Trust Mark Issuer, and are answered from its trust mark subjects. Other entities answer 400 `unsupported_parameter`. See [#273](https://github.com/swedenconnect/openid-federation-services/issues/273).
 
-* The service no longer shuts down when the trust anchor cannot be fetched at startup. The first scheduled resolver reload now runs a minute after startup, so a failed initial load is retried without waiting for a full reload rate. ([#247](https://github.com/swedenconnect/openid-federation-services/issues/247))
+* The service no longer shuts down when the trust anchor cannot be fetched at startup. The first scheduled resolver reload now runs a minute after startup, so a failed initial load is retried without waiting for a full reload rate. See [#247](https://github.com/swedenconnect/openid-federation-services/issues/247).
 
 * The resolve and discovery endpoints answer 503 `temporarily_unavailable` while the resolver has no loaded tree, instead of 400 `invalid_trust_chain` and 500 `server_error`.
 
