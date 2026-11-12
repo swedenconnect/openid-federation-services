@@ -20,18 +20,31 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jspecify.annotations.NonNull;
 import org.springframework.util.Assert;
+
+import java.time.Duration;
 
 /**
  * Configuration properties for resolver.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class ResolverConfigurationProperties {
+
+  /**
+   * Default timeouts for the resolver client.
+   *
+   * @return default connect and read timeouts
+   */
+  public static RestClientProperty.@NonNull Timeout defaultClientTimeout() {
+    return new RestClientProperty.Timeout(Duration.ofSeconds(5), Duration.ofSeconds(10));
+  }
 
   private RestClientProperty client;
 

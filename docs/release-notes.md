@@ -8,6 +8,8 @@
 
 **Date:** _not yet released_
 
+* Connect and read timeouts can now be set for the resolver and registry clients with `timeout.connect` and `timeout.read`. Before, a fetch from a host that did not respond could hang for about a minute. See [#289](https://github.com/swedenconnect/openid-federation-services/issues/289).
+
 * When the resolver reloads its tree, each part of an entity (Entity Configuration, subordinate listing, Subordinate Statement and trust mark status) that cannot be fetched is taken from the previous load while it is still valid. This also applies to the trust anchor. An intermediate or trust anchor whose Entity Configuration has expired is kept, so its subordinates are still loaded. The `export` and `export-grafana` actuator endpoints now show when each entity was last seen, its latest fetch error and the status of its trust marks. In `export`, `uptime.lastSeen` is replaced by `last_seen`. See [#285](https://github.com/swedenconnect/openid-federation-services/issues/285).
 
 * A trust mark issuer without a validity duration no longer gives 500. A trust mark without a validity duration is issued without `exp` and never expires. See [#262](https://github.com/swedenconnect/openid-federation-services/issues/262).

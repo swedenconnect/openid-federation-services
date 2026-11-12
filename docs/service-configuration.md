@@ -131,11 +131,13 @@ Routing dispatches an incoming request path to the correct virtual entity — se
 
 `federation.registry.integration.client.*`
 
-| Property                  | Description                     | Type   |
-|---------------------------|---------------------------------|--------|
-| `base-uri`                | Base URI of the registry        | String |
-| `trust-store-bundle-name` | Trust store bundle used for TLS | String |
-| `name`                    | Logical name of the client      | String |
+| Property | Description | Type | Default |
+| :--- | :--- | :--- | :--- |
+| `base-uri` | Base URI of the registry. | String | – |
+| `trust-store-bundle-name` | Trust store bundle used for TLS. | String | – |
+| `name` | Logical name of the client. | String | – |
+| `timeout.connect` | Maximum time to establish the connection. | Duration | 5s |
+| `timeout.read` | Maximum time to wait for the response. | Duration | 30s |
 
 Every key named by a key reference from the registry, such as `hosted:sign-key`, must exist on this instance. An
 entity with a reference to a missing key is left out and logged as an error. A reference to a missing key in the
@@ -269,11 +271,15 @@ The REST client the service's Resolver module uses to fetch entity configuration
 statements from other federation participants over HTTPS while walking a trust chain. Same shape as
 [`federation.registry.integration.client`](#24-registry-integration):
 
-| Property                  | Description                                                       | Type   |
-|----------------------------|---------------------------------------------------------------------|--------|
-| `name`                    | Logical name of the client                                         | String |
-| `trust-store-bundle-name` | Trust store bundle used to validate TLS server certs               | String |
-| `base-uri`                | Not used for this client — startup fails validation if this is set | String |
+| Property | Description | Type | Default |
+| :--- | :--- | :--- | :--- |
+| `name` | Logical name of the client. | String | – |
+| `trust-store-bundle-name` | Trust store bundle used to validate TLS server certs. | String | – |
+| `base-uri` | Not used for this client. Startup fails validation if this is set. | String | – |
+| `timeout.connect` | Maximum time to establish the connection. | Duration | 5s |
+| `timeout.read` | Maximum time to wait for the response. | Duration | 10s |
+
+A request that exceeds a timeout fails in the same way as other fetch errors.
 
 ---
 

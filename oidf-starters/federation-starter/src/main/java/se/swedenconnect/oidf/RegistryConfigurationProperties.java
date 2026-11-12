@@ -21,9 +21,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.util.Assert;
 
+import java.time.Duration;
 import java.util.UUID;
 
 /**
@@ -43,6 +45,7 @@ public class RegistryConfigurationProperties {
    * IntegrationProperties for openid federation registry.
    *
    * @author Felix Hellman
+   * @author Martin Lindström
    */
   @Setter
   @Getter
@@ -54,16 +57,25 @@ public class RegistryConfigurationProperties {
     private JWKSet validationKeys;
 
     /**
+     * Default timeouts for the registry client.
+     *
+     * @return default connect and read timeouts
+     */
+    public static RestClientProperty.@NonNull Timeout defaultClientTimeout() {
+      return new RestClientProperty.Timeout(Duration.ofSeconds(5), Duration.ofSeconds(30));
+    }
+
+    /**
      * If enabled properties are validated
      */
     public void validate() {
       if (this.enabled == null || !this.enabled) {
         return;
       }
-      final String basePropName = "openid.federation.registry.integration.";
+      final String basePropName = "federation.registry.integration.";
       Assert.notNull(this.instanceId, basePropName + "instance-id must be configured");
-      Assert.notNull(this.validationKeys, basePropName + "validationKeys must be configured");
-      Assert.isTrue(!this.validationKeys.isEmpty(), basePropName + "validationKeys must be configured");
+      Assert.notNull(this.validationKeys, basePropName + "validation-keys must be configured");
+      Assert.isTrue(!this.validationKeys.isEmpty(), basePropName + "validation-keys must be configured");
       Assert.notNull(this.client, "Rest client properties can not be null");
     }
   }
