@@ -29,27 +29,35 @@ import se.swedenconnect.oidf.UptimeRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.ResolveRequest;
 import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
+import se.swedenconnect.oidf.common.entity.entity.integration.trustmark.TrustMarkStatusResponse;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
+import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 import se.swedenconnect.oidf.resolver.ResolverCacheRegistry;
 import se.swedenconnect.oidf.resolver.ResolverFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Actuator endpoint that exports the federation tree of a resolver as a JSON graph of nodes and edges.
  * <p>
- * Nodes are the self-signed entity configurations, enriched with the resolver explanation, request metrics and
- * uptime data. Edges are the subordinate statements.
+ * Nodes are the self-signed entity configurations, enriched with the resolver explanation, request metrics, uptime
+ * data, the time the entity was last seen, the latest fetch error and the status of its trust marks. Edges are the
+ * subordinate statements.
  * </p>
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Endpoint(id = "export")
 @Component
@@ -139,7 +147,7 @@ public class ExportEndpoint {
    */
   public @NonNull Map<String, List<Map<String, Object>>> getNodesAndEdges(final @Nullable String trustAnchor) {
     final ResolverProperties properties = this.getResolverProperties(trustAnchor);
-    final List<ExportStatement> selfStatements = new ArrayList<>();
+    final List<ScrapedEntity> selfEntities = new ArrayList<>();
     final List<ExportStatement> subordinateStatements = new ArrayList<>();
 
     final EntityStatementTree tree = this.registry.getRegistration(properties.getEntityIdentifier())
@@ -155,16 +163,21 @@ public class ExportEndpoint {
             entity.getIntermediate().subordinates().values().forEach(jwt ->
                 subordinateStatements.add(new ExportStatement(jwt)));
           }
-          final ExportStatement statement = new ExportStatement(entity.getEntityStatement());
           if (EntityStatementClaims.isSelfStatement(entity.getEntityStatement())) {
-            selfStatements.add(statement);
+            selfEntities.add(entity);
           }
           else {
-            subordinateStatements.add(statement);
+            subordinateStatements.add(new ExportStatement(entity.getEntityStatement()));
           }
         });
 
-    selfStatements.forEach(statement -> this.addNodeDetails(statement, properties));
+    final List<ExportStatement> selfStatements = selfEntities.stream()
+        .map(entity -> {
+          final ExportStatement statement = new ExportStatement(entity.getEntityStatement());
+          this.addNodeDetails(statement, entity, properties);
+          return statement;
+        })
+        .toList();
 
     return Map.of(
         "nodes", selfStatements.stream().map(ExportStatement::toJsonObject).toList(),
@@ -190,15 +203,24 @@ public class ExportEndpoint {
   }
 
   /**
-   * Adds the resolver explanation, request metrics and uptime data to a node. A failure is logged and leaves the
-   * node without the remaining details.
+   * Adds the resolver explanation, request metrics, uptime data and scrape data to a node. A failure is logged and
+   * leaves the node without the remaining details.
    *
    * @param statement the self-signed entity configuration
+   * @param entity the entity in the resolver tree
    * @param properties the resolver configuration
    */
-  private void addNodeDetails(final @NonNull ExportStatement statement, final @NonNull ResolverProperties properties) {
+  private void addNodeDetails(final @NonNull ExportStatement statement, final @NonNull ScrapedEntity entity,
+      final @NonNull ResolverProperties properties) {
     try {
       final String entityId = EntityStatementClaims.getEntityID(statement.getEntityStatement()).getValue();
+      final Instant newestSeen = newer(entity.getLastSeen(),
+          this.uptimeRegistry.getLastSeenReachable(entityId).orElse(null));
+      statement.withScrapeData(
+          Optional.ofNullable(newestSeen).map(Instant::toString).orElse(null),
+          Optional.ofNullable(entity.getLastError()).map(Object::toString).orElse(null),
+          trustMarks(entity));
+
       final Map<Integer, Map<String, String>> explain = this.factory.create(properties)
           .explain(new ResolveRequest(entityId, properties.getTrustAnchor(), null, true));
       if (explain != null) {
@@ -216,15 +238,68 @@ public class ExportEndpoint {
       statement.withMetrics(success + failure, success, failure);
 
       this.uptimeRegistry.uptimeRatio(entityId).ifPresent(ratio -> {
-        final String lastSeen = this.uptimeRegistry.getLastSeenReachable(entityId)
-            .map(Instant::toString)
-            .orElse(null);
         final Long avgMs = this.uptimeRegistry.getAvgResponseMs(entityId).orElse(null);
-        statement.withUptimeData(ratio, lastSeen, avgMs);
+        statement.withUptimeData(ratio, avgMs);
       });
     }
     catch (final Exception e) {
       log.warn("Failed to add resolver explanation and metrics to export node", e);
+    }
+  }
+
+  /**
+   * Gives the newer of two times.
+   *
+   * @param a a time, or null
+   * @param b a time, or null
+   * @return the newer time, the other one if one is null, or null if both are
+   */
+  private static @Nullable Instant newer(final @Nullable Instant a, final @Nullable Instant b) {
+    if (a == null) {
+      return b;
+    }
+    return b == null || a.isAfter(b) ? a : b;
+  }
+
+  /**
+   * Lists the trust marks of an entity, each with its type, the status from the stored status response and the time
+   * the status was last checked.
+   *
+   * @param entity the entity
+   * @return list of trust marks
+   */
+  private static @NonNull List<Map<String, Object>> trustMarks(final @NonNull ScrapedEntity entity) {
+    final Map<String, TrustMarkStatusResponse> statuses =
+        Optional.ofNullable(entity.getTrustMarkStatuses()).orElseGet(Map::of);
+    return new EntityStatementWrapper(entity.getEntityStatement()).getTrustMarks().stream()
+        .map(trustMark -> {
+          final Map<String, Object> json = new HashMap<>();
+          json.put("type", EntityStatementClaims.getTrustMarkType(trustMark));
+          Optional.ofNullable(statuses.get(trustMark.serialize())).ifPresent(status -> {
+            json.put("status", status(status));
+            json.put("last_checked",
+                Optional.ofNullable(status.getLastChecked()).map(Instant::toString).orElse(null));
+          });
+          return json;
+        })
+        .toList();
+  }
+
+  /**
+   * Reads the {@code status} claim of a stored trust mark status response.
+   *
+   * @param response the stored response
+   * @return the status, or null if there is no status response or it cannot be parsed
+   */
+  private static @Nullable String status(final @NonNull TrustMarkStatusResponse response) {
+    if (response.getSignedJWT() == null) {
+      return null;
+    }
+    try {
+      return response.getSignedJWT().getJWTClaimsSet().getStringClaim("status");
+    }
+    catch (final ParseException e) {
+      return null;
     }
   }
 }

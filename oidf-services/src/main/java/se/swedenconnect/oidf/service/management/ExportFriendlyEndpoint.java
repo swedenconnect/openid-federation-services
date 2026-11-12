@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
  * https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @AllArgsConstructor
 @Endpoint(id = "export-grafana")
@@ -191,8 +192,23 @@ public class ExportFriendlyEndpoint {
             final double ratio = (double) uptime.get("ratio");
             nodeJson.put("detail__uptime_percent", String.valueOf(Math.round(ratio * 100)));
             nodeJson.put("detail__avg_response_ms", String.valueOf(uptime.get("avgResponseMs")));
-            nodeJson.put("detail__last_scraped", uptime.get("lastSeen").toString());
           });
+
+          nodeJson.put("detail__last_scraped",
+              Optional.ofNullable(node.get("last_seen")).map(Object::toString).orElse("unknown"));
+          Optional.ofNullable(node.get("last_error"))
+              .ifPresent(error -> nodeJson.put("detail__last_error", error.toString()));
+          Optional.ofNullable(node.get("trust_marks"))
+              .map(trustMarks -> (List<Map<String, Object>>) trustMarks)
+              .ifPresent(trustMarks -> {
+                final AtomicInteger counter = new AtomicInteger();
+                trustMarks.forEach(trustMark -> nodeJson.put(
+                    "detail__trust_mark_%d".formatted(counter.getAndIncrement()),
+                    "%s: %s, last checked %s".formatted(
+                        Optional.ofNullable(trustMark.get("type")).orElse("unknown"),
+                        Optional.ofNullable(trustMark.get("status")).orElse("no status"),
+                        Optional.ofNullable(trustMark.get("last_checked")).orElse("never"))));
+              });
 
           Optional.ofNullable(evaluatedRole).ifPresent(role -> {
             Optional.ofNullable(icons.get(role)).ifPresent(icon -> {

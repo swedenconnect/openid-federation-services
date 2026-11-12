@@ -21,6 +21,7 @@ import lombok.Getter;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,6 +29,7 @@ import java.util.Optional;
  * Data class to transform entity statement into something that can be easily presented in a graph.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 public class ExportStatement {
 
@@ -48,8 +50,10 @@ public class ExportStatement {
   private Integer successCount;
   private Integer failureCount;
   private Double uptimeWindow;
-  private String lastSeenReachable;
   private Long avgResponseMs;
+  private String lastSeen;
+  private String lastError;
+  private List<Map<String, Object>> trustMarks;
 
   /**
    * @return json object
@@ -79,12 +83,34 @@ public class ExportStatement {
     Optional.ofNullable(this.uptimeWindow).ifPresent(w -> {
       json.put("uptime", Map.of(
           "ratio", w,
-          "lastSeen", this.lastSeenReachable != null ? this.lastSeenReachable : "never",
           "avgResponseMs", this.avgResponseMs != null ? this.avgResponseMs : 0L
       ));
     });
 
+    Optional.ofNullable(this.lastSeen).ifPresent(v -> json.put("last_seen", v));
+    Optional.ofNullable(this.lastError).ifPresent(v -> json.put("last_error", v));
+    Optional.ofNullable(this.trustMarks).filter(t -> !t.isEmpty()).ifPresent(v -> json.put("trust_marks", v));
+
     return json;
+  }
+
+  /**
+   * Add the data from scraping the entity to this node.
+   *
+   * @param lastSeen   ISO-8601 timestamp of the last successful fetch of the Entity Configuration, the newer of
+   *                   the resolver tree and the uptime registry, or null
+   * @param lastError  the latest failed fetch of the Entity Configuration, or null
+   * @param trustMarks the trust marks of the entity with their stored status
+   * @return this
+   */
+  public ExportStatement withScrapeData(
+      final String lastSeen,
+      final String lastError,
+      final List<Map<String, Object>> trustMarks) {
+    this.lastSeen = lastSeen;
+    this.lastError = lastError;
+    this.trustMarks = trustMarks;
+    return this;
   }
 
   /**
@@ -101,16 +127,13 @@ public class ExportStatement {
    * Add sliding-window uptime data to this node.
    *
    * @param uptimeWindow    ratio of successful fetches in the last N cycles (0.0–1.0)
-   * @param lastSeenReachable ISO-8601 timestamp of last successful fetch, or null
    * @param avgResponseMs   exponential moving average response time in ms, or null
    * @return this
    */
   public ExportStatement withUptimeData(
       final double uptimeWindow,
-      final String lastSeenReachable,
       final Long avgResponseMs) {
     this.uptimeWindow = uptimeWindow;
-    this.lastSeenReachable = lastSeenReachable;
     this.avgResponseMs = avgResponseMs;
     return this;
   }

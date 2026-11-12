@@ -26,19 +26,15 @@ import se.swedenconnect.oidf.common.entity.tree.EntityStatementWrapper;
 import se.swedenconnect.oidf.common.entity.tree.Node;
 import se.swedenconnect.oidf.common.entity.tree.NodeKey;
 import se.swedenconnect.oidf.common.entity.tree.Tree;
+import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapeFailureListener;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
-import se.swedenconnect.oidf.common.entity.tree.scraping.WrongJwkKidException;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContext;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.ExecutionStrategy;
 import se.swedenconnect.oidf.resolver.tree.resolution.ResolutionContext;
 
-import java.text.ParseException;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,6 +43,7 @@ import java.util.concurrent.Executors;
  * Responsible for populating and creating a new (logical) tree.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Slf4j
 public class EntityStatementTreeLoader {
@@ -74,7 +71,11 @@ public class EntityStatementTreeLoader {
     /**
      * When fetching entity configuration (that is not root)
      */
-    FETCH_ENTITY_CONFIGURATION
+    FETCH_ENTITY_CONFIGURATION,
+    /**
+     * When fetching the status of a trust mark
+     */
+    TRUST_MARK_STATUS
   }
 
   private static final ExecutorService RESOLUTION_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
@@ -144,7 +145,10 @@ public class EntityStatementTreeLoader {
     final Node<ScrapedEntity> root = new Node<>(nodeKey);
     final EntityID entityID = new EntityID(nodeKey.entityId());
     final ScrapedEntity scrapedEntity = ScrapedEntity.builder().entityID(entityID).build();
-    scrapedEntity.scrape(this.client);
+    if (!scrapedEntity.scrape(this.client, this.previousData(nodeKey, tree, snapshotId),
+        this.failureListener(true))) {
+      throw new IllegalStateException("Trust anchor %s could not be loaded".formatted(nodeKey.getKey()));
+    }
     log.debug("TreeLoader scraped root {}", nodeKey.getKey());
     final EntityStatementWrapper wrapper =
         new EntityStatementWrapper(scrapedEntity.getEntityStatement());
@@ -170,8 +174,9 @@ public class EntityStatementTreeLoader {
   }
 
   /**
-   * Scrapes a subordinate, adds it to the snapshot being built and continues with its own subordinates. If the scrape
-   * fails, the data from the previous load is used while it is still valid.
+   * Scrapes a subordinate, adds it to the snapshot being built and continues with its own subordinates. Parts that
+   * cannot be fetched are taken from the previous load while they are still valid, see
+   * {@link ScrapedEntity#scrape(FederationClient, ScrapedEntity, ScrapeFailureListener)}.
    *
    * @param subordinateStatement the superior's statement about the subordinate
    * @param parentKey            key of the superior
@@ -202,18 +207,18 @@ public class EntityStatementTreeLoader {
       return;
     }
     final Node<ScrapedEntity> subNode = new Node<>(new NodeKey(subject));
-    ScrapedEntity entity;
+    final ScrapedEntity entity =
+        ScrapedEntity.builder().entityID(new EntityID(subject)).ecLocation((String) ecLocation).build();
     try {
-      entity = ScrapedEntity.builder().entityID(new EntityID(subject)).ecLocation((String) ecLocation).build();
-      entity.scrape(this.client);
-      log.debug("TreeLoader scraped subordinate {}", subject);
-    } catch (final Exception e) {
-      entity = this.previousData(subNode.getKey(), tree, snapshot, e);
-      if (entity == null) {
-        this.handleError(StepName.FETCH_ENTITY_CONFIGURATION, subNode.getKey(), e);
+      if (!entity.scrape(this.client, this.previousData(subNode.getKey(), tree, snapshot.getVersion()),
+          this.failureListener(false))) {
+        log.debug("TreeLoader leaving out subordinate {}", subject);
         return;
       }
-      this.errorContextFactory.create(subNode.getKey(), StepName.FETCH_ENTITY_CONFIGURATION).increment();
+      log.debug("TreeLoader scraped subordinate {}", subject);
+    } catch (final Exception e) {
+      this.handleError(StepName.FETCH_ENTITY_CONFIGURATION, subNode.getKey(), e);
+      return;
     }
     try {
       tree.addChild(subNode, parentKey, entity, snapshot);
@@ -261,58 +266,53 @@ public class EntityStatementTreeLoader {
   }
 
   /**
-   * Looks up the data of an entity in the snapshot that is in use while a new snapshot is built. The data is used
-   * in place of a failed scrape, so that an entity that is temporarily unreachable is not dropped from the tree. Data
-   * whose Entity Configuration has expired is not used, nor is data for an entity whose Entity Configuration is
-   * invalid.
+   * Looks up the data of an entity in the snapshot that is in use while a new snapshot is built. Parts of the data are
+   * used in place of parts that cannot be fetched.
    *
-   * @param key      of the entity
-   * @param tree     being loaded
-   * @param snapshot being built
-   * @param e        cause of the failed scrape
-   * @return a copy of the previous data, marked as coming from a failed scrape, or {@code null} if there is no data
-   *     to use
+   * @param key        of the entity
+   * @param tree       being loaded
+   * @param snapshotId version of the snapshot being built
+   * @return the previous data, or {@code null} if there is none
    */
-  ScrapedEntity previousData(
-      final NodeKey key,
-      final Tree<ScrapedEntity> tree,
-      final CacheSnapshot<ScrapedEntity> snapshot,
-      final Exception e) {
-
-    if (e instanceof WrongJwkKidException) {
-      return null;
-    }
+  ScrapedEntity previousData(final NodeKey key, final Tree<ScrapedEntity> tree, final long snapshotId) {
     final CacheSnapshot<ScrapedEntity> previous = tree.getCurrentSnapshot();
-    if (previous.getVersion() == snapshot.getVersion()) {
+    if (previous.getVersion() == snapshotId) {
       return null;
     }
-    final ScrapedEntity data = previous.getData(key);
-    if (data == null || data.getEntityStatement() == null) {
-      return null;
-    }
-    final Instant now = Instant.now();
-    final Date expiration;
-    try {
-      expiration = data.getEntityStatement().getJWTClaimsSet().getExpirationTime();
-    } catch (final ParseException pe) {
-      return null;
-    }
-    if (expiration == null || !expiration.toInstant().isAfter(now)) {
-      log.debug("TreeLoader previous data of {} has expired", key.getKey());
-      return null;
-    }
-    final Instant failedSince = Optional.ofNullable(data.getScrapeFailedAt()).orElse(now);
-    log.warn("TreeLoader failed to fetch {} ({}), keeping data from previous load until {}",
-        key.getKey(), e.getClass().getCanonicalName(), expiration.toInstant());
-    log.trace("TreeLoader failed to fetch {}: ", key.getKey(), e);
-    return data.copyForFailedScrape(failedSince);
+    return previous.getData(key);
+  }
+
+  /**
+   * Creates a listener that logs and counts the failed fetches of a scrape. A failure where the previous value is
+   * used is logged as a warning; one that leaves something out is logged as an error.
+   *
+   * @param root true if the scrape is of the trust anchor
+   * @return the listener
+   */
+  private ScrapeFailureListener failureListener(final boolean root) {
+    return (part, entityId, reason, previousUsed) -> {
+      final StepName stepName = switch (part) {
+        case ENTITY_CONFIGURATION -> root ? StepName.RESOLVE_ROOT : StepName.FETCH_ENTITY_CONFIGURATION;
+        case SUBORDINATE_LISTING -> StepName.SUBORDINATE_LISTING;
+        case SUBORDINATE_STATEMENT -> StepName.FETCH_SUBORDINATE_STATEMENT;
+        case TRUST_MARK_STATUS -> StepName.TRUST_MARK_STATUS;
+      };
+      if (previousUsed) {
+        log.warn("TreeLoader {} {} failed ({}), keeping the value from the previous load", entityId,
+            stepName.name(), reason);
+      }
+      else {
+        log.error("TreeLoader {} {} failed ({}), no valid value from the previous load", entityId,
+            stepName.name(), reason);
+      }
+      this.errorContextFactory.create(new NodeKey(entityId), stepName).increment();
+    };
   }
 
   /**
    * Records a failed step. The failing branch is left out of the snapshot being built; it is picked up
-   * again by the next scheduled tree load rather than retried against the current one. A failed scrape of an
-   * entity that has valid data in the previous load does not end up here, see
-   * {@link #previousData(NodeKey, Tree, CacheSnapshot, Exception)}.
+   * again by the next scheduled tree load rather than retried against the current one. Failed fetches during a
+   * scrape do not end up here, see {@link #failureListener(boolean)}.
    *
    * @param stepName of the step that failed
    * @param node     the step was executing for

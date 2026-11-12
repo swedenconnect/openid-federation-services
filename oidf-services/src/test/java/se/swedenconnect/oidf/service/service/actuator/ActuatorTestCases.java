@@ -160,4 +160,28 @@ public class ActuatorTestCases {
     assertTrue(deadNodes.contains("http://localhost:11112/broken/subordinate"),
         "Dead nodes should contain the broken subordinate");
   }
+
+  @Test
+  void testDeadNodesDoesNotContainReachableTrustAnchor() throws Exception {
+    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(Context.getManagementPort())).build();
+    final String body = client.get()
+        .uri("/actuator/dead-nodes?trustAnchor=http://localhost:11111/anarchy/ta")
+        .retrieve()
+        .body(String.class);
+    final List<String> deadNodes = new JsonMapper().readValue(body, new TypeReference<>() {});
+    assertFalse(deadNodes.contains("http://localhost:11111/anarchy/ta"),
+        "A trust anchor fetched by the latest load should not be dead");
+  }
+
+  @Test
+  void testExportHasLastSeen() throws Exception {
+    final RestClient client = RestClient.builder().baseUrl("http://localhost:%d".formatted(Context.getManagementPort())).build();
+    final String body = client.get()
+        .uri("/actuator/export?trustAnchor=http://localhost:11111/anarchy/ta")
+        .retrieve()
+        .body(String.class);
+    final JsonNode json = new JsonMapper().readTree(body);
+    assertFalse(json.get("nodes").isEmpty());
+    json.get("nodes").forEach(node -> assertTrue(node.has("last_seen"), "Node should have last_seen: " + node));
+  }
 }
