@@ -110,13 +110,13 @@ class ValidatingResolverDiscoveryTest {
   }
 
   @Test
-  void withoutTrustMarkFilterNoTrustMarkIsChecked() {
+  void withoutTrustMarkFilterNoTrustMarkIsChecked() throws Exception {
     Assertions.assertEquals(List.of(LEAF),
         this.resolver.discovery(new DiscoveryRequest(TA, null, null)).supportedEntities());
     Mockito.verify(this.tree, Mockito.never()).getTrustChainViaAuthorityHints(Mockito.any());
   }
 
-  private List<String> discover() {
+  private List<String> discover() throws Exception {
     return this.resolver.discovery(new DiscoveryRequest(TA, null, List.of(TYPE))).supportedEntities();
   }
 

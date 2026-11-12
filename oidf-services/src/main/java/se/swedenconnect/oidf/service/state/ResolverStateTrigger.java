@@ -23,6 +23,8 @@ import org.springframework.scheduling.annotation.Scheduled;
  * {@code federation.service.scheduling.resolver-trigger-enabled=false}.
  * The reload rate can be configured via
  * {@code federation.service.scheduling.resolver-reload-rate} (ISO 8601 duration, default PT10M).
+ * The first reload runs a minute after startup, so that a failed initial load is retried without waiting
+ * for a full reload rate.
  *
  * @author Felix Hellman
  */
@@ -42,7 +44,8 @@ public class ResolverStateTrigger {
   /**
    * Trigger reload of resolver state on a fixed schedule.
    */
-  @Scheduled(fixedRateString = "${federation.service.scheduling.resolver-reload-rate:PT10M}")
+  @Scheduled(initialDelayString = "PT1M",
+      fixedRateString = "${federation.service.scheduling.resolver-reload-rate:PT10M}")
   public void reload() {
     this.resolverStateManager.reload();
   }

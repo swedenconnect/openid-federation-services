@@ -31,7 +31,9 @@ import se.swedenconnect.oidf.common.entity.exception.InvalidTrustAnchorException
 import se.swedenconnect.oidf.common.entity.exception.InvalidTrustChainException;
 import se.swedenconnect.oidf.common.entity.exception.NotFoundException;
 import se.swedenconnect.oidf.common.entity.exception.ServerErrorException;
+import se.swedenconnect.oidf.common.entity.exception.TemporarilyUnavailableException;
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
+import se.swedenconnect.oidf.common.entity.tree.TreeNotLoadedException;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationError;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationResult;
 import se.swedenconnect.oidf.resolver.chain.ChainValidator;
@@ -233,7 +235,9 @@ public class ValidatingResolver implements Resolver {
   }
 
   /**
-   * Builds the response for a trust chain that could not be built from the resolver tree.
+   * Builds the response for a trust chain that could not be built from the resolver tree. A tree that has not
+   * been loaded is reported as temporarily unavailable, since the request can be answered once a load has
+   * succeeded.
    *
    * @param request the resolve request
    * @param e the error from the tree
@@ -242,10 +246,17 @@ public class ValidatingResolver implements Resolver {
    */
   private ResolverResponse trustChainError(final ResolveRequest request, final RuntimeException e,
       final List<Exception> validationErrors) {
-    log.info("Failed to build trust chain for '{}' to '{}': {}", request.subject(), request.trustAnchor(),
-        e.getMessage());
-    validationErrors.add(new InvalidTrustChainException(
-        "Failed to build trust chain for %s".formatted(request.subject()), e));
+    if (e instanceof TreeNotLoadedException) {
+      log.warn("Cannot resolve '{}' to '{}', the resolver has no loaded tree", request.subject(),
+          request.trustAnchor());
+      validationErrors.add(new TemporarilyUnavailableException(
+          "The resolver has no loaded tree for %s".formatted(request.trustAnchor()), e));
+    } else {
+      log.info("Failed to build trust chain for '{}' to '{}': {}", request.subject(), request.trustAnchor(),
+          e.getMessage());
+      validationErrors.add(new InvalidTrustChainException(
+          "Failed to build trust chain for %s".formatted(request.subject()), e));
+    }
     return ResolverResponse.builder()
         .validationErrors(validationErrors)
         .build();
@@ -321,10 +332,18 @@ public class ValidatingResolver implements Resolver {
    *
    * @param request the discovery request
    * @return the matching entities
+   * @throws FederationException if the resolver has no loaded tree
    */
   @Override
-  public DiscoveryResponse discovery(final DiscoveryRequest request) {
-    final List<String> entities = this.tree.discovery(request);
+  public DiscoveryResponse discovery(final DiscoveryRequest request) throws FederationException {
+    final List<String> entities;
+    try {
+      entities = this.tree.discovery(request);
+    } catch (final TreeNotLoadedException e) {
+      log.warn("Cannot answer discovery for '{}', the resolver has no loaded tree", request.trustAnchor());
+      throw new TemporarilyUnavailableException(
+          "The resolver has no loaded tree for %s".formatted(request.trustAnchor()), e);
+    }
     if (request.trustMarkTypes() == null || request.trustMarkTypes().isEmpty()) {
       return new DiscoveryResponse(entities);
     }

@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.service.resolver.cache.CompositeTreeLoader;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Readystate component for loading resolvers.
@@ -39,6 +40,7 @@ public class ResolverStateManager extends ReadyStateComponent {
   private final CompositeTreeLoader treeLoader;
   private final ServiceLock redisServiceLock;
   private final ObservationRegistry registry;
+  private final AtomicBoolean initialLoadTriggered = new AtomicBoolean(false);
 
   /**
    * Constructor.
@@ -62,32 +64,50 @@ public class ResolverStateManager extends ReadyStateComponent {
   }
 
   /**
-   * Trigger reload of this component.
+   * Trigger reload of this component. Also retries the initial load when it failed, so that a resolver that
+   * could not load its trees at startup becomes ready as soon as the federation can be read again.
    */
   public void reload() {
     log.debug("Reload resolver triggered from cron");
-    if (this.ready()) {
-      //No need to execute cron job during startup
-      this.reloadResolvers();
+    if (this.initialLoadTriggered.get()) {
+      //No need to execute cron job before the initial load has been triggered
+      this.loadResolvers();
     }
   }
 
   @EventListener
   void handle(final RegistryReadyEvent event) {
-    try {
-      log.debug("Triggering reload resolvers from ready event");
-      this.reloadResolvers();
-    } finally {
-      log.debug("Resolver ready for traffic");
-      this.markReady();
-    }
+    log.debug("Triggering reload resolvers from ready event");
+    this.initialLoadTriggered.set(true);
+    this.loadResolvers();
   }
 
   @EventListener
   void handle(final RegistryLoadedEvent event) {
-    if (this.ready()) {
+    if (this.initialLoadTriggered.get()) {
       log.debug("Triggering reload resolvers from loaded event");
+      this.loadResolvers();
+    }
+  }
+
+  /**
+   * Loads the resolver trees and keeps the ready state in sync with the outcome. A failed load is logged
+   * instead of being thrown: at startup it would otherwise shut the service down, and the trees of the
+   * previous load are still served while the next load is attempted.
+   */
+  private void loadResolvers() {
+    try {
       this.reloadResolvers();
+      if (!this.ready()) {
+        log.info("Resolver ready for traffic");
+        this.markReady();
+      }
+    } catch (final Exception e) {
+      if (this.ready()) {
+        log.error("Failed to reload resolvers, keeping the trees of the previous load", e);
+      } else {
+        log.error("Failed to load resolvers, resolver is not ready for traffic", e);
+      }
     }
   }
 

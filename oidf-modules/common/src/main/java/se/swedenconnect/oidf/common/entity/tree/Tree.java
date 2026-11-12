@@ -64,11 +64,12 @@ public class Tree<T> {
    * Performs a search upon the tree.
    * @param request defines search parameters
    * @return a set of matching results
+   * @throws TreeNotLoadedException if the tree holds no data for the version of the request
    */
   public Set<SearchResult<T>> search(final SearchRequest<T> request) {
     final Node<T> root = request.snapshot().getRoot();
     if (Objects.isNull(root)) {
-      throw new IllegalStateException("Could not find root node for request %s".formatted(request));
+      throw new TreeNotLoadedException("Could not find root node for request %s".formatted(request));
     }
     final HashSet<NodeKey> visisted = new HashSet<>(List.of(root.getKey()));
     final Node.NodeSearchContext<T> context =

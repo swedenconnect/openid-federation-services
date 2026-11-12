@@ -26,6 +26,10 @@
 
 * The `trust_marked` and `trust_mark_type` filters of subordinate listings are only supported by an entity that is also a Trust Mark Issuer, and are answered from its trust mark subjects. Other entities answer 400 `unsupported_parameter`. See [#273](https://github.com/swedenconnect/openid-federation-services/issues/273).
 
+* The service no longer shuts down when the trust anchor cannot be fetched at startup. The first scheduled resolver reload now runs a minute after startup, so a failed initial load is retried without waiting for a full reload rate. ([#247](https://github.com/swedenconnect/openid-federation-services/issues/247))
+
+* The resolve and discovery endpoints answer 503 `temporarily_unavailable` while the resolver has no loaded tree, instead of 400 `invalid_trust_chain` and 500 `server_error`.
+
 ## Version 1.0.1
 
 **Date:** 2026-11-02

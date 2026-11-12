@@ -63,7 +63,7 @@ public class CacheBackedResolver implements Resolver {
   }
 
   @Override
-  public DiscoveryResponse discovery(final DiscoveryRequest request) {
+  public DiscoveryResponse discovery(final DiscoveryRequest request) throws FederationException {
     return this.inner.discovery(request);
   }
 

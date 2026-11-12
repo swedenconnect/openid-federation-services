@@ -140,7 +140,7 @@ class ValidatingResolverInMemoryTreeTest {
   }
 
   @Test
-  void discoveryReturnsLeafEntityId() {
+  void discoveryReturnsLeafEntityId() throws Exception {
     final DiscoveryRequest request = new DiscoveryRequest(TA_ID, List.of("openid_relying_party"), null);
     final DiscoveryResponse response = resolver.discovery(request);
 
@@ -230,7 +230,7 @@ class ValidatingResolverInMemoryTreeTest {
   }
 
   @Test
-  void discoverySamlSpByType() {
+  void discoverySamlSpByType() throws Exception {
     final DiscoveryRequest request = new DiscoveryRequest(TA_ID, List.of("saml_service_provider"), null);
     final DiscoveryResponse response = resolver.discovery(request);
 
