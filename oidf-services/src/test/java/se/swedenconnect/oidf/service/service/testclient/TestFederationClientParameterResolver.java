@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.RestClientFactory;
+import se.swedenconnect.oidf.ResolverConfigurationProperties;
 import se.swedenconnect.oidf.RestClientProperty;
 import se.swedenconnect.oidf.service.suites.Context;
 
@@ -40,7 +41,8 @@ public class TestFederationClientParameterResolver implements ParameterResolver 
     final RestClientProperty property = new RestClientProperty();
     property.setTrustStoreBundleName("oidf-internal");
     property.setName("test");
-    final RestClient client = new RestClientFactory(bundles, ObservationRegistry.NOOP).create(property);
+    final RestClient client = new RestClientFactory(bundles, ObservationRegistry.NOOP)
+        .create(property, ResolverConfigurationProperties.defaultClientTimeout());
     return new FederationClients(client);
   }
 }

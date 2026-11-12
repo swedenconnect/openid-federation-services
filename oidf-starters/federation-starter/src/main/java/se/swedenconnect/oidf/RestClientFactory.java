@@ -18,18 +18,21 @@ package se.swedenconnect.oidf;
 
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.Optional;
 
 /**
  * Factory class for creating rest clients.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Slf4j
 public class RestClientFactory {
@@ -48,11 +51,22 @@ public class RestClientFactory {
   }
 
   /**
+   * Creates a rest client. Timeouts that are not set in the property are taken from the supplied defaults.
+   *
    * @param property for rest client
+   * @param defaultTimeout timeouts to use for settings that are not set in the property
    * @return new instance
    */
-  public RestClient create(final RestClientProperty property) {
+  public @NonNull RestClient create(
+      final @NonNull RestClientProperty property, final RestClientProperty.@NonNull Timeout defaultTimeout) {
+    final Optional<RestClientProperty.Timeout> timeout = Optional.ofNullable(property.getTimeout());
+    final Duration connectTimeout = timeout.map(RestClientProperty.Timeout::getConnect)
+        .orElse(defaultTimeout.getConnect());
+    final Duration readTimeout = timeout.map(RestClientProperty.Timeout::getRead)
+        .orElse(defaultTimeout.getRead());
+
     final HttpClient.Builder builder = HttpClient.newBuilder();
+    Optional.ofNullable(connectTimeout).ifPresent(builder::connectTimeout);
 
     Optional.ofNullable(property.getTrustStoreBundleName())
         .ifPresentOrElse(bundleName -> {
@@ -67,8 +81,11 @@ public class RestClientFactory {
             () -> log.info("Client: %s was created without a trust-store, using default ..."
                 .formatted(property.getName())));
 
+    final JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(builder.build());
+    Optional.ofNullable(readTimeout).ifPresent(requestFactory::setReadTimeout);
+
     final RestClient.Builder restClientBuilder = RestClient.builder()
-        .requestFactory(new JdkClientHttpRequestFactory(builder.build()));
+        .requestFactory(requestFactory);
 
     Optional.ofNullable(property.getBaseUri())
         .ifPresent(restClientBuilder::baseUrl);

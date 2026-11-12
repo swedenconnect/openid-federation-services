@@ -34,6 +34,8 @@ import se.swedenconnect.oidf.CacheFactory;
 import se.swedenconnect.oidf.FederationProperties;
 import se.swedenconnect.oidf.InMemoryCacheFactory;
 import se.swedenconnect.oidf.JWSRegistryVerifier;
+import se.swedenconnect.oidf.RegistryConfigurationProperties;
+import se.swedenconnect.oidf.ResolverConfigurationProperties;
 import se.swedenconnect.oidf.RestClientFactory;
 import se.swedenconnect.oidf.RestClientRecordIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.Cache;
@@ -65,6 +67,7 @@ import java.time.ZoneId;
  * Registry Configuration.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Configuration
 public class FederationRegistryConfiguration {
@@ -122,7 +125,8 @@ public class FederationRegistryConfiguration {
   @Bean
   RestClient federationRestClient(final RestClientFactory restClientFactory,
                                   final FederationProperties properties) {
-    return restClientFactory.create(properties.getResolver().getClient()).mutate()
+    return restClientFactory.create(properties.getResolver().getClient(),
+            ResolverConfigurationProperties.defaultClientTimeout()).mutate()
         .defaultHeader("cache-control", "no-cache")
         .build();
   }
@@ -131,7 +135,8 @@ public class FederationRegistryConfiguration {
   @ConditionalOnProperty(name = "federation.registry.integration.enabled", havingValue = "true")
   RestClient registryRestClient(final RestClientFactory restClientFactory,
                                 final FederationProperties properties) {
-    return restClientFactory.create(properties.getRegistry().getIntegration().getClient());
+    return restClientFactory.create(properties.getRegistry().getIntegration().getClient(),
+        RegistryConfigurationProperties.Integration.defaultClientTimeout());
   }
 
   @Bean
