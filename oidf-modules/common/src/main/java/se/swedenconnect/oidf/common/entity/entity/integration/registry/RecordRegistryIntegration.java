@@ -21,6 +21,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.E
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -42,4 +43,14 @@ public interface RecordRegistryIntegration {
    * @return modules
    */
   Expirable<ModuleRecord> getModules(final UUID instanceId);
+
+  /**
+   * Tells whether the registry has changes that have not been loaded yet.
+   *
+   * @param instanceId of this instance
+   * @return true if there are changes to load, or empty if this integration cannot tell without loading
+   */
+  default Optional<Boolean> hasChanges(final UUID instanceId) {
+    return Optional.empty();
+  }
 }

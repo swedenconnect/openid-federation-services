@@ -20,6 +20,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.Expirable;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.NotificationRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.StateChanges;
 
 import java.util.List;
 
@@ -46,4 +47,10 @@ public interface RegistryVerifier {
    * @return notification
    */
   NotificationRecord verifyNotification(final String jwt);
+
+  /**
+   * @param jwt with a page of changes (claim {@code state_changes})
+   * @return page of changes
+   */
+  Expirable<StateChanges> verifyStateChanges(final String jwt);
 }

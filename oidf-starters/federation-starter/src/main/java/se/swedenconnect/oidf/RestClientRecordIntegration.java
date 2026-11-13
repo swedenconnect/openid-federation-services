@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.RecordReg
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryVerifier;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.StateChanges;
 
 import java.util.List;
 import java.util.UUID;
@@ -67,5 +68,24 @@ public class RestClientRecordIntegration implements RecordRegistryIntegration {
         .retrieve()
         .body(String.class);
     return this.verifier.verifyModuleResponse(body);
+  }
+
+  /**
+   * Fetches one page of changes of an instance.
+   *
+   * @param instanceId of the instance
+   * @param since      exclusive lower bound of the sequence numbers, 0 for a full snapshot
+   * @return page of changes
+   */
+  public Expirable<StateChanges> getChanges(final UUID instanceId, final long since) {
+    final String body = this.client.get()
+        .uri(builder -> builder
+            .path("/changes")
+            .queryParam("instanceid", instanceId.toString())
+            .queryParam("since", since)
+            .build())
+        .retrieve()
+        .body(String.class);
+    return this.verifier.verifyStateChanges(body);
   }
 }

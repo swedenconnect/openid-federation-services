@@ -90,7 +90,7 @@ Background jobs that keep cached state fresh. Useful to disable in tests (see
 
 | Property                    | Description                                                              | Type     | Default |
 |------------------------------|---------------------------------------------------------------------------|----------|---------|
-| `registry-trigger-enabled`   | Poll the registry for state changes once a minute (managed mode only)    | Boolean  | true    |
+| `registry-trigger-enabled`   | Check the registry for changes once a minute (managed mode only)                       | Boolean  | true    |
 | `resolver-trigger-enabled`   | Periodically rebuild resolver state/cache                                | Boolean  | true    |
 | `resolver-reload-rate`       | Interval between resolver state rebuilds (ISO‑8601 duration)             | Duration | PT10M   |
 
@@ -128,6 +128,10 @@ Routing dispatches an incoming request path to the correct virtual entity — se
 | `enabled`         | Enable registry integration         | Boolean      | false   |
 | `instance-id`     | Instance identifier for node groups | UUID         | –       |
 | `validation-keys` | Keys used to validate registry JWTs | List<String> | Empty   |
+| `transport`       | How records are loaded from the registry, `legacy` or `delta` | String | legacy |
+
+With `legacy`, each load gets all records, and with `delta`, each load gets only the changes since the last load
+(`delta` needs a registry that supports it).
 
 `federation.registry.integration.client.*`
 

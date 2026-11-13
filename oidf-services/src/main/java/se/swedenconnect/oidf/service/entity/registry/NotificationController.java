@@ -70,11 +70,7 @@ public class NotificationController {
             Thread.currentThread().interrupt();
             return;
           }
-          try {
-            this.registryStateManager.forceReload();
-          } finally {
-            this.hasPending.set(false);
-          }
+          this.reloadUntilCurrent();
         });
       } else {
         log.debug("Reload already pending, notification coalesced");
@@ -84,4 +80,28 @@ public class NotificationController {
     }
   }
 
+  /**
+   * Reloads, and reloads again as soon as the reload, including the resolver reload it triggers, is done if the
+   * registry has changes that arrived meanwhile. Notifications received during a reload are coalesced into this
+   * check instead of being dropped. The pending flag is cleared before the check, so a notification that arrives
+   * after it starts its own reload.
+   */
+  private void reloadUntilCurrent() {
+    while (true) {
+      final boolean reloaded;
+      try {
+        reloaded = this.registryStateManager.forceReload();
+      } finally {
+        this.hasPending.set(false);
+      }
+      if (!reloaded || !this.registryStateManager.hasPendingChanges()) {
+        return;
+      }
+      if (!this.hasPending.compareAndSet(false, true)) {
+        // A notification arrived after the reload and runs its own
+        return;
+      }
+      log.debug("Registry changed during the reload, reloading again");
+    }
+  }
 }

@@ -52,6 +52,7 @@ import java.time.Duration;
 import se.swedenconnect.oidf.service.state.RedisServiceLock;
 import se.swedenconnect.oidf.service.state.ServiceLock;
 import se.swedenconnect.oidf.service.submodule.RequestResponseEntry;
+import se.swedenconnect.oidf.sync.RegistrySyncStateStore;
 
 import java.time.Clock;
 
@@ -232,6 +233,13 @@ public class RedisCacheConfiguration {
       final Gson gson,
       final Clock clock) {
     return new RedisEntityRecordIndex(template, gson, clock);
+  }
+
+  @Bean
+  RegistrySyncStateStore redisRegistrySyncStateStore(
+      @Qualifier("entityRecordHashTemplate") final RedisTemplate<String, String> template,
+      final RedisTemplate<String, Long> longRedisTemplate) {
+    return new RedisRegistrySyncStateStore(template, longRedisTemplate);
   }
 
   @Bean
