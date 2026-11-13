@@ -22,6 +22,8 @@ import com.nimbusds.jose.shaded.gson.FieldAttributes;
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jose.shaded.gson.GsonBuilder;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -34,6 +36,8 @@ import se.swedenconnect.oidf.CacheFactory;
 import se.swedenconnect.oidf.FederationProperties;
 import se.swedenconnect.oidf.InMemoryCacheFactory;
 import se.swedenconnect.oidf.JWSRegistryVerifier;
+import se.swedenconnect.oidf.RegistryConfigurationProperties;
+import se.swedenconnect.oidf.RegistryTransport;
 import se.swedenconnect.oidf.RestClientFactory;
 import se.swedenconnect.oidf.RestClientRecordIntegration;
 import se.swedenconnect.oidf.common.entity.entity.integration.Cache;
@@ -55,11 +59,16 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.TrustMark
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.CompositeRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.keys.KeyRegistry;
+import se.swedenconnect.oidf.sync.DeltaSyncRecordIntegration;
+import se.swedenconnect.oidf.sync.InMemoryRegistrySyncStateStore;
+import se.swedenconnect.oidf.sync.RegistryStateAssembler;
+import se.swedenconnect.oidf.sync.RegistrySyncStateStore;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.UUID;
 
 /**
  * Registry Configuration.
@@ -135,12 +144,49 @@ public class FederationRegistryConfiguration {
   }
 
   @Bean
+  @ConditionalOnMissingBean(RegistrySyncStateStore.class)
+  RegistrySyncStateStore inMemoryRegistrySyncStateStore() {
+    return new InMemoryRegistrySyncStateStore();
+  }
+
+  /**
+   * Publishes the sequence number this service has applied from the registry as the gauge
+   * {@code oidf.registry.sync.seq}, tagged with the instance ID. The registry publishes its head as
+   * {@code oidf.registry.state.head}, so the difference shows how far this service is behind. No value is reported
+   * before the first sync.
+   *
+   * @param properties the federation properties
+   * @param syncStateStore the synced state
+   * @return the binder of the gauge
+   */
+  @Bean
+  @ConditionalOnProperty(name = "federation.registry.integration.transport", havingValue = "delta")
+  MeterBinder registrySyncSeqMetrics(final FederationProperties properties,
+      final RegistrySyncStateStore syncStateStore) {
+    final UUID instanceId = properties.getRegistry().getIntegration().getInstanceId();
+    return registry -> Gauge.builder("oidf.registry.sync.seq",
+            () -> syncStateStore.seq(instanceId).map(seq -> (Number) seq).orElse(Double.NaN))
+        .description("Sequence number of the registry changes applied by this service")
+        .tag("instance", instanceId.toString())
+        .register(registry);
+  }
+
+  @Bean
   @ConditionalOnProperty(name = "federation.registry.integration.enabled", havingValue = "true")
   RecordRegistryIntegration recordRegistryIntegration(
       final RegistryVerifier verifier,
-      @Qualifier("registryRestClient") final RestClient restClient) {
+      @Qualifier("registryRestClient") final RestClient restClient,
+      final FederationProperties properties,
+      final JsonRegistryLoader loader,
+      final RegistrySyncStateStore syncStateStore) {
 
-    return new RestClientRecordIntegration(verifier, restClient);
+    final RestClientRecordIntegration integration = new RestClientRecordIntegration(verifier, restClient);
+    final RegistryConfigurationProperties.Integration integrationProperties =
+        properties.getRegistry().getIntegration();
+    if (integrationProperties.getTransport() == RegistryTransport.DELTA) {
+      return new DeltaSyncRecordIntegration(integration, syncStateStore, new RegistryStateAssembler(loader));
+    }
+    return integration;
   }
 
   @Bean

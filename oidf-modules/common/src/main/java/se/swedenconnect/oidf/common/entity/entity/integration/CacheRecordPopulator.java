@@ -126,9 +126,30 @@ public class CacheRecordPopulator {
   }
 
   /**
-   * @return To check if
+   * Tells whether the records should be reloaded from the registry. An integration that can tell whether the
+   * registry has changes is asked; otherwise the records are reloaded when the cached records are old.
+   *
+   * @return true if the records should be reloaded
    */
   public boolean shouldRefresh() {
-    return this.source.shouldRefresh();
+    return this.changes().orElseGet(this.source::shouldRefresh);
+  }
+
+  /**
+   * @return true if the integration reports changes in the registry that have not been loaded yet; false if it
+   *     reports none, cannot tell, or the registry cannot be reached
+   */
+  public boolean hasChanges() {
+    return this.changes().orElse(false);
+  }
+
+  private Optional<Boolean> changes() {
+    try {
+      return this.integration.hasChanges(this.instanceId);
+    }
+    catch (final RuntimeException e) {
+      log.warn("Could not check the registry for changes: {}", e.getMessage());
+      return Optional.empty();
+    }
   }
 }

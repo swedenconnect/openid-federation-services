@@ -52,6 +52,7 @@ public class RegistryConfigurationProperties {
     private UUID instanceId;
     private Boolean enabled;
     private JWKSet validationKeys;
+    private RegistryTransport transport = RegistryTransport.LEGACY;
 
     /**
      * If enabled properties are validated

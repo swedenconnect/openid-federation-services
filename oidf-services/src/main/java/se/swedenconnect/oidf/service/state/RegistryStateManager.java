@@ -93,8 +93,10 @@ public class RegistryStateManager extends ReadyStateComponent {
   /**
    * Force reload from registry regardless of current state hash. Always publishes {@link RegistryLoadedEvent}
    * if the lock can be acquired.
+   *
+   * @return true if the reload ran, false if the lock was held by another instance
    */
-  public void forceReload() {
+  public boolean forceReload() {
     log.debug("Forced federation reload triggered via notify endpoint");
     if (this.serviceLock.acquireLock(this.name())) {
       try {
@@ -116,9 +118,20 @@ public class RegistryStateManager extends ReadyStateComponent {
       } finally {
         this.serviceLock.close(this.name());
       }
-    } else {
-      log.debug("Forced reload skipped, lock held by another instance");
+      return true;
     }
+    log.debug("Forced reload skipped, lock held by another instance");
+    return false;
+  }
+
+  /**
+   * Checks the registry for changes that have not been loaded yet, for example changes made while the previous
+   * reload, which also reloads the resolvers, was running.
+   *
+   * @return true if the registry reports changes to load
+   */
+  public boolean hasPendingChanges() {
+    return this.properties.getRegistry().getIntegration().getEnabled() && this.populator.hasChanges();
   }
 
   private void reloadFromRegistry() {

@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.common.entity.entity.integration;
 
 import com.nimbusds.jose.shaded.gson.Gson;
+import com.nimbusds.jose.shaded.gson.JsonArray;
 import com.nimbusds.jose.shaded.gson.JsonElement;
 import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jose.shaded.gson.JsonParser;
@@ -25,6 +26,7 @@ import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.StateChanges;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -121,5 +123,39 @@ public class JsonRegistryLoader {
   public String toJson(final List<EntityRecord> entityRecords) {
     return this.gson.getAdapter(new TypeToken<List<EntityRecord>>(){}).toJson(entityRecords);
   }
-}
 
+  /**
+   * Parse a page of changes from json. The record of each change is kept as json, to be parsed when the state is
+   * assembled.
+   *
+   * @param json the state changes payload
+   * @return page of changes
+   */
+  public StateChanges parseStateChanges(final String json) {
+    final JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    final List<StateChanges.Change> changes = new ArrayList<>();
+    for (final JsonElement element : arrayOf(root, "changes")) {
+      final JsonObject change = element.getAsJsonObject();
+      final JsonElement record = change.get("record");
+      changes.add(new StateChanges.Change(
+          change.get("seq").getAsLong(),
+          change.get("op").getAsString(),
+          change.get("key").getAsString(),
+          record == null || record.isJsonNull() ? null : record.toString()));
+    }
+    final JsonElement next = root.get("next");
+    final JsonElement full = root.get("full");
+    return new StateChanges(
+        next == null || next.isJsonNull() ? null : next.getAsLong(),
+        full != null && !full.isJsonNull() && full.getAsBoolean(),
+        List.copyOf(changes));
+  }
+
+  private static JsonArray arrayOf(final JsonObject root, final String name) {
+    final JsonElement element = root.get(name);
+    if (element == null || element.isJsonNull()) {
+      return new JsonArray();
+    }
+    return element.getAsJsonArray();
+  }
+}

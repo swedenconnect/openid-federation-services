@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.common.entity.entity.integration.registry.RegistryV
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.ModuleRecord;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.NotificationRecord;
+import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.StateChanges;
 import se.swedenconnect.oidf.common.entity.validation.FederationAssert;
 import se.swedenconnect.oidf.common.entity.entity.integration.JsonRegistryLoader;
 
@@ -92,6 +93,21 @@ public class JWSRegistryVerifier implements RegistryVerifier {
       return new NotificationRecord();
     } catch (final ParseException | JOSEException e) {
       throw new RecordVerificationException("Failed to verify TrustMarkIssuerSubject record", e);
+    }
+  }
+
+  @Override
+  public Expirable<StateChanges> verifyStateChanges(final String jwt) {
+    try {
+      final JWTClaimsSet claims = this.verify(jwt).getJWTClaimsSet();
+      final String json = claims.getClaimAsString("state_changes");
+      FederationAssert.assertNotEmpty(json, "Missing claim for:'state_changes'");
+      FederationAssert.assertNotEmpty(claims.getExpirationTime(), "Missing claim 'exp' in token");
+      FederationAssert.assertNotEmpty(claims.getIssueTime(), "Missing claim 'iat' in token");
+      return new Expirable<>(claims.getExpirationTime().toInstant(), claims.getIssueTime().toInstant(),
+          this.loader.parseStateChanges(json));
+    } catch (final ParseException | JOSEException e) {
+      throw new RecordVerificationException("Failed to verify state_changes", e);
     }
   }
 
