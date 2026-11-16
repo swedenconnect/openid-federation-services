@@ -30,7 +30,6 @@ import se.swedenconnect.oidf.common.entity.tree.Tree;
 import se.swedenconnect.oidf.common.entity.tree.TreeNotLoadedException;
 import se.swedenconnect.oidf.resolver.DiscoveryRequest;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
-import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedIntermediate;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -88,69 +87,7 @@ public class EntityStatementTree {
       log.error("Failed to load from cache due to internal error for request {}", resolveRequest);
       throw e;
     }
-    return this.resolverTrustChain(reversed);
-  }
-
-  /**
-   * Builds the trust chain for a path of entities.
-   *
-   * @param entities the path, leaf first
-   * @return the trust chain
-   * @throws IllegalStateException if a superior is not among the authority hints of its subordinate, or holds no
-   *     subordinate statement about it
-   */
-  private ResolverTrustChain resolverTrustChain(final SequencedSet<ScrapedEntity> entities) {
-    //1. Use request to find path to the entity
-    //2. Initial chain structure should be
-    // leaf --> subordinateStatement --> (node --> subordinateStatement [repeated]) --> root
-    //3. Remove all nodes in the chain that is not leaf or root
-    final List<ScrapedEntity> entityList = new ArrayList<>(entities);
-    final LinkedHashSet<SignedJWT> chain = new LinkedHashSet<>();
-
-    if (entityList.isEmpty()) {
-      return new ResolverTrustChain(chain, null);
-    }
-
-    // Add leaf entity configuration
-    chain.add(entityList.getFirst().getEntityStatement());
-
-    // For each consecutive (child, parent) pair, add the parent's subordinate statement about
-    // the child. Intermediate self-configurations are omitted per step 3.
-    for (int i = 0; i < entityList.size() - 1; i++) {
-      final ScrapedEntity child = entityList.get(i);
-      final ScrapedEntity parent = entityList.get(i + 1);
-
-      // The superior must be among the authority hints of the entity (Section 3.2, step 6)
-      final String parentId = EntityStatementClaims.getEntityID(parent.getEntityStatement()).getValue();
-      final List<EntityID> hints = EntityStatementClaims.getAuthorityHints(child.getEntityStatement());
-      if (hints == null || hints.stream().noneMatch(hint -> hint.getValue().equals(parentId))) {
-        throw new IllegalStateException("Entity %s does not list %s in its authority_hints"
-            .formatted(child.getEntityID().getValue(), parentId));
-      }
-
-      final ScrapedIntermediate parentIntermediate = parent.getIntermediate();
-      if (parentIntermediate == null) {
-        throw new IllegalStateException(
-            "Entity %s has no intermediate role but appears as parent in trust chain"
-                .formatted(parent.getEntityID().getValue()));
-      }
-
-      final SignedJWT subJWT = parentIntermediate.subordinates().get(child.getEntityID().getValue());
-      if (subJWT == null) {
-        throw new IllegalStateException(
-            "Entity %s has no subordinate statement for %s"
-                .formatted(parent.getEntityID().getValue(), child.getEntityID().getValue()));
-      }
-
-      chain.add(subJWT);
-    }
-
-    // Add root (trust anchor) entity configuration
-    if (entityList.size() > 1) {
-      chain.add(entityList.getLast().getEntityStatement());
-    }
-
-    return new ResolverTrustChain(chain, entityList.getFirst());
+    return ResolverTrustChainFactory.trustChainOf(reversed);
   }
 
   /**
@@ -218,7 +155,7 @@ public class EntityStatementTree {
    */
   public Optional<ResolverTrustChain> getTrustChainViaAuthorityHints(final ResolveRequest request) {
     return this.findPathToTrustAnchor(request.subject(), request.trustAnchor())
-        .map(path -> this.resolverTrustChain(new LinkedHashSet<>(path)));
+        .map(path -> ResolverTrustChainFactory.trustChainOf(new LinkedHashSet<>(path)));
   }
 
   /**

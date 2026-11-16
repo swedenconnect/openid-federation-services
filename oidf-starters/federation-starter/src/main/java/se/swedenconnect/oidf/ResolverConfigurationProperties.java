@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.util.Assert;
 
@@ -35,6 +36,7 @@ import java.time.Duration;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Slf4j
 public class ResolverConfigurationProperties {
 
   /**
@@ -49,11 +51,21 @@ public class ResolverConfigurationProperties {
   private RestClientProperty client;
 
   /**
+   * Whether the resolver builds trust chains at request time, see {@link LazyResolve}. Defaults to
+   * {@link LazyResolve#NONE}.
+   */
+  private LazyResolve lazy = LazyResolve.NONE;
+
+  /**
    * Validate resolver properties.
    * @param propertyKey
    */
   public void validate(final String propertyKey) {
     Assert.notNull(this.client, "%s.%s can not be null".formatted(propertyKey, "client"));
     Assert.isNull(this.client.getBaseUri(), "%s.%s can not be set".formatted(propertyKey, "client.base-uri"));
+    if (this.lazy != LazyResolve.NONE) {
+      log.warn("Lazy resolving is enabled ({}.lazy={}), which might impact performance and is not recommended "
+          + "for production use", propertyKey, this.lazy.name().toLowerCase());
+    }
   }
 }
