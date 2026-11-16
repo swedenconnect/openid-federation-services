@@ -282,6 +282,7 @@ statements from other federation participants over HTTPS while walking a trust c
 | `base-uri` | Not used for this client. Startup fails validation if this is set. | String | – |
 | `timeout.connect` | Maximum time to establish the connection. | Duration | 5s |
 | `timeout.read` | Maximum time to wait for the response. | Duration | 10s |
+| `local-requests` | Allows the client to not use HTTP for entities this service controls. | Boolean | true |
 
 A request that exceeds a timeout fails in the same way as other fetch errors.
 

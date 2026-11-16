@@ -35,4 +35,11 @@ public class TrustAnchorConfiguration {
   ) {
     return new TrustAnchorFactory(recordSource, signerFactory);
   }
+
+  @Bean
+  TrustAnchorLocalEndpoints trustAnchorLocalEndpoints(
+      final CompositeRecordSource recordSource,
+      final TrustAnchorFactory trustAnchorFactory) {
+    return new TrustAnchorLocalEndpoints(recordSource, trustAnchorFactory);
+  }
 }

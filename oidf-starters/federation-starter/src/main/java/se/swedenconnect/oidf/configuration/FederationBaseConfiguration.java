@@ -27,9 +27,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.client.RestClient;
+import se.swedenconnect.oidf.EntityLocalEndpoints;
 import se.swedenconnect.oidf.FederationProperties;
+import se.swedenconnect.oidf.LocalFederationEndpoints;
+import se.swedenconnect.oidf.LocalFirstFederationClient;
 import se.swedenconnect.oidf.RestClientFederationClient;
 import se.swedenconnect.oidf.UptimeRegistry;
+import se.swedenconnect.oidf.common.entity.entity.EntityConfigurationFactory;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.LocalRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.RecordSource;
@@ -68,6 +72,12 @@ public class FederationBaseConfiguration {
   }
 
   @Bean
+  EntityLocalEndpoints entityLocalEndpoints(
+      final CompositeRecordSource source, final EntityConfigurationFactory entityConfigurationFactory) {
+    return new EntityLocalEndpoints(source, entityConfigurationFactory);
+  }
+
+  @Bean
   UptimeRegistry uptimeRegistry() {
     return new UptimeRegistry();
   }
@@ -82,8 +92,15 @@ public class FederationBaseConfiguration {
       @Qualifier("federationRestClient") final RestClient restClient,
       final MeterRegistry registry,
       final UptimeRegistry uptimeRegistry,
-      final EcLocationValidator ecLocationValidator) {
-    return new RestClientFederationClient(restClient, registry, uptimeRegistry, ecLocationValidator);
+      final EcLocationValidator ecLocationValidator,
+      final FederationProperties properties,
+      final ObjectProvider<LocalFederationEndpoints> localEndpoints) {
+    final FederationClient client =
+        new RestClientFederationClient(restClient, registry, uptimeRegistry, ecLocationValidator);
+    if (!properties.getResolver().getClient().isLocalRequests()) {
+      return client;
+    }
+    return new LocalFirstFederationClient(client, localEndpoints, uptimeRegistry);
   }
 
   @Bean

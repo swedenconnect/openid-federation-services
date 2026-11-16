@@ -40,6 +40,8 @@ public class RestClientProperty {
   private String baseUri;
   private String trustStoreBundleName;
   private String name;
+  /** Whether requests to endpoints this service hosts are answered in-process instead of over HTTP. */
+  private boolean localRequests = true;
 
   /**
    * Connect and read timeouts. If not set, or if a setting is missing, the default for the client applies.
