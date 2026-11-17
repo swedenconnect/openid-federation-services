@@ -48,9 +48,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Resolver implementation.
@@ -130,10 +133,24 @@ public class ValidatingResolver implements Resolver {
       Optional.ofNullable(resolverResponse.validationErrors())
           .ifPresent(validationErrors -> validationErrors.forEach(error ->
               explanation.put(counter.getAndIncrement(),
-                  Map.of(error.getClass().getCanonicalName(), error.getMessage()))
+                  Map.of(error.getClass().getCanonicalName(), describe(error)))
           ));
     }
     return explanation;
+  }
+
+  /**
+   * Describes an error together with its causes.
+   *
+   * @param error the error to describe
+   * @return the messages of the error and its causes
+   */
+  private static String describe(final Throwable error) {
+    return Stream.iterate(error, Objects::nonNull, Throwable::getCause)
+        .limit(10)
+        .map(cause -> Optional.ofNullable(cause.getMessage()).orElse(cause.getClass().getSimpleName()))
+        .distinct()
+        .collect(Collectors.joining(": "));
   }
 
   @Override
