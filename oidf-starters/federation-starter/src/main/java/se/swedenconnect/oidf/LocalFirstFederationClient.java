@@ -39,8 +39,8 @@ import java.util.Optional;
  * Intermediates directly, instead of calling itself over HTTP.
  *
  * <p>Answered in-process: Entity Configurations, Subordinate Statements, subordinate listings and trust mark
- * statuses of the endpoints a {@link LocalFederationEndpoints} hosts. These are built the same way as the responses of the endpoints, but
- * they are not read from or written to the response caches.</p>
+ * statuses of the endpoints a {@link LocalFederationEndpoints} hosts. These are built the same way as the responses
+ * of the endpoints, but they are not read from or written to the response caches.</p>
  *
  * @author Felix Hellman
  */
