@@ -36,39 +36,35 @@ class CriticalClaimsValidationStepTest {
 
   @Test
   void unknownCritClaimIsRejected() {
-    Assertions.assertThrows(IllegalArgumentException.class,
-        () -> this.step.validate(List.of(statement("crit", List.of("ec_location", "foo")))));
+    Assertions.assertFalse(this.step.validate(List.of(statement("crit", List.of("ec_location", "foo")))).isEmpty());
   }
 
   @Test
   void specDefinedCritClaimIsRejected() {
-    Assertions.assertThrows(IllegalArgumentException.class,
-        () -> this.step.validate(List.of(statement("crit", List.of("metadata")))));
+    Assertions.assertFalse(this.step.validate(List.of(statement("crit", List.of("metadata")))).isEmpty());
   }
 
   @Test
   void unknownOperatorIsRejected() {
-    Assertions.assertThrows(IllegalArgumentException.class, () -> this.step.validate(
-        List.of(statement("metadata_policy_crit", List.of("unknown_op")))));
+    Assertions.assertFalse(this.step.validate(
+        List.of(statement("metadata_policy_crit", List.of("unknown_op")))).isEmpty());
   }
 
   @Test
   void standardOperatorIsRejected() {
-    Assertions.assertThrows(IllegalArgumentException.class,
-        () -> this.step.validate(List.of(statement("metadata_policy_crit", List.of("value")))));
+    Assertions.assertFalse(this.step.validate(List.of(statement("metadata_policy_crit", List.of("value")))).isEmpty());
   }
 
   @Test
   void emptyMetadataPolicyCritIsRejected() {
-    Assertions.assertThrows(IllegalArgumentException.class,
-        () -> this.step.validate(List.of(statement("metadata_policy_crit", List.of()))));
+    Assertions.assertFalse(this.step.validate(List.of(statement("metadata_policy_crit", List.of()))).isEmpty());
   }
 
   @Test
   void metadataPolicyCritInEntityConfigurationIsRejected() {
     final SignedJWT entityConfiguration = statement("https://example.com/leaf", "metadata_policy_crit",
         List.of("unknown_op"));
-    Assertions.assertThrows(IllegalArgumentException.class, () -> this.step.validate(List.of(entityConfiguration)));
+    Assertions.assertFalse(this.step.validate(List.of(entityConfiguration)).isEmpty());
   }
 
   private static SignedJWT statement(final String claim, final List<String> value) {

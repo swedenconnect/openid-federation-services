@@ -43,31 +43,33 @@ public class ConstraintsValidationStep implements ChainValidationStep {
   @Override
   public List<ChainValidationError> validate(final List<SignedJWT> chain) {
     final ArrayList<ChainValidationError> errors = new ArrayList<>();
-    try {
-      for (int x = chain.size() - 1; x >= 0; x--) {
-        final SignedJWT current = chain.get(x);
-        //TODO check parent is self statement
+    for (int x = chain.size() - 1; x >= 0; x--) {
+      final SignedJWT current = chain.get(x);
+      //TODO check parent is self statement
+      try {
         final Map<String, Object> jsonConstraints =
             EntityStatementClaims.claims(current).getJSONObjectClaim("constraints");
         if (Objects.nonNull(jsonConstraints)) {
           final ConstraintRecord constraints = ConstraintRecord.fromJson(jsonConstraints);
-          this.verifySubordinates(constraints, chain.subList(0, x));
+          errors.addAll(this.verifySubordinates(constraints, chain.subList(0, x)));
         }
+      } catch (final Exception e) {
+        errors.add(new ChainValidationError(ChainValidationErrorType.MALFORMED_STATEMENT,
+            "Failed to validate constraints of statement at position %d: %s".formatted(x, e.getMessage()), e));
       }
-    } catch (final Exception e) {
-      throw new RuntimeException("Failed to validate", e);
     }
     return errors;
   }
 
-  private void verifySubordinates(
+  private List<ChainValidationError> verifySubordinates(
       final ConstraintRecord constraints,
       final List<SignedJWT> subordinateStatements)
       throws BadJOSEException, JOSEException, java.text.ParseException {
 
     if (subordinateStatements.isEmpty()) {
-      return;
+      return List.of();
     }
+    final List<ChainValidationError> errors = new ArrayList<>();
 
     final SignedJWT leafStatement = subordinateStatements.getFirst();
 
@@ -83,7 +85,9 @@ public class ConstraintsValidationStep implements ChainValidationStep {
 
     if (Objects.nonNull(constraints.getMaxPathLength())) {
       if (intermediateCount > constraints.getMaxPathLength()) {
-        throw new IllegalArgumentException("Max path length constraints check failed");
+        errors.add(new ChainValidationError(ChainValidationErrorType.MAX_PATH_LENGTH_EXCEEDED,
+            "Max path length constraints check failed: %d intermediates, max_path_length is %d"
+                .formatted(intermediateCount, constraints.getMaxPathLength()), null));
       }
     }
 
@@ -93,14 +97,16 @@ public class ConstraintsValidationStep implements ChainValidationStep {
         .toList();
 
     if (Objects.nonNull(constraints.getNaming())) {
-      checkNamingConstraints(constraints, subjectEntityIdentifiers);
+      errors.addAll(checkNamingConstraints(constraints, subjectEntityIdentifiers));
     }
+    return errors;
   }
 
-  private static void checkNamingConstraints(
+  private static List<ChainValidationError> checkNamingConstraints(
       final ConstraintRecord constraints,
       final List<String> subjectEntityIdentifiers) {
 
+    final List<ChainValidationError> errors = new ArrayList<>();
     final List<String> excluded =
         constraints.getNaming().getExcluded()
             .stream()
@@ -110,20 +116,25 @@ public class ConstraintsValidationStep implements ChainValidationStep {
             .stream()
             .toList();
     if (!excluded.isEmpty()) {
-      final boolean entityNameIsNotAllowed = subjectEntityIdentifiers.stream()
-          //NONE of the subjects may match ANY rule
-          .anyMatch(subjectId -> EntityNameValidator.anyMatch(subjectId, excluded));
-      if (entityNameIsNotAllowed) {
-        throw new IllegalArgumentException("Excluded name constraints violation");
+      //NONE of the subjects may match ANY rule
+      final List<String> notAllowed = subjectEntityIdentifiers.stream()
+          .filter(subjectId -> EntityNameValidator.anyMatch(subjectId, excluded))
+          .toList();
+      if (!notAllowed.isEmpty()) {
+        errors.add(new ChainValidationError(ChainValidationErrorType.NAMING_CONSTRAINT_EXCLUDED_VIOLATION,
+            "Excluded name constraints violation: %s".formatted(notAllowed), null));
       }
     }
     if (!permitted.isEmpty()) {
-      final boolean entityNameIsAllowed = subjectEntityIdentifiers.stream()
-          //ALL subjects needs to match at least ONE permitted rule
-          .allMatch(subjectId -> EntityNameValidator.anyMatch(subjectId, permitted));
-      if (!entityNameIsAllowed) {
-        throw new IllegalArgumentException("Permitted name constraints violation");
+      //ALL subjects needs to match at least ONE permitted rule
+      final List<String> notPermitted = subjectEntityIdentifiers.stream()
+          .filter(subjectId -> !EntityNameValidator.anyMatch(subjectId, permitted))
+          .toList();
+      if (!notPermitted.isEmpty()) {
+        errors.add(new ChainValidationError(ChainValidationErrorType.NAMING_CONSTRAINT_PERMITTED_VIOLATION,
+            "Permitted name constraints violation: %s".formatted(notPermitted), null));
       }
     }
+    return errors;
   }
 }

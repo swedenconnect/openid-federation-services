@@ -35,6 +35,7 @@ import se.swedenconnect.oidf.common.entity.exception.TemporarilyUnavailableExcep
 import se.swedenconnect.oidf.common.entity.tree.EntityStatementClaims;
 import se.swedenconnect.oidf.common.entity.tree.TreeNotLoadedException;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationError;
+import se.swedenconnect.oidf.resolver.chain.ChainValidationFailedException;
 import se.swedenconnect.oidf.resolver.chain.ChainValidationResult;
 import se.swedenconnect.oidf.resolver.chain.ChainValidator;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
@@ -46,13 +47,13 @@ import se.swedenconnect.oidf.resolver.trustmark.TrustMarkCollector;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -117,40 +118,58 @@ public class ValidatingResolver implements Resolver {
     this.source = source;
   }
 
+  /**
+   * Explains why a resolve request fails, listing every error found. All checks are executed, also when the trust
+   * chain could not be fully built, so that all reasons are reported and not only the first one. Errors from the
+   * chain validation are listed with their type, other errors with the class of the error.
+   *
+   * @param request the resolve request
+   * @return the errors, in the order they were found
+   */
   @Override
   public Map<Integer, Map<String, String>> explain(final ResolveRequest request) {
-    final HashMap<Integer, Map<String, String>> explanation = new HashMap<>();
+    final Map<Integer, Map<String, String>> explanation = new LinkedHashMap<>();
     final AtomicInteger counter = new AtomicInteger();
     final ResolverResponse resolverResponse = this.internalResolve(request);
-    final List<ChainValidationError> typedErrors = Optional.ofNullable(resolverResponse.typedValidationErrors())
-        .orElse(List.of());
-    if (!typedErrors.isEmpty()) {
-      typedErrors.forEach(error -> explanation.put(counter.getAndIncrement(), Map.of(
-          "type", error.getErrorType().name(),
-          "message", error.getMessage()
-      )));
-    } else {
-      Optional.ofNullable(resolverResponse.validationErrors())
-          .ifPresent(validationErrors -> validationErrors.forEach(error ->
-              explanation.put(counter.getAndIncrement(),
-                  Map.of(error.getClass().getCanonicalName(), describe(error)))
-          ));
+    final List<ChainValidationError> typedErrors = resolverResponse.typedValidationErrors();
+    final Runnable explainTypedErrors = () -> typedErrors.forEach(error ->
+        explanation.put(counter.getAndIncrement(), Map.of(
+            "type", error.getErrorType().name(),
+            "message", describe(error)
+        )));
+    boolean typedErrorsExplained = false;
+    for (final Exception error : resolverResponse.validationErrors()) {
+      if (error instanceof ChainValidationFailedException) {
+        // Summary of the typed errors, which are listed one by one instead
+        if (!typedErrorsExplained) {
+          explainTypedErrors.run();
+          typedErrorsExplained = true;
+        }
+        continue;
+      }
+      explanation.put(counter.getAndIncrement(), Map.of(error.getClass().getCanonicalName(), describe(error)));
+    }
+    if (!typedErrorsExplained) {
+      explainTypedErrors.run();
     }
     return explanation;
   }
 
   /**
-   * Describes an error together with its causes.
+   * Describes an error together with its causes. A cause whose message is already part of the description, as when
+   * an error message includes the message of its cause, is left out so that it is not repeated.
    *
    * @param error the error to describe
    * @return the messages of the error and its causes
    */
   private static String describe(final Throwable error) {
-    return Stream.iterate(error, Objects::nonNull, Throwable::getCause)
+    final StringBuilder description = new StringBuilder();
+    Stream.iterate(error, Objects::nonNull, Throwable::getCause)
         .limit(10)
         .map(cause -> Optional.ofNullable(cause.getMessage()).orElse(cause.getClass().getSimpleName()))
-        .distinct()
-        .collect(Collectors.joining(": "));
+        .filter(message -> !description.toString().contains(message))
+        .forEach(message -> description.append(description.isEmpty() ? "" : ": ").append(message));
+    return description.toString();
   }
 
   @Override
@@ -223,6 +242,13 @@ public class ValidatingResolver implements Resolver {
     }
     catch (final RuntimeException e) {
       return this.trustChainError(request, e, validationErrors);
+    }
+    // Links that could not be built are reported, the rest of the chain is still validated to find all problems
+    chain.getBuildErrors().forEach(error -> validationErrors.add(new InvalidTrustChainException(
+        "Failed to build trust chain for %s".formatted(request.subject()), new IllegalStateException(error))));
+    if (!chain.isComplete()) {
+      log.info("Failed to build trust chain for '{}' to '{}': {}", request.subject(), request.trustAnchor(),
+          chain.getBuildErrors());
     }
     if (chain.getTrustChain().isEmpty()) {
       validationErrors.add(
@@ -336,8 +362,12 @@ public class ValidatingResolver implements Resolver {
     final ResolveRequest request = new ResolveRequest(issuer, trustAnchor, null, false);
     final List<SignedJWT> issuerChain;
     try {
-      issuerChain = this.source.trustChain(request)
-          .getTrustChain().stream().toList();
+      final ResolverTrustChain chain = this.source.trustChain(request);
+      if (!chain.isComplete()) {
+        log.debug("Failed to build trust chain for trust mark issuer '{}': {}", issuer, chain.getBuildErrors());
+        return Optional.empty();
+      }
+      issuerChain = chain.getTrustChain().stream().toList();
     }
     catch (final RuntimeException e) {
       log.debug("Failed to build trust chain for trust mark issuer '{}': {}", issuer, e.getMessage());
@@ -407,7 +437,7 @@ public class ValidatingResolver implements Resolver {
     final ResolveRequest resolveRequest = new ResolveRequest(entityId, request.trustAnchor(), null, false);
     try {
       final ResolverTrustChain chain = this.source.trustChain(resolveRequest);
-      if (chain.getTrustChain().isEmpty()) {
+      if (chain.getTrustChain().isEmpty() || !chain.isComplete()) {
         return false;
       }
       return TrustMarkCollector.collectSubjectTrustMarks(chain, issuerKeyResolver).stream()

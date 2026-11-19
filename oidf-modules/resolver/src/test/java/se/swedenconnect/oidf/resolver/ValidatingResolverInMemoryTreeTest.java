@@ -45,6 +45,7 @@ import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -121,6 +122,22 @@ class ValidatingResolverInMemoryTreeTest {
     final InvalidTrustChainException e =
         assertThrows(InvalidTrustChainException.class, () -> wrongHints.resolve(request));
     Assertions.assertTrue(e.getCause().getMessage().contains("authority_hints"), e.getCause().getMessage());
+  }
+
+  @Test
+  void explainReportsAllErrorsWhenTheTrustChainCannotBeBuilt() throws Exception {
+    final TestEntitiesFactory entities = new TestEntitiesFactory(List.of(TA_ID));
+    final ValidatingResolver resolver = this.createResolver(entities,
+        new JWKSet(new RSAKeyGenerator(2048).keyID("other").generate().toPublicJWK()));
+
+    final Map<Integer, Map<String, String>> explanation =
+        resolver.explain(new ResolveRequest(SAML_SP_ID, TA_ID, null, true));
+
+    final String chainError = explanation.get(0).get(InvalidTrustChainException.class.getCanonicalName());
+    Assertions.assertNotNull(chainError, explanation.toString());
+    Assertions.assertTrue(chainError.contains("authority_hints"), chainError);
+    Assertions.assertTrue(explanation.values().stream()
+        .anyMatch(entry -> "TRUST_ANCHOR_INVALID".equals(entry.get("type"))), explanation.toString());
   }
 
   @Test

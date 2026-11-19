@@ -103,30 +103,79 @@ public class SignatureValidationStep implements ChainValidationStep {
         verifyLink(current, next);
       } catch (final Exception e) {
         errors.add(new ChainValidationError(ChainValidationErrorType.CHAIN_LINK_SIGNATURE_INVALID,
-            "Failed to verify link between %s and %s".formatted(
-                EntityStatementClaims.getEntityID(current), EntityStatementClaims.getEntityID(next)), e));
+            "Failed to verify link between %s and %s: %s".formatted(
+                describe(current), describe(next), e.getMessage()), e));
+      }
+      if (i == 0) {
+        // The validity time of the leaf is already verified above
+        continue;
       }
       try {
         verifyValidityTime(current);
       } catch (final Exception e) {
         errors.add(new ChainValidationError(ChainValidationErrorType.STATEMENT_EXPIRED,
-            "Failed to verify validity time of %s".formatted(EntityStatementClaims.getEntityID(current)), e));
+            "Failed to verify validity time of %s".formatted(describe(current)), e));
       }
     }
 
     return errors;
   }
 
-  private static void verifyLink(final SignedJWT current, final SignedJWT next)
-      throws BadJOSEException, JOSEException, ParseException {
+  /**
+   * Verifies that a statement is signed by a key of the next statement in the chain.
+   *
+   * @param current the statement to verify
+   * @param next the next statement in the chain, holding the keys of the issuer of {@code current}
+   * @throws IllegalArgumentException with a description of what failed
+   */
+  private static void verifyLink(final SignedJWT current, final SignedJWT next) throws ParseException {
     final String currentIssuer = current.getJWTClaimsSet().getIssuer();
     final String nextSubject = next.getJWTClaimsSet().getSubject();
-    if (!currentIssuer.equals(nextSubject)) {
+    if (currentIssuer == null || !currentIssuer.equals(nextSubject)) {
       throw new IllegalArgumentException(
-          "Current issuer:%s is not same as next subject:%s".formatted(currentIssuer, nextSubject)
-      );
+          "issuer %s of the %s is not the subject %s of the %s".formatted(
+              currentIssuer, describe(current), nextSubject, describe(next)));
     }
-    EntityStatementClaims.verifySignature(current, EntityStatementClaims.getJWKSet(next));
+    final JWKSet nextJwks = EntityStatementClaims.getJWKSet(next);
+    if (nextJwks == null || nextJwks.getKeys().isEmpty()) {
+      throw new IllegalArgumentException("the %s has no jwks".formatted(describe(next)));
+    }
+    final String kid = current.getHeader().getKeyID();
+    if (kid == null || kid.isBlank()) {
+      throw new IllegalArgumentException("the %s has no kid in its header".formatted(describe(current)));
+    }
+    if (nextJwks.getKeyByKeyId(kid) == null) {
+      throw new IllegalArgumentException(
+          "key '%s' used to sign the %s is not present in the jwks of the %s (known: %s)".formatted(
+              kid, describe(current), describe(next), keyIds(nextJwks)));
+    }
+    try {
+      EntityStatementClaims.verifySignature(current, nextJwks);
+    } catch (final BadJOSEException | JOSEException e) {
+      throw new IllegalArgumentException("the signature of the %s could not be verified with key '%s' of the %s: %s"
+          .formatted(describe(current), kid, describe(next), e.getMessage()), e);
+    }
+  }
+
+  /**
+   * @param statement an entity statement
+   * @return a description of the statement that tells its kind, issuer and subject
+   */
+  private static String describe(final SignedJWT statement) {
+    try {
+      final String issuer = statement.getJWTClaimsSet().getIssuer();
+      final String subject = statement.getJWTClaimsSet().getSubject();
+      if (issuer != null && issuer.equals(subject)) {
+        return "Entity Configuration of %s".formatted(issuer);
+      }
+      return "Subordinate Statement issued by %s about %s".formatted(issuer, subject);
+    } catch (final ParseException e) {
+      return "statement with unparsable claims";
+    }
+  }
+
+  private static List<String> keyIds(final JWKSet jwks) {
+    return jwks.getKeys().stream().map(JWK::getKeyID).filter(Objects::nonNull).toList();
   }
 
   private void verifyEntity(final SignedJWT entity) throws BadJOSEException, JOSEException, ParseException {
