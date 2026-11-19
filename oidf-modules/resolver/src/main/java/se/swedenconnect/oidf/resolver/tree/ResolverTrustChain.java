@@ -17,20 +17,52 @@
 package se.swedenconnect.oidf.resolver.tree;
 
 import com.nimbusds.jwt.SignedJWT;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import se.swedenconnect.oidf.common.entity.tree.scraping.ScrapedEntity;
 
+import java.util.List;
 import java.util.Set;
 
 /**
- * Holds a resolved trust chain and the scraped leaf entity.
+ * Holds a resolved trust chain and the scraped leaf entity. A chain whose links could not all be built is kept
+ * together with the reasons, so that the rest of the chain can still be validated and every problem reported.
  *
  * @author Felix Hellman
  */
 @Getter
-@AllArgsConstructor
 public class ResolverTrustChain {
   private final Set<SignedJWT> trustChain;
   private final ScrapedEntity leafEntity;
+  private final List<String> buildErrors;
+
+  /**
+   * Constructor for a chain that was built without errors.
+   *
+   * @param trustChain the statements of the chain, leaf first
+   * @param leafEntity the scraped leaf entity
+   */
+  public ResolverTrustChain(final Set<SignedJWT> trustChain, final ScrapedEntity leafEntity) {
+    this(trustChain, leafEntity, List.of());
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param trustChain the statements of the chain, leaf first
+   * @param leafEntity the scraped leaf entity
+   * @param buildErrors the reasons the chain could not be fully built, empty if it was
+   */
+  public ResolverTrustChain(final Set<SignedJWT> trustChain, final ScrapedEntity leafEntity,
+      final List<String> buildErrors) {
+    this.trustChain = trustChain;
+    this.leafEntity = leafEntity;
+    this.buildErrors = List.copyOf(buildErrors);
+  }
+
+  /**
+   * @return true if every link of the chain could be built
+   */
+  public boolean isComplete() {
+    return this.buildErrors.isEmpty();
+  }
 }

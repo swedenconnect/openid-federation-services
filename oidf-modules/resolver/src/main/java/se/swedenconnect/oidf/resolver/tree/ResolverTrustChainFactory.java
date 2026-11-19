@@ -41,9 +41,9 @@ public final class ResolverTrustChainFactory {
    * Builds the trust chain for a path of entities.
    *
    * @param entities the path, leaf first
-   * @return the trust chain
-   * @throws IllegalStateException if a superior is not among the authority hints of its subordinate, or holds no
-   *     subordinate statement about it
+   * @return the trust chain, holding the reasons for every link that could not be built: a superior that is not among
+   *     the authority hints of its subordinate, that has no intermediate role, or that holds no subordinate statement
+   *     about it. The remaining links are still built, so that the chain can be validated and all problems reported.
    */
   public static ResolverTrustChain trustChainOf(final SequencedSet<ScrapedEntity> entities) {
     //1. Use request to find path to the entity
@@ -52,6 +52,7 @@ public final class ResolverTrustChainFactory {
     //3. Remove all nodes in the chain that is not leaf or root
     final List<ScrapedEntity> entityList = new ArrayList<>(entities);
     final LinkedHashSet<SignedJWT> chain = new LinkedHashSet<>();
+    final List<String> buildErrors = new ArrayList<>();
 
     if (entityList.isEmpty()) {
       return new ResolverTrustChain(chain, null);
@@ -70,22 +71,22 @@ public final class ResolverTrustChainFactory {
       final String parentId = EntityStatementClaims.getEntityID(parent.getEntityStatement()).getValue();
       final List<EntityID> hints = EntityStatementClaims.getAuthorityHints(child.getEntityStatement());
       if (hints == null || hints.stream().noneMatch(hint -> hint.getValue().equals(parentId))) {
-        throw new IllegalStateException("Entity %s does not list %s in its authority_hints"
+        buildErrors.add("Entity %s does not list %s in its authority_hints"
             .formatted(child.getEntityID().getValue(), parentId));
       }
 
       final ScrapedIntermediate parentIntermediate = parent.getIntermediate();
       if (parentIntermediate == null) {
-        throw new IllegalStateException(
-            "Entity %s has no intermediate role but appears as parent in trust chain"
-                .formatted(parent.getEntityID().getValue()));
+        buildErrors.add("Entity %s has no intermediate role but appears as parent in trust chain"
+            .formatted(parent.getEntityID().getValue()));
+        continue;
       }
 
       final SignedJWT subJWT = parentIntermediate.subordinates().get(child.getEntityID().getValue());
       if (subJWT == null) {
-        throw new IllegalStateException(
-            "Entity %s has no subordinate statement for %s"
-                .formatted(parent.getEntityID().getValue(), child.getEntityID().getValue()));
+        buildErrors.add("Entity %s has no subordinate statement for %s"
+            .formatted(parent.getEntityID().getValue(), child.getEntityID().getValue()));
+        continue;
       }
 
       chain.add(subJWT);
@@ -96,6 +97,6 @@ public final class ResolverTrustChainFactory {
       chain.add(entityList.getLast().getEntityStatement());
     }
 
-    return new ResolverTrustChain(chain, entityList.getFirst());
+    return new ResolverTrustChain(chain, entityList.getFirst(), buildErrors);
   }
 }

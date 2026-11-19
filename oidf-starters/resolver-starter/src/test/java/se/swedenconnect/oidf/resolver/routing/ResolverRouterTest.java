@@ -30,7 +30,13 @@ import se.swedenconnect.oidf.routing.ServerResponseErrorHandler;
 import io.micrometer.observation.ObservationRegistry;
 import se.swedenconnect.oidf.common.entity.entity.integration.registry.records.EntityRecord;
 
+import org.springframework.util.LinkedMultiValueMap;
+import se.swedenconnect.oidf.common.entity.entity.integration.properties.ResolverProperties;
+import se.swedenconnect.oidf.resolver.Resolver;
+import se.swedenconnect.oidf.resolver.ResolverFactory;
+
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -93,6 +99,37 @@ class ResolverRouterTest {
 
     Assertions.assertEquals(404, response.statusCode());
     Assertions.assertTrue(response.body().contains("not_found"), response.body());
+  }
+
+  @Test
+  void explainReturnsTheExplanationInsteadOfResolving() throws FederationException {
+    final ResolverProperties properties = new ResolverProperties(
+        "https://myentity.com/ta", Duration.ofHours(1), null, ENTITY_ID);
+    final CompositeRecordSource source = Mockito.mock(CompositeRecordSource.class);
+    Mockito.when(source.getResolverProperties()).thenReturn(List.of(properties));
+    final Resolver resolver = Mockito.mock(Resolver.class);
+    Mockito.when(resolver.explain(Mockito.any()))
+        .thenReturn(Map.of(0, Map.of("type", "Entity does not list superior in its authority_hints")));
+    final ResolverFactory factory = Mockito.mock(ResolverFactory.class);
+    Mockito.when(factory.create(properties)).thenReturn(resolver);
+    final ResolverRouter withSource =
+        new ResolverRouter(factory, null, null, null, null, ObservationRegistry.NOOP, source);
+
+    final String uri = ENTITY_ID
+        + "/resolve?sub=https://myentity.com/rp&trust_anchor=https://myentity.com/ta&explain=true";
+    final ServerRequest request = request(uri);
+    final LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("sub", "https://myentity.com/rp");
+    params.add("trust_anchor", "https://myentity.com/ta");
+    params.add("explain", "true");
+    Mockito.when(request.params()).thenReturn(params);
+
+    final CachedResponse response = withSource.handleRequest(request, record(null));
+
+    Assertions.assertEquals(200, response.statusCode());
+    Assertions.assertEquals("application/json", response.contentType());
+    Assertions.assertTrue(response.body().contains("authority_hints"), response.body());
+    Mockito.verify(resolver, Mockito.never()).resolve(Mockito.any());
   }
 
   private static ServerRequest request(final String uri) {

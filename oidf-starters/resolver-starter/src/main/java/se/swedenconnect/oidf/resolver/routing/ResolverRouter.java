@@ -210,6 +210,9 @@ public class ResolverRouter implements Router, ModuleRouter {
       final Resolver resolver = this.resolverFactory.create(resolverProperties);
       if (isResolve) {
         final ResolveRequest resolveRequest = this.createResolveRequest(request, resolverProperties);
+        if (Boolean.TRUE.equals(resolveRequest.explain())) {
+          return new CachedResponse(GSON.toJson(resolver.explain(resolveRequest)), "application/json", 200);
+        }
         final String response = resolver.resolve(resolveRequest);
         return new CachedResponse(response, "application/resolve-response+jwt", 200);
       }

@@ -26,6 +26,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Validates where claims are placed and their syntax, for every statement in the chain (OpenID Federation 1.0,
@@ -49,12 +50,10 @@ public class StatementSyntaxValidationStep implements ChainValidationStep {
     for (final SignedJWT statement : chain) {
       try {
         final JWTClaimsSet claims = statement.getJWTClaimsSet();
-        final String error = check(claims);
-        if (error != null) {
-          errors.add(new ChainValidationError(ChainValidationErrorType.MALFORMED_STATEMENT,
-              "Statement issued by %s about %s: %s".formatted(claims.getIssuer(), claims.getSubject(), error),
-              null));
-        }
+        check(claims).forEach(error -> errors.add(new ChainValidationError(
+            ChainValidationErrorType.MALFORMED_STATEMENT,
+            "Statement issued by %s about %s: %s".formatted(claims.getIssuer(), claims.getSubject(), error),
+            null)));
       }
       catch (final ParseException e) {
         errors.add(new ChainValidationError(ChainValidationErrorType.MALFORMED_STATEMENT,
@@ -64,58 +63,50 @@ public class StatementSyntaxValidationStep implements ChainValidationStep {
     return errors;
   }
 
-  private static String check(final JWTClaimsSet claims) {
+  private static List<String> check(final JWTClaimsSet claims) {
+    final List<String> errors = new ArrayList<>();
     final Map<String, Object> all = claims.getClaims();
     final boolean entityConfiguration = claims.getIssuer() != null && claims.getIssuer().equals(claims.getSubject());
     final List<String> notAllowed = entityConfiguration ? SUBORDINATE_STATEMENT_CLAIMS : ENTITY_CONFIGURATION_CLAIMS;
     for (final String claim : notAllowed) {
       if (all.containsKey(claim)) {
-        return "%s is not allowed in %s".formatted(claim,
-            entityConfiguration ? "an Entity Configuration" : "a Subordinate Statement");
+        errors.add("%s is not allowed in %s".formatted(claim,
+            entityConfiguration ? "an Entity Configuration" : "a Subordinate Statement"));
       }
     }
     if (all.containsKey("authority_hints")) {
       if (!isStringArray(all.get("authority_hints")) || ((List<?>) all.get("authority_hints")).isEmpty()) {
-        return "authority_hints must be a non-empty array of entity identifiers";
+        errors.add("authority_hints must be a non-empty array of entity identifiers");
       }
     }
     if (all.containsKey("trust_anchor_hints") && !isStringArray(all.get("trust_anchor_hints"))) {
-      return "trust_anchor_hints must be an array of entity identifiers";
+      errors.add("trust_anchor_hints must be an array of entity identifiers");
     }
     if (all.containsKey("metadata")) {
-      final String error = checkMetadata(all.get("metadata"));
-      if (error != null) {
-        return error;
-      }
+      Optional.ofNullable(checkMetadata(all.get("metadata"))).ifPresent(errors::add);
     }
     if (all.containsKey("metadata_policy") && !isObjectOfObjectsOfObjects(all.get("metadata_policy"))) {
-      return "metadata_policy must map entity types to parameter policies";
+      errors.add("metadata_policy must map entity types to parameter policies");
     }
     if (all.containsKey("constraints")) {
-      final String error = checkConstraints(all.get("constraints"));
-      if (error != null) {
-        return error;
-      }
+      Optional.ofNullable(checkConstraints(all.get("constraints"))).ifPresent(errors::add);
     }
     if (all.containsKey("trust_marks") && !(all.get("trust_marks") instanceof List<?>)) {
-      return "trust_marks must be an array";
+      errors.add("trust_marks must be an array");
     }
     if (all.containsKey("trust_mark_issuers")) {
       if (!(all.get("trust_mark_issuers") instanceof final Map<?, ?> issuers)
           || !issuers.values().stream().allMatch(StatementSyntaxValidationStep::isStringArray)) {
-        return "trust_mark_issuers must map trust mark types to arrays of entity identifiers";
+        errors.add("trust_mark_issuers must map trust mark types to arrays of entity identifiers");
       }
     }
     if (all.containsKey("trust_mark_owners")) {
-      final String error = checkTrustMarkOwners(all.get("trust_mark_owners"));
-      if (error != null) {
-        return error;
-      }
+      Optional.ofNullable(checkTrustMarkOwners(all.get("trust_mark_owners"))).ifPresent(errors::add);
     }
     if (all.containsKey("source_endpoint") && !isUrl(all.get("source_endpoint"))) {
-      return "source_endpoint must be a URL";
+      errors.add("source_endpoint must be a URL");
     }
-    return null;
+    return errors;
   }
 
   private static String checkMetadata(final Object metadata) {

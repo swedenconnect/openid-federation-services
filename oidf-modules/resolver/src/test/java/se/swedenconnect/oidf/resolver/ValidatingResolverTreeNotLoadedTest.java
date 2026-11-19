@@ -31,6 +31,7 @@ import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 
 import java.time.Duration;
+import java.util.Map;
 
 /**
  * Tests the responses of a resolver whose tree has not been loaded, as before the first load has succeeded.
@@ -80,6 +81,21 @@ class ValidatingResolverTreeNotLoadedTest {
 
     Assertions.assertThrows(InvalidTrustChainException.class,
         () -> this.resolverFor(tree).resolve(new ResolveRequest(LEAF, TA, null, false)));
+  }
+
+  @Test
+  void explainShowsWhyTheTrustChainCouldNotBeBuilt() {
+    final String reason = "Entity %s does not list %s in its authority_hints".formatted(LEAF, TA);
+    final EntityStatementTree tree = Mockito.mock(EntityStatementTree.class);
+    Mockito.when(tree.getTrustChainViaAuthorityHints(Mockito.any())).thenThrow(new IllegalStateException(reason));
+
+    final Map<Integer, Map<String, String>> explanation =
+        this.resolverFor(tree).explain(new ResolveRequest(LEAF, TA, null, true));
+
+    Assertions.assertEquals(1, explanation.size());
+    final String message = explanation.get(0).get(InvalidTrustChainException.class.getCanonicalName());
+    Assertions.assertNotNull(message, explanation.toString());
+    Assertions.assertTrue(message.contains(reason), message);
   }
 
   private ValidatingResolver resolverFor(final EntityStatementTree tree) {

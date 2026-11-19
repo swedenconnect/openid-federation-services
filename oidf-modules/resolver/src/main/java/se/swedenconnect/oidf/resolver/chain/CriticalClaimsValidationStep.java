@@ -48,34 +48,47 @@ public class CriticalClaimsValidationStep implements ChainValidationStep {
   @Override
   public List<ChainValidationError> validate(final List<SignedJWT> chain) {
     final ArrayList<ChainValidationError> errors = new ArrayList<>();
-    chain
-        .forEach(es -> {
-          Optional.ofNullable(EntityStatementClaims.getCriticalExtensionClaims(es))
-              .filter(crit -> !SUPPORTED_CRITICAL_CLAIMS.containsAll(crit))
-              .ifPresent(crit -> {
-                throw new IllegalArgumentException(
-                    "Unsupported claims in crit of Entity Statement: %s".formatted(unsupported(crit,
-                        SUPPORTED_CRITICAL_CLAIMS)));
-              });
-          final List<String> metadataPolicyCrit;
-          try {
-            metadataPolicyCrit = EntityStatementClaims.claims(es).getStringListClaim("metadata_policy_crit");
-          } catch (final java.text.ParseException e) {
-            throw new IllegalStateException("Failed to parse metadata_policy_crit claim", e);
-          }
-          if (metadataPolicyCrit != null && EntityStatementClaims.isSelfStatement(es)) {
-            throw new IllegalArgumentException("metadata_policy_crit is only allowed in Subordinate Statements");
-          }
-          Optional.ofNullable(metadataPolicyCrit)
-              .filter(critMetadata -> critMetadata.isEmpty() || !SUPPORTED_METADATA_CLAIMS.containsAll(critMetadata))
-              .ifPresent(critMetadata -> {
-                throw new IllegalArgumentException(
-                    "Unsupported operators in metadata_policy_crit of Entity Statement: %s".formatted(
-                        critMetadata.isEmpty() ? "empty array" : unsupported(critMetadata,
-                            SUPPORTED_METADATA_CLAIMS)));
-              });
-        });
+    chain.forEach(es -> errors.addAll(validateStatement(es)));
     return errors;
+  }
+
+  private static List<ChainValidationError> validateStatement(final SignedJWT es) {
+    final List<ChainValidationError> errors = new ArrayList<>();
+    final String statement = describe(es);
+    Optional.ofNullable(EntityStatementClaims.getCriticalExtensionClaims(es))
+        .filter(crit -> !SUPPORTED_CRITICAL_CLAIMS.containsAll(crit))
+        .ifPresent(crit -> errors.add(error("Unsupported claims in crit of Entity Statement %s: %s"
+            .formatted(statement, unsupported(crit, SUPPORTED_CRITICAL_CLAIMS)))));
+    final List<String> metadataPolicyCrit;
+    try {
+      metadataPolicyCrit = EntityStatementClaims.claims(es).getStringListClaim("metadata_policy_crit");
+    } catch (final java.text.ParseException e) {
+      errors.add(new ChainValidationError(ChainValidationErrorType.MALFORMED_STATEMENT,
+          "Failed to parse metadata_policy_crit claim of Entity Statement %s".formatted(statement), e));
+      return errors;
+    }
+    if (metadataPolicyCrit != null && EntityStatementClaims.isSelfStatement(es)) {
+      errors.add(error("metadata_policy_crit is only allowed in Subordinate Statements, found in %s"
+          .formatted(statement)));
+    }
+    Optional.ofNullable(metadataPolicyCrit)
+        .filter(critMetadata -> critMetadata.isEmpty() || !SUPPORTED_METADATA_CLAIMS.containsAll(critMetadata))
+        .ifPresent(critMetadata -> errors.add(error(
+            "Unsupported operators in metadata_policy_crit of Entity Statement %s: %s".formatted(statement,
+                critMetadata.isEmpty() ? "empty array" : unsupported(critMetadata, SUPPORTED_METADATA_CLAIMS)))));
+    return errors;
+  }
+
+  private static ChainValidationError error(final String message) {
+    return new ChainValidationError(ChainValidationErrorType.UNSUPPORTED_CRITICAL_CLAIMS, message, null);
+  }
+
+  private static String describe(final SignedJWT es) {
+    try {
+      return "issued by %s about %s".formatted(es.getJWTClaimsSet().getIssuer(), es.getJWTClaimsSet().getSubject());
+    } catch (final java.text.ParseException e) {
+      return "with unparsable claims";
+    }
   }
 
   private static List<String> unsupported(final List<String> values, final Set<String> supported) {

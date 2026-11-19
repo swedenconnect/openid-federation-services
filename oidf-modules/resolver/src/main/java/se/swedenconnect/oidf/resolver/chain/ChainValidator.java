@@ -17,12 +17,9 @@
 package se.swedenconnect.oidf.resolver.chain;
 
 import com.nimbusds.jwt.SignedJWT;
-import se.swedenconnect.oidf.common.entity.exception.InvalidTrustChainException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Entity Statement chain validation.
@@ -44,17 +41,19 @@ public class ChainValidator {
   }
 
   /**
+   * Validates a trust chain. Every validation step is executed, also when an earlier step has failed, so that all
+   * problems of the chain are reported.
+   *
    * @param chain to validate
-   * @return a validation result if the chain passed validation
-   * @throws InvalidTrustChainException if validation fails
+   * @return the validation result, holding all errors found
    */
-  public ChainValidationResult validate(final List<SignedJWT> chain) throws InvalidTrustChainException {
-    // Check that chain has at least length = 3
-    final List<Exception> errors = new ArrayList<>();
+  public ChainValidationResult validate(final List<SignedJWT> chain) {
+    final List<ChainValidationError> typedErrors = new ArrayList<>();
     if (chain.size() < 3) {
-      errors.add(new InvalidTrustChainException("Chain does not include at least three statements"));
+      typedErrors.add(new ChainValidationError(ChainValidationErrorType.CHAIN_TOO_SHORT,
+          "Chain does not include at least three statements", null));
     }
-    return this.runSteps(chain, errors);
+    return this.runSteps(chain, typedErrors);
   }
 
   /**
@@ -69,41 +68,32 @@ public class ChainValidator {
     return this.runSteps(List.of(entityConfiguration), new ArrayList<>());
   }
 
-  private ChainValidationResult runSteps(final List<SignedJWT> chain, final List<Exception> errors) {
-
-    final List<ChainValidationStepResult> failedValidationSteps =
-        this.chainValidationSteps
-            .stream()
-            .map(step -> execute(step, chain))
-            .filter(stepResult -> !stepResult.valid())
-            .toList();
-
-    final List<ChainValidationError> typedErrors = failedValidationSteps.stream()
-        .flatMap(s -> s.validationErrors().stream())
-        .toList();
-
-    if (!failedValidationSteps.isEmpty()) {
-      final Set<String> failedValidationStepNames =
-          failedValidationSteps.stream().map(ChainValidationStepResult::name).collect(Collectors.toSet());
-      final List<String> messages = failedValidationSteps.stream().map(s -> s.error().getMessage()).toList();
-      final String exceptionMessage =
-          "Failed to validate trust chain:%s messages:%s".formatted(failedValidationStepNames, messages);
-      errors.add(new InvalidTrustChainException(exceptionMessage));
+  private ChainValidationResult runSteps(final List<SignedJWT> chain, final List<ChainValidationError> typedErrors) {
+    if (!chain.isEmpty()) {
+      this.chainValidationSteps.forEach(step -> typedErrors.addAll(execute(step, chain)));
     }
-
-    return new ChainValidationResult(chain, errors, typedErrors);
+    final List<Exception> errors = new ArrayList<>();
+    if (!typedErrors.isEmpty()) {
+      errors.add(new ChainValidationFailedException("Failed to validate trust chain: %s"
+          .formatted(typedErrors.stream().map(Throwable::getMessage).toList())));
+    }
+    return new ChainValidationResult(chain, errors, List.copyOf(typedErrors));
   }
 
-  private static ChainValidationStepResult execute(final ChainValidationStep step, final List<SignedJWT> chain) {
-    final String name = step.getClass().getCanonicalName();
+  /**
+   * Executes a validation step. A step that fails unexpectedly is reported as an error of its own, so that the other
+   * steps are still executed.
+   *
+   * @param step the step to execute
+   * @param chain the chain to validate
+   * @return the errors found by the step
+   */
+  private static List<ChainValidationError> execute(final ChainValidationStep step, final List<SignedJWT> chain) {
     try {
-      final List<ChainValidationError> validate = step.validate(chain);
-      if (validate.isEmpty()) {
-        return ChainValidationStepResult.valid(name);
-      }
-      return ChainValidationStepResult.invalid(name, validate.getFirst(), validate);
+      return step.validate(chain);
     } catch (final Exception e) {
-      return ChainValidationStepResult.invalid(name, e, List.of());
+      return List.of(new ChainValidationError(ChainValidationErrorType.VALIDATION_STEP_FAILED,
+          "%s failed: %s".formatted(step.getClass().getSimpleName(), e.getMessage()), e));
     }
   }
 }
