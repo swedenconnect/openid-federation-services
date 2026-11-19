@@ -8,7 +8,13 @@
 
 **Date:** _not yet released_
 
-*
+* `federation.registry.integration.transport: delta` loads only changed records from the registry. The registry must support it. Default: `legacy`.
+
+* Requests to hosted entities are answered locally. Disable with `federation.resolver.client.local-requests: false`.
+
+* `federation.resolver.lazy` builds trust chains at request time: `local` for hosted subjects, `all` for all subjects. Default: `none`.
+
+* Resolve accepts `explain=true` and returns the validation errors as JSON.
 
 ## Version 1.1.0
 
