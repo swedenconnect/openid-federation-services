@@ -283,9 +283,19 @@ statements from other federation participants over HTTPS while walking a trust c
 | `timeout.connect` | Maximum time to establish the connection. | Duration | 5s |
 | `timeout.read` | Maximum time to wait for the response. | Duration | 10s |
 | `local-requests` | Allows the client to not use HTTP for entities this service controls. | Boolean | true |
-| `federation.resolver.lazy` | Source of the trust chain. `none`: pre-calculated tree. `local`: built at request time for hosted subjects. `all`: built at request time for all subjects. | String | none |
 
 A request that exceeds a timeout fails in the same way as other fetch errors.
+
+## 2.7 Resolver Trust Chain Source
+
+Configure trust chain source for resolver. Defaults to the pre-calculated tree that rebuilds periodically.
+Changing this from it's default value is not recommended and will impact performance.
+
+`federation.resolver.*`
+
+| Property | Description | Type | Default |
+| :--- | :--- | :--- | :--- |
+| `lazy` | Source of the trust chain. `none`: pre-calculated tree. `local`: built at request time for hosted subjects. `all`: built at request time for all subjects. | String | none |
 
 ---
 
