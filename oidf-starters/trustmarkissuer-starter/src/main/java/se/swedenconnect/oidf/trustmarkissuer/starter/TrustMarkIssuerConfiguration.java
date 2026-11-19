@@ -41,6 +41,13 @@ public class TrustMarkIssuerConfiguration {
   }
 
   @Bean
+  TrustMarkIssuerLocalEndpoints trustMarkIssuerLocalEndpoints(
+      final CompositeRecordSource recordSource,
+      final TrustMarkIssuerFactory trustMarkIssuerFactory) {
+    return new TrustMarkIssuerLocalEndpoints(recordSource, trustMarkIssuerFactory);
+  }
+
+  @Bean
   TrustMarkSigner trustMarkSigner(final SignerFactory signerFactory, final Clock clock) {
     return new TrustMarkSigner(signerFactory, clock);
   }
