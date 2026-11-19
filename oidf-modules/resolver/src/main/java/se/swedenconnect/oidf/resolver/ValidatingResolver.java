@@ -40,6 +40,8 @@ import se.swedenconnect.oidf.resolver.chain.ChainValidator;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 import se.swedenconnect.oidf.resolver.tree.ResolverTrustChain;
+import se.swedenconnect.oidf.resolver.tree.TreeTrustChainSource;
+import se.swedenconnect.oidf.resolver.tree.TrustChainSource;
 import se.swedenconnect.oidf.resolver.trustmark.TrustMarkCollector;
 
 import java.util.ArrayList;
@@ -67,6 +69,7 @@ public class ValidatingResolver implements Resolver {
   private final MetadataProcessor processor;
 
   private final ResolverResponseFactory factory;
+  private final TrustChainSource source;
 
   /**
    * Constructor.
@@ -83,11 +86,32 @@ public class ValidatingResolver implements Resolver {
                             final MetadataProcessor processor,
                             final ResolverResponseFactory factory) {
 
+    this(resolverProperties, validator, tree, processor, factory, new TreeTrustChainSource(tree));
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param resolverProperties for this resolver
+   * @param validator          for trust chains
+   * @param tree               for discovery
+   * @param processor          for metadata
+   * @param factory            for responses
+   * @param source             of the trust chains to validate
+   */
+  public ValidatingResolver(final ResolverProperties resolverProperties,
+                            final ChainValidator validator,
+                            final EntityStatementTree tree,
+                            final MetadataProcessor processor,
+                            final ResolverResponseFactory factory,
+                            final TrustChainSource source) {
+
     this.resolverProperties = resolverProperties;
     this.validator = validator;
     this.tree = tree;
     this.processor = processor;
     this.factory = factory;
+    this.source = source;
   }
 
   @Override
@@ -143,7 +167,7 @@ public class ValidatingResolver implements Resolver {
     if (request.trustAnchor().equals(request.subject())) {
       final ResolverTrustChain chain;
       try {
-        chain = this.tree.getTrustChain(request);
+        chain = this.source.trustChain(request);
       }
       catch (final RuntimeException e) {
         return this.trustChainError(request, e, validationErrors);
@@ -178,8 +202,7 @@ public class ValidatingResolver implements Resolver {
 
     final ResolverTrustChain chain;
     try {
-      chain = this.tree.getTrustChainViaAuthorityHints(request)
-          .orElseGet(() -> this.tree.getTrustChain(request));
+      chain = this.source.trustChain(request);
     }
     catch (final RuntimeException e) {
       return this.trustChainError(request, e, validationErrors);
@@ -296,8 +319,7 @@ public class ValidatingResolver implements Resolver {
     final ResolveRequest request = new ResolveRequest(issuer, trustAnchor, null, false);
     final List<SignedJWT> issuerChain;
     try {
-      issuerChain = this.tree.getTrustChainViaAuthorityHints(request)
-          .orElseGet(() -> this.tree.getTrustChain(request))
+      issuerChain = this.source.trustChain(request)
           .getTrustChain().stream().toList();
     }
     catch (final RuntimeException e) {
@@ -367,8 +389,7 @@ public class ValidatingResolver implements Resolver {
       final Function<String, Optional<JWKSet>> issuerKeyResolver) {
     final ResolveRequest resolveRequest = new ResolveRequest(entityId, request.trustAnchor(), null, false);
     try {
-      final ResolverTrustChain chain = this.tree.getTrustChainViaAuthorityHints(resolveRequest)
-          .orElseGet(() -> this.tree.getTrustChain(resolveRequest));
+      final ResolverTrustChain chain = this.source.trustChain(resolveRequest);
       if (chain.getTrustChain().isEmpty()) {
         return false;
       }

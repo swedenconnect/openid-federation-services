@@ -21,12 +21,16 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.swedenconnect.oidf.FederationProperties;
+import se.swedenconnect.oidf.LazyResolve;
 import se.swedenconnect.oidf.common.entity.entity.integration.CompositeRecordSource;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.EcLocationValidator;
 import se.swedenconnect.oidf.common.entity.entity.integration.federation.FederationClient;
 import se.swedenconnect.oidf.common.entity.jwt.SignerFactory;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
 import se.swedenconnect.oidf.resolver.tree.resolution.DFSExecution;
+import se.swedenconnect.oidf.resolver.tree.TreeTrustChainSource;
+import se.swedenconnect.oidf.resolver.tree.TrustChainSourceFactory;
 import se.swedenconnect.oidf.resolver.tree.resolution.ErrorContextFactory;
 
 import java.util.List;
@@ -49,7 +53,8 @@ public class FederationResolverConfiguration {
       final ResolverCacheRegistry resolverCacheRegistry,
       final SignerFactory signerFactory,
       final List<Function<Resolver, Resolver>> transformers,
-      final CompositeRecordSource compositeRecordSource
+      final CompositeRecordSource compositeRecordSource,
+      final TrustChainSourceFactory trustChainSourceFactory
       ) {
     return new ResolverFactory(
         cacheFactory,
@@ -58,8 +63,24 @@ public class FederationResolverConfiguration {
         resolverCacheRegistry,
         signerFactory,
         transformers,
-        compositeRecordSource
+        compositeRecordSource,
+        trustChainSourceFactory
     );
+  }
+
+  @Bean
+  @ConditionalOnMissingBean
+  TrustChainSourceFactory trustChainSourceFactory(
+      final FederationProperties properties,
+      final FederationClient federationClient,
+      final CompositeRecordSource source) {
+
+    final LazyResolve lazy = properties.getResolver().getLazy();
+    if (lazy == LazyResolve.NONE) {
+      return TreeTrustChainSource::new;
+    }
+    final LazyTrustChainSource lazyChains = new LazyTrustChainSource(lazy, federationClient, source);
+    return tree -> lazyChains;
   }
 
   @Bean

@@ -125,6 +125,19 @@ public class ScrapedEntity {
   }
 
   /**
+   * Resolves the Entity Configuration and the status of its trust marks, without the subordinates of an
+   * intermediate.
+   *
+   * @param client the federation client to use for resolution
+   * @throws WrongJwkKidException if the {@code kid} is not in the {@code jwks}
+   */
+  public void scrapeEntityConfiguration(final FederationClient client) {
+    log.debug("Resolving entity {}", this.entityID);
+    this.fetchEntityConfiguration(client);
+    this.scrapeTrustMarkStatuses(client, null, (part, entityId, reason, previousUsed) -> {});
+  }
+
+  /**
    * Fetches the Entity Configuration and checks that its {@code kid} is in its own {@code jwks}. An expired Entity
    * Configuration is kept and marked with {@link FetchError#expired()}, it is left to the resolver to reject it.
    *

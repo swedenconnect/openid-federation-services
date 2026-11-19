@@ -27,6 +27,7 @@ import se.swedenconnect.oidf.resolver.chain.CriticalClaimsValidationStep;
 import se.swedenconnect.oidf.resolver.chain.SignatureValidationStep;
 import se.swedenconnect.oidf.resolver.chain.StatementSyntaxValidationStep;
 import se.swedenconnect.oidf.resolver.metadata.MetadataProcessor;
+import se.swedenconnect.oidf.resolver.tree.TrustChainSourceFactory;
 import se.swedenconnect.oidf.resolver.tree.EntityStatementTree;
 
 import java.time.Clock;
@@ -47,6 +48,7 @@ public class ResolverFactory {
   private final SignerFactory signerFactory;
   private final List<Function<Resolver, Resolver>> transformers;
   private final CompositeRecordSource compositeRecordSource;
+  private final TrustChainSourceFactory trustChainSourceFactory;
 
   /**
    * Constructor.
@@ -58,6 +60,7 @@ public class ResolverFactory {
    * @param signerFactory         to use
    * @param transformers          functions to apply on resolver
    * @param compositeRecordSource to find entity
+   * @param trustChainSourceFactory creates the trust chain source of a resolver from its tree
    */
   public ResolverFactory(
       final ResolverCacheFactory resolverCacheFactory,
@@ -66,7 +69,8 @@ public class ResolverFactory {
       final ResolverCacheRegistry registry,
       final SignerFactory signerFactory,
       final List<Function<Resolver, Resolver>> transformers,
-      final CompositeRecordSource compositeRecordSource) {
+      final CompositeRecordSource compositeRecordSource,
+      final TrustChainSourceFactory trustChainSourceFactory) {
 
     this.resolverCacheFactory = resolverCacheFactory;
     this.processor = processor;
@@ -75,6 +79,7 @@ public class ResolverFactory {
     this.signerFactory = signerFactory;
     this.transformers = transformers;
     this.compositeRecordSource = compositeRecordSource;
+    this.trustChainSourceFactory = trustChainSourceFactory;
   }
 
 
@@ -101,7 +106,8 @@ public class ResolverFactory {
         this.createChainValidator(properties),
         registration.tree(),
         this.processor,
-        this.resolverResponseFactory(properties, this.compositeRecordSource)
+        this.resolverResponseFactory(properties, this.compositeRecordSource),
+        this.trustChainSourceFactory.create(registration.tree())
     );
 
     return this.transformers.stream()
