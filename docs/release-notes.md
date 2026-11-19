@@ -6,7 +6,7 @@
 
 ## Version 1.1.1
 
-**Date:** _not yet released_
+**Date:** 2026-11-19
 
 * `federation.registry.integration.transport: delta` loads only changed records from the registry. The registry must support it. Default: `legacy`.
 
