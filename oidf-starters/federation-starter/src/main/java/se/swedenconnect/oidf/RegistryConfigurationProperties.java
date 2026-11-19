@@ -55,6 +55,7 @@ public class RegistryConfigurationProperties {
     private UUID instanceId;
     private Boolean enabled;
     private JWKSet validationKeys;
+    private RegistryTransport transport = RegistryTransport.LEGACY;
 
     /**
      * Default timeouts for the registry client.
