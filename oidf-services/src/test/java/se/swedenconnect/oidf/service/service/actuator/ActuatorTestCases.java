@@ -38,7 +38,7 @@ public class ActuatorTestCases {
   public void beforeMethod() {
     final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
     final boolean context = applicationContext != null;
-    org.junit.Assume.assumeTrue(context);
+    org.junit.jupiter.api.Assumptions.assumeTrue(context);
   }
 
   @Test

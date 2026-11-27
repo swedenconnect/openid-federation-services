@@ -42,7 +42,7 @@ public class GeneralErrorHandlingTestCases {
   public void beforeMethod() {
     final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
     final boolean context = applicationContext != null;
-    org.junit.Assume.assumeTrue(context);
+    org.junit.jupiter.api.Assumptions.assumeTrue(context);
     this.restClient = RestClient.builder()
         .baseUrl("http://localhost:" + Context.getServicePort())
         .build();

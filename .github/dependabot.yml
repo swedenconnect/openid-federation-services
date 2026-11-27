@@ -1,17 +1,15 @@
 version: 2
-registries:
 updates:
   - package-ecosystem: "maven"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     groups:
       spring-upgrade:
         applies-to: version-updates
         patterns:
-          - org.springframework:spring-framework-bom
-          - org.springframework.boot:spring-boot-dependencies
+          - org.springframework.boot:*
       swedenconnect-upgrade:
         applies-to: version-updates
         patterns:
