@@ -49,7 +49,7 @@ public class TrustMarkTestCases {
   public void beforeMethod() {
     final ThreadLocal<ApplicationContext> applicationContext = Context.applicationContext;
     final boolean context = applicationContext != null;
-    org.junit.Assume.assumeTrue(context);
+    org.junit.jupiter.api.Assumptions.assumeTrue(context);
     // rest of setup.
     RestAssured.port = Context.getServicePort();
     RestAssured.basePath = "/tm";

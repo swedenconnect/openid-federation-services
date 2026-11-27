@@ -55,8 +55,7 @@ public class FederationKeyConfiguration {
 
     jwkTransformerFunction
         .withRsaCustomizer(rsa -> rsa.x509CertChain(null))
-        .withEcKeyCustomizer(ec -> ec.x509CertChain(null))
-        .serializable();
+        .withEcKeyCustomizer(ec -> ec.x509CertChain(null));
 
     bundles.getRegisteredCredentials().forEach(key -> {
       final KeyProperty property = new KeyProperty();
