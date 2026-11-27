@@ -31,13 +31,10 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsVerifier;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
 import com.nimbusds.openid.connect.sdk.federation.entities.FederationEntityMetadata;
-import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
-import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import com.nimbusds.openid.connect.sdk.federation.trust.marks.TrustMarkEntry;
 import com.nimbusds.openid.connect.sdk.federation.utils.JWTUtils;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
-import se.swedenconnect.oidf.nimbus.policy.ExtendedMetadataPolicy;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -163,27 +160,6 @@ public final class EntityStatementClaims {
     try {
       return FederationEntityMetadata.parse(metadata);
     } catch (final ParseException e) {
-      return null;
-    }
-  }
-
-  /**
-   * @param jwt  to get metadata policy from
-   * @param type of metadata policy to get
-   * @return metadata policy for the given type, or null if not present or invalid
-   */
-  public static MetadataPolicy getMetadataPolicy(final SignedJWT jwt, final EntityType type) {
-    try {
-      final Map<String, Object> policy = claims(jwt).getJSONObjectClaim("metadata_policy");
-      if (policy == null) {
-        return null;
-      }
-      final JSONObject typePolicy = JSONObjectUtils.getJSONObject(new JSONObject(policy), type.getValue(), null);
-      if (typePolicy == null) {
-        return null;
-      }
-      return ExtendedMetadataPolicy.parse(typePolicy);
-    } catch (final java.text.ParseException | ParseException | PolicyViolationException e) {
       return null;
     }
   }

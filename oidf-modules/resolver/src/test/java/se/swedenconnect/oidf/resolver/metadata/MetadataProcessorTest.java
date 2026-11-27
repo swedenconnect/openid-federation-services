@@ -248,6 +248,31 @@ class MetadataProcessorTest {
   }
 
   @Test
+  void subsetOfWithNoCommonValuesGivesEmptyArray() throws Exception {
+    for (final boolean essential : List.of(true, false)) {
+      final JWK leafKey = generateKey();
+      final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, metadata(java.util.Map.of(
+          "grant_types", List.of("d", "e"))));
+      final JSONObject policy = policy("grant_types",
+          java.util.Map.of("subset_of", List.of("a", "b", "c"), "essential", essential));
+      final SignedJWT superiorStatement = SignedJWT.parse(
+          subordinateStatement(leafKey, SUPERIOR_ID, LEAF_ID, null, policy).serialize());
+
+      final JSONObject result = this.processor.processMetadata(List.of(leafEc, superiorStatement));
+
+      final JSONObject rp = (JSONObject) result.get("openid_relying_party");
+      Assertions.assertEquals(List.of(), rp.get("grant_types"), "essential: " + essential);
+    }
+  }
+
+  @Test
+  void numberDefaultIsApplied() throws Exception {
+    final JSONObject policy = policy("default_max_age", java.util.Map.of("default", 3600));
+    final JSONObject rp = (JSONObject) this.processWithPolicy(policy, null).get("openid_relying_party");
+    Assertions.assertEquals(3600, ((Number) rp.get("default_max_age")).intValue());
+  }
+
+  @Test
   void leafWithoutMetadataGivesEmptyMetadata() throws Exception {
     final JWK leafKey = generateKey();
     final SignedJWT leafEc = selfStatement(leafKey, LEAF_ID, null);
