@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
  * Combines metadata policy and calculates what the metadata value should be.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 @Slf4j
 public class MetadataProcessor {
@@ -239,9 +240,6 @@ public class MetadataProcessor {
         else if (updated == null) {
           return null;
         }
-      }
-      if (SubsetOfOperation.NAME.equals(name) && essential && updated == null) {
-        throw new PolicyViolationException("Essential parameter failed subset_of check");
       }
     }
     return updated;

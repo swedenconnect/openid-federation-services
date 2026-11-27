@@ -260,6 +260,91 @@ class ExtendedMetadataPolicyTest {
     Assertions.assertThrows(PolicyViolationException.class, () -> value.merge(notNull));
   }
 
+  @Test
+  void subsetOfWithNoCommonValuesGivesEmptyArray() throws Exception {
+    final ExtendedSubsetOfOperation subsetOf = operation(
+        parseParameter("{\"subset_of\": [\"a\", \"b\", \"c\"]}"), "p", ExtendedSubsetOfOperation.class);
+    Assertions.assertEquals(List.of(), subsetOf.apply(List.of("d", "e")));
+    Assertions.assertEquals(List.of("b"), subsetOf.apply(List.of("b", "d")));
+    Assertions.assertNull(subsetOf.apply(null));
+    Assertions.assertThrows(PolicyViolationException.class, () -> subsetOf.apply("a"));
+  }
+
+  @Test
+  void subsetOfMergeMayGiveEmptySet() throws Exception {
+    final MetadataPolicy policy = parse("""
+        {
+          "metadata_policy": {
+            "openid_relying_party": {
+              "first": { "subset_of": ["a", 1] },
+              "second": { "subset_of": ["b", 1.0] },
+              "third": { "subset_of": ["c"] }
+            }
+          }
+        }
+        """, RELYING_PARTY);
+    final ExtendedSubsetOfOperation first = operation(policy, "first", ExtendedSubsetOfOperation.class);
+    final ExtendedSubsetOfOperation second = operation(policy, "second", ExtendedSubsetOfOperation.class);
+    final ExtendedSubsetOfOperation third = operation(policy, "third", ExtendedSubsetOfOperation.class);
+    Assertions.assertEquals(List.of(1), ((ExtendedSubsetOfOperation) first.merge(second)).getValues());
+    Assertions.assertEquals(List.of(), ((ExtendedSubsetOfOperation) first.merge(third)).getValues());
+  }
+
+  @Test
+  void addOutsideSubsetOfFails() {
+    Assertions.assertThrows(PolicyViolationException.class,
+        () -> parseParameter("{\"add\": [\"c\"], \"subset_of\": [\"a\", \"b\"]}"));
+    Assertions.assertDoesNotThrow(() -> parseParameter("{\"add\": [\"a\"], \"subset_of\": [\"a\", \"b\"]}"));
+  }
+
+  @Test
+  void defaultMayBeCombinedWithSubsetOfAndSupersetOf() {
+    Assertions.assertDoesNotThrow(() -> parseParameter("{\"default\": [\"c\"], \"subset_of\": [\"a\"]}"));
+    Assertions.assertDoesNotThrow(() -> parseParameter("{\"default\": [\"c\"], \"superset_of\": [\"a\"]}"));
+  }
+
+  @Test
+  void nullValueMayBeCombinedWithValueChecks() {
+    Assertions.assertDoesNotThrow(() -> parseParameter("{\"value\": null, \"superset_of\": [\"a\"]}"));
+    Assertions.assertDoesNotThrow(() -> parseParameter("{\"value\": null, \"subset_of\": [\"a\"]}"));
+    Assertions.assertDoesNotThrow(() -> parseParameter("{\"value\": null, \"one_of\": [\"a\"]}"));
+  }
+
+  @Test
+  void subsetOfMustBeSupersetOfSupersetOf() {
+    Assertions.assertThrows(PolicyViolationException.class,
+        () -> parseParameter("{\"subset_of\": [\"a\"], \"superset_of\": [\"a\", \"b\"]}"));
+  }
+
+  @Test
+  void defaultAcceptsNumbersAndBooleans() throws Exception {
+    final ExtendedDefaultOperation number =
+        operation(parseParameter("{\"default\": 3600}"), "p", ExtendedDefaultOperation.class);
+    Assertions.assertEquals(3600, ((Number) number.apply(null)).intValue());
+    Assertions.assertEquals(60L, number.apply(60L));
+    final ExtendedDefaultOperation bool =
+        operation(parseParameter("{\"default\": true}"), "p", ExtendedDefaultOperation.class);
+    Assertions.assertEquals(true, bool.apply(null));
+    Assertions.assertThrows(ParseException.class, () -> parseParameter("{\"default\": {\"a\": 1}}"));
+  }
+
+  @Test
+  void defaultMergeRequiresEqualValues() throws Exception {
+    final ExtendedDefaultOperation first =
+        operation(parseParameter("{\"default\": 1}"), "p", ExtendedDefaultOperation.class);
+    final ExtendedDefaultOperation second =
+        operation(parseParameter("{\"default\": 1.0}"), "p", ExtendedDefaultOperation.class);
+    final ExtendedDefaultOperation third =
+        operation(parseParameter("{\"default\": 2}"), "p", ExtendedDefaultOperation.class);
+    Assertions.assertEquals(1, ((Number) ((ExtendedDefaultOperation) first.merge(second)).getValue()).intValue());
+    Assertions.assertThrows(PolicyViolationException.class, () -> first.merge(third));
+  }
+
+  private static MetadataPolicy parseParameter(final String operators) throws Exception {
+    return ExtendedMetadataPolicy.parse(
+        new JSONObject(java.util.Map.of("p", JSONValue.parse(operators))));
+  }
+
   private static MetadataPolicy parse(final String json, final String entityType) throws Exception {
     final JSONObject metadataPolicy = (JSONObject) ((JSONObject) JSONValue.parse(json)).get("metadata_policy");
     return ExtendedMetadataPolicy.parse((JSONObject) metadataPolicy.get(entityType));

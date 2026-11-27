@@ -58,6 +58,16 @@ final class JsonValues {
     return required.stream().allMatch(item -> contains(values, item));
   }
 
+  static List<Object> intersection(final List<?> values, final Collection<?> allowed) {
+    final List<Object> intersection = new ArrayList<>();
+    for (final Object item : values) {
+      if (contains(allowed, item) && !contains(intersection, item)) {
+        intersection.add(item);
+      }
+    }
+    return intersection;
+  }
+
   static List<?> asList(final Object value) {
     if (value == null) {
       return List.of();

@@ -22,10 +22,12 @@ import com.nimbusds.openid.connect.sdk.federation.policy.language.OperationName;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyOperation;
 
 /**
- * Policy operation factory that creates {@link NullableValueOperation} for {@code value} and
- * {@link ExtendedOneOfOperation} for {@code one_of}. Other operations are created by a delegate.
+ * Policy operation factory that creates {@link NullableValueOperation} for {@code value},
+ * {@link ExtendedOneOfOperation} for {@code one_of}, {@link ExtendedSubsetOfOperation} for {@code subset_of} and
+ * {@link ExtendedDefaultOperation} for {@code default}. Other operations are created by a delegate.
  *
  * @author Felix Hellman
+ * @author Martin Lindström
  */
 public class ExtendedPolicyOperationFactory implements PolicyOperationFactory {
 
@@ -54,6 +56,12 @@ public class ExtendedPolicyOperationFactory implements PolicyOperationFactory {
     }
     if (ExtendedOneOfOperation.NAME.getValue().equals(name.getValue())) {
       return new ExtendedOneOfOperation();
+    }
+    if (ExtendedSubsetOfOperation.NAME.getValue().equals(name.getValue())) {
+      return new ExtendedSubsetOfOperation();
+    }
+    if (ExtendedDefaultOperation.NAME.getValue().equals(name.getValue())) {
+      return new ExtendedDefaultOperation();
     }
     return this.delegate.createForName(name);
   }

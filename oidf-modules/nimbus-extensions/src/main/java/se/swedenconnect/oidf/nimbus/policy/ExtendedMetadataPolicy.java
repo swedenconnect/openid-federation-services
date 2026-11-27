@@ -22,7 +22,8 @@ import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolatio
 import net.minidev.json.JSONObject;
 
 /**
- * Parses metadata policies with the extended {@code value} and {@code one_of} operators.
+ * Parses metadata policies with the extended {@code value}, {@code default}, {@code one_of} and {@code subset_of}
+ * operators.
  *
  * @author Felix Hellman
  */
