@@ -6,7 +6,7 @@
 
 ## Version 1.1.2
 
-**Date:** _not yet released_
+**Date:** 2026-11-27
 
 * Metadata policies now follow OpenID Federation 1.0, Section 6.1. A `subset_of` that leaves no values gives an empty array instead of a removed parameter or a policy error, `default` may be combined with `subset_of` and `superset_of` and may be a number, `add` must be a subset of `subset_of`, and `value: null` may be combined with `superset_of`. See [#307](https://github.com/swedenconnect/openid-federation-services/issues/307).
 
